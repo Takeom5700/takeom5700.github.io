@@ -654,9 +654,10 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); }
 window.addEventListener('load', () => {
   initMap();
   // サーバー接続確認
-  fetch(`${API_BASE}/api/search?keyword=テスト`, { signal: AbortSignal.timeout(3000) })
+  fetch(`${API_BASE}/api/ping`, { signal: AbortSignal.timeout(5000) })
+    .then(r => { if (!r.ok) throw new Error(); })
     .catch(() => {
-      showToast('⚠️ サーバー未起動。start.bat を実行してください。');
+      showToast('❌ サーバーに接続できませんでした。start.bat でサーバーを起動してください。');
     });
 });
 </script>
