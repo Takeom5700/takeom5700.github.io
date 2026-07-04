@@ -12,7 +12,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif; background: #f0f2f5; color: #333; height: 100vh; display: flex; flex-direction: column; }
+body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; display: flex; flex-direction: column; overflow-y: auto; }
 
 header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
 header h1 { font-size: 1.2rem; font-weight: 700; }
@@ -23,7 +23,7 @@ header h1 { font-size: 1.2rem; font-weight: 700; }
 .sources a { color: #0f3460; text-decoration: none; }
 .sources a:hover { text-decoration: underline; }
 
-.layout { display: flex; flex: 1; overflow: hidden; }
+.layout { display: flex; height: calc(100vh - 80px); min-height: 500px; }
 
 /* ── 左パネル ── */
 .left-panel { width: 420px; min-width: 360px; background: #fff; display: flex; flex-direction: column; border-right: 1px solid #ddd; overflow: hidden; }
@@ -174,8 +174,8 @@ header h1 { font-size: 1.2rem; font-weight: 700; }
 <header>
   <h1>🏠 東京楽器可物件検索</h1>
   <div class="header-right">
-    <a href="#search" style="color:white;font-size:0.8rem;margin-right:12px;opacity:0.9;">🔍 物件検索</a>
-    <a href="#content" style="color:white;font-size:0.8rem;opacity:0.9;">📖 コラム</a>
+    <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;" style="color:white;font-size:0.8rem;margin-right:12px;opacity:0.9;">🔍 物件検索</a>
+    <a href="#" onclick="document.getElementById('content').scrollIntoView({behavior:'smooth'});return false;" style="color:white;font-size:0.8rem;opacity:0.9;">📖 コラム</a>
   </div>
 </header>
 
@@ -670,7 +670,7 @@ window.addEventListener('load', () => {
 </script>
 <section id="content" style="max-width:900px; margin:40px auto; padding:0 20px;">
   <div style="text-align:center; margin-bottom:32px;">
-    <a href="#search" style="display:inline-block; background:#0f3460; color:white; padding:10px 24px; border-radius:6px; text-decoration:none; font-weight:bold; font-size:0.9em;">🔍 物件検索に戻る ↑</a>
+    <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;" style="display:inline-block; background:#0f3460; color:white; padding:10px 24px; border-radius:6px; text-decoration:none; font-weight:bold; font-size:0.9em;">🔍 物件検索に戻る ↑</a>
   </div>
   <h2 style="font-size:1.4em; color:#1a3a5c; border-left:4px solid #0f3460; padding-left:12px; margin-bottom:20px;">楽器可物件とは？</h2>
   <p style="line-height:1.9; color:#444; margin-bottom:16px;">
