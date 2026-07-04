@@ -173,7 +173,10 @@ header h1 { font-size: 1.2rem; font-weight: 700; }
 
 <header>
   <h1>🏠 東京楽器可物件検索</h1>
-  <div class="header-right">リアルタイム<span class="sp-hide">横断検索</span></div>
+  <div class="header-right">
+    <a href="#search" style="color:white;font-size:0.8rem;margin-right:12px;opacity:0.9;">🔍 物件検索</a>
+    <a href="#content" style="color:white;font-size:0.8rem;opacity:0.9;">📖 コラム</a>
+  </div>
 </header>
 
 <div class="sources">
@@ -187,7 +190,7 @@ header h1 { font-size: 1.2rem; font-weight: 700; }
   <span style="margin-left:8px;color:#999;border-left:1px solid #ddd;padding-left:10px;">⚠️ 検索結果は楽器演奏可能を保証するものではありません。必ず不動産会社に直接ご確認ください。</span>
 </div>
 
-<div class="layout">
+<div class="layout" id="search">
 
   <!-- 左パネル -->
   <div class="left-panel">
@@ -665,7 +668,10 @@ window.addEventListener('load', () => {
     });
 });
 </script>
-<section style="max-width:900px; margin:40px auto; padding:0 20px;">
+<section id="content" style="max-width:900px; margin:40px auto; padding:0 20px;">
+  <div style="text-align:center; margin-bottom:32px;">
+    <a href="#search" style="display:inline-block; background:#0f3460; color:white; padding:10px 24px; border-radius:6px; text-decoration:none; font-weight:bold; font-size:0.9em;">🔍 物件検索に戻る ↑</a>
+  </div>
   <h2 style="font-size:1.4em; color:#1a3a5c; border-left:4px solid #0f3460; padding-left:12px; margin-bottom:20px;">楽器可物件とは？</h2>
   <p style="line-height:1.9; color:#444; margin-bottom:16px;">
     楽器可物件とは、ピアノ・ギター・管楽器などの演奏を入居条件として認めている賃貸物件のことです。
