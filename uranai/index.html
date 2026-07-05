@@ -893,6 +893,33 @@
     });
   }
 })();
+
+// 期限切れチップを非表示にする
+(function() {
+  const now = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+  const todayMonth = now.getUTCMonth() + 1;
+  const todayDay = now.getUTCDate();
+
+  function parseChipEndDate(labelText) {
+    // 「（7/2-4）」「（十二支・7/3-5）」「（12星座 7/6-8）」などから終了日を取得
+    const m = labelText.match(/[（(](?:[^）)]*?・)?(?:\d+星座\s*)?(\d+)\/(\d+)-(\d+)[）)]/);
+    if (!m) return null;
+    const month = parseInt(m[1]);
+    const endDay = parseInt(m[3]);
+    return { month, endDay };
+  }
+
+  document.querySelectorAll('.color-chip').forEach(function(chip) {
+    const label = chip.querySelector('.chip-label');
+    if (!label) return;
+    const parsed = parseChipEndDate(label.textContent);
+    if (!parsed) return;
+    // 終了日の翌日以降なら非表示
+    const expired = (parsed.month < todayMonth) ||
+                    (parsed.month === todayMonth && parsed.endDay < todayDay);
+    if (expired) chip.style.display = 'none';
+  });
+})();
 </script>
 
 </body>
