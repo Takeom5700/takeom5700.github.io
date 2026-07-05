@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>占いダッシュボード 2026/7/5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-soft: #ece1fb;
+    --text: #2a2440;
+    --text-sub: #5f5678;
+    --border: #d5c2f2;
+    --primary: #a685f2;
+    --pink: #ff9ecb;
+    --sky: #8ed1ff;
+    --mint: #8ff0c8;
+  }
+
+  html {
+    background: linear-gradient(180deg, #f3e9ff 0%, #e9d8fb 40%, #dcebfc 100%);
+    background-attachment: fixed;
+  }
+
+  body {
+    color: var(--text);
+    font-family: "M PLUS Rounded 1c", 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ── 背景の光玉・きらめき ───────────────────────── */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(46px);
+    opacity: 0.55;
+    z-index: 0;
+    pointer-events: none;
+    animation: drift 13s ease-in-out infinite;
+    mix-blend-mode: multiply;
+  }
+  .blob--1 { width: 380px; height: 380px; top: -120px; left: -120px;
+    background: radial-gradient(circle, var(--primary), transparent 72%); }
+  .blob--2 { width: 360px; height: 360px; top: 40%; right: -140px;
+    background: radial-gradient(circle, var(--pink), transparent 72%); animation-delay: 3s; }
+  .blob--3 { width: 320px; height: 320px; bottom: -120px; left: 10%;
+    background: radial-gradient(circle, var(--sky), transparent 72%); animation-delay: 6s; }
+
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(28px, -24px) scale(1.08); }
+    66% { transform: translate(-22px, 18px) scale(0.95); }
+  }
+
+  .sparkle {
+    position: fixed;
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 0;
+    animation: float 5s ease-in-out infinite;
+  }
+  .sparkle--1 { top: 6%;  left: 5%;  font-size: 22px; color: var(--primary); animation-delay: 0s; }
+  .sparkle--2 { top: 10%; right: 6%; font-size: 18px; color: var(--pink); animation-delay: 1.2s; }
+  .sparkle--3 { bottom: 10%; left: 4%; font-size: 20px; color: var(--sky); animation-delay: 2.1s; }
+  .sparkle--4 { bottom: 16%; right: 5%; font-size: 24px; color: var(--primary); animation-delay: 0.6s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-14px) rotate(10deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .blob, .sparkle { animation: none; }
+  }
+
+  h1 {
+    text-align: center;
+    font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    background: linear-gradient(120deg, var(--primary), var(--pink) 60%, var(--sky));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 4px;
+    letter-spacing: 0.06em;
+    position: relative;
+    z-index: 1;
+    animation: mascot-bounce 3s ease-in-out infinite;
+  }
+
+  @keyframes mascot-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    h1 { animation: none; }
+  }
+
+  .date {
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .sign-badge {
+    text-align: center;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+  }
+  .sign-badge span {
+    background: #fff;
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 20px;
+    font-size: 1rem;
+    color: var(--primary);
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(166, 133, 242, 0.12);
+  }
+
+  /* ラッキーカラー */
+  .lucky-section {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(6px);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 8px 20px rgba(166, 133, 242, 0.08);
+  }
+  .lucky-section h2 {
+    font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif;
+    color: var(--primary);
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+    letter-spacing: 0.08em;
+  }
+  .color-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .color-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-soft);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+  .color-dot {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0,0,0,0.12);
+  }
+  .chip-label { color: var(--text-sub); font-size: 0.75rem; }
+  .chip-value { color: var(--text); font-weight: bold; }
+
+  /* スコアグリッド */
+  .scores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .score-card {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(6px);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(166, 133, 242, 0.08);
+    opacity: 0;
+    animation: card-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .scores-grid .score-card:nth-child(1) { animation-delay: 0.05s; }
+  .scores-grid .score-card:nth-child(2) { animation-delay: 0.1s; }
+  .scores-grid .score-card:nth-child(3) { animation-delay: 0.15s; }
+  .scores-grid .score-card:nth-child(4) { animation-delay: 0.2s; }
+  .scores-grid .score-card:nth-child(5) { animation-delay: 0.25s; }
+  .scores-grid .score-card:nth-child(6) { animation-delay: 0.3s; }
+  .scores-grid .score-card:nth-child(7) { animation-delay: 0.35s; }
+
+  @keyframes card-in {
+    0%   { opacity: 0; transform: translateY(20px) scale(0.94); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .score-card { opacity: 1; animation: none; }
+  }
+
+  .score-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 26px rgba(166, 133, 242, 0.18);
+  }
+  .score-card .label {
+    font-size: 0.8rem;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+  }
+  .score-card .score-num {
+    font-size: 2rem;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .score-bar-bg {
+    background: var(--bg-soft);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s;
+  }
+  .score-card .comment {
+    font-size: 0.72rem;
+    color: var(--text-sub);
+    margin-top: 6px;
+    text-align: left;
+  }
+
+  /* ソース別サマリー */
+  .sources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .source-card {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(6px);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 8px 20px rgba(166, 133, 242, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .source-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 26px rgba(166, 133, 242, 0.18);
+  }
+  .source-card h3 {
+    font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif;
+    font-size: 0.9rem;
+    color: var(--primary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .source-card .tag {
+    font-size: 0.7rem;
+    background: var(--bg-soft);
+    border-radius: 999px;
+    padding: 2px 10px;
+    color: var(--primary);
+    font-weight: 700;
+  }
+  .source-card p {
+    font-size: 0.82rem;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .source-card .file-link {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .source-card .file-link:hover { color: #8a63e0; }
+
+  /* 注意事項 */
+  .alert-box {
+    background: #fff6ea;
+    border: 2px solid #ffd9a0;
+    border-radius: 16px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 0.82rem;
+    color: #a06a1a;
+    line-height: 1.7;
+    position: relative;
+    z-index: 1;
+  }
+  .alert-box strong { color: #c07d10; }
+
+  /* 人間関係・コミュニケーション */
+  .comm-section {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(6px);
+    border: 2px solid var(--border);
+    border-left: 4px solid var(--sky);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 0.82rem;
+    color: var(--text);
+    line-height: 1.8;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 8px 20px rgba(166, 133, 242, 0.08);
+  }
+  .comm-section strong { color: #4a90c0; }
+  .comm-section .comm-title {
+    font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif;
+    font-size: 0.85rem;
+    color: #4a90c0;
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .comm-item {
+    margin-bottom: 8px;
+    padding-left: 10px;
+    border-left: 2px solid #cfe8f7;
+  }
+  .comm-item .comm-source {
+    font-size: 0.72rem;
+    color: var(--text-sub);
+    margin-bottom: 2px;
+  }
+
+  /* チャット */
+  .chat-section {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(6px);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 8px 20px rgba(166, 133, 242, 0.08);
+  }
+  .chat-section h2 {
+    font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif;
+    color: var(--primary);
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+    letter-spacing: 0.08em;
+  }
+  #chat-log {
+    max-height: 320px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chat-msg {
+    padding: 8px 14px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    max-width: 85%;
+    white-space: pre-wrap;
+  }
+  .chat-msg.user {
+    background: linear-gradient(120deg, var(--primary), var(--pink));
+    color: #fff;
+    align-self: flex-end;
+  }
+  .chat-msg.assistant {
+    background: var(--bg-soft);
+    color: var(--text);
+    align-self: flex-start;
+  }
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+  }
+  #chat-input {
+    flex: 1;
+    background: #fff;
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    padding: 10px 16px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.85rem;
+  }
+  #chat-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(166, 133, 242, 0.15);
+  }
+  #chat-send {
+    background: linear-gradient(135deg, var(--primary), var(--pink));
+    border: none;
+    border-radius: 999px;
+    padding: 10px 20px;
+    color: #fff;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 4px 12px rgba(166, 133, 242, 0.3);
+  }
+  #chat-send:hover:not(:disabled) { transform: translateY(-1px); }
+  #chat-send:disabled { opacity: 0.5; cursor: default; }
+  #chat-voice {
+    background: #eaf6ff;
+    border: 2px solid var(--sky);
+    border-radius: 999px;
+    padding: 10px 14px;
+    color: #3a8fc0;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+  }
+  #chat-voice:hover { background: #d8f0ff; }
+  #chat-voice.recording {
+    background: #ffe8ea;
+    border-color: var(--pink);
+    color: #e05575;
+    animation: pulse-rec 1s infinite;
+  }
+  @keyframes pulse-rec {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .chat-note { font-size: 0.7rem; color: var(--text-sub); margin-top: 8px; }
+
+  footer {
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 0.75rem;
+    margin-top: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* スコア色 */
+  .s-high { color: #2c8a56; }
+  .s-mid  { color: #b57a15; }
+  .s-low  { color: #c94464; }
+  .bar-high { background: linear-gradient(90deg, #6bc98f, #2c8a56); }
+  .bar-mid  { background: linear-gradient(90deg, #ffcf7a, #b57a15); }
+  .bar-low  { background: linear-gradient(90deg, #ff9eb5, #c94464); }
+</style>
+</head>
+<body>
+
+<div class="blob blob--1" aria-hidden="true"></div>
+<div class="blob blob--2" aria-hidden="true"></div>
+<div class="blob blob--3" aria-hidden="true"></div>
+
+<span class="sparkle sparkle--1" aria-hidden="true">✦</span>
+<span class="sparkle sparkle--2" aria-hidden="true">✧</span>
+<span class="sparkle sparkle--3" aria-hidden="true">⋆</span>
+<span class="sparkle sparkle--4" aria-hidden="true">✦</span>
+
+<h1>🔮 占いダッシュボード</h1>
+<p class="date">2026年7月5日（日）｜ 木星獅子座期・無神経な人注意・水のトラブル注意・常識を覆す</p>
+
+<div class="sign-badge">
+  <span>♉ 牡牛座（4/20〜5/20）・木星人＋霊合星人（寅・1986年5月7日）</span>
+</div>
+
+<!-- アラート -->
+<div class="alert-box">
+  <strong>⚠ 今週の注意・天文情報：</strong><br>
+  😶💧 <strong>7/5〜7テーマ：無神経な人に注意・水のトラブル注意・常識を覆す</strong>（Loveちゃん）：悪気のない無神経発言注意・水漏れ/台風/大雨/船事故注意・常識を覆す出来事・声優ニュース・映画ドラマ一気見日<br>
+  🌊🔥 <strong>7/4〜6テーマ（継続）：水と火の攻防・闇暴露・逮捕注意</strong>（Loveちゃん）：有名人の逮捕・暴露ニュース出やすい（7/7まで）<br>
+  ♌ <strong>木星獅子座期進行中</strong>（6/30〜2027年）：長期的幸運トレンド継続<br>
+  六星占術：7月月運は <strong>「健弱」⚠ / 「陰影」⚠</strong>（体調・停滞注意。無理は禁物）<br>
+  六星占術：本日（7/5）日運は <strong>「種子」/ 「再会」</strong>（木星人＋：新しい物事の始まりサイン・コツコツ努力が大事。金星人（霊合）：旧友・過去のご縁が復活しやすい日）<br>
+  六星占術：翌日（7/6）日運は <strong>「緑生」/ 「財成」★</strong>（明日は物事が動き始める兆し・金運も好転！）
+</div>
+
+<!-- 人間関係・コミュニケーション -->
+<div class="comm-section">
+  <div class="comm-title">🤝 人間関係・コミュニケーションの心構え</div>
+  <div class="comm-item">
+    <div class="comm-source">Loveちゃん｜全体 7/5〜7「無神経な人注意・水のトラブル・常識を覆す」</div>
+    <strong>悪気のない無神経な発言に傷つくことが多い3日間。</strong>「あの人は考えずに話しているだけ」と思うことが大事。自分の価値観を押し付けてくる人にも気をつける。相手の発言を深刻に受け取りすぎないよう注意。
+  </div>
+  <div class="comm-item">
+    <div class="comm-source">Loveちゃん｜牡牛座 7/4〜6（継続中）</div>
+    <strong>うまい話・甘い話が来やすいが冷静な判断が必要。</strong>家族・友人・AIに相談して冷静さを取り戻すことが大事。舐められないようクールさや個性をアピールすること。平等性を大事にした関わりが吉。
+  </div>
+  <div class="comm-item">
+    <div class="comm-source">六星占術｜7月「健弱⚠ / 陰影⚠」</div>
+    <strong>エネルギー消耗に注意。口約束・多方面コミットを避ける。</strong>「あとでやる」「考えておく」と言いがちな月。なるべく約束は減らし、内省と回復に集中すること。
+  </div>
+  <div class="comm-item">
+    <div class="comm-source">しいたけ占い｜下半期テーマ</div>
+    <strong>人間関係の「改革運動」が本格化。</strong>一歩前に出たり、一歩後ろに下がったりするバランス感覚が問われる時期。関係を更新・整理する勇気を持って。
+  </div>
+  <div class="comm-item">
+    <div class="comm-source">しいたけ占い（週間）｜牡牛座 6/29〜7/5</div>
+    <strong>「かわいい」と感じる人・ものに心を奪われやすい週。愛情面の変化が予想される。</strong>かわいいものを見守り内面の栄養補給を図ることで、関係性がうまく動き出す。ただし衝動的な感情移入は注意。
+  </div>
+</div>
+
+<!-- ラッキーカラー -->
+<div class="lucky-section">
+  <h2>🎨 ラッキーカラーなど</h2>
+  <div class="color-grid">
+    <div class="color-chip">
+      <div class="color-dot" style="background:#ff9eb5;"></div>
+      <div><div class="chip-label">しいたけ POWER UP</div><div class="chip-value">ピンク</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#48c9b0;"></div>
+      <div><div class="chip-label">しいたけ COOL DOWN</div><div class="chip-value">ターコイズ</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#50c878;"></div>
+      <div><div class="chip-label">しいたけ半期 今月（7月）</div><div class="chip-value">エメラルド</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#4488ff;border:1px solid #2255cc;"></div>
+      <div><div class="chip-label">Loveちゃん 寅年（十二支・7/5-7）ラッキーカラー★</div><div class="chip-value">青 ★</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#ffd700;border:1px solid #b8860b;"></div>
+      <div><div class="chip-label">Loveちゃん 寅年（十二支・7/3-5）</div><div class="chip-value">ゴールド</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#c0c0c0;border:1px solid #888;"></div>
+      <div><div class="chip-label">Loveちゃん 寅年（十二支・下半期）</div><div class="chip-value">シルバー</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#d4a017;"></div>
+      <div><div class="chip-label">Loveちゃん 牡牛座（7/4-6）ラッキーフード🍗 ★</div><div class="chip-value">唐揚げ ★</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#b87333;"></div>
+      <div><div class="chip-label">Loveちゃん 牡牛座（7/2-4）ラッキーフード🥩</div><div class="chip-value">お肉・ステーキ</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#fffde0;border:1px solid #ccc;"></div>
+      <div><div class="chip-label">Loveちゃん 牡牛座（下半期）ラッキーフード🍜</div><div class="chip-value">そうめん</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#ff2222;border:1px solid #cc0000;"></div>
+      <div><div class="chip-label">Loveちゃん 九星気学・五黄土星（下半期）</div><div class="chip-value">赤 🔴</div></div>
+    </div>
+    <!-- 山田ありす 牡牛座 スペシャルチェックデー -->
+    <div class="color-chip">
+      <div class="color-dot" style="background:#7ec8e3;border:1px solid #4a9fc0;"></div>
+      <div><div class="chip-label">山田ありす 牡牛座 7/10 チェックデー📡</div><div class="chip-value">情報収集・生活スタイル変化</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#a8d8a8;border:1px solid #5a9a5a;"></div>
+      <div><div class="chip-label">山田ありす 牡牛座 8/15 推奨行動🏠</div><div class="chip-value">引っ越し・模様替え・部屋整備</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#ffd700;border:1px solid #b8860b;"></div>
+      <div><div class="chip-label">山田ありす 牡牛座 10/24 🌟スペシャルチェックデー</div><div class="chip-value">復縁・重要人物との再会</div></div>
+    </div>
+    <div class="color-chip">
+      <div class="color-dot" style="background:#dda0dd;border:1px solid #9060a0;"></div>
+      <div><div class="chip-label">山田ありす 牡牛座 12/28 重要決断日🔮</div><div class="chip-value">重要な決断に最良・安心感・冷静判断</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- スコア -->
+<div class="scores-grid">
+
+  <div class="score-card">
+    <div class="label">🚶 外出すべきか</div>
+    <div class="score-num s-mid">6.0</div>
+    <div class="score-bar-bg"><div class="score-bar-fill bar-mid" style="width:60%"></div></div>
+    <div class="comment">【日運：種子/再会】新しいことを始めるきっかけとして◎。Loveちゃん「水のトラブル注意・台風・大雨注意」。外出時は雨対策を。寅年ラッキーカラー「青」を身につけると吉。過去に縁があった場所・人に会いに行くのが特に吉</div>
+  </div>
+
+  <div class="score-card">
+    <div class="label">📧 メール・返信すべきか</div>
+    <div class="score-num s-mid">5.5</div>
+    <div class="score-bar-bg"><div class="score-bar-fill bar-mid" style="width:55%"></div></div>
+    <div class="comment">【日運：種子/再会】流れが変わり始めた。久しぶりの人・過去のご縁からの連絡に丁寧に応答◎。Loveちゃん「無神経な人注意・悪気のない発言に傷つきやすい」→自分も相手も無神経に発言しないよう意識。重要な契約・意思決定は7/6（緑生/財成★）以降がより吉</div>
+  </div>
+
+  <div class="score-card">
+    <div class="label">🎲 ガチャを引くべきか</div>
+    <div class="score-num s-mid">5.0</div>
+    <div class="score-bar-bg"><div class="score-bar-fill bar-mid" style="width:50%"></div></div>
+    <div class="comment">【日運：種子/再会】種子は「まだ芽が出ない」段階。大きな課金は翌日（財成★）待ちが賢明。牡牛座：冷静な判断が必要・うまい話に注意。風龍：エネルギー漏れ注意・衝動的な出費は避けて</div>
+  </div>
+
+  <div class="score-card">
+    <div class="label">💕 恋愛運</div>
+    <div class="score-num s-mid">6.5</div>
+    <div class="score-bar-bg"><div class="score-bar-fill bar-mid" style="width:65%"></div></div>
+    <div class="comment">【日運：再会】過去のご縁が復活しやすい日。Loveちゃん全体テーマ「無神経な人の発言で傷つきやすい」→相手の言葉を重く受け取りすぎずに。牡牛座：告白・プロポーズに良い時</div>
+  </div>
+
+  <div class="score-card">
+    <div class="label">💼 仕事運</div>
+    <div class="score-num s-mid">5.5</div>
+    <div class="score-bar-bg"><div class="score-bar-fill bar-mid" style="width:55%"></div></div>
+    <div class="comment">【日運：種子】新たな物事の始まり。今日動いたことが後で花開く。五黄土星：下半期は仕事メインで動くと吉。風龍：新しい分野を切り開くタイミング。来週への仕込みを今日する◎</div>
+  </div>
+
+  <div class="score-card">
+    <div class="label">📚 勉強・読書運</div>
+    <div class="score-num s-high">8.0</div>
+    <div class="score-bar-bg"><div class="score-bar-fill bar-high" style="width:80%"></div></div>
+    <div class="comment">Loveちゃん「映画・ドラマ・アニメの一気見・情報インプットに最適な3日間」。しいたけ半期：苦手分野の新開拓に縁あり。五黄土星：デジタルデトックス→スマホを置いて本を手に取るのが◎。風龍：水＝学びを取り入れる月</div>
+  </div>
+
+  <div class="score-card">
+    <div class="label">🌿 健康運</div>
+    <div class="score-num s-low">4.5</div>
+    <div class="score-bar-bg"><div class="score-bar-fill bar-low" style="width:45%"></div></div>
+    <div class="comment">【月運：健弱⚠/陰影⚠】7月全体で体調注意継続。寅年7/5-7「気を使いすぎて疲れる・免疫力が落ちやすい→食生活・睡眠大切」。Loveちゃん「水のトラブル・台風注意」→外出時は雨対策を万全に。水分補給・軽い運動◎</div>
+  </div>
+
+</div>
+
+<!-- ソース別サマリー -->
+<div class="sources-grid">
+
+  <div class="source-card">
+    <h3>🌿🍄 しいたけ占い<span class="tag">牡牛座</span></h3>
+    <p>
+      <strong>【週間】</strong> テーマ：「連続で改革に取り組んでいる」週<br>
+      実行力が強まり、「やる！」という意欲が高い。小さな世界を修正・改革する地道な作業が中心。
+      かわいいものに心を奪われやすい時期。愛情面の変化が予想される。<br>
+      <a class="file-link" href="しいたけ占いまとめ週間.md" style="font-size:0.8rem;">→ 週間まとめ.md</a>
+    </p>
+    <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+    <p>
+      <strong>【下半期】</strong> 全体テーマ：「修羅場を乗り越えてきて、力がみなぎっている」<br>
+      余白と余裕が生まれ、やりたかったことへの爆発力・突進力が強まる時期。気前よくやりすぎ注意。<br>
+      <strong>📍今月（6→7月）：面倒なことを片付ける好機（🎨エメラルド）</strong><br>
+      仕事「嫌いと苦手と禁足地の取り扱い方」、恋愛「一歩前に出る・一歩後ろに下がる」<br>
+      <span style="color:#9988bb;font-size:0.8rem;">※11月「1+1が90になる協働効果」ラッキー月（オレンジ）</span><br>
+      <a class="file-link" href="しいたけ占いまとめ半期.md" style="font-size:0.8rem;">→ 下半期まとめ.md</a>
+    </p>
+  </div>
+
+  <div class="source-card">
+    <h3>⭐ 六星占術<span class="tag">木星人＋霊合星人</span></h3>
+    <p>
+      ※霊合星人のため運気は常に2つ存在します<br>
+      <strong>年運：立花★★★★★ / 安定★★★</strong>（年間通じて黄金期）<br>
+      <strong>7月月運：健弱⚠ / 陰影⚠</strong>（木星人＋ / 金星人）<br>
+      <strong style="color:#80c080;">本日（7/5）日運：種子 / 再会</strong>（新しいことの始まりサイン・コツコツ努力◎。過去のご縁が復活しやすい日）<br>
+      種子：まだ芽は出ないが行動することで未来の花が咲く・焦らず基盤を作る<br>
+      再会：旧友・昔の縁が戻ってくる・過去のプロジェクトが再起動することも<br>
+      <span style="color:#f0c060;">→ 明日(7/6)は緑生/財成★：物事が動き始める・金運好転！積極的に動いて吉</span>
+    </p>
+    <a class="file-link" href="六星占術１９８６年５月７日まとめ.md">→ 六星占術まとめ.md</a>
+  </div>
+
+  <div class="source-card">
+    <h3>📺 Loveちゃん<span class="tag">最新7/4</span></h3>
+    <p>
+      <strong>😶💧 7/5〜7 全体テーマ：無神経な人に注意・水のトラブル注意・常識を覆す</strong><br>
+      悪気のない無神経発言に注意。水漏れ・台風・大雨・洪水・津波・船事故注意。常識を覆す出来事が起こりやすい（スポーツ番狂わせ・技術革新・NASA発表等）。声優さんが話題になるかも。映画・ドラマ・アニメの一気見に最適な3日間。<br>
+      <strong>寅年（十二支 7/5-7）：気を使いすぎて疲れる。キャパオーバー注意。人に振って楽をする。免疫力低下注意。🔵 ラッキーカラー：青 ★</strong><br>
+      <strong>牡牛座（12星座 7/4-6継続）：うまい話・甘い話に注意・冷静な判断が必要。転職・引っ越しに良い。🍗 ラッキーフード：唐揚げ ★</strong><br>
+      🌊🔥 7/4〜6テーマ（継続）：闇暴露・逮捕ニュース出やすい（7/7まで）。有名人の逮捕・暴露注意。<br>
+      寅年（十二支・下半期）：衝撃的なことが起こる半期。環境を変えて勝負。ラッキーカラー：シルバー<br>
+      牡牛座（下半期）：さりげない優しさが人気運を高める。ラッキーフード：そうめん<br>
+      <strong style="color:#ff8888;">☯ 九星気学・五黄土星（下半期）：別れと出会いの時。リニューアル・新しいものを積極的に取り入れて。仕事運UP・出世チャンス。下半期は仕事メインで動くと吉。デジタルデトックスと自然との触れ合いを大切に。🔴 ラッキーカラー：赤</strong>
+    </p>
+    <a class="file-link" href="Loveちゃん占いまとめ.md">→ Loveちゃん占いまとめ.md</a>
+  </div>
+
+  <div class="source-card">
+    <h3>🐉 六龍法占い<span class="tag">風龍・初夏</span></h3>
+    <p>
+      <strong>7月テーマ：木の羊＝砂漠に咲く花（サボテン）</strong><br>
+      厳しい環境でも花を咲かせるバランス感覚が求められる月。今年の強い日差し（丙午）でエネルギー枯渇注意。水分補給＋精神的な潤い（学び・解釈）も大切。<br>
+      <strong style="color:#8ed1ff;">🌬️ 風龍（初夏の運気）：「エネルギー漏れに敏感になってください」</strong><br>
+      勢いと行動力があるが、あっちこっちに分散してエネルギーを無駄遣いしやすい。いらんことに頑張って肝心な時に力が残らないタイプ。<br>
+      ✅ 新しいことに挑戦・新分野を切り開くタイミング<br>
+      ⚠️ 周りの人にアクセル・ブレーキを頼む。方向性がずれてないかチェックを
+    </p>
+    <a class="file-link" href="六龍法占いまとめ.md">→ 六龍法占いまとめ.md</a>
+  </div>
+
+  <div class="source-card">
+    <h3>🌟 山田ありす<span class="tag">牡牛座</span></h3>
+    <p>
+      2026年テーマ：恋愛・居場所・価値観が最も大きく変化する年<br>
+      幸運キーワード：「家族的なコミュニケーション・安心感」<br>
+      6/30以降：家庭・居場所・基盤がぐんぐん運気UP<br>
+      <strong>📅 次のチェックデー：7/10（情報収集・生活スタイル変化）</strong><br>
+      <strong style="color:#f0c060;">🌟 スペシャルチェックデー：10/24（復縁・重要人物との再会）、12/28（重要な決断に最良）</strong>
+    </p>
+    <a class="file-link" href="山田ありすさん占いまとめ.md">→ 山田ありすさん占いまとめ.md（スペシャルチェックデー全件収録）</a>
+  </div>
+
+</div>
+
+<!-- AI占い師チャット -->
+<div class="chat-section">
+  <h2>🔮 占い師に相談する</h2>
+  <div id="chat-log"></div>
+  <div class="chat-input-row">
+    <input id="chat-input" type="text" placeholder="悩み相談・質問・世間話など、何でもどうぞ" />
+    <button id="chat-voice" title="音声入力">🎤</button>
+    <button id="chat-send">送信</button>
+  </div>
+  <div class="chat-note">※ ローカルサーバー（node server.js）起動時のみ利用可能です。Claude Codeのサブスクリプション経由で動作するため追加API課金はありません。各占いソースの詳細データを根拠に占い師として応答します。</div>
+</div>
+
+<footer>
+  占いダッシュボード | データ取得日: 2026年7月5日<br>
+  ソース: しいたけ占い / 六星占術 / Loveちゃん / 山田ありす先生 / 六龍法占い<br>
+  ※スコアは各占いソースの情報を総合して算出した参考値です
+</footer>
+
+<script>
+(function () {
+  const log = document.getElementById('chat-log');
+  const input = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('chat-send');
+  const history = [];
+
+  function addMsg(role, text) {
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + role;
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  async function send() {
+    const text = input.value.trim();
+    if (!text) return;
+    addMsg('user', text);
+    history.push({ role: 'user', content: text });
+    input.value = '';
+    sendBtn.disabled = true;
+    try {
+      const res = await fetch('https://uranai-takechan.duckdns.org:8443/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        addMsg('assistant', 'エラー: ' + JSON.stringify(data.error));
+      } else {
+        addMsg('assistant', data.reply);
+        history.push({ role: 'assistant', content: data.reply });
+      }
+    } catch (e) {
+      addMsg('assistant', 'サーバーに接続できません。node server.js を起動してください。');
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener('click', send);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+
+  // 音声入力
+  const voiceBtn = document.getElementById('chat-voice');
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    voiceBtn.disabled = true;
+    voiceBtn.title = 'このブラウザは音声入力に対応していません';
+    voiceBtn.style.opacity = '0.3';
+  } else {
+    let isRecording = false;
+    let silenceTimer = null;
+    let accumulated = '';   // 確定済みテキストを蓄積
+    let shouldRestart = false; // ユーザーが止めるまで再起動し続けるフラグ
+    const SILENCE_MS = 2500;
+
+    function makeRecog() {
+      const r = new SpeechRecognition();
+      r.lang = 'ja-JP';
+      r.interimResults = true;
+      r.continuous = true;
+
+      r.onstart = () => {
+        if (!isRecording) {
+          // 最初の起動時だけUIを更新
+          isRecording = true;
+          voiceBtn.classList.add('recording');
+          voiceBtn.title = '録音中（もう一度押すと停止）';
+          input.placeholder = '🎤 話しかけてください...';
+        }
+        resetSilenceTimer(r);
+      };
+
+      r.onresult = (e) => {
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) {
+            accumulated += e.results[i][0].transcript;
+          } else {
+            interim += e.results[i][0].transcript;
+          }
+        }
+        input.value = accumulated + interim;
+        resetSilenceTimer(r);
+      };
+
+      r.onend = () => {
+        clearTimeout(silenceTimer);
+        if (shouldRestart && isRecording) {
+          // ブラウザが勝手に切った場合は即再起動（蓄積テキストは維持）
+          try { makeRecog().start(); } catch(_) {}
+        } else {
+          // ユーザーが止めた・無音タイムアウト → 終了処理
+          isRecording = false;
+          shouldRestart = false;
+          voiceBtn.classList.remove('recording');
+          voiceBtn.title = '音声入力';
+          input.placeholder = '悩み相談・質問・世間話など、何でもどうぞ';
+          if (input.value.trim()) send();
+        }
+      };
+
+      r.onerror = (e) => {
+        if (e.error === 'aborted') return; // 意図的停止は無視
+        if (e.error === 'no-speech' && shouldRestart && isRecording) return; // 無音でも継続
+        clearTimeout(silenceTimer);
+        isRecording = false;
+        shouldRestart = false;
+        voiceBtn.classList.remove('recording');
+        input.placeholder = '音声認識エラー: ' + e.error;
+        setTimeout(() => { input.placeholder = '悩み相談・質問・世間話など、何でもどうぞ'; }, 3000);
+      };
+
+      return r;
+    }
+
+    let currentRecog = null;
+
+    function resetSilenceTimer(r) {
+      clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => {
+        shouldRestart = false; // タイムアウトなので再起動しない
+        try { r.stop(); } catch(_) {}
+      }, SILENCE_MS);
+    }
+
+    voiceBtn.addEventListener('click', () => {
+      if (isRecording) {
+        // ユーザーが明示的に停止
+        shouldRestart = false;
+        clearTimeout(silenceTimer);
+        try { currentRecog.stop(); } catch(_) { }
+      } else {
+        accumulated = '';
+        input.value = '';
+        shouldRestart = true;
+        currentRecog = makeRecog();
+        currentRecog.start();
+      }
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
