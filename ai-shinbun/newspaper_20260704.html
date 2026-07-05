@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI時報 2026年7月4日</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: radial-gradient(ellipse at 38% 28%, #3d2a14 0%, #1a0e06 85%);
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; min-height:100vh;
+    font-family:'Noto Serif JP','Yu Mincho',serif;
+    padding: 24px 0;
+  }
+  .page {
+    width: 1800px;
+    transform: perspective(2600px) rotateX(0.55deg) rotateY(-0.4deg) rotate(-0.12deg);
+    transform-origin: center center;
+    box-shadow:
+      -5px 0 10px rgba(0,0,0,0.3),
+       3px 5px 20px rgba(0,0,0,0.4),
+       8px 12px 50px rgba(0,0,0,0.5),
+       0 35px 90px rgba(0,0,0,0.65);
+  }
+  .mast {
+    background:#f4f0e6;
+    border-bottom:3px solid #111;
+    padding: 6px 16px 4px;
+    display:flex; align-items:baseline; gap:20px;
+  }
+  .mast-logo {
+    font-family:'Noto Serif JP',serif; font-size:42px; font-weight:900;
+    color:#b0001e; letter-spacing:0.05em; line-height:1;
+  }
+  .mast-sub {
+    font-family:'Noto Sans JP',sans-serif; font-size:11px;
+    color:#444; line-height:1.4;
+  }
+  .mast-date {
+    margin-left:auto; font-family:'Noto Sans JP',sans-serif;
+    font-size:11px; color:#333; text-align:right; line-height:1.5;
+  }
+  .footer {
+    background:#f4f0e6; border-top:1.5px solid #111;
+    padding:3px 16px; display:flex; justify-content:space-between;
+    font-family:'Noto Sans JP',sans-serif; font-size:9px; color:#555;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="mast">
+  <div class="mast-logo">AI時報</div>
+  <div class="mast-sub">
+    人工知能・生成AI・テクノロジー専門紙<br>
+    AI産業面　第312号
+  </div>
+  <div class="mast-date">
+    2026年7月4日（土）<br>朝刊　第312号
+  </div>
+</div>
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 900"
+     style="display:block;width:100%;">
+<defs>
+  <linearGradient id="paper-grad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%"   stop-color="#f4f0e6"/>
+    <stop offset="100%" stop-color="#edeadf"/>
+  </linearGradient>
+  <filter id="grain-fx" x="0%" y="0%" width="100%" height="100%"
+          color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.82 0.88"
+                  numOctaves="4" seed="7" result="noise"/>
+    <feColorMatrix type="saturate" values="0" in="noise" result="gray-noise"/>
+    <feBlend in="SourceGraphic" in2="gray-noise" mode="multiply" result="blended"/>
+    <feComposite in="blended" in2="SourceGraphic" operator="in"/>
+  </filter>
+  <radialGradient id="vignette-grad" cx="50%" cy="50%" r="72%">
+    <stop offset="0%"   stop-color="transparent"/>
+    <stop offset="75%"  stop-color="rgba(0,0,0,0.04)"/>
+    <stop offset="100%" stop-color="rgba(0,0,0,0.22)"/>
+  </radialGradient>
+  <linearGradient id="spine-shadow" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%"  stop-color="rgba(0,0,0,0.18)"/>
+    <stop offset="100%" stop-color="transparent"/>
+  </linearGradient>
+  <linearGradient id="top-shadow" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%"  stop-color="rgba(0,0,0,0.12)"/>
+    <stop offset="100%" stop-color="transparent"/>
+  </linearGradient>
+  <clipPath id="c-main"><rect x="1260" y="0"  width="540" height="530"/></clipPath>
+  <clipPath id="c-2nd"> <rect x="936"  y="0"  width="324" height="530"/></clipPath>
+  <clipPath id="c-3rd"> <rect x="684"  y="0"  width="252" height="530"/></clipPath>
+  <clipPath id="c-4th"> <rect x="486"  y="0"  width="198" height="530"/></clipPath>
+  <clipPath id="c-br1"> <rect x="324"  y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-br2"> <rect x="324"  y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-bm1"> <rect x="162"  y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-bm2"> <rect x="162"  y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-bl1"> <rect x="0"    y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-bl2"> <rect x="0"    y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-da">  <rect x="1200" y="530" width="600" height="370"/></clipPath>
+  <clipPath id="c-db">  <rect x="600"  y="530" width="600" height="370"/></clipPath>
+  <clipPath id="c-dc">  <rect x="0"    y="530" width="600" height="370"/></clipPath>
+</defs>
+
+<!-- 紙の地色 -->
+<rect width="1800" height="900" fill="url(#paper-grad)"/>
+
+<!-- 縦罫線 -->
+<line x1="1260" y1="0" x2="1260" y2="530" stroke="#555" stroke-width="1.5"/>
+<line x1="936"  y1="0" x2="936"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="684"  y1="0" x2="684"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="486"  y1="0" x2="486"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="324"  y1="0" x2="324"  y2="530" stroke="#aaa" stroke-width="0.5"/>
+<line x1="162"  y1="0" x2="162"  y2="530" stroke="#aaa" stroke-width="0.5"/>
+<line x1="0" y1="265" x2="486" y2="265" stroke="#bbb" stroke-width="0.5" stroke-dasharray="3,2"/>
+<line x1="0" y1="530" x2="1800" y2="530" stroke="#333" stroke-width="2.5"/>
+<line x1="1200" y1="530" x2="1200" y2="900" stroke="#888" stroke-width="0.8"/>
+<line x1="600"  y1="530" x2="600"  y2="900" stroke="#888" stroke-width="0.8"/>
+
+
+<!-- ① 主記事：Claude Sonnet 5 リリース -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="9"
+      fill="#111" font-weight="700" x="1262" y="13">
+  【独自速報】アンソロピック社、次世代中核モデルを7月1日より全世界同時公開
+</text>
+<line x1="1260" y1="17" x2="1800" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="36"
+      writing-mode="tb-rl" x="1756" y="24"
+      clip-path="url(#c-main)">クロード・ソネット5</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="36"
+      writing-mode="tb-rl" x="1716" y="24"
+      clip-path="url(#c-main)">遂に正式公開へ</text>
+
+<foreignObject x="1260" y="22" width="448" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:448px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">アンソロピック</span>は<span style="color:#b0001e;font-weight:700;">6月30日</span>、同社の中位モデル最新作<span style="color:#0d3461;font-weight:700;">「Claude Sonnet 5」</span>を発表し、<span style="color:#b0001e;font-weight:700;">7月1日</span>より全プランのデフォルトモデルとして提供を開始した。エージェントコーディング性能では<span style="color:#b0001e;font-weight:700;">63.2%</span>を記録し、上位モデルの<span style="color:#0d3461;font-weight:700;">Opus 4.8</span>に迫る精度を実現している。</p>
+  <p style="font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;
+            color:#b0001e;border-right:2.5px solid #b0001e;padding-right:3px;margin:5px 0 2px;">破格の導入価格設定</p>
+  <p style="text-indent:1em;margin:0 0 2px;">料金は入力<span style="color:#b0001e;font-weight:700;">100万トークンあたり2ドル</span>、出力<span style="color:#b0001e;font-weight:700;">10ドル</span>と設定されており、これは<span style="color:#b0001e;font-weight:700;">8月31日</span>までの期間限定価格となる。同日以降は<span style="color:#b0001e;font-weight:700;">3ドル・15ドル</span>に改定される予定だ。利用可能なプラットフォームは<span style="color:#0d3461;font-weight:700;">Claude API</span>、<span style="color:#0d3461;font-weight:700;">Amazon Bedrock</span>、<span style="color:#0d3461;font-weight:700;">Google Cloud</span>、<span style="color:#0d3461;font-weight:700;">Microsoft Azure</span>と幅広い。</p>
+  <p style="font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;
+            color:#b0001e;border-right:2.5px solid #b0001e;padding-right:3px;margin:5px 0 2px;">コンテキスト100万トークン対応</p>
+  <p style="text-indent:1em;">コンテキストウィンドウは<span style="color:#b0001e;font-weight:700;">100万トークン</span>に対応し、自律的な計画立案・ブラウザ操作・ターミナル実行など高度なエージェント機能を備える。企業の<span style="color:#0d3461;font-weight:700;">AI導入コスト</span>を大幅に削減する起爆剤となることが期待される。</p>
+</div>
+</foreignObject>
+
+
+<!-- ② 第2記事：Anthropic Claude Science -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="9"
+      fill="#111" font-weight="700" x="938" y="13">
+  科学研究支援プラットフォーム　ベータ公開
+</text>
+<line x1="936" y1="17" x2="1260" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="24"
+      writing-mode="tb-rl" x="1229" y="24"
+      clip-path="url(#c-2nd)">クロード・サイエンス</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="24"
+      writing-mode="tb-rl" x="1201" y="24"
+      clip-path="url(#c-2nd)">研究者向け公開</text>
+
+<foreignObject x="936" y="22" width="257" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:257px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 7px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">アンソロピック</span>は<span style="color:#b0001e;font-weight:700;">6月30日</span>、科学者向け統合研究環境<span style="color:#0d3461;font-weight:700;">「Claude Science」</span>のパブリックベータを公開した。<span style="color:#b0001e;font-weight:700;">60以上</span>の科学スキルとコネクターを搭載し、ゲノミクス・プロテオミクス・構造生物学など幅広い領域をカバーする。</p>
+  <p style="text-indent:1em;">決定論的ツールの活用により、生物学的予測精度が<span style="color:#b0001e;font-weight:700;">16.9%</span>から<span style="color:#b0001e;font-weight:700;">92.8%</span>へと劇的に向上したと報告されており、創薬・ワクチン開発分野での応用が期待される。応募は<span style="color:#b0001e;font-weight:700;">7月15日</span>まで受け付けている。</p>
+</div>
+</foreignObject>
+
+
+<!-- ③ 第3記事：国連AI統治対話 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#111" font-weight="700" x="686" y="13">
+  ジュネーブ国際会議　6・7日開催へ
+</text>
+<line x1="684" y1="17" x2="936" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="18"
+      writing-mode="tb-rl" x="910" y="24"
+      clip-path="url(#c-3rd)">国連AI統治対話</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="18"
+      writing-mode="tb-rl" x="888" y="24"
+      clip-path="url(#c-3rd)">開幕迫る</text>
+
+<foreignObject x="684" y="22" width="196" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:196px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 6px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">国連</span>主催の<span style="color:#0d3461;font-weight:700;">「グローバルAI統治対話」</span>が<span style="color:#b0001e;font-weight:700;">7月6日・7日</span>、<span style="color:#0d3461;font-weight:700;">ジュネーブ</span>で開幕する。<span style="color:#0d3461;font-weight:700;">WSIS</span>フォーラム・<span style="color:#0d3461;font-weight:700;">ITU</span>サミットと並行開催される大規模な国際会議となる。</p>
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">ヨシュア・ベンジオ</span>氏ら共同議長が、AI欺瞞リスクや情報整合性・デジタル格差を含む独立科学パネルの報告書を提示する予定。各国の規制アプローチが試される場となる。</p>
+</div>
+</foreignObject>
+
+
+<!-- ④ 第4記事：カリフォルニア州-アンソロピック協定 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8"
+      fill="#111" font-weight="700" x="488" y="13">
+  米国州政府初　生成AI全庁導入協定
+</text>
+<line x1="486" y1="17" x2="684" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="15"
+      writing-mode="tb-rl" x="661" y="24"
+      clip-path="url(#c-4th)">カリフォルニア州</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="15"
+      writing-mode="tb-rl" x="642" y="24"
+      clip-path="url(#c-4th)">半額協定締結</text>
+
+<foreignObject x="486" y="22" width="148" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:148px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 6px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">ニューサム</span>知事は<span style="color:#b0001e;font-weight:700;">6月29日</span>、<span style="color:#0d3461;font-weight:700;">アンソロピック</span>と歴史的な提携協定を締結した。州内の全政府機関・市区町村が<span style="color:#0d3461;font-weight:700;">Claude</span>を<span style="color:#b0001e;font-weight:700;">50%割引</span>で利用できる。</p>
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">DMV</span>や<span style="color:#0d3461;font-weight:700;">保健省</span>など複数機関が既に試験導入済み。従業員への無償研修も含まれる。</p>
+</div>
+</foreignObject>
+
+
+<!-- 短信右・上：Gemini画像生成 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="326" y="11">画像生成AI</text>
+<line x1="324" y1="15" x2="486" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="469" y="19" clip-path="url(#c-br1)">グーグル新モデル</text>
+<foreignObject x="324" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">グーグル</span>は<span style="color:#b0001e;font-weight:700;">6月30日</span>、<span style="color:#0d3461;font-weight:700;">Gemini 3.1 Flash Image</span>と<span style="color:#0d3461;font-weight:700;">Gemini 3 Pro Image</span>の<span style="color:#b0001e;font-weight:700;">2モデル</span>を同時公開した。Flash版は入力<span style="color:#b0001e;font-weight:700;">0.50ドル</span>/百万トークンと低コスト設計。</p>
+</div>
+</foreignObject>
+
+<!-- 短信右・下：Fable 5復活 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="326" y="276">規制動向</text>
+<line x1="324" y1="280" x2="486" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="469" y="284" clip-path="url(#c-br2)">輸出規制解除</text>
+<foreignObject x="324" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">米商務省</span>は<span style="color:#b0001e;font-weight:700;">6月30日</span>、<span style="color:#b0001e;font-weight:700;">6月12日</span>に課した<span style="color:#0d3461;font-weight:700;">Fable 5</span>への輸出規制を解除。<span style="color:#b0001e;font-weight:700;">7月1日</span>より全世界ユーザーへの提供が再開された。</p>
+</div>
+</foreignObject>
+
+<!-- 短信中・上：AIチップ Etched -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="164" y="11">半導体産業</text>
+<line x1="162" y1="15" x2="324" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="307" y="19" clip-path="url(#c-bm1)">新興チップ躍進</text>
+<foreignObject x="162" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">Etched</span>が<span style="color:#0d3461;font-weight:700;">TSMC</span>での量産化に成功し、企業評価額<span style="color:#b0001e;font-weight:700;">50億ドル</span>、受注額<span style="color:#b0001e;font-weight:700;">10億ドル</span>を達成。<span style="color:#0d3461;font-weight:700;">エヌビディア</span>への対抗軸として注目を集める。</p>
+</div>
+</foreignObject>
+
+<!-- 短信中・下：タンパク質構造予測 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="164" y="276">科学技術</text>
+<line x1="162" y1="280" x2="324" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="307" y="284" clip-path="url(#c-bm2)">蛋白質構造解析</text>
+<foreignObject x="162" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">AI</span>がこれまでに<span style="color:#b0001e;font-weight:700;">2億以上</span>のタンパク質構造を予測。創薬・ワクチン・抗生物質耐性の研究が加速し、科学界に革命をもたらしている。</p>
+</div>
+</foreignObject>
+
+<!-- 短信左・上：Azure Claude提供 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="2" y="11">クラウド連携</text>
+<line x1="0" y1="15" x2="162" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="145" y="19" clip-path="url(#c-bl1)">Azure正式提供</text>
+<foreignObject x="0" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">マイクロソフト</span>は<span style="color:#0d3461;font-weight:700;">Azure</span>上で<span style="color:#0d3461;font-weight:700;">Claude</span>の一般提供を開始。最新の<span style="color:#0d3461;font-weight:700;">Sonnet 5</span>も即日対応となり、企業のガバナンス要件に応える体制を整えた。</p>
+</div>
+</foreignObject>
+
+<!-- 短信左・下：Gemini Omni Flash -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="2" y="276">動画AI</text>
+<line x1="0" y1="280" x2="162" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="145" y="284" clip-path="url(#c-bl2)">動画生成API公開</text>
+<foreignObject x="0" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">グーグル</span>が<span style="color:#0d3461;font-weight:700;">Gemini Omni Flash</span>のAPI公開プレビューを開始。ネイティブマルチモーダルで企業向けカスタム動画ワークフローを初めて実現した。</p>
+</div>
+</foreignObject>
+
+
+<!-- 下段A：AI for Scienceの詳細 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="1202" y="543">
+  生物学精度92.8%達成　研究自動化の新時代
+</text>
+<line x1="1200" y1="547" x2="1800" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1770" y="552"
+      clip-path="url(#c-da)">AIが科学研究を</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1748" y="552"
+      clip-path="url(#c-da)">自動化する時代へ</text>
+<foreignObject x="1200" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">Claude Science</span>は単一のワークスペースに散在していた研究ツールを統合し、データベース・コード・計算資源を一元管理する。<span style="color:#b0001e;font-weight:700;">60超</span>の専門スキルを持つサブエージェント群が、調整エージェントの指示のもと並列に処理を進める。別途設けられたレビューエージェントが引用と計算を逐次検証しエラーを自動修正する仕組みだ。単細胞<span style="color:#0d3461;font-weight:700;">RNAシーケンシング</span>解析、<span style="color:#0d3461;font-weight:700;">CRISPR</span>スクリーン設計、タンパク質構造予測など多彩な研究作業に対応し、全結果はコードに紐付けられ再現性が担保される。アンソロピックは医療・創薬領域を優先分野とし、応募は<span style="color:#b0001e;font-weight:700;">7月15日</span>まで受付中。</p>
+</div>
+</foreignObject>
+
+<!-- 下段B：UN AI Governance -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="602" y="543">
+  ベンジオ・レッサ両氏が科学パネル報告書を提出へ
+</text>
+<line x1="600" y1="547" x2="1200" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1170" y="552"
+      clip-path="url(#c-db)">国際AI規制の枠組み</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1148" y="552"
+      clip-path="url(#c-db)">構築へ正念場</text>
+<foreignObject x="600" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#b0001e;font-weight:700;">7月6日・7日</span>、<span style="color:#0d3461;font-weight:700;">ジュネーブ</span>で開幕する<span style="color:#0d3461;font-weight:700;">国連グローバルAI統治対話</span>は、世界各国がAI規制の国際的な枠組みを協議する初の本格的な政府間対話として注目される。<span style="color:#0d3461;font-weight:700;">WSIS</span>フォーラムおよび<span style="color:#0d3461;font-weight:700;">ITU AI for Good</span>サミットと会期を重ねており、国際機関と各国政府が一堂に会する。</p>
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">国連事務総長</span>室が設置した独立国際科学パネルは、AI欺瞞的挙動リスク・情報整合性の毀損・南北間デジタル格差の<span style="color:#b0001e;font-weight:700;">3点</span>を最重要課題として提示した。共同議長を務める<span style="color:#0d3461;font-weight:700;">ヨシュア・ベンジオ</span>氏と<span style="color:#0d3461;font-weight:700;">マリア・レッサ</span>氏がこの報告書を直接提出する。各国が異なる規制アプローチをとる中、国際標準の合意形成が可能かが焦点となる。</p>
+</div>
+</foreignObject>
+
+<!-- 下段C：カリフォルニア州AIソネット5詳細 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="2" y="543">
+  DMV・保健省など複数機関が先行活用　職員研修も無償提供
+</text>
+<line x1="0" y1="547" x2="600" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="570" y="552"
+      clip-path="url(#c-dc)">米州政府が生成AI</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="548" y="552"
+      clip-path="url(#c-dc)">全庁導入の先鞭</text>
+<foreignObject x="0" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">カリフォルニア州</span>のニューサム知事は<span style="color:#b0001e;font-weight:700;">6月29日</span>、<span style="color:#0d3461;font-weight:700;">アンソロピック</span>と米国の州政府としては初となる生成AI全庁導入協定を締結した。州内の全省庁・市区町村が<span style="color:#0d3461;font-weight:700;">Claude</span>を通常価格の<span style="color:#b0001e;font-weight:700;">50%割引</span>で利用できるほか、<span style="color:#0d3461;font-weight:700;">アンソロピック</span>による職員向け無償ワークフロー研修・技術支援が含まれる。</p>
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">DMV（車両管理局）</span>は顧客サービス改善に、<span style="color:#0d3461;font-weight:700;">カリフォルニア州保健省</span>は内部業務効率化にそれぞれ<span style="color:#0d3461;font-weight:700;">Claude</span>を先行活用してきた実績があり、本協定はその成果を踏まえた拡大策だ。人口<span style="color:#b0001e;font-weight:700;">3900万人</span>を抱える同州が官民一体でAI活用を推進する姿は、他州・他国の行政DXの参考事例となることが予想される。</p>
+</div>
+</foreignObject>
+
+
+<!-- 物理エフェクトオーバーレイ -->
+<rect width="1800" height="900" fill="#e8d8a0"
+      filter="url(#grain-fx)" opacity="0.10" pointer-events="none"/>
+<rect width="1800" height="900" fill="url(#vignette-grad)" pointer-events="none"/>
+<rect x="0" y="0" width="28" height="900"
+      fill="url(#spine-shadow)" pointer-events="none"/>
+<rect x="0" y="0" width="1800" height="22"
+      fill="url(#top-shadow)" pointer-events="none"/>
+<rect width="1800" height="900"
+      fill="rgba(180,130,50,0.02)" pointer-events="none"/>
+
+</svg>
+
+<div class="footer">
+  <span>AI時報　AI産業面　※本紙面はAIエージェントが自動生成した模擬紙面です</span>
+  <span>2026年7月4日　朝刊</span>
+</div>
+
+</div>
+</body>
+</html>

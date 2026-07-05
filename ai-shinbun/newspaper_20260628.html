@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AI新聞 2026年6月28日 朝刊</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+
+/* ── デスク背景（暗い木目調）── */
+html,body{
+  width:100vw;height:100vh;overflow:hidden;
+  background: radial-gradient(ellipse at 38% 28%, #3d2a14 0%, #1a0e06 85%);
+  font-family:'Noto Serif JP',serif;
+}
+
+/* ── 紙面全体：3D透視変換＋深い影 ── */
+.page{
+  width:100vw;height:100vh;
+  background:#e8dfc8;
+  display:flex;flex-direction:column;overflow:hidden;
+  /* 3D傾き：紙を斜めに持っているような微妙な歪み */
+  transform: perspective(2600px) rotateX(0.55deg) rotateY(-0.4deg) rotate(-0.12deg);
+  transform-origin: 50% 50%;
+  /* 多層シャドウで紙の立体感・厚み */
+  box-shadow:
+    -5px 0 10px rgba(0,0,0,0.3),
+    3px 5px 20px rgba(0,0,0,0.4),
+    8px 12px 50px rgba(0,0,0,0.5),
+    0 35px 90px rgba(0,0,0,0.65),
+    inset 0 0 120px rgba(180,140,80,0.06);
+  border-radius:0 0 2px 2px;
+}
+
+/* ── マストヘッド：わずかに黄ばんだ上部 ── */
+.masthead{
+  flex-shrink:0;
+  border-bottom:3px double #111;
+  padding:4px 18px 3px;
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  background: linear-gradient(to bottom, #ede6cc, #e8dfc5);
+}
+.mast-left{font-family:'Noto Sans JP',sans-serif;font-size:8px;color:#555;line-height:1.6;}
+.mast-logo{font-size:clamp(22px,2.8vw,38px);font-weight:900;letter-spacing:.05em;text-align:center;line-height:1;color:#b0001e;}
+.mast-right{text-align:right;font-family:'Noto Sans JP',sans-serif;font-size:8px;color:#555;line-height:1.6;}
+.mast-date{font-size:10px;font-weight:700;color:#111;}
+.men-bar{flex-shrink:0;background:#1a1208;color:#e8dfc5;font-family:'Noto Sans JP',sans-serif;font-size:8.5px;padding:2px 18px;display:flex;}
+.men-bar span{padding:0 10px;border-right:1px solid #4a3a20;}
+.men-bar span:first-child{padding-left:0;}
+.paper-svg{flex:1;min-height:0;display:block;width:100%;}
+.footer{
+  flex-shrink:0;border-top:2px double #111;padding:2px 18px;
+  display:flex;justify-content:space-between;
+  font-family:'Noto Sans JP',sans-serif;font-size:7.5px;color:#776655;
+  background: linear-gradient(to top, #dfd6be, #e8dfc5);
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="masthead">
+  <div class="mast-left">定価100円（本体92円）<br>AIエージェントチーム発行</div>
+  <div class="mast-logo">ＡＩ新聞</div>
+  <div class="mast-right">
+    <div class="mast-date">2026年（令和8年）6月28日　日曜日</div>
+    朝刊　AIテクノロジー・経済面
+  </div>
+</div>
+<div class="men-bar">
+  <span>経済・企業</span><span>AI・テクノロジー</span><span>規制・政策</span><span>医療</span><span>エージェント</span>
+</div>
+
+<!--
+  ════════════════════════════════════════════════════
+  紙面構成（viewBox 1800×900）  ─── 2層構造
+
+  【上段】y=0〜530（高さ530px）
+    主記事  : x=1260-1800  幅540 (30%)
+    第2記事 : x=936-1260   幅324 (18%)
+    第3記事 : x=684-936    幅252 (14%)
+    第4記事 : x=486-684    幅198 (11%)
+    短信右  : x=324-486    幅162  上下2段 (y=0-265, y=265-530)
+    短信中  : x=162-324    幅162  上下2段
+    短信左  : x=0-162      幅162  上下2段
+
+  【段間横断罫】y=530 ── 太罫で上下を明確に区切る
+
+  【下段】y=530〜900（高さ370px）
+    下段A: x=1200-1800 幅600 (33%)
+    下段B: x=600-1200  幅600 (33%)
+    下段C: x=0-600     幅600 (33%)
+
+  設計原則：縦の視線移動を最小化
+  → 上段各記事は530px止まり（縦を短く抑える）
+  → 2層構造で視線が「右上→左、段を降りて右→左」と流れる
+  ════════════════════════════════════════════════════
+-->
+<svg class="paper-svg" viewBox="0 0 1800 900"
+     preserveAspectRatio="xMidYMid meet"
+     xmlns="http://www.w3.org/2000/svg">
+<defs>
+
+  <!-- ══ 紙の質感エフェクト ══ -->
+
+  <!-- 紙の色むら（控えめな黄ばみ） -->
+  <linearGradient id="paper-grad" x1="3%" y1="0%" x2="97%" y2="100%">
+    <stop offset="0%"   stop-color="#f4f0e6"/>
+    <stop offset="40%"  stop-color="#f1ede3"/>
+    <stop offset="100%" stop-color="#edeadf"/>
+  </linearGradient>
+
+  <!-- 四隅の古びた染み（ごく薄め） -->
+  <radialGradient id="age-spot-tl" cx="0%" cy="0%" r="45%">
+    <stop offset="0%" stop-color="#c9a96e" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="age-spot-br" cx="100%" cy="100%" r="40%">
+    <stop offset="0%" stop-color="#b8904a" stop-opacity="0.04"/>
+    <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+  </radialGradient>
+
+  <!-- 紙の繊維・グレイン（fractalNoiseで微細な紙目を再現） -->
+  <filter id="grain-fx" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.82 0.88" numOctaves="4"
+                  stitchTiles="stitch" seed="3" result="noiseMap"/>
+    <!-- グレインを明るめに補正してほんのり紙目感に -->
+    <feColorMatrix type="matrix"
+      values="0 0 0 0 0.98
+              0 0 0 0 0.95
+              0 0 0 0 0.88
+              0 0 0 -1.6 2.3"
+      in="noiseMap" result="lightGrain"/>
+    <feBlend in="SourceGraphic" in2="lightGrain" mode="multiply"/>
+  </filter>
+
+  <!-- 微細な印刷ブレ（インクのにじみ感） -->
+  <filter id="ink-bleed" x="-1%" y="-1%" width="102%" height="102%">
+    <feTurbulence type="turbulence" baseFrequency="0.006 0.004" numOctaves="2"
+                  seed="7" result="warpField"/>
+    <feDisplacementMap in="SourceGraphic" in2="warpField" scale="2.2"
+                       xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+
+  <!-- ビネット（周辺減光：部屋の照明で端が暗くなる感じ） -->
+  <radialGradient id="vignette-grad" cx="50%" cy="47%" r="74%" fx="50%" fy="45%">
+    <stop offset="45%" stop-color="rgba(0,0,0,0)"  stop-opacity="0"/>
+    <stop offset="80%" stop-color="rgba(8,4,0,1)"  stop-opacity="0.12"/>
+    <stop offset="100%" stop-color="rgba(8,4,0,1)" stop-opacity="0.32"/>
+  </radialGradient>
+
+  <!-- 左綴じ側の影（折り目の影） -->
+  <linearGradient id="spine-shadow" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%"   stop-color="rgba(0,0,0,0.18)"/>
+    <stop offset="100%" stop-color="rgba(0,0,0,0)" stop-opacity="0"/>
+  </linearGradient>
+
+  <!-- 上端の影（製本・折り目の上側） -->
+  <linearGradient id="top-shadow" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%"   stop-color="rgba(0,0,0,0.10)"/>
+    <stop offset="100%" stop-color="rgba(0,0,0,0)" stop-opacity="0"/>
+  </linearGradient>
+
+  <!-- 上段 clipPaths -->
+  <clipPath id="c-main"><rect x="1260" y="0"   width="540" height="530"/></clipPath>
+  <clipPath id="c-2nd"> <rect x="936"  y="0"   width="324" height="530"/></clipPath>
+  <clipPath id="c-3rd"> <rect x="684"  y="0"   width="252" height="530"/></clipPath>
+  <clipPath id="c-4th"> <rect x="486"  y="0"   width="198" height="530"/></clipPath>
+  <!-- 短信（上段内・上下2段に分割） -->
+  <clipPath id="c-br1"> <rect x="324" y="0"   width="162" height="265"/></clipPath>
+  <clipPath id="c-bm1"> <rect x="162" y="0"   width="162" height="265"/></clipPath>
+  <clipPath id="c-bl1"> <rect x="0"   y="0"   width="162" height="265"/></clipPath>
+  <clipPath id="c-br2"> <rect x="324" y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-bm2"> <rect x="162" y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-bl2"> <rect x="0"   y="265" width="162" height="265"/></clipPath>
+  <!-- 下段 clipPaths -->
+  <clipPath id="c-da">  <rect x="1200" y="530" width="600" height="370"/></clipPath>
+  <clipPath id="c-db">  <rect x="600"  y="530" width="600" height="370"/></clipPath>
+  <clipPath id="c-dc">  <rect x="0"    y="530" width="600" height="370"/></clipPath>
+</defs>
+
+<!-- 紙のベース色：グラデーションで微妙な色むら -->
+<rect width="1800" height="900" fill="url(#paper-grad)"/>
+<!-- 古びた染み（四隅） -->
+<rect width="1800" height="900" fill="url(#age-spot-tl)"/>
+<rect width="1800" height="900" fill="url(#age-spot-br)"/>
+
+<!-- ── 上段 縦罫（y=0〜530のみ） ── -->
+<line x1="1260" y1="0" x2="1260" y2="530" stroke="#111" stroke-width="1.5"/>
+<line x1="936"  y1="0" x2="936"  y2="530" stroke="#888" stroke-width="1"/>
+<line x1="684"  y1="0" x2="684"  y2="530" stroke="#888" stroke-width="0.8"/>
+<line x1="486"  y1="0" x2="486"  y2="530" stroke="#888" stroke-width="0.8"/>
+<line x1="324"  y1="0" x2="324"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="162"  y1="0" x2="162"  y2="530" stroke="#888" stroke-width="0.7"/>
+<!-- 短信欄の中断罫（y=265） -->
+<line x1="0" y1="265" x2="486" y2="265" stroke="#bbb" stroke-width="0.7"/>
+
+<!-- 上段 天罫（各記事上部・重要度別太さ・主記事のみ赤） -->
+<line x1="1260" y1="0" x2="1800" y2="0" stroke="#b0001e" stroke-width="3.5"/>
+<line x1="936"  y1="0" x2="1260" y2="0" stroke="#111" stroke-width="2"/>
+<line x1="684"  y1="0" x2="936"  y2="0" stroke="#111" stroke-width="1.5"/>
+<line x1="486"  y1="0" x2="684"  y2="0" stroke="#111" stroke-width="1.5"/>
+<line x1="0"    y1="0" x2="486"  y2="0" stroke="#555" stroke-width="1.2"/>
+
+<!-- ════ 段間横断罫（y=530）上下段を区切る太罫 ════ -->
+<line x1="0" y1="530" x2="1800" y2="530" stroke="#111" stroke-width="2.5"/>
+
+<!-- ── 下段 縦罫（y=530〜900） ── -->
+<line x1="1200" y1="530" x2="1200" y2="900" stroke="#0d3461" stroke-width="1.2"/>
+<line x1="600"  y1="530" x2="600"  y2="900" stroke="#0d3461" stroke-width="0.8"/>
+
+
+<!-- ══════════════════════════════════════════════════════
+     ① 主記事（x:1260-1800, 幅540, 上段y:0-530）
+
+     縦見出し font-size=30（ベタ組み）
+       L1 x=1760 (1800-30-10)
+       L2 x=1726 (1760-30-4)
+     横見出し: y=13, fill="#111" 厳守
+     本文: x=1260, w=462, y=22, h=508
+══════════════════════════════════════════════════════ -->
+
+<rect x="1752" y="4" width="42" height="12" fill="#b0001e"/>
+<text font-family="'Noto Sans JP',sans-serif" font-size="7"
+      fill="white" font-weight="700" x="1756" y="13">きょうの注目</text>
+
+<text font-family="'Noto Sans JP',sans-serif" font-size="11"
+      fill="#111" font-weight="700" x="1262" y="14">
+  評価額約140兆円　10月ナスダック上場　売上高が半年で5倍超の急伸
+</text>
+<line x1="1260" y1="17" x2="1800" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="36"
+      writing-mode="tb-rl" x="1756" y="24"
+      clip-path="url(#c-main)">アンソロピック</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="36"
+      writing-mode="tb-rl" x="1716" y="24"
+      clip-path="url(#c-main)">ＩＰＯ申請へ</text>
+
+<!-- 本文右端=1260+448=1708, L2左端=1716 → 8px隙間 ✓ -->
+<foreignObject x="1260" y="22" width="448" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:448px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;">米ＡＩ企業<span style="color:#0d3461;font-weight:700;">アンソロピック</span>が６月１日、米ＳＥＣに株式公開（<span style="color:#b0001e;font-weight:700;">ＩＰＯ</span>）の申請書類を秘密裏に提出したとされる。評価額は約<span style="color:#b0001e;font-weight:700;">９６５０億ドル（約１４０兆円）</span>に上るとみられ、実現すれば近年のＩＰＯとして異例の規模となる。上場先は<span style="color:#0d3461;font-weight:700;">ナスダック</span>を目指しており、時期は<span style="color:#b0001e;font-weight:700;">１０月</span>を想定しているという。主幹事にはゴールドマン・サックス、ＪＰモルガン、モルガン・スタンレーが名を連ねるとみられる。</p>
+  <p style="font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;
+            color:#b0001e;border-right:2.5px solid #b0001e;padding-right:3px;margin:5px 0 2px;">売上高、半年で５倍超に急伸</p>
+  <p style="text-indent:1em;margin:0 0 2px;">年間売上高は２０２５年末の<span style="color:#b0001e;font-weight:700;">９０億ドル</span>から２０２６年５月時点で<span style="color:#b0001e;font-weight:700;">４７億ドル</span>へと６カ月未満で<span style="color:#b0001e;font-weight:700;">５倍超</span>に拡大。ＩＰＯ調達額は<span style="color:#b0001e;font-weight:700;">６００億ドル超</span>を見込む。ＡＩモデル「<span style="color:#0d3461;font-weight:700;">クロード</span>」の急速な普及が業績を押し上げており、<span style="color:#0d3461;font-weight:700;">グーグル</span>など主要テック企業から出資を受けている。</p>
+  <p style="font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;
+            color:#b0001e;border-right:2.5px solid #b0001e;padding-right:3px;margin:5px 0 2px;">市場シェア３位、成長率は３０６％</p>
+  <p style="text-indent:1em;">ＡＩ市場シェアは<span style="color:#0d3461;font-weight:700;">ＣｈａｔＧＰＴ</span>首位（<span style="color:#b0001e;font-weight:700;">５４・７％</span>）、<span style="color:#0d3461;font-weight:700;">Ｇｅｍｉｎｉ</span>（<span style="color:#b0001e;font-weight:700;">２７・４％</span>）に次ぐ３位（<span style="color:#b0001e;font-weight:700;">８・２％</span>）だが、前四半期比<span style="color:#b0001e;font-weight:700;">３０６％</span>の突出した成長を見せる。同社は安全性重視の経営理念を掲げており、<span style="color:#0d3461;font-weight:700;">アップル</span>の次期ＯＳ「<span style="color:#0d3461;font-weight:700;">ｉＯＳ２７</span>」でも採用されるなど、さらなる普及が見込まれる。</p>
+</div>
+</foreignObject>
+
+
+<!-- ══════════════════════════════════════════════════════
+     ② 第2記事（x:936-1260, 幅324, 上段y:0-530）
+
+     縦見出し font-size=20
+       L1 x=1233, L2 x=1210
+     本文: x=936, w=270, y=22, h=508
+══════════════════════════════════════════════════════ -->
+
+<text font-family="'Noto Sans JP',sans-serif" font-size="9"
+      fill="#111" font-weight="700" x="938" y="13">
+  ＷＷＤＣ２６でｉＯＳ２７発表　新型Ｓｉｒｉも全面刷新
+</text>
+<line x1="936" y1="17" x2="1260" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="24"
+      writing-mode="tb-rl" x="1229" y="24"
+      clip-path="url(#c-2nd)">アップル、ＡＩ複数選択可能に</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="24"
+      writing-mode="tb-rl" x="1201" y="24"
+      clip-path="url(#c-2nd)">ＷＷＤＣ２６でｉＯＳ２７発表</text>
+
+<!-- 本文右端=936+257=1193, L2左端=1201 → 8px隙間 ✓ -->
+<foreignObject x="936" y="22" width="257" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:257px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 7px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;">米<span style="color:#0d3461;font-weight:700;">アップル</span>は８日、年次開発者会議「<span style="color:#0d3461;font-weight:700;">ＷＷＤＣ２６</span>」で次期基本ソフト「<span style="color:#0d3461;font-weight:700;">ｉＯＳ２７</span>」を発表した。最大の特徴は「<span style="color:#0d3461;font-weight:700;">Ｅｘｔｅｎｓｉｏｎｓ</span>」と呼ばれる新機能で、<span style="color:#0d3461;font-weight:700;">Ｃｌａｕｄｅ・ＣｈａｔＧＰＴ・Ｇｅｍｉｎｉ・Ｇｒｏｋ</span>など複数の外部ＡＩモデルをユーザーが自由に選択できるようになるという。<span style="color:#b0001e;font-weight:700;">単一ＡＩアシスタント時代の終焉</span>を象徴する転換として注目される。</p>
+  <p style="text-indent:1em;margin:0 0 2px;">新型<span style="color:#0d3461;font-weight:700;">Ｓｉｒｉ</span>は画面コンテキストをリアルタイムで認識し、統合検索が可能に。対応は<span style="color:#0d3461;font-weight:700;">ｉＰｈｏｎｅ１５Ｐｒｏ</span>以降。アップルは<span style="color:#0d3461;font-weight:700;">Ｇｅｍｉｎｉ</span>の利用に<span style="color:#b0001e;font-weight:700;">年間１０億ドル</span>のライセンス料を支払うとされており、マルチＡＩ戦略への転換を明確に示した。正式リリースは<span style="color:#b0001e;font-weight:700;">２０２６年秋</span>を予定している。</p>
+</div>
+</foreignObject>
+
+
+<!-- ══════════════════════════════════════════════════════
+     ③ 第3記事（x:684-936, 幅252, 上段y:0-530）
+
+     縦見出し font-size=15
+       L1 x=912, L2 x=893
+     本文: x=684, w=205, y=22, h=508
+══════════════════════════════════════════════════════ -->
+
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#111" font-weight="700" x="686" y="13">
+  米欧で相次ぎ施行　企業に対応迫る
+</text>
+<line x1="684" y1="17" x2="936" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="18"
+      writing-mode="tb-rl" x="910" y="24"
+      clip-path="url(#c-3rd)">ＡＩ規制、世界で本格化</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="18"
+      writing-mode="tb-rl" x="888" y="24"
+      clip-path="url(#c-3rd)">米欧相次ぎ施行</text>
+
+<!-- 本文右端=684+196=880, L2左端=888 → 8px隙間 ✓ -->
+<foreignObject x="684" y="22" width="196" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:196px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 6px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;">ＡＩをめぐる規制整備が世界で加速している。<span style="color:#0d3461;font-weight:700;">米コロラド州</span>では<span style="color:#b0001e;font-weight:700;">６月３０日</span>、採用・医療・金融・教育に関わるＡＩシステムを対象とした<span style="color:#0d3461;font-weight:700;">州ＡＩ法</span>が施行された。企業にはリスク管理プログラムの策定や透明性の開示が義務付けられるという。</p>
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">ＥＵ</span>でも<span style="color:#b0001e;font-weight:700;">８月２日</span>、高リスクＡＩ条項の本格適用が始まる。違反した場合、最大<span style="color:#b0001e;font-weight:700;">３５００万ユーロ</span>または<span style="color:#b0001e;font-weight:700;">年間売上の７％</span>の罰金が科せられる。米連邦レベルでも包括的ＡＩ規制法草案が公表されており、規制対応コストの増大がＡＩ戦略に制約をもたらしている。</p>
+</div>
+</foreignObject>
+
+
+<!-- ══════════════════════════════════════════════════════
+     ④ 第4記事（x:486-684, 幅198, 上段y:0-530）
+
+     縦見出し font-size=13
+       L1 x=663, L2 x=646
+     本文: x=486, w=156, y=22, h=508
+══════════════════════════════════════════════════════ -->
+
+<text font-family="'Noto Sans JP',sans-serif" font-size="8"
+      fill="#111" font-weight="700" x="488" y="13">
+  ＯｐｅｎＡＩ旧モデル廃止　企業分析機能も追加
+</text>
+<line x1="486" y1="17" x2="684" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="15"
+      writing-mode="tb-rl" x="661" y="24"
+      clip-path="url(#c-4th)">ＧＰＴ‐５・５へ完全移行</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="15"
+      writing-mode="tb-rl" x="642" y="24"
+      clip-path="url(#c-4th)">旧モデル廃止</text>
+
+<!-- 本文右端=486+148=634, L2左端=642 → 8px隙間 ✓ -->
+<foreignObject x="486" y="22" width="148" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:148px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 6px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;">米<span style="color:#0d3461;font-weight:700;">オープンＡＩ</span>は<span style="color:#b0001e;font-weight:700;">６月２６日</span>、<span style="color:#0d3461;font-weight:700;">ＧＰＴ‐４・５</span>の提供を終了し、<span style="color:#0d3461;font-weight:700;">ＧＰＴ‐５・５</span>への完全移行を実施した。ハルシネーション率が前世代比<span style="color:#b0001e;font-weight:700;">５２・５％削減</span>されたとされ、業務利用の信頼性向上が期待される。</p>
+  <p style="text-indent:1em;">ＡＩモデルの<span style="color:#b0001e;font-weight:700;">世代交代サイクルの急速な短縮</span>を背景に、企業はシステム移行コストと性能向上のトレードオフに直面している。</p>
+</div>
+</foreignObject>
+
+
+<!-- ══════════════════════════════════════════════════════
+     ⑤ 短信 6本（3列×上下、上段内で y=0-265, y=265-530）
+══════════════════════════════════════════════════════ -->
+
+<!-- 短信右・上（y:0-265） -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="326" y="11">医療ＡＩ、カルテ記録時間を大幅削減</text>
+<line x1="324" y1="15" x2="486" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="469" y="19" clip-path="url(#c-br1)">医療ＡＩで８３％削減</text>
+<!-- 本文右端=324+137=461, L1左端=469 → 8px隙間 ✓ -->
+<foreignObject x="324" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;">医療現場でＡＩ診療録システムの導入が進んでいる。２０２６年６月の調査で医師のカルテ記録時間が<span style="color:#b0001e;font-weight:700;">８３％削減</span>された。ＡＩ効率化が医師の過重労働解消に着実な成果を上げている。</p>
+</div>
+</foreignObject>
+
+<!-- 短信右・下（y:265-530） -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="326" y="276">企業エージェント導入率、前四半期比２倍</text>
+<line x1="324" y1="280" x2="486" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="469" y="284" clip-path="url(#c-br2)">エージェント移行率３１％</text>
+<foreignObject x="324" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;">企業のＡＩエージェント本番移行率が<span style="color:#b0001e;font-weight:700;">３１％</span>に達し、前四半期比で２倍となった。ガートナーは２０２６年末までに企業アプリの<span style="color:#b0001e;font-weight:700;">４０％</span>がＡＩエージェントを統合すると予測している。</p>
+</div>
+</foreignObject>
+
+<!-- 短信中・上（y:0-265） -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="164" y="11">ＭＣＰ採用急拡大、四半期比５８％増</text>
+<line x1="162" y1="15" x2="324" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="307" y="19" clip-path="url(#c-bm1)">ＭＣＰサーバー９４００個</text>
+<!-- 本文右端=162+137=299, L1左端=307 → 8px隙間 ✓ -->
+<foreignObject x="162" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;">ＡＩエージェント通信規格「<span style="color:#0d3461;font-weight:700;">ＭＣＰ</span>」対応サーバーが<span style="color:#b0001e;font-weight:700;">９４００個</span>に達し、前四半期比<span style="color:#b0001e;font-weight:700;">５８％増</span>となった。エンタープライズ採用が進んでおり、ＡＩエコシステム急拡大の指標として注目される。</p>
+</div>
+</foreignObject>
+
+<!-- 短信中・下（y:265-530） -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="164" y="276">国内ＡＩ投資額、上半期に前年比３倍</text>
+<line x1="162" y1="280" x2="324" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="307" y="284" clip-path="url(#c-bm2)">国内ＡＩ投資、前年比３倍</text>
+<foreignObject x="162" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;">国内のＡＩ関連投資額が２０２６年上半期に前年同期比<span style="color:#b0001e;font-weight:700;">３倍</span>に達した。政府補助金制度と企業の<span style="color:#0d3461;font-weight:700;">ＤＸ</span>需要が相まって投資が加速しており、スタートアップへの資金流入も続いている。</p>
+</div>
+</foreignObject>
+
+<!-- 短信左・上（y:0-265） -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="2" y="11">ＡＩ生成コードの脆弱性、前年比６倍に</text>
+<line x1="0" y1="15" x2="162" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="145" y="19" clip-path="url(#c-bl1)">ＡＩコードの脆弱性６倍増</text>
+<!-- 本文右端=0+137=137, L1左端=145 → 8px隙間 ✓ -->
+<foreignObject x="0" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;">ＡＩが生成したコードに起因するセキュリティ脆弱性の報告数が２０２５年比で６倍に増加した。ＡＩによる開発効率化が広がる一方で、品質・安全性の管理体制整備が急務となっている。</p>
+</div>
+</foreignObject>
+
+<!-- 短信左・下（y:265-530） -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="2" y="276">経産省がＡＩガバナンス指針を改訂</text>
+<line x1="0" y1="280" x2="162" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="145" y="284" clip-path="url(#c-bl2)">ＡＩガバナンス指針を改訂</text>
+<foreignObject x="0" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;">経済産業省はＡＩガバナンスに関する指針を改訂し、企業に対してリスク評価と透明性確保の強化を求めた。国際的な規制動向を踏まえた対応が急がれており、各企業は体制整備を急いでいる。</p>
+</div>
+</foreignObject>
+
+
+<!-- ══════════════════════════════════════════════════════
+     【下段】3本の横広・縦短記事（y:530-900, 高さ370px）
+
+     横に広く縦が短い構成で視線の上下移動を最小化
+     各記事幅600px × 高さ370px
+
+     縦見出し font-size=18
+       下段A右端=1800: L1 x=1770, L2 x=1748
+       下段B右端=1200: L1 x=1170, L2 x=1148
+       下段C右端=600:  L1 x=570,  L2 x=548
+══════════════════════════════════════════════════════ -->
+
+<!-- ── 下段A（x:1200-1800, y:530-900）── -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="1202" y="543">
+  量子計算機との融合が加速　創薬期間を10分の1に短縮へ
+</text>
+<line x1="1200" y1="547" x2="1800" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1770" y="552"
+      clip-path="url(#c-da)">量子ＡＩが創薬変える</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1748" y="552"
+      clip-path="url(#c-da)">新薬開発期間１０分の１に</text>
+
+<foreignObject x="1200" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">量子コンピュータ</span>とＡＩを組み合わせた創薬研究が加速している。従来は<span style="color:#b0001e;font-weight:700;">１０〜１５年</span>かかっていた新薬開発期間が、量子ＡＩ活用により<span style="color:#b0001e;font-weight:700;">１〜２年</span>程度に短縮できる可能性が示されたとする論文が相次いで発表されている。製薬大手各社は量子ＡＩ専門チームを設立しており、研究開発の様相が大きく変わりつつある。<span style="color:#0d3461;font-weight:700;">グーグル・ファーマ</span>と<span style="color:#0d3461;font-weight:700;">ＩＢＭ・クオンタム</span>が共同開発した創薬向けモデルが特に注目されており、<span style="color:#b0001e;font-weight:700;">がん・アルツハイマー</span>分野での応用が期待されている。日本でも<span style="color:#0d3461;font-weight:700;">理化学研究所</span>と製薬大手が連携した量子ＡＩ創薬プロジェクトが始動した。</p>
+</div>
+</foreignObject>
+
+<!-- ── 下段B（x:600-1200, y:530-900）── -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="602" y="543">
+  2028年に世界で450万人不足の試算　企業内育成に限界
+</text>
+<line x1="600" y1="547" x2="1200" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1170" y="552"
+      clip-path="url(#c-db)">ＡＩ人材需給ギャップ拡大</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1148" y="552"
+      clip-path="url(#c-db)">世界で４５０万人不足へ</text>
+
+<foreignObject x="600" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;">ＡＩ技術者の需要が急増する一方、供給の追いつかない状況が深刻化している。<span style="color:#0d3461;font-weight:700;">マッキンゼー・グローバル・インスティテュート</span>は、<span style="color:#b0001e;font-weight:700;">２０２８年</span>には世界で約<span style="color:#b0001e;font-weight:700;">４５０万人</span>のＡＩ人材が不足するとの試算を発表した。特に<span style="color:#0d3461;font-weight:700;">機械学習エンジニア</span>や<span style="color:#0d3461;font-weight:700;">ＡＩプロダクトマネジャー</span>の不足が顕著で、採用競争が激化している。</p>
+  <p style="text-indent:1em;">国内でも<span style="color:#0d3461;font-weight:700;">経済産業省</span>の推計で<span style="color:#b0001e;font-weight:700;">２０２７年</span>までに約<span style="color:#b0001e;font-weight:700;">１６万人</span>のＡＩ人材が不足する見通し。大学のカリキュラム改革や社会人向け<span style="color:#0d3461;font-weight:700;">リスキリング</span>支援が急務となっており、企業内育成だけでは到底追いつかないとの声が相次いでいる。</p>
+</div>
+</foreignObject>
+
+<!-- ── 下段C（x:0-600, y:530-900）── -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="2" y="543">
+  アジア太平洋が牽引役　2030年に国内市場も10兆円超か
+</text>
+<line x1="0" y1="547" x2="600" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="570" y="552"
+      clip-path="url(#c-dc)">生成ＡＩ市場、２０３０年に２００兆円超</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="548" y="552"
+      clip-path="url(#c-dc)">アジアが牽引役に</text>
+
+<foreignObject x="0" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;">生成ＡＩの世界市場規模が<span style="color:#b0001e;font-weight:700;">２０３０年に２００兆円超（約１・４兆ドル）</span>に達するとの予測がアナリスト大手から相次いで発表されている。特に<span style="color:#0d3461;font-weight:700;">アジア太平洋</span>地域の成長が著しく、<span style="color:#0d3461;font-weight:700;">日本・中国・インド</span>を中心に企業導入が加速しており、全体成長の牽引役になるとみられる。</p>
+  <p style="text-indent:1em;">国内市場も急拡大しており、<span style="color:#b0001e;font-weight:700;">２０３０年には１０兆円超</span>に達するとの試算もある。製造業・金融・医療・教育の各分野でＡＩ投資が本格化しており、政府もデジタル化支援策を拡充し、ＡＩ産業育成を政策的に後押ししている。</p>
+</div>
+</foreignObject>
+
+
+<!-- ══ 物理エフェクトオーバーレイ層（全コンテンツの上） ══ -->
+
+<!-- ① 紙のグレイン・繊維テクスチャ（控えめ） -->
+<rect width="1800" height="900" fill="#e8d8a0"
+      filter="url(#grain-fx)" opacity="0.10" pointer-events="none"/>
+
+<!-- ② ビネット（周辺減光） -->
+<rect width="1800" height="900" fill="url(#vignette-grad)" pointer-events="none"/>
+
+<!-- ③ 左端の折り目・製本影 -->
+<rect x="0" y="0" width="28" height="900"
+      fill="url(#spine-shadow)" pointer-events="none"/>
+
+<!-- ④ 上端の影 -->
+<rect x="0" y="0" width="1800" height="22"
+      fill="url(#top-shadow)" pointer-events="none"/>
+
+<!-- ⑤ 全体に微妙な黄ばみトーン（ごく薄め） -->
+<rect width="1800" height="900"
+      fill="rgba(180,130,50,0.02)" pointer-events="none"/>
+
+</svg>
+
+<div class="footer">
+  <span>AI新聞　AIテクノロジー・経済面　※本紙面はAIエージェントが自動生成した模擬紙面です</span>
+  <span>2026年6月28日　朝刊</span>
+</div>
+
+</div>
+</body>
+</html>

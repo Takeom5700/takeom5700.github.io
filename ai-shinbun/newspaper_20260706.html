@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI時報 2026年7月6日</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: radial-gradient(ellipse at 38% 28%, #3d2a14 0%, #1a0e06 85%);
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; min-height:100vh;
+    font-family:'Noto Serif JP','Yu Mincho',serif;
+    padding: 24px 0;
+  }
+  .page {
+    width: 1800px;
+    transform: perspective(2600px) rotateX(0.55deg) rotateY(-0.4deg) rotate(-0.12deg);
+    transform-origin: center center;
+    box-shadow:
+      -5px 0 10px rgba(0,0,0,0.3),
+       3px 5px 20px rgba(0,0,0,0.4),
+       8px 12px 50px rgba(0,0,0,0.5),
+       0 35px 90px rgba(0,0,0,0.65);
+  }
+  .mast {
+    background:#f4f0e6;
+    border-bottom:3px solid #111;
+    padding: 6px 16px 4px;
+    display:flex; align-items:baseline; gap:20px;
+  }
+  .mast-logo {
+    font-family:'Noto Serif JP',serif; font-size:42px; font-weight:900;
+    color:#b0001e; letter-spacing:0.05em; line-height:1;
+  }
+  .mast-sub {
+    font-family:'Noto Sans JP',sans-serif; font-size:11px;
+    color:#444; line-height:1.4;
+  }
+  .mast-date {
+    margin-left:auto; font-family:'Noto Sans JP',sans-serif;
+    font-size:11px; color:#333; text-align:right; line-height:1.5;
+  }
+  .footer {
+    background:#f4f0e6; border-top:1.5px solid #111;
+    padding:3px 16px; display:flex; justify-content:space-between;
+    font-family:'Noto Sans JP',sans-serif; font-size:9px; color:#555;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="mast">
+  <div class="mast-logo">AI時報</div>
+  <div class="mast-sub">
+    人工知能・生成AI・テクノロジーの最前線を伝える専門紙<br>
+    AIコンサルタント向け業界情報面
+  </div>
+  <div class="mast-date">
+    2026年7月6日（日曜日）<br>朝刊　第187号
+  </div>
+</div>
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 900"
+     style="display:block;width:100%;">
+<defs>
+  <linearGradient id="paper-grad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%"   stop-color="#f4f0e6"/>
+    <stop offset="100%" stop-color="#edeadf"/>
+  </linearGradient>
+  <filter id="grain-fx" x="0%" y="0%" width="100%" height="100%"
+          color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.82 0.88"
+                  numOctaves="4" seed="7" result="noise"/>
+    <feColorMatrix type="saturate" values="0" in="noise" result="gray-noise"/>
+    <feBlend in="SourceGraphic" in2="gray-noise" mode="multiply" result="blended"/>
+    <feComposite in="blended" in2="SourceGraphic" operator="in"/>
+  </filter>
+  <radialGradient id="vignette-grad" cx="50%" cy="50%" r="72%">
+    <stop offset="0%"   stop-color="transparent"/>
+    <stop offset="75%"  stop-color="rgba(0,0,0,0.04)"/>
+    <stop offset="100%" stop-color="rgba(0,0,0,0.22)"/>
+  </radialGradient>
+  <linearGradient id="spine-shadow" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%"  stop-color="rgba(0,0,0,0.18)"/>
+    <stop offset="100%" stop-color="transparent"/>
+  </linearGradient>
+  <linearGradient id="top-shadow" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%"  stop-color="rgba(0,0,0,0.12)"/>
+    <stop offset="100%" stop-color="transparent"/>
+  </linearGradient>
+  <clipPath id="c-main"><rect x="1260" y="0"  width="540" height="530"/></clipPath>
+  <clipPath id="c-2nd"> <rect x="936"  y="0"  width="324" height="530"/></clipPath>
+  <clipPath id="c-3rd"> <rect x="684"  y="0"  width="252" height="530"/></clipPath>
+  <clipPath id="c-4th"> <rect x="486"  y="0"  width="198" height="530"/></clipPath>
+  <clipPath id="c-br1"> <rect x="324"  y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-br2"> <rect x="324"  y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-bm1"> <rect x="162"  y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-bm2"> <rect x="162"  y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-bl1"> <rect x="0"    y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-bl2"> <rect x="0"    y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-da">  <rect x="1200" y="530" width="600" height="370"/></clipPath>
+  <clipPath id="c-db">  <rect x="600"  y="530" width="600" height="370"/></clipPath>
+  <clipPath id="c-dc">  <rect x="0"    y="530" width="600" height="370"/></clipPath>
+</defs>
+
+<rect width="1800" height="900" fill="url(#paper-grad)"/>
+
+<!-- 縦罫線 -->
+<line x1="1260" y1="0" x2="1260" y2="530" stroke="#555" stroke-width="1.5"/>
+<line x1="936"  y1="0" x2="936"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="684"  y1="0" x2="684"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="486"  y1="0" x2="486"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="324"  y1="0" x2="324"  y2="530" stroke="#aaa" stroke-width="0.5"/>
+<line x1="162"  y1="0" x2="162"  y2="530" stroke="#aaa" stroke-width="0.5"/>
+<line x1="0" y1="265" x2="486" y2="265" stroke="#bbb" stroke-width="0.5" stroke-dasharray="3,2"/>
+<line x1="0" y1="530" x2="1800" y2="530" stroke="#333" stroke-width="2.5"/>
+<line x1="1200" y1="530" x2="1200" y2="900" stroke="#888" stroke-width="0.8"/>
+<line x1="600"  y1="530" x2="600"  y2="900" stroke="#888" stroke-width="0.8"/>
+
+
+<!-- ══ ① 主記事：Anthropic年収470億ドル（x:1260-1800） ══ -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="9"
+      fill="#111" font-weight="700" x="1262" y="13">
+  【独占】AI産業の勢力図が激変——収益規模でAnthropicがOpenAIを逆転
+</text>
+<line x1="1260" y1="17" x2="1800" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="36" fill="#111"
+      writing-mode="tb-rl" x="1756" y="24"
+      clip-path="url(#c-main)">逆転の収益</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="36" fill="#111"
+      writing-mode="tb-rl" x="1716" y="24"
+      clip-path="url(#c-main)">アンソロピック</text>
+
+<foreignObject x="1260" y="22" width="448" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:448px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">Anthropic</span>が自己報告ベースの年間経常収益（ARR）で<span style="color:#b0001e;font-weight:700;">470億ドル</span>を突破し、<span style="color:#0d3461;font-weight:700;">OpenAI</span>の<span style="color:#b0001e;font-weight:700;">250〜330億ドル</span>を上回ったことが明らかになった。<span style="color:#b0001e;font-weight:700;">7月3日</span>時点の数値で、企業向けAPIと<span style="color:#0d3461;font-weight:700;">Claude</span>サブスクリプションの急拡大が牽引した。</p>
+  <p style="font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;
+            color:#b0001e;border-right:2.5px solid #b0001e;padding-right:3px;margin:5px 0 2px;">Claude Sonnet 5が起爆剤</p>
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#b0001e;font-weight:700;">6月30日</span>に公開された<span style="color:#0d3461;font-weight:700;">Claude Sonnet 5</span>は<span style="color:#b0001e;font-weight:700;">7月1日</span>から全無料・有料ユーザーのデフォルトモデルに昇格。入力<span style="color:#b0001e;font-weight:700;">100万トークンあたり2ドル</span>という低価格を維持しながら、旗艦モデル<span style="color:#0d3461;font-weight:700;">Opus 4.8</span>に匹敵するエージェント性能を発揮する。</p>
+  <p style="font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;
+            color:#b0001e;border-right:2.5px solid #b0001e;padding-right:3px;margin:5px 0 2px;">VC資金も独占</p>
+  <p style="text-indent:1em;">上半期のグローバルVC投資総額<span style="color:#b0001e;font-weight:700;">5100億ドル</span>のうち<span style="color:#b0001e;font-weight:700;">43%</span>を<span style="color:#0d3461;font-weight:700;">OpenAI</span>と<span style="color:#0d3461;font-weight:700;">Anthropic</span>の<span style="color:#b0001e;font-weight:700;">2社</span>で占めた。AI産業への資本集中は前年比で加速しており、両社合計の調達額は<span style="color:#b0001e;font-weight:700;">2170億ドル</span>超に達する。</p>
+</div>
+</foreignObject>
+
+
+<!-- ══ ② 第2記事：国連AIグローバル委員会（x:936-1260） ══ -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="9"
+      fill="#111" font-weight="700" x="938" y="13">
+  国際ガバナンス　国連・ITU共同設置、エンジェン・ファン・フアンら参画
+</text>
+<line x1="936" y1="17" x2="1260" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="24" fill="#111"
+      writing-mode="tb-rl" x="1229" y="24"
+      clip-path="url(#c-2nd)">国連AI委員会</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="24" fill="#111"
+      writing-mode="tb-rl" x="1201" y="24"
+      clip-path="url(#c-2nd)">正式発足す</text>
+
+<foreignObject x="936" y="22" width="257" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:257px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 7px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">国連</span>と<span style="color:#0d3461;font-weight:700;">国際電気通信連合（ITU）</span>は<span style="color:#b0001e;font-weight:700;">7月2日</span>、「<span style="color:#0d3461;font-weight:700;">AI for Good グローバル委員会</span>」を正式に発足させた。設立メンバーには<span style="color:#0d3461;font-weight:700;">Nvidia</span> CEOの<span style="color:#0d3461;font-weight:700;">ジェンスン・フアン</span>氏、<span style="color:#0d3461;font-weight:700;">Amazon</span> CEOの<span style="color:#0d3461;font-weight:700;">アンディ・ジャシー</span>氏、<span style="color:#0d3461;font-weight:700;">Anthropic</span>共同創業者の<span style="color:#0d3461;font-weight:700;">ジャック・クラーク</span>氏らが名を連ねた。</p>
+  <p style="text-indent:1em;">委員会の使命はAIの有益な活用に向けたグローバル標準とフレームワークの策定。<span style="color:#b0001e;font-weight:700;">2027年</span>末までに勧告を取りまとめる予定で、加盟国<span style="color:#b0001e;font-weight:700;">193カ国</span>への拘束力はないが、各国規制の参照基準となる見通しだ。</p>
+</div>
+</foreignObject>
+
+
+<!-- ══ ③ 第3記事：中国LongCat-2.0（x:684-936） ══ -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#111" font-weight="700" x="686" y="13">
+  中国AI　国産チップのみで訓練、完全オープンソース公開
+</text>
+<line x1="684" y1="17" x2="936" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="18" fill="#111"
+      writing-mode="tb-rl" x="910" y="24"
+      clip-path="url(#c-3rd)">中国LongCat</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="18" fill="#111"
+      writing-mode="tb-rl" x="888" y="24"
+      clip-path="url(#c-3rd)">封鎖を突破</text>
+
+<foreignObject x="684" y="22" width="196" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:196px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 6px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;">中国の研究機関が開発した<span style="color:#0d3461;font-weight:700;">LongCat-2.0</span>が公開された。<span style="color:#0d3461;font-weight:700;">Nvidia</span>製チップを一切使わず国産半導体のみで訓練した<span style="color:#b0001e;font-weight:700;">1.6兆パラメータ</span>のMoE型モデルで、<span style="color:#0d3461;font-weight:700;">MITライセンス</span>の下で完全オープンソース化された。</p>
+  <p style="text-indent:1em;">米国の輸出規制を実質的に無効化した形で、西側AI産業に衝撃を与えている。性能評価では主要ベンチマークの<span style="color:#b0001e;font-weight:700;">82%</span>で<span style="color:#0d3461;font-weight:700;">GPT-5.5</span>相当以上の結果を示した。</p>
+</div>
+</foreignObject>
+
+
+<!-- ══ ④ 第4記事：OpenAI政府株式提案（x:486-684） ══ -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8"
+      fill="#111" font-weight="700" x="488" y="13">
+  米国政策　5%権益・42億ドル相当を米政府へ提案
+</text>
+<line x1="486" y1="17" x2="684" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="15" fill="#111"
+      writing-mode="tb-rl" x="661" y="24"
+      clip-path="url(#c-4th)">政府株主構想</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="15" fill="#111"
+      writing-mode="tb-rl" x="642" y="24"
+      clip-path="url(#c-4th)">OpenAI提案</text>
+
+<foreignObject x="486" y="22" width="148" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:148px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 6px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">OpenAI</span>が米連邦政府に対し<span style="color:#b0001e;font-weight:700;">5%</span>の株式（<span style="color:#b0001e;font-weight:700;">42.6億ドル</span>相当）を提供する構想を提案した。<span style="color:#0d3461;font-weight:700;">アラスカ恒久基金</span>モデルを参考にした仕組みで、規制上の中立性を確保できるか懸念が上がっている。</p>
+</div>
+</foreignObject>
+
+
+<!-- ══ 短信（各83文字以内） ══ -->
+
+<!-- 短信右・上：Grok 4.5ベータ -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="326" y="11">生成AI　新モデル</text>
+<line x1="324" y1="15" x2="486" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13" fill="#111"
+      writing-mode="tb-rl" x="469" y="19" clip-path="url(#c-br1)">Grok4.5始動</text>
+<foreignObject x="324" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">xAI</span>の<span style="color:#0d3461;font-weight:700;">Grok 4.5</span>がベータ開始。<span style="color:#b0001e;font-weight:700;">1.5兆</span>パラメータV9モデルを<span style="color:#0d3461;font-weight:700;">SpaceX</span>・<span style="color:#0d3461;font-weight:700;">Tesla</span>で稼働中。<span style="color:#0d3461;font-weight:700;">Opus</span>同等以上の性能を主張している。</p>
+</div>
+</foreignObject>
+
+<!-- 短信右・下：雇用喪失 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="326" y="276">雇用　BLS統計</text>
+<line x1="324" y1="280" x2="486" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13" fill="#111"
+      writing-mode="tb-rl" x="469" y="284" clip-path="url(#c-br2)">AI失業が加速</text>
+<foreignObject x="324" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">米BLS</span>の<span style="color:#b0001e;font-weight:700;">6月</span>雇用統計で就業増は<span style="color:#b0001e;font-weight:700;">5.7万人</span>にとどまった。事務・CS・コーディング補助などエントリー職でAI代替が急加速している。</p>
+</div>
+</foreignObject>
+
+<!-- 短信中・上：Fable5規制解除 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="164" y="11">規制・安全　輸出管理</text>
+<line x1="162" y1="15" x2="324" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13" fill="#111"
+      writing-mode="tb-rl" x="307" y="19" clip-path="url(#c-bm1)">Fable5制限解除</text>
+<foreignObject x="162" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#b0001e;font-weight:700;">20日間</span>の輸出規制を経て<span style="color:#0d3461;font-weight:700;">商務省</span>が<span style="color:#b0001e;font-weight:700;">6月30日</span>に規制解除。<span style="color:#0d3461;font-weight:700;">Fable 5</span>は<span style="color:#b0001e;font-weight:700;">7月1日</span>から世界全ユーザーへ再提供された。</p>
+</div>
+</foreignObject>
+
+<!-- 短信中・下：ペンタゴン訴訟 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="164" y="276">安全保障　軍事AI</text>
+<line x1="162" y1="280" x2="324" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13" fill="#111"
+      writing-mode="tb-rl" x="307" y="284" clip-path="url(#c-bm2)">国防省訴訟発覚</text>
+<foreignObject x="162" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">米国防総省</span>がAIへの自律兵器・国内監視の制約撤廃を要求したメールが開示。<span style="color:#0d3461;font-weight:700;">Anthropic</span> CEOが拒否した経緯が判明した。</p>
+</div>
+</foreignObject>
+
+<!-- 短信左・上：GPT-5.6 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="2" y="11">OpenAI　新モデル群</text>
+<line x1="0" y1="15" x2="162" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13" fill="#111"
+      writing-mode="tb-rl" x="145" y="19" clip-path="url(#c-bl1)">GPT-5.6三系統</text>
+<foreignObject x="0" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">GPT-5.6</span>がSol・Terra・Lunaの<span style="color:#b0001e;font-weight:700;">3系統</span>で公開。Solは最高性能、Terraは<span style="color:#b0001e;font-weight:700;">2倍</span>低コスト、Lunaは最速を謳う。</p>
+</div>
+</foreignObject>
+
+<!-- 短信左・下：Googleイメージ生成 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="2" y="276">Google　画像生成AI</text>
+<line x1="0" y1="280" x2="162" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13" fill="#111"
+      writing-mode="tb-rl" x="145" y="284" clip-path="url(#c-bl2)">Geminiイメージ</text>
+<foreignObject x="0" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">Google</span>が<span style="color:#b0001e;font-weight:700;">6月30日</span>に画像生成モデル<span style="color:#0d3461;font-weight:700;">Gemini 3.1 Flash Image</span>と<span style="color:#0d3461;font-weight:700;">Gemini 3 Pro Image</span>の<span style="color:#b0001e;font-weight:700;">2種</span>を同時公開した。</p>
+</div>
+</foreignObject>
+
+
+<!-- ══ 下段A：AnthropicのClaude Science（x:1200-1800） ══ -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="1202" y="543">
+  医薬・科学　AIが創薬の最前線へ——研究者向けワークベンチ公開
+</text>
+<line x1="1200" y1="547" x2="1800" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1770" y="552"
+      clip-path="url(#c-da)">科学AIの扉開く</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1748" y="552"
+      clip-path="url(#c-da)">Claude Science始動</text>
+<foreignObject x="1200" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">Anthropic</span>は<span style="color:#b0001e;font-weight:700;">7月5日</span>、研究者向けの統合作業環境「<span style="color:#0d3461;font-weight:700;">Claude Science</span>」を正式公開した。<span style="color:#b0001e;font-weight:700;">60以上</span>の事前設定ツールを搭載し、論文解析・分子設計・データ処理を一元化する。同時に社内に創薬プログラムを立ち上げ、<span style="color:#0d3461;font-weight:700;">顧みられない熱帯病</span>をターゲットとした研究も開始した。</p>
+  <p style="text-indent:1em;">製薬大手との連携も視野に入れており、候補化合物の絞り込みから臨床試験設計まで<span style="color:#0d3461;font-weight:700;">Claude</span>が一貫して支援する体制を目指す。業界では「<span style="color:#b0001e;font-weight:700;">創薬コストが最大70%</span>削減される可能性がある」との試算も示されており、製薬・バイオ領域における<span style="color:#0d3461;font-weight:700;">AI</span>活用が本格化する転換点となりそうだ。</p>
+</div>
+</foreignObject>
+
+<!-- ══ 下段B：VC資金集中と産業構造（x:600-1200） ══ -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="602" y="543">
+  投資・市場　上半期VC総額5100億ドル、AI2社が43%独占の衝撃
+</text>
+<line x1="600" y1="547" x2="1200" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1170" y="552"
+      clip-path="url(#c-db)">資本のAI独占</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1148" y="552"
+      clip-path="url(#c-db)">産業地図が塗替わる</text>
+<foreignObject x="600" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#b0001e;font-weight:700;">2026年上半期</span>のグローバルVC投資総額は<span style="color:#b0001e;font-weight:700;">5100億ドル</span>に達し、そのうち<span style="color:#b0001e;font-weight:700;">43%</span>にあたる<span style="color:#b0001e;font-weight:700;">2170億ドル</span>超が<span style="color:#0d3461;font-weight:700;">OpenAI</span>と<span style="color:#0d3461;font-weight:700;">Anthropic</span>の<span style="color:#b0001e;font-weight:700;">2社</span>に集中した。前年同期比で資本集中度は<span style="color:#b0001e;font-weight:700;">1.8倍</span>に拡大しており、AIスタートアップへの資金配分に構造的な歪みが生まれつつある。</p>
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">SoftBank</span>も新たなAI成長戦略を発表するなど日本からの投資も活発で、半導体・インフラ・アプリケーション層の各レイヤーで大型案件が相次ぐ。一方、シード期スタートアップへの資金流入は相対的に細っており、「<span style="color:#b0001e;font-weight:700;">勝者総取り</span>」の懸念が強まっている。</p>
+</div>
+</foreignObject>
+
+<!-- ══ 下段C：AIと雇用・米国労働市場（x:0-600） ══ -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="2" y="543">
+  雇用・社会　エントリー職でAI代替が急拡大、6月就業増は5.7万人止まり
+</text>
+<line x1="0" y1="547" x2="600" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="570" y="552"
+      clip-path="url(#c-dc)">AIが奪う仕事</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="548" y="552"
+      clip-path="url(#c-dc)">米雇用統計に異変</text>
+<foreignObject x="0" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">米労働統計局（BLS）</span>が公表した<span style="color:#b0001e;font-weight:700;">2026年6月</span>の雇用統計では非農業部門の就業者数増加が<span style="color:#b0001e;font-weight:700;">5万7000人</span>にとどまった。事前予測の<span style="color:#b0001e;font-weight:700;">18万人</span>を大幅に下回り、市場に衝撃が走った。背景にはAIツールによる事務職・コンテンツ制作・カスタマーサポート・コーディング補助などエントリーレベルの知識労働の代替加速がある。</p>
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">IMF</span>は今年<span style="color:#b0001e;font-weight:700;">3月</span>の報告書でAIにより先進国の全雇用の<span style="color:#b0001e;font-weight:700;">40%</span>が影響を受けると試算しており、その現実が統計数字に表れ始めた可能性がある。日本でも同様のトレンドが観測されており、政府は<span style="color:#b0001e;font-weight:700;">2027年度</span>中にAI転換支援策を策定する方針だ。</p>
+</div>
+</foreignObject>
+
+
+<!-- 物理エフェクトオーバーレイ -->
+<rect width="1800" height="900" fill="#e8d8a0"
+      filter="url(#grain-fx)" opacity="0.10" pointer-events="none"/>
+<rect width="1800" height="900" fill="url(#vignette-grad)" pointer-events="none"/>
+<rect x="0" y="0" width="28" height="900"
+      fill="url(#spine-shadow)" pointer-events="none"/>
+<rect x="0" y="0" width="1800" height="22"
+      fill="url(#top-shadow)" pointer-events="none"/>
+<rect width="1800" height="900"
+      fill="rgba(180,130,50,0.02)" pointer-events="none"/>
+
+</svg>
+
+<div class="footer">
+  <span>AI時報　AI・テクノロジー面　※本紙面はAIエージェントが自動生成した模擬紙面です</span>
+  <span>2026年7月6日　朝刊</span>
+</div>
+
+</div>
+</body>
+</html>
