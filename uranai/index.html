@@ -761,17 +761,29 @@
     div.textContent = text;
     log.appendChild(div);
     log.scrollTop = log.scrollHeight;
+    return div;
+  }
+
+  async function fetchWithTimeout(body, timeoutMs) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch('https://uranai-takechan.duckdns.org:8443/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      return await res.json();
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   async function fetchWithRetry(body, attempts) {
     for (let i = 0; i < attempts; i++) {
       try {
-        const res = await fetch('https://uranai-takechan.duckdns.org:8443/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        return await res.json();
+        return await fetchWithTimeout(body, 120000);
       } catch (e) {
         if (i < attempts - 1) {
           const wait = (i + 1) * 5;
@@ -793,8 +805,10 @@
     history.push({ role: 'user', content: text });
     input.value = '';
     sendBtn.disabled = true;
+    const thinkingEl = addMsg('assistant', '🔮 占い師が考え中です...');
     try {
       const data = await fetchWithRetry({ messages: history }, 4);
+      thinkingEl.remove();
       if (data.error) {
         addMsg('assistant', 'エラー: ' + JSON.stringify(data.error));
       } else {
@@ -802,6 +816,7 @@
         history.push({ role: 'assistant', content: data.reply });
       }
     } catch (e) {
+      thinkingEl.remove();
       addMsg('assistant', '占い師サーバーに接続できません。しばらくしてからもう一度お試しください。');
     } finally {
       sendBtn.disabled = false;
