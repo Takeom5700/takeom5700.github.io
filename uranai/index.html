@@ -10,6 +10,11 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  html {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
   :root {
     --bg-soft: #ece1fb;
     --text: #2a2440;
@@ -120,6 +125,7 @@
     z-index: 1;
   }
   .sign-badge span {
+    display: inline-block;
     background: #fff;
     border: 2px solid var(--border);
     border-radius: 999px;
@@ -128,6 +134,16 @@
     color: var(--primary);
     font-weight: 700;
     box-shadow: 0 4px 12px rgba(166, 133, 242, 0.12);
+    white-space: nowrap;
+  }
+  @media (max-width: 480px) {
+    .sign-badge span {
+      white-space: normal;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      padding: 8px 16px;
+      line-height: 1.7;
+    }
   }
 
   /* ラッキーカラー */
