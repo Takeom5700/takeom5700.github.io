@@ -739,7 +739,7 @@
     <button id="chat-voice" title="音声入力">🎤</button>
     <button id="chat-send">送信</button>
   </div>
-  <div class="chat-note">※ ローカルサーバー（node server.js）起動時のみ利用可能です。Claude Codeのサブスクリプション経由で動作するため追加API課金はありません。各占いソースの詳細データを根拠に占い師として応答します。</div>
+  <div class="chat-note">※ Claude Codeのサブスクリプション経由で動作するため追加API課金はありません。各占いソースの詳細データを根拠に占い師として応答します。</div>
 </div>
 
 <footer>
@@ -784,7 +784,7 @@
         history.push({ role: 'assistant', content: data.reply });
       }
     } catch (e) {
-      addMsg('assistant', 'サーバーに接続できません。node server.js を起動してください。');
+      addMsg('assistant', '占い師サーバーに接続できません。しばらくしてからもう一度お試しください。');
     } finally {
       sendBtn.disabled = false;
     }
