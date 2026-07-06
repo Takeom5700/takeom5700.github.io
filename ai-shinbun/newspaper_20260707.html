@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI新聞 2026年7月7日</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: radial-gradient(ellipse at 38% 28%, #3d2a14 0%, #1a0e06 85%);
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; min-height:100vh;
+    font-family:'Noto Serif JP','Yu Mincho',serif;
+    padding: 24px 0;
+  }
+  .page {
+    width: 1800px;
+    transform: perspective(2600px) rotateX(0.55deg) rotateY(-0.4deg) rotate(-0.12deg);
+    transform-origin: center center;
+    box-shadow:
+      -5px 0 10px rgba(0,0,0,0.3),
+       3px 5px 20px rgba(0,0,0,0.4),
+       8px 12px 50px rgba(0,0,0,0.5),
+       0 35px 90px rgba(0,0,0,0.65);
+  }
+  .mast {
+    background:#f4f0e6;
+    border-bottom:3px solid #111;
+    padding: 6px 16px 4px;
+    display:flex; align-items:baseline; gap:20px;
+  }
+  .mast-logo {
+    font-family:'Noto Serif JP',serif; font-size:42px; font-weight:900;
+    color:#b0001e; letter-spacing:0.05em; line-height:1;
+  }
+  .mast-sub {
+    font-family:'Noto Sans JP',sans-serif; font-size:11px;
+    color:#444; line-height:1.4;
+  }
+  .mast-date {
+    margin-left:auto; font-family:'Noto Sans JP',sans-serif;
+    font-size:11px; color:#333; text-align:right; line-height:1.5;
+  }
+  .footer {
+    background:#f4f0e6; border-top:1.5px solid #111;
+    padding:3px 16px; display:flex; justify-content:space-between;
+    font-family:'Noto Sans JP',sans-serif; font-size:9px; color:#555;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="mast">
+  <div class="mast-logo">AI新聞</div>
+  <div class="mast-sub">
+    人工知能の最前線を伝える専門紙　AIエージェント自動生成版<br>
+    人工知能・テクノロジー面　創刊号
+  </div>
+  <div class="mast-date">
+    2026年7月7日　月曜日<br>朝刊　第1号
+  </div>
+</div>
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 900"
+     style="display:block;width:100%;">
+<defs>
+
+  <linearGradient id="paper-grad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%"   stop-color="#f4f0e6"/>
+    <stop offset="100%" stop-color="#edeadf"/>
+  </linearGradient>
+
+  <filter id="grain-fx" x="0%" y="0%" width="100%" height="100%"
+          color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.82 0.88"
+                  numOctaves="4" seed="7" result="noise"/>
+    <feColorMatrix type="saturate" values="0" in="noise" result="gray-noise"/>
+    <feBlend in="SourceGraphic" in2="gray-noise" mode="multiply" result="blended"/>
+    <feComposite in="blended" in2="SourceGraphic" operator="in"/>
+  </filter>
+
+  <radialGradient id="vignette-grad" cx="50%" cy="50%" r="72%">
+    <stop offset="0%"   stop-color="transparent"/>
+    <stop offset="75%"  stop-color="rgba(0,0,0,0.04)"/>
+    <stop offset="100%" stop-color="rgba(0,0,0,0.22)"/>
+  </radialGradient>
+
+  <linearGradient id="spine-shadow" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%"  stop-color="rgba(0,0,0,0.18)"/>
+    <stop offset="100%" stop-color="transparent"/>
+  </linearGradient>
+
+  <linearGradient id="top-shadow" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%"  stop-color="rgba(0,0,0,0.12)"/>
+    <stop offset="100%" stop-color="transparent"/>
+  </linearGradient>
+
+  <clipPath id="c-main"><rect x="1260" y="0"  width="540" height="530"/></clipPath>
+  <clipPath id="c-2nd"> <rect x="936"  y="0"  width="324" height="530"/></clipPath>
+  <clipPath id="c-3rd"> <rect x="684"  y="0"  width="252" height="530"/></clipPath>
+  <clipPath id="c-4th"> <rect x="486"  y="0"  width="198" height="530"/></clipPath>
+  <clipPath id="c-br1"> <rect x="324"  y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-br2"> <rect x="324"  y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-bm1"> <rect x="162"  y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-bm2"> <rect x="162"  y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-bl1"> <rect x="0"    y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-bl2"> <rect x="0"    y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-da">  <rect x="1200" y="530" width="600" height="370"/></clipPath>
+  <clipPath id="c-db">  <rect x="600"  y="530" width="600" height="370"/></clipPath>
+  <clipPath id="c-dc">  <rect x="0"    y="530" width="600" height="370"/></clipPath>
+
+</defs>
+
+<rect width="1800" height="900" fill="url(#paper-grad)"/>
+
+<!-- 縦罫線 -->
+<line x1="1260" y1="0" x2="1260" y2="530" stroke="#555" stroke-width="1.5"/>
+<line x1="936"  y1="0" x2="936"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="684"  y1="0" x2="684"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="486"  y1="0" x2="486"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="324"  y1="0" x2="324"  y2="530" stroke="#aaa" stroke-width="0.5"/>
+<line x1="162"  y1="0" x2="162"  y2="530" stroke="#aaa" stroke-width="0.5"/>
+<line x1="0" y1="265" x2="486" y2="265" stroke="#bbb" stroke-width="0.5" stroke-dasharray="3,2"/>
+<line x1="0" y1="530" x2="1800" y2="530" stroke="#333" stroke-width="2.5"/>
+<line x1="1200" y1="530" x2="1200" y2="900" stroke="#888" stroke-width="0.8"/>
+<line x1="600"  y1="530" x2="600"  y2="900" stroke="#888" stroke-width="0.8"/>
+
+
+<!-- ① 主記事：国連AI対話開幕 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="9"
+      fill="#111" font-weight="700" x="1262" y="13">
+  国連・国際政策　7月6〜7日ジュネーブ開催
+</text>
+<line x1="1260" y1="17" x2="1800" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="36"
+      writing-mode="tb-rl" x="1756" y="24"
+      clip-path="url(#c-main)">国連AI対話が開幕</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="36"
+      writing-mode="tb-rl" x="1716" y="24"
+      clip-path="url(#c-main)">百九十三カ国が一堂</text>
+
+<foreignObject x="1260" y="22" width="448" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:448px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">国連</span>主催の「<span style="color:#0d3461;font-weight:700;">AI統治に関するグローバル対話</span>」が<span style="color:#b0001e;font-weight:700;">7月6日</span>、<span style="color:#0d3461;font-weight:700;">スイス・ジュネーブ</span>で開幕した。<span style="color:#b0001e;font-weight:700;">193</span>の国連加盟国に加え、産業界・学術界・市民社会が一堂に会し、急速に進化するAI技術の規制枠組みを<span style="color:#b0001e;font-weight:700;">2日間</span>にわたり議論する。</p>
+  <p style="font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;
+            color:#b0001e;border-right:2.5px solid #b0001e;padding-right:3px;margin:5px 0 2px;">拘束力なき対話、次回はニューヨーク</p>
+  <p style="text-indent:1em;margin:0 0 2px;">本対話は<span style="color:#0d3461;font-weight:700;">インターネット・ガバナンス・フォーラム</span>を範とした非拘束型の設計で、最終的に共同議長サマリーを発出する方式を採用。<span style="color:#0d3461;font-weight:700;">グテーレス国連事務総長</span>は開会演説で「AIが人類の未来を"ノリと勢い"で書き換えることを許してはならない」と強く警告した。</p>
+  <p style="font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;
+            color:#b0001e;border-right:2.5px solid #b0001e;padding-right:3px;margin:5px 0 2px;">ホワイトハウスも自主基準を準備中</p>
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">米ホワイトハウス</span>は同週中にも自主的AIモデル基準を発表する見通し。次回対話は<span style="color:#b0001e;font-weight:700;">2027年5月</span>に<span style="color:#0d3461;font-weight:700;">ニューヨーク</span>で開催予定。AIガバナンスの国際的な枠組み整備に向けた機運が急速に高まっている。</p>
+</div>
+</foreignObject>
+
+
+<!-- ② 第2記事：Claude Sonnet 5 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="9"
+      fill="#111" font-weight="700" x="938" y="13">
+  モデル最新動向　アンソロピック社発表
+</text>
+<line x1="936" y1="17" x2="1260" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="24"
+      writing-mode="tb-rl" x="1229" y="24"
+      clip-path="url(#c-2nd)">ソネット5が全ユーザー既定に</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="24"
+      writing-mode="tb-rl" x="1201" y="24"
+      clip-path="url(#c-2nd)">百万トークン窓を標準装備</text>
+
+<foreignObject x="936" y="22" width="257" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:257px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 7px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">アンソロピック</span>は<span style="color:#b0001e;font-weight:700;">6月30日</span>に<span style="color:#0d3461;font-weight:700;">Claude Sonnet 5</span>を公開し、<span style="color:#b0001e;font-weight:700;">7月1日</span>付でフリー・プロを含む全ユーザーの既定モデルへ昇格させた。コンテキスト窓は<span style="color:#b0001e;font-weight:700;">100万トークン</span>で、入力<span style="color:#b0001e;font-weight:700;">2ドル</span>・出力<span style="color:#b0001e;font-weight:700;">10ドル</span>（<span style="color:#b0001e;font-weight:700;">1M</span>トークン）の導入価格は<span style="color:#b0001e;font-weight:700;">8月31日</span>まで継続。エージェント的能力でも旗艦モデルの<span style="color:#0d3461;font-weight:700;">Opus 4.8</span>に迫る性能を発揮する。</p>
+  <p style="text-indent:1em;">同日、米政府が輸出規制を解除したことで<span style="color:#0d3461;font-weight:700;">Fable 5</span>も世界全域で再提供が開始された。</p>
+</div>
+</foreignObject>
+
+
+<!-- ③ 第3記事：Gemini 3.5 Pro -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#111" font-weight="700" x="686" y="13">
+  グーグル　7月一般提供へ
+</text>
+<line x1="684" y1="17" x2="936" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="18"
+      writing-mode="tb-rl" x="910" y="24"
+      clip-path="url(#c-3rd)">ジェミニ3.5プロ</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="18"
+      writing-mode="tb-rl" x="888" y="24"
+      clip-path="url(#c-3rd)">二百万トークン窓で圧倒</text>
+
+<foreignObject x="684" y="22" width="196" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:196px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 6px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">グーグル</span>が<span style="color:#b0001e;font-weight:700;">7月</span>に一般提供を開始する<span style="color:#0d3461;font-weight:700;">Gemini 3.5 Pro</span>は、コンテキスト窓<span style="color:#b0001e;font-weight:700;">200万トークン</span>を実装。現行最大の<span style="color:#0d3461;font-weight:700;">Fable 5</span>や<span style="color:#0d3461;font-weight:700;">Claude Opus 4.8</span>の<span style="color:#b0001e;font-weight:700;">2倍</span>に相当し、生産環境フロンティアモデルで最大のコンテキスト窓となる。</p>
+  <p style="text-indent:1em;">推論ベンチマークで現行最高水準にある<span style="color:#0d3461;font-weight:700;">Gemini 3.1 Pro</span>の後継として、ランキング刷新が期待される。</p>
+</div>
+</foreignObject>
+
+
+<!-- ④ 第4記事：クアルコム買収 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8"
+      fill="#111" font-weight="700" x="488" y="13">
+  AIチップ業界　M&amp;A最前線
+</text>
+<line x1="486" y1="17" x2="684" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="15"
+      writing-mode="tb-rl" x="661" y="24"
+      clip-path="url(#c-4th)">クアルコム最大一兆円買収へ</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="15"
+      writing-mode="tb-rl" x="642" y="24"
+      clip-path="url(#c-4th)">RISC-Vで対エヌビディア戦略</text>
+
+<foreignObject x="486" y="22" width="148" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:148px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 6px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">クアルコム</span>がAIチップ新興企業<span style="color:#0d3461;font-weight:700;">テンストレント</span>を<span style="color:#b0001e;font-weight:700;">80〜100億ドル</span>（約<span style="color:#b0001e;font-weight:700;">1.4兆円</span>）で買収する交渉を進めていると報じられた。</p>
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">テンストレント</span>は伝説的チップ設計者<span style="color:#0d3461;font-weight:700;">ジム・ケラー</span>率いる<span style="color:#0d3461;font-weight:700;">RISC-V</span>アーキテクチャのAIチップ企業で、<span style="color:#0d3461;font-weight:700;">エヌビディア</span>の独占に対抗する布石となる。</p>
+</div>
+</foreignObject>
+
+
+<!-- 短信右・上：GPT-5.6 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="326" y="11">オープンAI　限定先行公開</text>
+<line x1="324" y1="15" x2="486" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="469" y="19" clip-path="url(#c-br1)">GPT-5.6 Sol先行公開</text>
+<foreignObject x="324" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">オープンAI</span>が<span style="color:#b0001e;font-weight:700;">6月26日</span>に発表した<span style="color:#0d3461;font-weight:700;">GPT-5.6</span>ファミリー（Sol・Terra・Luna）は米政府が承認する約<span style="color:#b0001e;font-weight:700;">20</span>組織のみへの限定先行提供となった。</p>
+</div>
+</foreignObject>
+
+<!-- 短信右・下：Doubao規制 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="326" y="276">中国　AI同伴法が施行へ</text>
+<line x1="324" y1="280" x2="486" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="469" y="284" clip-path="url(#c-br2)">Doubao三億人に影響</text>
+<foreignObject x="324" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">バイトダンス</span>のAIアプリ<span style="color:#0d3461;font-weight:700;">Doubao</span>が週間ユーザー<span style="color:#b0001e;font-weight:700;">3億4500万人</span>を抱える中、中国当局の新たなAI同伴規制により一部エージェント機能が停止の見通しだ。</p>
+</div>
+</foreignObject>
+
+<!-- 短信中・上：GLM-5.2 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="164" y="11">中国AI　オープン首位奪取</text>
+<line x1="162" y1="15" x2="324" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="307" y="19" clip-path="url(#c-bm1)">GLM-5.2が世界一位</text>
+<foreignObject x="162" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">Z.ai（智譜AI）</span>の新旗艦<span style="color:#0d3461;font-weight:700;">GLM-5.2</span>がオープンウェイト部門の独立評価で世界首位を獲得。<span style="color:#0d3461;font-weight:700;">ファーウェイ</span>製チップのみで学習し、<span style="color:#0d3461;font-weight:700;">MITライセンス</span>で無償公開された。</p>
+</div>
+</foreignObject>
+
+<!-- 短信中・下：API価格戦争 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="164" y="276">API価格戦争　米中格差鮮明</text>
+<line x1="162" y1="280" x2="324" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="307" y="284" clip-path="url(#c-bm2)">中国モデルは三十五分の一</text>
+<foreignObject x="162" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">DeepSeek V3.2</span>の入力APIは<span style="color:#b0001e;font-weight:700;">1Mトークン0.28ドル</span>と、<span style="color:#0d3461;font-weight:700;">GPT-5.2</span>の約<span style="color:#b0001e;font-weight:700;">10ドル</span>の<span style="color:#b0001e;font-weight:700;">35分の1</span>の低価格。中国勢の価格攻勢が業界構造を揺るがしている。</p>
+</div>
+</foreignObject>
+
+<!-- 短信左・上：Fable 5 解除 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="2" y="11">米商務省　規制解除を発表</text>
+<line x1="0" y1="15" x2="162" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="145" y="19" clip-path="url(#c-bl1)">Fable 5が世界再開</text>
+<foreignObject x="0" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">米商務省</span>が<span style="color:#b0001e;font-weight:700;">6月30日</span>に輸出規制を解除し、<span style="color:#b0001e;font-weight:700;">7月1日</span>午後<span style="color:#b0001e;font-weight:700;">3時31分</span>（米東部時間）に<span style="color:#0d3461;font-weight:700;">Fable 5</span>が世界全域で利用可能となった。<span style="color:#b0001e;font-weight:700;">約3週間</span>ぶりの復活だ。</p>
+</div>
+</foreignObject>
+
+<!-- 短信左・下：LMコンシル -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="2" y="276">モデル評価　七月版最新順位</text>
+<line x1="0" y1="280" x2="162" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="145" y="284" clip-path="url(#c-bl2)">群雄割拠の新時代へ</text>
+<foreignObject x="0" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">LMコンシル</span>の<span style="color:#b0001e;font-weight:700;">7月</span>版ベンチマークでは<span style="color:#0d3461;font-weight:700;">GPT-5.5</span>・<span style="color:#0d3461;font-weight:700;">Claude Opus</span>・<span style="color:#0d3461;font-weight:700;">Gemini 3</span>・<span style="color:#0d3461;font-weight:700;">Grok 4</span>が僅差で上位を分け合い、単独首位が定まらない混戦状態が続いている。</p>
+</div>
+</foreignObject>
+
+
+<!-- 下段A：Qualcomm vs Nvidia -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="1202" y="543">
+  半導体　AIチップ覇権争い新章
+</text>
+<line x1="1200" y1="547" x2="1800" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1770" y="552"
+      clip-path="url(#c-da)">テンストレント買収で</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1748" y="552"
+      clip-path="url(#c-da)">対エヌビディア包囲網</text>
+<foreignObject x="1200" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">クアルコム</span>が<span style="color:#0d3461;font-weight:700;">テンストレント</span>に対して<span style="color:#b0001e;font-weight:700;">80〜100億ドル</span>（約<span style="color:#b0001e;font-weight:700;">1.4兆円</span>）規模の買収交渉を進めていると複数メディアが報じた。<span style="color:#0d3461;font-weight:700;">テンストレント</span>は<span style="color:#b0001e;font-weight:700;">2016年</span>創業、<span style="color:#0d3461;font-weight:700;">Apple</span>・<span style="color:#0d3461;font-weight:700;">AMD</span>・<span style="color:#0d3461;font-weight:700;">Intel</span>で伝説的な実績を持つ<span style="color:#0d3461;font-weight:700;">ジム・ケラー</span>氏が率いる独自<span style="color:#0d3461;font-weight:700;">RISC-V</span>アーキテクチャのAIチップ企業だ。</p>
+  <p style="text-indent:1em;margin:0 0 2px;">同社の「<span style="color:#0d3461;font-weight:700;">Blackholeチップ</span>」は<span style="color:#b0001e;font-weight:700;">2026年4月28日</span>に一般提供を開始したばかり。GPUベースの<span style="color:#0d3461;font-weight:700;">エヌビディア</span>とは根本的に異なるアーキテクチャを採用しており、ソフトウェアの書き直し障壁を大幅に低減できると期待されている。</p>
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">クアルコム</span>はすでに<span style="color:#b0001e;font-weight:700;">140億ドル</span>規模の対<span style="color:#0d3461;font-weight:700;">エヌビディア</span>戦略投資を表明しており、今回の買収が成立すれば、<span style="color:#0d3461;font-weight:700;">RISC-V</span>とオープンコンパイラを武器に本格的なAIチップ市場再編を狙う。</p>
+</div>
+</foreignObject>
+
+<!-- 下段B：中国AI台頭 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="602" y="543">
+  地政学とAI　米中技術覇権の最前線
+</text>
+<line x1="600" y1="547" x2="1200" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1170" y="552"
+      clip-path="url(#c-db)">中国AIが米規制の隙衝く</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1148" y="552"
+      clip-path="url(#c-db)">無償公開で世界市場席捲</text>
+<foreignObject x="600" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;">米国が<span style="color:#0d3461;font-weight:700;">アンソロピック</span>の<span style="color:#0d3461;font-weight:700;">Fable 5</span>・<span style="color:#0d3461;font-weight:700;">Mythos</span>への海外アクセスを一時遮断した<span style="color:#b0001e;font-weight:700;">6月12日</span>、<span style="color:#0d3461;font-weight:700;">Z.ai（智譜AI）</span>は新旗艦<span style="color:#0d3461;font-weight:700;">GLM-5.2</span>を<span style="color:#0d3461;font-weight:700;">MITライセンス</span>で無償公開した。独立評価機関はこれをオープンウェイトモデル世界首位と認定している。</p>
+  <p style="text-indent:1em;margin:0 0 2px;">学習インフラも注目を集める。<span style="color:#0d3461;font-weight:700;">GLM-5.2</span>は<span style="color:#0d3461;font-weight:700;">ファーウェイ製Ascend 910B</span>チップのみで学習が完了しており、対中半導体輸出規制を迂回した技術的成果として議論を呼んでいる。</p>
+  <p style="text-indent:1em;">価格面でも中国勢の攻勢は続く。<span style="color:#0d3461;font-weight:700;">DeepSeek V3.2</span>のAPI単価は入力<span style="color:#b0001e;font-weight:700;">0.28ドル</span>／<span style="color:#b0001e;font-weight:700;">1Mトークン</span>と、米国勢<span style="color:#0d3461;font-weight:700;">GPT-5.2</span>の<span style="color:#b0001e;font-weight:700;">約35分の1</span>。この価格破壊が世界の企業導入判断を揺さぶっている。</p>
+</div>
+</foreignObject>
+
+<!-- 下段C：国連AI対話の意義 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="2" y="543">
+  解説　AIガバナンスの現在地
+</text>
+<line x1="0" y1="547" x2="600" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="570" y="552"
+      clip-path="url(#c-dc)">規制か自律かを問う</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="548" y="552"
+      clip-path="url(#c-dc)">ジュネーブ対話の意義</text>
+<foreignObject x="0" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;">今回の<span style="color:#0d3461;font-weight:700;">国連グローバルAI対話</span>は拘束力を持たない設計だが、その意義は小さくない。<span style="color:#b0001e;font-weight:700;">193</span>の国連全加盟国が同一テーブルにつき、AI規制の方向性を議論する場は史上初であり、<span style="color:#b0001e;font-weight:700;">169カ国</span>から代表団が実際にジュネーブへ参集した。</p>
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">国連独立AIパネル</span>が提出した予備報告書は、AIの「壊滅的な危害」を防ぐため早急な行動を求めており、<span style="color:#0d3461;font-weight:700;">グテーレス</span>事務総長は「殺傷型ロボット」を含む自律兵器システムへの警鐘も鳴らした。</p>
+  <p style="text-indent:1em;">次回対話は<span style="color:#b0001e;font-weight:700;">2027年5月</span>に<span style="color:#0d3461;font-weight:700;">ニューヨーク</span>で開催予定。今後<span style="color:#b0001e;font-weight:700;">1年</span>間の議論の進展が、AIガバナンスの国際的規範形成に向けた試金石となる。</p>
+</div>
+</foreignObject>
+
+
+<!-- 物理エフェクトオーバーレイ -->
+<rect width="1800" height="900" fill="#e8d8a0"
+      filter="url(#grain-fx)" opacity="0.10" pointer-events="none"/>
+<rect width="1800" height="900" fill="url(#vignette-grad)" pointer-events="none"/>
+<rect x="0" y="0" width="28" height="900"
+      fill="url(#spine-shadow)" pointer-events="none"/>
+<rect x="0" y="0" width="1800" height="22"
+      fill="url(#top-shadow)" pointer-events="none"/>
+<rect width="1800" height="900"
+      fill="rgba(180,130,50,0.02)" pointer-events="none"/>
+
+</svg>
+
+<div class="footer">
+  <span>AI新聞　人工知能・テクノロジー面　※本紙面はAIエージェントが自動生成した模擬紙面です</span>
+  <span>2026年7月7日　朝刊</span>
+</div>
+
+</div>
+</body>
+</html>
