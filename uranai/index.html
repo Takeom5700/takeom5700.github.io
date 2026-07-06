@@ -789,7 +789,7 @@
           const wait = (i + 1) * 5;
           addMsg('assistant', `接続中... ${wait}秒後に再試行します（${i + 1}/${attempts - 1}）`);
           await new Promise(r => setTimeout(r, wait * 1000));
-          const last = chatBox.lastElementChild;
+          const last = log.lastElementChild;
           if (last) last.remove();
         } else {
           throw e;
