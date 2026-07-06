@@ -763,6 +763,29 @@
     log.scrollTop = log.scrollHeight;
   }
 
+  async function fetchWithRetry(body, attempts) {
+    for (let i = 0; i < attempts; i++) {
+      try {
+        const res = await fetch('https://uranai-takechan.duckdns.org:8443/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        return await res.json();
+      } catch (e) {
+        if (i < attempts - 1) {
+          const wait = (i + 1) * 5;
+          addMsg('assistant', `接続中... ${wait}秒後に再試行します（${i + 1}/${attempts - 1}）`);
+          await new Promise(r => setTimeout(r, wait * 1000));
+          const last = chatBox.lastElementChild;
+          if (last) last.remove();
+        } else {
+          throw e;
+        }
+      }
+    }
+  }
+
   async function send() {
     const text = input.value.trim();
     if (!text) return;
@@ -771,12 +794,7 @@
     input.value = '';
     sendBtn.disabled = true;
     try {
-      const res = await fetch('https://uranai-takechan.duckdns.org:8443/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history }),
-      });
-      const data = await res.json();
+      const data = await fetchWithRetry({ messages: history }, 4);
       if (data.error) {
         addMsg('assistant', 'エラー: ' + JSON.stringify(data.error));
       } else {
