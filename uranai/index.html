@@ -764,38 +764,25 @@
     return div;
   }
 
-  async function fetchWithTimeout(body, timeoutMs) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const res = await fetch('https://uranai-takechan.duckdns.org:8443/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-      return await res.json();
-    } finally {
-      clearTimeout(timer);
+  async function sendChat(body) {
+    const postRes = await fetch('https://uranai-takechan.duckdns.org:8443/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!postRes.ok) throw new Error('サーバーエラー: ' + postRes.status);
+    const { jobId } = await postRes.json();
+    if (!jobId) throw new Error('ジョブIDを取得できませんでした');
+    const start = Date.now();
+    while (Date.now() - start < 180000) {
+      await new Promise(r => setTimeout(r, 2000));
+      const sr = await fetch('https://uranai-takechan.duckdns.org:8443/chat-status/' + jobId);
+      if (!sr.ok) throw new Error('ステータス確認エラー');
+      const job = await sr.json();
+      if (job.status === 'done') return { reply: job.reply };
+      if (job.status === 'error') return { error: job.error };
     }
-  }
-
-  async function fetchWithRetry(body, attempts) {
-    for (let i = 0; i < attempts; i++) {
-      try {
-        return await fetchWithTimeout(body, 120000);
-      } catch (e) {
-        if (i < attempts - 1) {
-          const wait = (i + 1) * 5;
-          addMsg('assistant', `接続中... ${wait}秒後に再試行します（${i + 1}/${attempts - 1}）`);
-          await new Promise(r => setTimeout(r, wait * 1000));
-          const last = log.lastElementChild;
-          if (last) last.remove();
-        } else {
-          throw e;
-        }
-      }
-    }
+    throw new Error('タイムアウト（3分経過）');
   }
 
   async function send() {
@@ -807,7 +794,7 @@
     sendBtn.disabled = true;
     const thinkingEl = addMsg('assistant', '🔮 占い師が考え中です...');
     try {
-      const data = await fetchWithRetry({ messages: history }, 4);
+      const data = await sendChat({ messages: history });
       thinkingEl.remove();
       if (data.error) {
         addMsg('assistant', 'エラー: ' + JSON.stringify(data.error));
