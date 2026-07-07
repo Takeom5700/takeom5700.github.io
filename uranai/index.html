@@ -188,6 +188,41 @@
   .chip-label { color: var(--text-sub); font-size: 0.75rem; }
   .chip-value { color: var(--text); font-weight: bold; }
 
+  /* ソートボタン */
+  .sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .sort-controls .sort-label {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    white-space: nowrap;
+  }
+  .sort-btn {
+    font-size: 0.72rem;
+    padding: 4px 13px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--text-sub);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .sort-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+  .sort-btn:hover:not(.active) {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
   /* スコアグリッド */
   .scores-grid {
     display: grid;
@@ -549,6 +584,11 @@
 <!-- ラッキーカラー -->
 <div class="lucky-section">
   <h2>🎨 ラッキーカラーなど</h2>
+  <div class="sort-controls">
+    <span class="sort-label">並び替え：</span>
+    <button class="sort-btn active" data-sort="type">種類順</button>
+    <button class="sort-btn" data-sort="source">ソース順</button>
+  </div>
   <div class="color-grid">
     <div class="color-chip">
       <div class="color-dot" style="background:#ff3333;"></div>
@@ -976,6 +1016,63 @@
       }
     });
   }
+})();
+
+// ラッキーカラーソート
+(function() {
+  const TYPE_ORDER = ['color', 'food', 'number', 'direction', 'other'];
+  const SOURCE_ORDER = ['しいたけ占い', 'Loveちゃん', '山田ありす', '六星占術', '六龍法占い', '四柱推命', '中国式占い', 'その他'];
+  const COLOR_WORDS = /赤|青|白|黒|緑|黄|金|銀|シルバー|ゴールド|エメラルド|紫|オレンジ|ピンク|クリーム|ベージュ|水色|ターコイズ|グリーン|ブルー|レッド/;
+
+  function detectType(label, value) {
+    const all = label + ' ' + value;
+    if (/フード|食材|食べ|料理/.test(all)) return 'food';
+    if (/数字|ナンバー/.test(all)) return 'number';
+    if (/方位/.test(all)) return 'direction';
+    if (/カラー/.test(all)) return 'color';
+    if (COLOR_WORDS.test(value)) return 'color';
+    return 'other';
+  }
+
+  function detectSource(label) {
+    if (/^しいたけ/.test(label)) return 'しいたけ占い';
+    if (/^Love/.test(label)) return 'Loveちゃん';
+    if (/^山田ありす/.test(label)) return '山田ありす';
+    if (/^六星占術/.test(label)) return '六星占術';
+    if (/^六龍法/.test(label)) return '六龍法占い';
+    if (/^四柱推命/.test(label)) return '四柱推命';
+    if (/^中国式/.test(label)) return '中国式占い';
+    return 'その他';
+  }
+
+  function sortChips(mode) {
+    const grid = document.querySelector('.color-grid');
+    if (!grid) return;
+    const chips = Array.from(grid.querySelectorAll('.color-chip'));
+    chips.sort(function(a, b) {
+      const al = (a.querySelector('.chip-label') || {}).textContent || '';
+      const av = (a.querySelector('.chip-value') || {}).textContent || '';
+      const bl = (b.querySelector('.chip-label') || {}).textContent || '';
+      const bv = (b.querySelector('.chip-value') || {}).textContent || '';
+      if (mode === 'type') {
+        return TYPE_ORDER.indexOf(detectType(al, av)) - TYPE_ORDER.indexOf(detectType(bl, bv));
+      } else {
+        return SOURCE_ORDER.indexOf(detectSource(al)) - SOURCE_ORDER.indexOf(detectSource(bl));
+      }
+    });
+    chips.forEach(function(c) { grid.appendChild(c); });
+  }
+
+  // デフォルト: 種類順で初期表示
+  sortChips('type');
+
+  document.querySelectorAll('.sort-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
+      this.classList.add('active');
+      sortChips(this.dataset.sort);
+    });
+  });
 })();
 
 // 期限切れチップを非表示にする
