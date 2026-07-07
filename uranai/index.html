@@ -462,6 +462,7 @@
   }
   #chat-input {
     flex: 1;
+    min-width: 0;
     background: #fff;
     border: 2px solid var(--border);
     border-radius: 999px;
@@ -485,6 +486,7 @@
     font-weight: 700;
     font-size: 0.85rem;
     cursor: pointer;
+    flex-shrink: 0;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     box-shadow: 0 4px 12px rgba(166, 133, 242, 0.3);
   }
@@ -513,6 +515,13 @@
     50% { opacity: 0.5; }
   }
   .chat-note { font-size: 0.7rem; color: var(--text-sub); margin-top: 8px; }
+
+  @media (max-width: 480px) {
+    .chat-section { padding: 14px 10px; }
+    #chat-send { padding: 10px 14px; font-size: 0.8rem; }
+    #chat-voice { padding: 10px 10px; }
+    .chat-input-row { gap: 6px; }
+  }
 
   footer {
     text-align: center;
