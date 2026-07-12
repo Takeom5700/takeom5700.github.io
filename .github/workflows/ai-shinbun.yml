@@ -1,0 +1,137 @@
+name: AI新聞 毎日自動生成
+
+on:
+  schedule:
+    - cron: '0 19 * * *'  # 毎日 04:00 JST (UTC 19:00)
+  workflow_dispatch:       # 手動実行も可能
+
+jobs:
+  generate-newspaper:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install anthropic requests
+
+      - name: Generate AI newspaper
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python - <<'PYEOF'
+          import anthropic
+          import datetime
+          import os
+          import re
+
+          # 日付設定（JST）
+          jst = datetime.timezone(datetime.timedelta(hours=9))
+          today = datetime.datetime.now(jst)
+          date_str = today.strftime('%Y%m%d')
+          year = today.year
+          month = today.month
+          day = today.day
+          weekdays = ['月', '火', '水', '木', '金', '土', '日']
+          weekday = weekdays[today.weekday()]
+
+          output_path = f'ai-shinbun/newspaper_{date_str}.html'
+
+          # すでに存在する場合はスキップ
+          if os.path.exists(output_path):
+              print(f'{output_path} already exists, skipping.')
+              exit(0)
+
+          client = anthropic.Anthropic()
+
+          prompt = f"""あなたはAI新聞を生成するエージェントです。
+
+{year}年{month}月{day}日付のAI新聞HTMLを生成してください。
+
+## 指示
+1. WebSearchで以下を検索して最新AIニュースを13記事分収集する：
+   - "AI news today {year}/{month}/{day}"
+   - "人工知能 最新ニュース {year}年{month}月"
+   - "LLM GPT Claude Gemini news {year}"
+
+2. 以下の文字数制限を厳守してHTMLを生成する（超過すると表示が切れる）：
+   - 主記事: 400文字以内
+   - 第2記事: 260文字以内
+   - 第3記事: 200文字以内
+   - 第4記事: 140文字以内
+   - 短信6本: 各83文字以内
+   - 下段3本: 各400文字以内
+
+3. 色アクセント：
+   - 数値・統計・日付: <span style="color:#b0001e;font-weight:700;">...</span>
+   - 固有名詞・組織名: <span style="color:#0d3461;font-weight:700;">...</span>
+
+4. 完全なHTMLを出力する。<!DOCTYPE html>から</html>まで全て含める。
+   タイトルは「AI新聞 {year}年{month}月{day}日」
+
+newspaper-creatorスキルの全仕様（SVGレイアウト・寸法・フォント設定すべて）に従って生成すること。
+HTMLのみを出力し、説明文は不要。"""
+
+          print(f"Generating newspaper for {date_str}...")
+
+          message = client.messages.create(
+              model="claude-sonnet-4-6",
+              max_tokens=16000,
+              messages=[{"role": "user", "content": prompt}]
+          )
+
+          html_content = message.content[0].text
+
+          # HTMLブロックの抽出
+          match = re.search(r'<!DOCTYPE html>.*?</html>', html_content, re.DOTALL | re.IGNORECASE)
+          if match:
+              html_content = match.group(0)
+
+          os.makedirs('ai-shinbun', exist_ok=True)
+          with open(output_path, 'w', encoding='utf-8') as f:
+              f.write(html_content)
+
+          print(f"Saved: {output_path}")
+
+          # index.html更新
+          index_path = 'ai-shinbun/index.html'
+          with open(index_path, 'r', encoding='utf-8') as f:
+              index_html = f.read()
+
+          new_card = f'''      <a class="newspaper-card" href="newspaper_{date_str}.html" style="animation-delay:0.05s">
+        <div class="card-date-num">{month}月{day}日</div>
+        <div class="card-date-str">{year}年{month}月{day}日（{weekday}）</div>
+        <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
+      </a>
+
+      '''
+
+          # 最初のnewspaper-cardの直前に挿入
+          index_html = index_html.replace(
+              '      <a class="newspaper-card" href="newspaper_',
+              new_card + '      <a class="newspaper-card" href="newspaper_',
+              1
+          )
+
+          with open(index_path, 'w', encoding='utf-8') as f:
+              f.write(index_html)
+
+          print(f"Updated: {index_path}")
+          PYEOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ai-shinbun/
+          git diff --staged --quiet || git commit -m "AI新聞 $(TZ=Asia/Tokyo date '+%Y年%m月%d日')号を追加"
+          git pull --rebase origin main
+          git push origin main

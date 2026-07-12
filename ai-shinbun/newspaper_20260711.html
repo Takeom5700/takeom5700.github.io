@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI時報 2026年7月11日</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: radial-gradient(ellipse at 38% 28%, #3d2a14 0%, #1a0e06 85%);
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; min-height:100vh;
+    font-family:'Noto Serif JP','Yu Mincho',serif;
+    padding: 24px 0;
+  }
+  .page {
+    width: 1800px;
+    transform: perspective(2600px) rotateX(0.55deg) rotateY(-0.4deg) rotate(-0.12deg);
+    transform-origin: center center;
+    box-shadow:
+      -5px 0 10px rgba(0,0,0,0.3),
+       3px 5px 20px rgba(0,0,0,0.4),
+       8px 12px 50px rgba(0,0,0,0.5),
+       0 35px 90px rgba(0,0,0,0.65);
+  }
+  .mast {
+    background:#f4f0e6;
+    border-bottom:3px solid #111;
+    padding: 6px 16px 4px;
+    display:flex; align-items:baseline; gap:20px;
+  }
+  .mast-logo {
+    font-family:'Noto Serif JP',serif; font-size:42px; font-weight:900;
+    color:#b0001e; letter-spacing:0.05em; line-height:1;
+  }
+  .mast-sub {
+    font-family:'Noto Sans JP',sans-serif; font-size:11px;
+    color:#444; line-height:1.4;
+  }
+  .mast-date {
+    margin-left:auto; font-family:'Noto Sans JP',sans-serif;
+    font-size:11px; color:#333; text-align:right; line-height:1.5;
+  }
+  .footer {
+    background:#f4f0e6; border-top:1.5px solid #111;
+    padding:3px 16px; display:flex; justify-content:space-between;
+    font-family:'Noto Sans JP',sans-serif; font-size:9px; color:#555;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="mast">
+  <div class="mast-logo">AI時報</div>
+  <div class="mast-sub">
+    人工知能の最前線をいち早く伝える専門紙　AIコンサルタント向け情報誌<br>
+    人工知能総合面　創刊第一号
+  </div>
+  <div class="mast-date">
+    2026年7月11日（土）<br>朝刊　第1号
+  </div>
+</div>
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 900"
+     style="display:block;width:100%;">
+<defs>
+  <linearGradient id="paper-grad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%"   stop-color="#f4f0e6"/>
+    <stop offset="100%" stop-color="#edeadf"/>
+  </linearGradient>
+  <filter id="grain-fx" x="0%" y="0%" width="100%" height="100%"
+          color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.82 0.88"
+                  numOctaves="4" seed="7" result="noise"/>
+    <feColorMatrix type="saturate" values="0" in="noise" result="gray-noise"/>
+    <feBlend in="SourceGraphic" in2="gray-noise" mode="multiply" result="blended"/>
+    <feComposite in="blended" in2="SourceGraphic" operator="in"/>
+  </filter>
+  <radialGradient id="vignette-grad" cx="50%" cy="50%" r="72%">
+    <stop offset="0%"   stop-color="transparent"/>
+    <stop offset="75%"  stop-color="rgba(0,0,0,0.04)"/>
+    <stop offset="100%" stop-color="rgba(0,0,0,0.22)"/>
+  </radialGradient>
+  <linearGradient id="spine-shadow" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%"  stop-color="rgba(0,0,0,0.18)"/>
+    <stop offset="100%" stop-color="transparent"/>
+  </linearGradient>
+  <linearGradient id="top-shadow" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%"  stop-color="rgba(0,0,0,0.12)"/>
+    <stop offset="100%" stop-color="transparent"/>
+  </linearGradient>
+  <clipPath id="c-main"><rect x="1260" y="0"  width="540" height="530"/></clipPath>
+  <clipPath id="c-2nd"> <rect x="936"  y="0"  width="324" height="530"/></clipPath>
+  <clipPath id="c-3rd"> <rect x="684"  y="0"  width="252" height="530"/></clipPath>
+  <clipPath id="c-4th"> <rect x="486"  y="0"  width="198" height="530"/></clipPath>
+  <clipPath id="c-br1"> <rect x="324"  y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-br2"> <rect x="324"  y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-bm1"> <rect x="162"  y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-bm2"> <rect x="162"  y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-bl1"> <rect x="0"    y="0"  width="162" height="265"/></clipPath>
+  <clipPath id="c-bl2"> <rect x="0"    y="265" width="162" height="265"/></clipPath>
+  <clipPath id="c-da">  <rect x="1200" y="530" width="600" height="370"/></clipPath>
+  <clipPath id="c-db">  <rect x="600"  y="530" width="600" height="370"/></clipPath>
+  <clipPath id="c-dc">  <rect x="0"    y="530" width="600" height="370"/></clipPath>
+</defs>
+
+<!-- 紙の地色 -->
+<rect width="1800" height="900" fill="url(#paper-grad)"/>
+
+<!-- 縦罫線 -->
+<line x1="1260" y1="0" x2="1260" y2="530" stroke="#555" stroke-width="1.5"/>
+<line x1="936"  y1="0" x2="936"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="684"  y1="0" x2="684"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="486"  y1="0" x2="486"  y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="324"  y1="0" x2="324"  y2="530" stroke="#aaa" stroke-width="0.5"/>
+<line x1="162"  y1="0" x2="162"  y2="530" stroke="#aaa" stroke-width="0.5"/>
+<line x1="0" y1="265" x2="486" y2="265" stroke="#bbb" stroke-width="0.5" stroke-dasharray="3,2"/>
+<line x1="0" y1="530" x2="1800" y2="530" stroke="#333" stroke-width="2.5"/>
+<line x1="1200" y1="530" x2="1200" y2="900" stroke="#888" stroke-width="0.8"/>
+<line x1="600"  y1="530" x2="600"  y2="900" stroke="#888" stroke-width="0.8"/>
+
+
+<!-- ① 主記事：OpenAI GPT-5.6ファミリー正式公開 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="9"
+      fill="#111" font-weight="700" x="1262" y="13">
+  【速報】OpenAI、次世代モデルGPT-5.6ファミリーを正式リリース
+</text>
+<line x1="1260" y1="17" x2="1800" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="36"
+      writing-mode="tb-rl" x="1756" y="24"
+      clip-path="url(#c-main)">GPT-5.6三系統</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="36"
+      writing-mode="tb-rl" x="1716" y="24"
+      clip-path="url(#c-main)">世界同時解禁</text>
+
+<foreignObject x="1260" y="22" width="448" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:448px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">OpenAI</span>は<span style="color:#b0001e;font-weight:700;">7月9日</span>、新世代モデル群<span style="color:#0d3461;font-weight:700;">GPT-5.6</span>ファミリーの一般公開を開始した。フラッグシップの<span style="color:#0d3461;font-weight:700;">Sol</span>、バランス型の<span style="color:#0d3461;font-weight:700;">Terra</span>、高速廉価の<span style="color:#0d3461;font-weight:700;">Luna</span>の三系統で構成される新体制は、政府承認機関<span style="color:#b0001e;font-weight:700;">約20社</span>への限定プレビューを経て世界展開された。</p>
+  <p style="font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;
+            color:#b0001e;border-right:2.5px solid #b0001e;padding-right:3px;margin:5px 0 2px;">料金体系と性能</p>
+  <p style="text-indent:1em;margin:0 0 2px;">価格は<span style="color:#0d3461;font-weight:700;">Sol</span>が入力<span style="color:#b0001e;font-weight:700;">5ドル</span>・出力<span style="color:#b0001e;font-weight:700;">30ドル</span>（百万トークン）、<span style="color:#0d3461;font-weight:700;">Terra</span>は<span style="color:#0d3461;font-weight:700;">GPT-5.5</span>同等の性能を<span style="color:#b0001e;font-weight:700;">半額</span>で実現し、<span style="color:#0d3461;font-weight:700;">Luna</span>は最安値の<span style="color:#b0001e;font-weight:700;">1ドル</span>入力で大量処理向けに最適化された。</p>
+  <p style="font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;
+            color:#b0001e;border-right:2.5px solid #b0001e;padding-right:3px;margin:5px 0 2px;">超高速推論の実現</p>
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">Sol</span>は<span style="color:#0d3461;font-weight:700;">Cerebras</span>との連携により毎秒<span style="color:#b0001e;font-weight:700;">750トークン</span>という前例のない推論速度を達成。キャッシュの最低保持時間<span style="color:#b0001e;font-weight:700;">30分</span>保証など実用面の改善も加わり、エンタープライズ用途への本格展開が加速する見通しだ。</p>
+</div>
+</foreignObject>
+
+
+<!-- ② 第2記事：Meta 8000人削減 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="9"
+      fill="#111" font-weight="700" x="938" y="13">
+  AI再編で揺れる巨人　最高責任者が計画の遅れを自認
+</text>
+<line x1="936" y1="17" x2="1260" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="24"
+      writing-mode="tb-rl" x="1229" y="24"
+      clip-path="url(#c-2nd)">メタ八千人削減</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="24"
+      writing-mode="tb-rl" x="1201" y="24"
+      clip-path="url(#c-2nd)">ＡＩ転換に苦悩</text>
+
+<foreignObject x="936" y="22" width="257" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:257px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 7px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">Meta</span>は全従業員の約<span style="color:#b0001e;font-weight:700;">10%</span>にあたる<span style="color:#b0001e;font-weight:700;">8000人</span>を削減し、同時に<span style="color:#b0001e;font-weight:700;">7000人</span>をAI専任部門へ異動させた。<span style="color:#0d3461;font-weight:700;">ザッカーバーグCEO</span>は社内集会で「AIエージェント開発が期待通りに加速していない」と認め、再編が当初計画より大幅に遅れていることを異例の形で公表した。</p>
+  <p style="text-indent:1em;">削減対象は<span style="color:#0d3461;font-weight:700;">セキュリティ</span>・<span style="color:#0d3461;font-weight:700;">Reality Labs</span>部門が中心。従業員満足度は<span style="color:#b0001e;font-weight:700;">25%</span>低下し、平均報酬も<span style="color:#b0001e;font-weight:700;">3万ドル</span>近く減少した。</p>
+</div>
+</foreignObject>
+
+
+<!-- ③ 第3記事：国連AIガバナンス対話 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#111" font-weight="700" x="686" y="13">
+  193か国が参集　AI統治の国際枠組み構築へ
+</text>
+<line x1="684" y1="17" x2="936" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="18"
+      writing-mode="tb-rl" x="910" y="24"
+      clip-path="url(#c-3rd)">国連ＡＩ対話</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="18"
+      writing-mode="tb-rl" x="888" y="24"
+      clip-path="url(#c-3rd)">ジュネーブ閉幕</text>
+
+<foreignObject x="684" y="22" width="196" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:196px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 6px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#b0001e;font-weight:700;">7月6・7日</span>、<span style="color:#0d3461;font-weight:700;">国連</span>初の「グローバルAIガバナンス対話」が<span style="color:#0d3461;font-weight:700;">スイス・ジュネーブ</span>で開催された。<span style="color:#0d3461;font-weight:700;">193か国</span>の加盟国に加え民間企業・学界が一堂に集い、AIの国際的統治のあり方を議論した。</p>
+  <p style="text-indent:1em;">次回は<span style="color:#b0001e;font-weight:700;">2027年5月</span>に<span style="color:#0d3461;font-weight:700;">ニューヨーク</span>で第二回セッションを開く予定。</p>
+</div>
+</foreignObject>
+
+
+<!-- ④ 第4記事：富士通PHOTON -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8"
+      fill="#111" font-weight="700" x="488" y="13">
+  国産発の革新　ポストTransformerの本命か
+</text>
+<line x1="486" y1="17" x2="684" y2="17" stroke="#aaa" stroke-width="0.5"/>
+
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="15"
+      writing-mode="tb-rl" x="661" y="24"
+      clip-path="url(#c-4th)">富士通ＰＨＯＴＯＮ</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="15"
+      writing-mode="tb-rl" x="642" y="24"
+      clip-path="url(#c-4th)">効率四七五倍</text>
+
+<foreignObject x="486" y="22" width="148" height="508">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:508px;width:148px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 6px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">富士通</span>が開発した新LLMアーキテクチャ<span style="color:#0d3461;font-weight:700;">PHOTON</span>が<span style="color:#0d3461;font-weight:700;">ACL 2026</span>で発表された。<span style="color:#0d3461;font-weight:700;">Transformer</span>比最大<span style="color:#b0001e;font-weight:700;">475倍</span>のGPUスループットを実現し、業界を驚かせた。</p>
+  <p style="text-indent:1em;">階層的処理でKVキャッシュを削減、同一GPUで並列生成が可能となる。</p>
+</div>
+</foreignObject>
+
+
+<!-- 短信右・上：Z.ai GLM-5.2 中国AI -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="326" y="11">中国AI追い上げ</text>
+<line x1="324" y1="15" x2="486" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="469" y="19" clip-path="url(#c-br1)">GLM-5.2急浮上</text>
+<foreignObject x="324" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">Z.ai</span>の<span style="color:#0d3461;font-weight:700;">GLM-5.2</span>が<span style="color:#0d3461;font-weight:700;">Anthropic</span>・<span style="color:#0d3461;font-weight:700;">OpenAI</span>の最先端モデルと同等の性能を低コストで示し、米中AI競争の焦点となっている。</p>
+</div>
+</foreignObject>
+
+<!-- 短信右・下：中国トークン処理量 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="326" y="276">中国AI処理規模</text>
+<line x1="324" y1="280" x2="486" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="469" y="284" clip-path="url(#c-br2)">日量百四十兆</text>
+<foreignObject x="324" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;">中国のAI処理量は<span style="color:#b0001e;font-weight:700;">1日140兆</span>トークンに達し、<span style="color:#b0001e;font-weight:700;">2024年初頭</span>比で約<span style="color:#b0001e;font-weight:700;">1400倍</span>に急拡大した。</p>
+</div>
+</foreignObject>
+
+<!-- 短信中・上：Anthropic Claude Science -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="164" y="11">研究者向け新基盤</text>
+<line x1="162" y1="15" x2="324" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="307" y="19" clip-path="url(#c-bm1)">Claude Science公開</text>
+<foreignObject x="162" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">Anthropic</span>は研究者向けワークベンチ<span style="color:#0d3461;font-weight:700;">Claude Science</span>をベータ公開。<span style="color:#b0001e;font-weight:700;">60以上</span>のツールを事前設定済みで提供する。</p>
+</div>
+</foreignObject>
+
+<!-- 短信中・下：White House フロンティアモデル審査 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="164" y="276">米政府規制動向</text>
+<line x1="162" y1="280" x2="324" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="307" y="284" clip-path="url(#c-bm2)">公開前三十日審査</text>
+<foreignObject x="162" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">米ホワイトハウス</span>はフロンティアモデル公開前に政府が<span style="color:#b0001e;font-weight:700;">30日間</span>レビューする自主基準枠組みを発表する見通し。</p>
+</div>
+</foreignObject>
+
+<!-- 短信左・上：Meta Watermelon -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="2" y="11">メタ極秘モデル</text>
+<line x1="0" y1="15" x2="162" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="145" y="19" clip-path="url(#c-bl1)">Watermelon台頭</text>
+<foreignObject x="0" y="19" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">Meta</span>の超知能責任者は、開発中の<span style="color:#0d3461;font-weight:700;">Watermelon</span>が<span style="color:#0d3461;font-weight:700;">GPT-5.5</span>と同等のベンチマーク性能を達成したと発表した。</p>
+</div>
+</foreignObject>
+
+<!-- 短信左・下：Cognition Devin Security -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="7.5"
+      fill="#5c3214" font-weight="700" x="2" y="276">AI脆弱性診断</text>
+<line x1="0" y1="280" x2="162" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="13"
+      writing-mode="tb-rl" x="145" y="284" clip-path="url(#c-bl2)">Devinがセキュリティ参入</text>
+<foreignObject x="0" y="284" width="137" height="246">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;">
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">Cognition社</span>はコードベースの脆弱性を自動発見する<span style="color:#0d3461;font-weight:700;">Devin Security Swarm</span>を発表した。</p>
+</div>
+</foreignObject>
+
+
+<!-- 下段A：GPT-5.6詳細 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="1202" y="543">
+  【解説】三層モデル戦略の狙いと企業導入への影響
+</text>
+<line x1="1200" y1="547" x2="1800" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1770" y="552"
+      clip-path="url(#c-da)">GPT-5.6の全貌</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1748" y="552"
+      clip-path="url(#c-da)">三層戦略を読む</text>
+<foreignObject x="1200" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">OpenAI</span>がGPT-5.6ファミリーで採用した「三層価格体系」は、同社にとって初めての本格的なティアリング戦略となる。最上位の<span style="color:#0d3461;font-weight:700;">Sol</span>は研究・高度な推論向け、<span style="color:#0d3461;font-weight:700;">Terra</span>は日常業務・コード生成向け、<span style="color:#0d3461;font-weight:700;">Luna</span>は大量処理・チャットボット向けと明確に棲み分けられた。</p>
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">Terra</span>の登場は特に注目に値する。<span style="color:#0d3461;font-weight:700;">GPT-5.5</span>比<span style="color:#b0001e;font-weight:700;">2分の1</span>のコストで同等性能を発揮するため、多くの企業が<span style="color:#0d3461;font-weight:700;">GPT-5.5</span>から<span style="color:#0d3461;font-weight:700;">Terra</span>へ移行するとみられる。エンタープライズ向けの月次コスト削減効果は業種によって<span style="color:#b0001e;font-weight:700;">30〜50%</span>に達するとの試算もある。</p>
+  <p style="text-indent:1em;"><span style="color:#0d3461;font-weight:700;">Cerebras</span>との連携で実現した毎秒<span style="color:#b0001e;font-weight:700;">750トークン</span>超の推論速度は、リアルタイム音声・映像処理など従来AIが苦手とした領域を開拓する可能性がある。業界全体が「モデルの大きさ」競争から「実用性・コスト・信頼性」の競争へと移行しつつある中、今回の発表はその象徴的な転換点となった。</p>
+</div>
+</foreignObject>
+
+<!-- 下段B：Meta再編の詳細 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="602" y="543">
+  【分析】AIへの大転換　巨大テック企業が抱える構造的矛盾
+</text>
+<line x1="600" y1="547" x2="1200" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1170" y="552"
+      clip-path="url(#c-db)">メタ再編の深層</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="1148" y="552"
+      clip-path="url(#c-db)">人材流出の連鎖</text>
+<foreignObject x="600" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">Meta</span>の<span style="color:#b0001e;font-weight:700;">8000人</span>削減は、表面上は「AI集中投資」の一環だが、<span style="color:#0d3461;font-weight:700;">ザッカーバーグ</span>自身が認めた「加速の遅れ」が実態の複雑さを示している。削減対象となった<span style="color:#0d3461;font-weight:700;">整合性チーム</span>・<span style="color:#0d3461;font-weight:700;">サイバーセキュリティ</span>・<span style="color:#0d3461;font-weight:700;">Reality Labs</span>は、いずれも長期的な企業価値に直結する機能であり、短期のコスト削減優先との批判も根強い。</p>
+  <p style="text-indent:1em;margin:0 0 2px;">従業員満足度が<span style="color:#b0001e;font-weight:700;">25%</span>低下し、平均年収が<span style="color:#b0001e;font-weight:700;">3万ドル</span>近く減少した中、優秀なエンジニアの離職が進むリスクが高まっている。<span style="color:#0d3461;font-weight:700;">ワシントン州</span>では<span style="color:#b0001e;font-weight:700;">7月22日</span>から追加<span style="color:#b0001e;font-weight:700;">1400人</span>の削減が始まる予定だ。</p>
+  <p style="text-indent:1em;">退職者には<span style="color:#b0001e;font-weight:700;">16週間</span>の基本退職金に加え、勤続年数<span style="color:#b0001e;font-weight:700;">1年ごとに2週間</span>分を上乗せし、健康保険を<span style="color:#b0001e;font-weight:700;">18か月</span>延長するなど手厚い補償を設定した。</p>
+</div>
+</foreignObject>
+
+<!-- 下段C：富士通PHOTON詳細 -->
+<text font-family="'Noto Sans JP',sans-serif" font-size="8.5"
+      fill="#0d3461" font-weight="700" x="2" y="543">
+  【技術解説】ポストTransformer時代の幕開けか　PHOTONの仕組みを読む
+</text>
+<line x1="0" y1="547" x2="600" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="570" y="552"
+      clip-path="url(#c-dc)">国産アーキテクチャ</text>
+<text font-family="'Noto Serif JP','Yu Mincho',serif"
+      font-weight="900" font-size="21" fill="#0d3461"
+      writing-mode="tb-rl" x="548" y="552"
+      clip-path="url(#c-dc)">世界の頂点へ</text>
+<foreignObject x="0" y="552" width="540" height="348">
+<div xmlns="http://www.w3.org/1999/xhtml"
+     style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;
+            font-family:'Noto Serif JP','Yu Mincho',serif;
+            font-size:14px;line-height:1.85;text-align:justify;
+            padding:0 8px;color:#111;">
+  <p style="text-indent:1em;margin:0 0 2px;"><span style="color:#0d3461;font-weight:700;">富士通</span>が開発した<span style="color:#0d3461;font-weight:700;">PHOTON</span>（Parallel Hierarchical Operation for TOp-down Networks）は、トークン単位で処理する<span style="color:#0d3461;font-weight:700;">Transformer</span>と異なり、文章を「意味のまとまり」として階層的に処理することで計算量を大幅に削減する。<span style="color:#b0001e;font-weight:700;">12億</span>パラメーターモデルで最大<span style="color:#b0001e;font-weight:700;">475倍</span>のGPUスループットを達成した。</p>
+  <p style="text-indent:1em;margin:0 0 2px;">特筆すべきはKVキャッシュ使用量の削減で、同じGPUメモリ内で複数の生成結果を並列に得られるため、推論コストを劇的に下げられる。<span style="color:#b0001e;font-weight:700;">7月2〜7日</span>に米<span style="color:#0d3461;font-weight:700;">サンディエゴ</span>で開催された自然言語処理の最高峰<span style="color:#0d3461;font-weight:700;">ACL 2026</span>のオーラルセッションで発表され、世界の研究者から高い注目を集めた。</p>
+  <p style="text-indent:1em;">AI先進国である米中の独壇場に国産技術が風穴を開けた形であり、日本のAI競争力向上への期待が高まっている。</p>
+</div>
+</foreignObject>
+
+
+<!-- 物理エフェクトオーバーレイ -->
+<rect width="1800" height="900" fill="#e8d8a0"
+      filter="url(#grain-fx)" opacity="0.10" pointer-events="none"/>
+<rect width="1800" height="900" fill="url(#vignette-grad)" pointer-events="none"/>
+<rect x="0" y="0" width="28" height="900"
+      fill="url(#spine-shadow)" pointer-events="none"/>
+<rect x="0" y="0" width="1800" height="22"
+      fill="url(#top-shadow)" pointer-events="none"/>
+<rect width="1800" height="900"
+      fill="rgba(180,130,50,0.02)" pointer-events="none"/>
+
+</svg>
+
+<div class="footer">
+  <span>AI時報　人工知能総合面　※本紙面はAIエージェントが自動生成した模擬紙面です</span>
+  <span>2026年7月11日　朝刊</span>
+</div>
+
+</div>
+</body>
+</html>
