@@ -21,17 +21,19 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install anthropic requests
+        run: pip install google-genai requests
 
       - name: Generate AI newspaper
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python - <<'PYEOF'
-          import anthropic
-          import datetime
           import os
           import re
+          import datetime
+          import requests
+          from google import genai
+          from google.genai import types
 
           # 日付設定（JST）
           jst = datetime.timezone(datetime.timedelta(hours=9))
@@ -45,52 +47,195 @@ jobs:
 
           output_path = f'ai-shinbun/newspaper_{date_str}.html'
 
-          # すでに存在する場合はスキップ
           if os.path.exists(output_path):
               print(f'{output_path} already exists, skipping.')
               exit(0)
 
-          client = anthropic.Anthropic()
+          client = genai.Client(api_key=os.environ['GEMINI_API_KEY'])
 
-          prompt = f"""あなたはAI新聞を生成するエージェントです。
+          prompt = f"""{year}年{month}月{day}日付のAI新聞HTMLを生成してください。
 
-{year}年{month}月{day}日付のAI新聞HTMLを生成してください。
+まずGoogle検索で以下を調べて最新AIニュースを収集してください：
+- "AI news {year} {month}/{day}"
+- "人工知能 最新ニュース {year}年{month}月"
+- "Claude GPT Gemini LLM news {year}"
 
-## 指示
-1. WebSearchで以下を検索して最新AIニュースを13記事分収集する：
-   - "AI news today {year}/{month}/{day}"
-   - "人工知能 最新ニュース {year}年{month}月"
-   - "LLM GPT Claude Gemini news {year}"
+収集したニュースをもとに、以下の仕様で完全なAI新聞HTMLを生成してください。
 
-2. 以下の文字数制限を厳守してHTMLを生成する（超過すると表示が切れる）：
-   - 主記事: 400文字以内
-   - 第2記事: 260文字以内
-   - 第3記事: 200文字以内
-   - 第4記事: 140文字以内
-   - 短信6本: 各83文字以内
-   - 下段3本: 各400文字以内
+## 文字数制限（厳守・超過すると表示が切れる）
+- 主記事（上段右・最重要）: 400文字以内
+- 第2記事（上段右から2番目）: 260文字以内
+- 第3記事: 200文字以内
+- 第4記事: 140文字以内
+- 短信6本（左上ゾーン）: 各83文字以内
+- 下段3本: 各400文字以内
 
-3. 色アクセント：
-   - 数値・統計・日付: <span style="color:#b0001e;font-weight:700;">...</span>
-   - 固有名詞・組織名: <span style="color:#0d3461;font-weight:700;">...</span>
+## 色アクセント
+- 数値・統計・日付: <span style="color:#b0001e;font-weight:700;">数値</span>
+- 固有名詞・組織名: <span style="color:#0d3461;font-weight:700;">名前</span>
 
-4. 完全なHTMLを出力する。<!DOCTYPE html>から</html>まで全て含める。
-   タイトルは「AI新聞 {year}年{month}月{day}日」
+## レイアウト仕様（SVG縦書き紙面、viewBox="0 0 1800 900"）
+上段（y=0〜530）右→左に4記事＋短信6本、下段（y=530〜900）3記事。
+縦書きはwriting-mode="tb-rl"使用。foreignObjectでHTML本文を配置。
 
-newspaper-creatorスキルの全仕様（SVGレイアウト・寸法・フォント設定すべて）に従って生成すること。
-HTMLのみを出力し、説明文は不要。"""
+## 絶対守るルール
+- foreignObject内のテキストは文字数制限を守る
+- 全見出しはSVG text要素（writing-mode="tb-rl"）で縦書き
+- 実際に収集したニュースで記事を書く（架空ニュース禁止）
+- <!DOCTYPE html>から</html>まで完全なHTMLを出力する
 
-          print(f"Generating newspaper for {date_str}...")
+## HTMLテンプレート（このまま使い、【】内を実際の内容に置き換える）
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AI新聞 {year}年{month}月{day}日</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box;}}
+body{{background:radial-gradient(ellipse at 38% 28%,#3d2a14 0%,#1a0e06 85%);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px 0;}}
+.page{{width:1800px;transform:perspective(2600px) rotateX(0.55deg) rotateY(-0.4deg) rotate(-0.12deg);box-shadow:-5px 0 10px rgba(0,0,0,0.3),3px 5px 20px rgba(0,0,0,0.4),8px 12px 50px rgba(0,0,0,0.5),0 35px 90px rgba(0,0,0,0.65);}}
+.mast{{background:#f4f0e6;border-bottom:3px solid #111;padding:6px 16px 4px;display:flex;align-items:baseline;gap:20px;}}
+.mast-logo{{font-family:'Noto Serif JP',serif;font-size:42px;font-weight:900;color:#b0001e;letter-spacing:0.05em;line-height:1;}}
+.mast-sub{{font-family:'Noto Sans JP',sans-serif;font-size:11px;color:#444;line-height:1.4;}}
+.mast-date{{margin-left:auto;font-family:'Noto Sans JP',sans-serif;font-size:11px;color:#333;text-align:right;line-height:1.5;}}
+.footer{{background:#f4f0e6;border-top:1.5px solid #111;padding:3px 16px;display:flex;justify-content:space-between;font-family:'Noto Sans JP',sans-serif;font-size:9px;color:#555;}}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="mast">
+  <div class="mast-logo">AI新聞</div>
+  <div class="mast-sub">AIテクノロジー・経済面<br>最新AI動向をお届けします</div>
+  <div class="mast-date">{year}年{month}月{day}日<br>朝刊</div>
+</div>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 900" style="display:block;width:100%;">
+<defs>
+  <linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f4f0e6"/><stop offset="100%" stop-color="#edeadf"/></linearGradient>
+  <filter id="gfx" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.82 0.88" numOctaves="4" seed="7" result="n"/><feColorMatrix type="saturate" values="0" in="n" result="g"/><feBlend in="SourceGraphic" in2="g" mode="multiply" result="b"/><feComposite in="b" in2="SourceGraphic" operator="in"/></filter>
+  <radialGradient id="vg" cx="50%" cy="50%" r="72%"><stop offset="0%" stop-color="transparent"/><stop offset="75%" stop-color="rgba(0,0,0,0.04)"/><stop offset="100%" stop-color="rgba(0,0,0,0.22)"/></radialGradient>
+  <linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(0,0,0,0.18)"/><stop offset="100%" stop-color="transparent"/></linearGradient>
+  <clipPath id="cm"><rect x="1260" y="0" width="540" height="530"/></clipPath>
+  <clipPath id="c2"><rect x="936" y="0" width="324" height="530"/></clipPath>
+  <clipPath id="c3"><rect x="684" y="0" width="252" height="530"/></clipPath>
+  <clipPath id="c4"><rect x="486" y="0" width="198" height="530"/></clipPath>
+  <clipPath id="cr1"><rect x="324" y="0" width="162" height="265"/></clipPath>
+  <clipPath id="cr2"><rect x="324" y="265" width="162" height="265"/></clipPath>
+  <clipPath id="cm1"><rect x="162" y="0" width="162" height="265"/></clipPath>
+  <clipPath id="cm2"><rect x="162" y="265" width="162" height="265"/></clipPath>
+  <clipPath id="cl1"><rect x="0" y="0" width="162" height="265"/></clipPath>
+  <clipPath id="cl2"><rect x="0" y="265" width="162" height="265"/></clipPath>
+  <clipPath id="cda"><rect x="1200" y="530" width="600" height="370"/></clipPath>
+  <clipPath id="cdb"><rect x="600" y="530" width="600" height="370"/></clipPath>
+  <clipPath id="cdc"><rect x="0" y="530" width="600" height="370"/></clipPath>
+</defs>
+<rect width="1800" height="900" fill="url(#pg)"/>
+<line x1="1260" y1="0" x2="1260" y2="530" stroke="#555" stroke-width="1.5"/>
+<line x1="936" y1="0" x2="936" y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="684" y1="0" x2="684" y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="486" y1="0" x2="486" y2="530" stroke="#888" stroke-width="0.7"/>
+<line x1="324" y1="0" x2="324" y2="530" stroke="#aaa" stroke-width="0.5"/>
+<line x1="162" y1="0" x2="162" y2="530" stroke="#aaa" stroke-width="0.5"/>
+<line x1="0" y1="265" x2="486" y2="265" stroke="#bbb" stroke-width="0.5" stroke-dasharray="3,2"/>
+<line x1="0" y1="530" x2="1800" y2="530" stroke="#333" stroke-width="2.5"/>
+<line x1="1200" y1="530" x2="1200" y2="900" stroke="#888" stroke-width="0.8"/>
+<line x1="600" y1="530" x2="600" y2="900" stroke="#888" stroke-width="0.8"/>
+<!-- 主記事 font=36 L1x=1756 L2x=1716 fo:x=1260,y=22,w=448,h=508 -->
+<text font-family="'Noto Sans JP'" font-size="9" fill="#111" font-weight="700" x="1262" y="13">【主記事肩見出し】</text>
+<line x1="1260" y1="17" x2="1800" y2="17" stroke="#aaa" stroke-width="0.5"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="36" writing-mode="tb-rl" x="1756" y="24" clip-path="url(#cm)">【主記事見出し1行目】</text>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="36" writing-mode="tb-rl" x="1716" y="24" clip-path="url(#cm)">【主記事見出し2行目】</text>
+<foreignObject x="1260" y="22" width="448" height="508"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:508px;width:448px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:14px;line-height:1.85;text-align:justify;padding:0 8px;color:#111;"><p style="text-indent:1em;margin:0 0 2px;">【主記事本文400文字以内】</p><p style="font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;color:#b0001e;border-right:2.5px solid #b0001e;padding-right:3px;margin:5px 0 2px;">【中見出し】</p><p style="text-indent:1em;margin:0 0 2px;">【本文続き】</p></div></foreignObject>
+<!-- 第2記事 font=24 L1x=1229 L2x=1201 fo:x=936,y=22,w=257,h=508 -->
+<text font-family="'Noto Sans JP'" font-size="9" fill="#111" font-weight="700" x="938" y="13">【第2肩】</text>
+<line x1="936" y1="17" x2="1260" y2="17" stroke="#aaa" stroke-width="0.5"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="24" writing-mode="tb-rl" x="1229" y="24" clip-path="url(#c2)">【第2見出し1】</text>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="24" writing-mode="tb-rl" x="1201" y="24" clip-path="url(#c2)">【第2見出し2】</text>
+<foreignObject x="936" y="22" width="257" height="508"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:508px;width:257px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:14px;line-height:1.85;text-align:justify;padding:0 7px;color:#111;"><p style="text-indent:1em;">【第2本文260文字以内】</p></div></foreignObject>
+<!-- 第3記事 font=18 L1x=910 L2x=888 fo:x=684,y=22,w=196,h=508 -->
+<text font-family="'Noto Sans JP'" font-size="8.5" fill="#111" font-weight="700" x="686" y="13">【第3肩】</text>
+<line x1="684" y1="17" x2="936" y2="17" stroke="#aaa" stroke-width="0.5"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="18" writing-mode="tb-rl" x="910" y="24" clip-path="url(#c3)">【第3見出し1】</text>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="18" writing-mode="tb-rl" x="888" y="24" clip-path="url(#c3)">【第3見出し2】</text>
+<foreignObject x="684" y="22" width="196" height="508"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:508px;width:196px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:14px;line-height:1.85;text-align:justify;padding:0 6px;color:#111;"><p style="text-indent:1em;">【第3本文200文字以内】</p></div></foreignObject>
+<!-- 第4記事 font=15 L1x=661 L2x=642 fo:x=486,y=22,w=148,h=508 -->
+<text font-family="'Noto Sans JP'" font-size="8" fill="#111" font-weight="700" x="488" y="13">【第4肩】</text>
+<line x1="486" y1="17" x2="684" y2="17" stroke="#aaa" stroke-width="0.5"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="15" writing-mode="tb-rl" x="661" y="24" clip-path="url(#c4)">【第4見出し1】</text>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="15" writing-mode="tb-rl" x="642" y="24" clip-path="url(#c4)">【第4見出し2】</text>
+<foreignObject x="486" y="22" width="148" height="508"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:508px;width:148px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:14px;line-height:1.85;text-align:justify;padding:0 6px;color:#111;"><p style="text-indent:1em;">【第4本文140文字以内】</p></div></foreignObject>
+<!-- 短信右上 L1x=469 fo:x=324,y=19,w=137,h=246 -->
+<text font-family="'Noto Sans JP'" font-size="7.5" fill="#5c3214" font-weight="700" x="326" y="11">【短信R上肩】</text>
+<line x1="324" y1="15" x2="486" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="13" writing-mode="tb-rl" x="469" y="19" clip-path="url(#cr1)">【短信R上見出し】</text>
+<foreignObject x="324" y="19" width="137" height="246"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;"><p style="text-indent:1em;">【83文字以内】</p></div></foreignObject>
+<!-- 短信右下 L1x=469 fo:x=324,y=284,w=137,h=246 -->
+<text font-family="'Noto Sans JP'" font-size="7.5" fill="#5c3214" font-weight="700" x="326" y="276">【短信R下肩】</text>
+<line x1="324" y1="280" x2="486" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="13" writing-mode="tb-rl" x="469" y="284" clip-path="url(#cr2)">【短信R下見出し】</text>
+<foreignObject x="324" y="284" width="137" height="246"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;"><p style="text-indent:1em;">【83文字以内】</p></div></foreignObject>
+<!-- 短信中上 L1x=307 fo:x=162,y=19,w=137,h=246 -->
+<text font-family="'Noto Sans JP'" font-size="7.5" fill="#5c3214" font-weight="700" x="164" y="11">【短信M上肩】</text>
+<line x1="162" y1="15" x2="324" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="13" writing-mode="tb-rl" x="307" y="19" clip-path="url(#cm1)">【短信M上見出し】</text>
+<foreignObject x="162" y="19" width="137" height="246"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;"><p style="text-indent:1em;">【83文字以内】</p></div></foreignObject>
+<!-- 短信中下 L1x=307 fo:x=162,y=284,w=137,h=246 -->
+<text font-family="'Noto Sans JP'" font-size="7.5" fill="#5c3214" font-weight="700" x="164" y="276">【短信M下肩】</text>
+<line x1="162" y1="280" x2="324" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="13" writing-mode="tb-rl" x="307" y="284" clip-path="url(#cm2)">【短信M下見出し】</text>
+<foreignObject x="162" y="284" width="137" height="246"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;"><p style="text-indent:1em;">【83文字以内】</p></div></foreignObject>
+<!-- 短信左上 L1x=145 fo:x=0,y=19,w=137,h=246 -->
+<text font-family="'Noto Sans JP'" font-size="7.5" fill="#5c3214" font-weight="700" x="2" y="11">【短信L上肩】</text>
+<line x1="0" y1="15" x2="162" y2="15" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="13" writing-mode="tb-rl" x="145" y="19" clip-path="url(#cl1)">【短信L上見出し】</text>
+<foreignObject x="0" y="19" width="137" height="246"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;"><p style="text-indent:1em;">【83文字以内】</p></div></foreignObject>
+<!-- 短信左下 L1x=145 fo:x=0,y=284,w=137,h=246 -->
+<text font-family="'Noto Sans JP'" font-size="7.5" fill="#5c3214" font-weight="700" x="2" y="276">【短信L下肩】</text>
+<line x1="0" y1="280" x2="162" y2="280" stroke="#5c3214" stroke-width="0.7"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="13" writing-mode="tb-rl" x="145" y="284" clip-path="url(#cl2)">【短信L下見出し】</text>
+<foreignObject x="0" y="284" width="137" height="246"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:246px;width:137px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:13px;line-height:1.85;text-align:justify;padding:0 5px;color:#111;"><p style="text-indent:1em;">【83文字以内】</p></div></foreignObject>
+<!-- 下段A L1x=1770 L2x=1748 fo:x=1200,y=552,w=540,h=348 -->
+<text font-family="'Noto Sans JP'" font-size="8.5" fill="#0d3461" font-weight="700" x="1202" y="543">【下段A肩】</text>
+<line x1="1200" y1="547" x2="1800" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="21" fill="#0d3461" writing-mode="tb-rl" x="1770" y="552" clip-path="url(#cda)">【下段A見出し1】</text>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="21" fill="#0d3461" writing-mode="tb-rl" x="1748" y="552" clip-path="url(#cda)">【下段A見出し2】</text>
+<foreignObject x="1200" y="552" width="540" height="348"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:14px;line-height:1.85;text-align:justify;padding:0 8px;color:#111;"><p style="text-indent:1em;">【下段A本文400文字以内】</p></div></foreignObject>
+<!-- 下段B L1x=1170 L2x=1148 fo:x=600,y=552,w=540,h=348 -->
+<text font-family="'Noto Sans JP'" font-size="8.5" fill="#0d3461" font-weight="700" x="602" y="543">【下段B肩】</text>
+<line x1="600" y1="547" x2="1200" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="21" fill="#0d3461" writing-mode="tb-rl" x="1170" y="552" clip-path="url(#cdb)">【下段B見出し1】</text>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="21" fill="#0d3461" writing-mode="tb-rl" x="1148" y="552" clip-path="url(#cdb)">【下段B見出し2】</text>
+<foreignObject x="600" y="552" width="540" height="348"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:14px;line-height:1.85;text-align:justify;padding:0 8px;color:#111;"><p style="text-indent:1em;">【下段B本文400文字以内】</p></div></foreignObject>
+<!-- 下段C L1x=570 L2x=548 fo:x=0,y=552,w=540,h=348 -->
+<text font-family="'Noto Sans JP'" font-size="8.5" fill="#0d3461" font-weight="700" x="2" y="543">【下段C肩】</text>
+<line x1="0" y1="547" x2="600" y2="547" stroke="#0d3461" stroke-width="0.8"/>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="21" fill="#0d3461" writing-mode="tb-rl" x="570" y="552" clip-path="url(#cdc)">【下段C見出し1】</text>
+<text font-family="'Noto Serif JP'" font-weight="900" font-size="21" fill="#0d3461" writing-mode="tb-rl" x="548" y="552" clip-path="url(#cdc)">【下段C見出し2】</text>
+<foreignObject x="0" y="552" width="540" height="348"><div xmlns="http://www.w3.org/1999/xhtml" style="writing-mode:vertical-rl;height:348px;width:540px;overflow:hidden;font-family:'Noto Serif JP',serif;font-size:14px;line-height:1.85;text-align:justify;padding:0 8px;color:#111;"><p style="text-indent:1em;">【下段C本文400文字以内】</p></div></foreignObject>
+<!-- エフェクト -->
+<rect width="1800" height="900" fill="#e8d8a0" filter="url(#gfx)" opacity="0.10" pointer-events="none"/>
+<rect width="1800" height="900" fill="url(#vg)" pointer-events="none"/>
+<rect x="0" y="0" width="28" height="900" fill="url(#sg)" pointer-events="none"/>
+</svg>
+<div class="footer"><span>AI新聞　AIテクノロジー・経済面　※AIエージェントが自動生成した模擬紙面</span><span>{year}年{month}月{day}日　朝刊</span></div>
+</div></body></html>
 
-          message = client.messages.create(
-              model="claude-sonnet-4-6",
-              max_tokens=16000,
-              messages=[{"role": "user", "content": prompt}]
+上記テンプレートの【】をすべて実際の内容に置き換えた完全なHTMLのみを出力してください。"""
+
+          print(f"Generating newspaper for {date_str} using Gemini with Google Search...")
+
+          response = client.models.generate_content(
+              model='gemini-2.0-flash',
+              contents=prompt,
+              config=types.GenerateContentConfig(
+                  tools=[types.Tool(google_search=types.GoogleSearch())],
+                  max_output_tokens=16000,
+              )
           )
 
-          html_content = message.content[0].text
+          html_content = response.text
 
-          # HTMLブロックの抽出
+          # HTMLブロック抽出
           match = re.search(r'<!DOCTYPE html>.*?</html>', html_content, re.DOTALL | re.IGNORECASE)
           if match:
               html_content = match.group(0)
@@ -98,33 +243,33 @@ HTMLのみを出力し、説明文は不要。"""
           os.makedirs('ai-shinbun', exist_ok=True)
           with open(output_path, 'w', encoding='utf-8') as f:
               f.write(html_content)
-
-          print(f"Saved: {output_path}")
+          print(f"Saved: {output_path} ({len(html_content)} chars)")
 
           # index.html更新
           index_path = 'ai-shinbun/index.html'
           with open(index_path, 'r', encoding='utf-8') as f:
               index_html = f.read()
 
-          new_card = f'''      <a class="newspaper-card" href="newspaper_{date_str}.html" style="animation-delay:0.05s">
+          # すでにこの日付のカードがあればスキップ
+          if f'newspaper_{date_str}.html' in index_html:
+              print(f"Card for {date_str} already in index.html, skipping.")
+          else:
+              new_card = f'''      <a class="newspaper-card" href="newspaper_{date_str}.html" style="animation-delay:0.05s">
         <div class="card-date-num">{month}月{day}日</div>
         <div class="card-date-str">{year}年{month}月{day}日（{weekday}）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
       '''
+              index_html = index_html.replace(
+                  '      <a class="newspaper-card" href="newspaper_',
+                  new_card + '      <a class="newspaper-card" href="newspaper_',
+                  1
+              )
+              with open(index_path, 'w', encoding='utf-8') as f:
+                  f.write(index_html)
+              print(f"Updated: {index_path}")
 
-          # 最初のnewspaper-cardの直前に挿入
-          index_html = index_html.replace(
-              '      <a class="newspaper-card" href="newspaper_',
-              new_card + '      <a class="newspaper-card" href="newspaper_',
-              1
-          )
-
-          with open(index_path, 'w', encoding='utf-8') as f:
-              f.write(index_html)
-
-          print(f"Updated: {index_path}")
           PYEOF
 
       - name: Commit and push
@@ -132,6 +277,7 @@ HTMLのみを出力し、説明文は不要。"""
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ai-shinbun/
-          git diff --staged --quiet || git commit -m "AI新聞 $(TZ=Asia/Tokyo date '+%Y年%m月%d日')号を追加"
+          git diff --staged --quiet && echo "No changes to commit" && exit 0
+          git commit -m "AI新聞 $(TZ=Asia/Tokyo date '+%Y年%m月%d日')号を追加 [Gemini自動生成]"
           git pull --rebase origin main
           git push origin main
