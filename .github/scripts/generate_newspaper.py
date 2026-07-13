@@ -1,0 +1,111 @@
+import os
+import re
+import sys
+import datetime
+from google import genai
+from google.genai import types
+
+jst = datetime.timezone(datetime.timedelta(hours=9))
+today = datetime.datetime.now(jst)
+date_str = today.strftime('%Y%m%d')
+year = today.year
+month = today.month
+day = today.day
+weekdays = ['月', '火', '水', '木', '金', '土', '日']
+weekday = weekdays[today.weekday()]
+
+output_path = f'ai-shinbun/newspaper_{date_str}.html'
+
+if os.path.exists(output_path):
+    print(f'{output_path} already exists, skipping.')
+    sys.exit(0)
+
+api_key = os.environ.get('GEMINI_API_KEY')
+if not api_key:
+    print('GEMINI_API_KEY is not set.')
+    sys.exit(1)
+
+client = genai.Client(api_key=api_key)
+
+template_path = os.path.join(os.path.dirname(__file__), 'newspaper_template.html')
+with open(template_path, 'r', encoding='utf-8') as f:
+    template = f.read()
+
+template = template.replace('{{YEAR}}', str(year)).replace('{{MONTH}}', str(month)).replace('{{DAY}}', str(day))
+
+prompt = f"""{year}年{month}月{day}日付のAI新聞HTMLを生成してください。
+
+まずGoogle検索で以下を調べて最新AIニュースを収集してください：
+- "AI news {year} {month}/{day}"
+- "人工知能 最新ニュース {year}年{month}月"
+- "Claude GPT Gemini LLM news {year}"
+
+収集したニュースをもとに、以下の仕様で完全なAI新聞HTMLを生成してください。
+
+## 文字数制限（厳守・超過すると表示が切れる）
+- 主記事（上段右・最重要）: 400文字以内
+- 第2記事: 260文字以内
+- 第3記事: 200文字以内
+- 第4記事: 140文字以内
+- 短信6本: 各83文字以内
+- 下段3本: 各400文字以内
+
+## 色アクセント
+- 数値・統計・日付: <span style="color:#b0001e;font-weight:700;">数値</span>
+- 固有名詞・組織名: <span style="color:#0d3461;font-weight:700;">名前</span>
+
+## 絶対守るルール
+- 実際に収集したニュースで記事を書く（架空ニュース禁止）
+- <!DOCTYPE html>から</html>まで完全なHTMLを出力する
+- 下記テンプレートの構造・スタイル・SVGレイアウトはそのまま使い、【】内のプレースホルダーだけを実際の内容に置き換える
+
+## テンプレート
+{template}
+
+上記テンプレートの【】をすべて実際の内容に置き換えた完全なHTMLのみを出力してください。説明文は不要です。"""
+
+print(f"Generating newspaper for {date_str} using Gemini with Google Search...")
+
+response = client.models.generate_content(
+    model='gemini-2.0-flash',
+    contents=prompt,
+    config=types.GenerateContentConfig(
+        tools=[types.Tool(google_search=types.GoogleSearch())],
+        max_output_tokens=16000,
+    )
+)
+
+html_content = response.text
+
+match = re.search(r'<!DOCTYPE html>.*?</html>', html_content, re.DOTALL | re.IGNORECASE)
+if match:
+    html_content = match.group(0)
+
+os.makedirs('ai-shinbun', exist_ok=True)
+with open(output_path, 'w', encoding='utf-8') as f:
+    f.write(html_content)
+print(f"Saved: {output_path} ({len(html_content)} chars)")
+
+index_path = 'ai-shinbun/index.html'
+with open(index_path, 'r', encoding='utf-8') as f:
+    index_html = f.read()
+
+if f'newspaper_{date_str}.html' in index_html:
+    print(f"Card for {date_str} already in index.html, skipping.")
+else:
+    new_card = (
+        f'      <a class="newspaper-card" href="newspaper_{date_str}.html" style="animation-delay:0.05s">\n'
+        f'        <div class="card-date-num">{month}月{day}日</div>\n'
+        f'        <div class="card-date-str">{year}年{month}月{day}日（{weekday}）</div>\n'
+        f'        <div class="card-label">朝刊 <span class="card-arrow">→</span></div>\n'
+        f'      </a>\n\n'
+        f'      '
+    )
+    index_html = index_html.replace(
+        '      <a class="newspaper-card" href="newspaper_',
+        new_card + '      <a class="newspaper-card" href="newspaper_',
+        1
+    )
+    with open(index_path, 'w', encoding='utf-8') as f:
+        f.write(index_html)
+    print(f"Updated: {index_path}")
