@@ -66,14 +66,30 @@ prompt = f"""{year}年{month}月{day}日付のAI新聞HTMLを生成してくだ�
 
 print(f"Generating newspaper for {date_str} using Gemini with Google Search...")
 
-response = client.models.generate_content(
-    model='gemini-2.0-flash',
-    contents=prompt,
-    config=types.GenerateContentConfig(
-        tools=[types.Tool(google_search=types.GoogleSearch())],
-        max_output_tokens=16000,
-    )
-)
+candidate_models = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.0-flash']
+
+response = None
+last_error = None
+for model_name in candidate_models:
+    try:
+        print(f"Trying model: {model_name}")
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+                max_output_tokens=16000,
+            )
+        )
+        print(f"Success with model: {model_name}")
+        break
+    except Exception as e:
+        last_error = e
+        print(f"Model {model_name} failed: {e}")
+        continue
+
+if response is None:
+    raise RuntimeError(f"All candidate models failed. Last error: {last_error}")
 
 html_content = response.text
 
