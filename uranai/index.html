@@ -118,6 +118,32 @@
     position: relative;
     z-index: 1;
   }
+  #refresh-btn {
+    display: block;
+    margin: 0 auto 20px auto;
+    padding: 8px 20px;
+    border-radius: 999px;
+    border: 1.5px solid var(--primary);
+    background: #fff;
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-family: inherit;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    transition: background 0.15s, color 0.15s;
+  }
+  #refresh-btn:hover:not(:disabled) { background: var(--primary); color: #fff; }
+  #refresh-btn:disabled { opacity: 0.5; cursor: default; }
+  #refresh-status {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-sub);
+    margin-top: -12px;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+  }
   .sign-badge {
     text-align: center;
     margin-bottom: 24px;
@@ -555,6 +581,9 @@
 <h1>🔮 占いダッシュボード</h1>
 <p class="date">2026年7月13日（月）｜ 🌑蟹座新月(7/14)前日・悪い波注意・流出/逮捕ニュース注意・安定/立花★・会話・勉強に吉</p>
 
+<button id="refresh-btn">🔄 今すぐ更新</button>
+<p id="refresh-status"></p>
+
 <div class="sign-badge">
   <span>♉ 牡牛座（4/20〜5/20）・木星人＋霊合星人（寅・1986年5月7日）</span>
 </div>
@@ -920,6 +949,32 @@
 </footer>
 
 <script>
+(function () {
+  const VM_BASE = 'https://uranai-takechan.duckdns.org:8443/';
+  const refreshBtn = document.getElementById('refresh-btn');
+  const refreshStatus = document.getElementById('refresh-status');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', function () {
+      refreshBtn.disabled = true;
+      refreshStatus.textContent = '更新中...';
+      fetch(VM_BASE + 'api/refresh-dashboard', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.success) {
+            refreshStatus.textContent = data.date + ' に更新しました。数秒後にページが再読み込みされます。';
+            setTimeout(function () { location.reload(); }, 3000);
+          } else {
+            refreshStatus.textContent = '更新に失敗しました: ' + (data.error || '不明なエラー');
+            refreshBtn.disabled = false;
+          }
+        })
+        .catch(function (e) {
+          refreshStatus.textContent = '通信エラー: ' + e.message;
+          refreshBtn.disabled = false;
+        });
+    });
+  }
+})();
 (function () {
   const log = document.getElementById('chat-log');
   const input = document.getElementById('chat-input');
