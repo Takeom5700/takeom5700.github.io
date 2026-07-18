@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>タケオのアプリ縁日 — Takeom5700 Works</title>
-<meta name="description" content="Takeom5700（タケオ）が個人開発したWebアプリの一覧。物件検索・グルメ検索・経路・占い・AI新聞など。">
+<title>タケオの縁日 — Takeom5700 & 宮本さなぎ</title>
+<meta name="description" content="Takeom5700（タケオ）が個人開発したWebアプリと、宮本さなぎ名義のnote・Instagram・YouTubeをまとめた活動の縁日。">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#221114">
 <meta name="mobile-web-app-capable" content="yes">
@@ -15,11 +15,13 @@
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=RocknRoll+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=RocknRoll+One&family=Shippori+Mincho+B1:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-/* タケオのアプリ縁日 — 夜祭り全振りテーマ
+/* タケオの縁日 — 夜祭り全振りテーマ v2
    基準世界観:「奇々怪界 黒マントの謎」公式（焦げ小豆×朱赤#C1181B×山吹金#FFB244）
-   紅白幕・連提灯・屋台テント・火の粉。夜祭りとして意図した単一ダークテーマ */
+   + 藍染め暖簾を追加（紅×金だけだと縁日として単調なため、伝統的な紅白×藍×金の
+   祭り配色に寄せた）。紅白幕は裾をまっすぐにし、紐の房・生地のムラを足して
+   西洋フェア風のスカラップ庇をやめた。単一ダークテーマは意図的な選択。 */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -30,7 +32,9 @@
   --shu: #c1181b;           /* 朱赤 */
   --shu-bright: #e04a3c;
   --kin: #ffb244;           /* 山吹金 */
+  --ai: #2c3c58;            /* 藍染め（暖簾） */
   --wood: #5f3d31;          /* 屋台の木枠 */
+  --rope: #6b4a2e;
   --line: rgba(244, 234, 216, 0.2);
 }
 
@@ -71,19 +75,50 @@ body::before {
     radial-gradient(1px 1px at 28% 76%, rgba(255, 178, 68, 0.35) 50%, transparent 51%);
 }
 
-/* ---- 紅白幕（入口の幕） ---- */
+/* ---- 紅白幕の紐（吊り下げの結び目） ---- */
+.maku-ties {
+  display: flex;
+  justify-content: space-evenly;
+  padding: 0 5%;
+  margin-bottom: -4px;
+  position: relative;
+  z-index: 1;
+}
+.maku-tie {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #8a6544, var(--rope) 55%, #3a2418 100%);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
+}
+
+/* ---- 紅白幕（入口の幕・裾はまっすぐ） ---- */
 .maku {
-  height: 40px;
+  position: relative;
+  height: 42px;
+  background: repeating-linear-gradient(90deg, var(--shu) 0 30px, #efe3c9 30px 60px);
+}
+/* 手染めのムラ・折りジワ */
+.maku::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   background:
-    linear-gradient(rgba(0, 0, 0, 0.18), transparent 60%),
-    repeating-linear-gradient(90deg, var(--shu) 0 22px, #eee1c8 22px 44px);
-  --r: 11px;
-  -webkit-mask:
-    radial-gradient(circle at 50% 100%, #000 calc(var(--r) - 0.5px), #0000 var(--r)) bottom / calc(var(--r) * 2) var(--r) repeat-x,
-    linear-gradient(#000 0 0) top / 100% calc(100% - var(--r)) no-repeat;
-  mask:
-    radial-gradient(circle at 50% 100%, #000 calc(var(--r) - 0.5px), #0000 var(--r)) bottom / calc(var(--r) * 2) var(--r) repeat-x,
-    linear-gradient(#000 0 0) top / 100% calc(100% - var(--r)) no-repeat;
+    linear-gradient(180deg, rgba(0, 0, 0, 0.22) 0%, transparent 42%, transparent 68%, rgba(0, 0, 0, 0.14) 100%),
+    radial-gradient(220px 50px at 14% 40%, rgba(0, 0, 0, 0.1), transparent),
+    radial-gradient(260px 50px at 63% 60%, rgba(255, 255, 255, 0.06), transparent),
+    radial-gradient(200px 50px at 88% 35%, rgba(0, 0, 0, 0.08), transparent);
+  pointer-events: none;
+}
+/* 房（下端の飾り） */
+.maku::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -8px;
+  height: 8px;
+  background-image: radial-gradient(circle, rgba(40, 20, 14, 0.55) 2px, transparent 2.5px);
+  background-size: 17px 8px;
+  background-position: 8px 0;
 }
 
 /* ---- 連提灯 ---- */
@@ -91,7 +126,7 @@ body::before {
   display: flex;
   justify-content: center;
   gap: clamp(20px, 6vw, 64px);
-  padding-top: 6px;
+  padding-top: 12px;
   min-height: 86px;
 }
 
@@ -239,6 +274,48 @@ header .lede {
 }
 .stats .sep { color: var(--shu-bright); margin: 0 0.6em; }
 
+/* ---- 区切り: 注連縄と紙垂 ---- */
+.shimenawa-wrap {
+  padding: 2.6rem 0 2.2rem;
+  text-align: center;
+}
+.shimenawa {
+  height: 12px;
+  max-width: 30rem;
+  margin: 0 auto;
+  border-radius: 7px;
+  background: repeating-linear-gradient(115deg, #7a5638 0 5px, #4a3120 5px 9px, #7a5638 9px 14px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: space-evenly;
+}
+.shide {
+  width: 11px;
+  height: 30px;
+  margin-top: 11px;
+  background: var(--washi);
+  opacity: 0.92;
+  clip-path: polygon(
+    0% 0%, 100% 0%, 100% 16%, 25% 26%, 100% 36%,
+    25% 46%, 100% 56%, 25% 66%, 100% 76%,
+    100% 100%, 0% 100%
+  );
+}
+.section-label {
+  margin-top: 1.4rem;
+  font-family: "DotGothic16", monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.35em;
+  color: var(--kin);
+}
+.section-lede {
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--washi-sub);
+  max-width: 34em;
+  margin-inline: auto;
+}
+
 /* ---- 屋台カード ---- */
 .grid {
   display: grid;
@@ -260,29 +337,44 @@ header .lede {
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-/* 屋台のテント庇（紅白スカラップ） */
-.awning {
-  display: block;
-  height: 30px;
-  margin: 0 -22px 16px;
-  background:
-    linear-gradient(rgba(0, 0, 0, 0.16), transparent 55%),
-    repeating-linear-gradient(90deg, var(--shu) 0 14px, #eee1c8 14px 28px);
-  --r: 7px;
-  -webkit-mask:
-    radial-gradient(circle at 50% 100%, #000 calc(var(--r) - 0.5px), #0000 var(--r)) bottom / calc(var(--r) * 2) var(--r) repeat-x,
-    linear-gradient(#000 0 0) top / 100% calc(100% - var(--r)) no-repeat;
-  mask:
-    radial-gradient(circle at 50% 100%, #000 calc(var(--r) - 0.5px), #0000 var(--r)) bottom / calc(var(--r) * 2) var(--r) repeat-x,
-    linear-gradient(#000 0 0) top / 100% calc(100% - var(--r)) no-repeat;
-}
-
 .card:hover {
   transform: translateY(-4px);
   border-color: var(--ac);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 24px color-mix(in srgb, var(--ac) 30%, transparent);
 }
 .card:hover .lantern { box-shadow: 0 0 16px var(--ac), 0 0 4px var(--ac); }
+.card:hover .noren-kanji { text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3), 0 0 14px color-mix(in srgb, var(--ac) 55%, transparent); }
+
+/* 暖簾（藍染め・一枚布に一文字・下端に一本切れ込み） */
+.noren {
+  position: relative;
+  height: 68px;
+  margin: 0 -22px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 8px;
+  background:
+    radial-gradient(140% 100% at 20% 10%, rgba(255, 255, 255, 0.07), transparent 55%),
+    radial-gradient(140% 100% at 82% 92%, rgba(0, 0, 0, 0.24), transparent 55%),
+    var(--ai);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 58% 100%, 50% 58%, 42% 100%, 0 100%);
+}
+.noren::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: linear-gradient(180deg, #8a6544, var(--rope));
+}
+.noren-kanji {
+  font-family: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-weight: 700;
+  font-size: 1.85rem;
+  color: var(--washi);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+  transition: text-shadow 0.18s ease;
+}
 
 .card-head {
   display: flex;
@@ -362,15 +454,16 @@ footer {
   text-align: center;
   font-family: "DotGothic16", monospace;
   font-size: 0.74rem;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.2em;
   color: var(--washi-sub);
-  padding: 2.2rem 0 3.5rem;
+  padding: 1.4rem 0 3.5rem;
+  line-height: 2.2;
 }
 footer .kin { color: var(--kin); }
 
 /* ---- 登場演出 ---- */
 @media (prefers-reduced-motion: no-preference) {
-  header, .card, footer {
+  header, .card, footer, .shimenawa-wrap {
     opacity: 0;
     transform: translateY(12px);
     animation: appear 0.5s ease-out forwards;
@@ -391,6 +484,11 @@ footer .kin { color: var(--kin); }
 </head>
 <body>
 
+<div class="maku-ties" aria-hidden="true">
+  <span class="maku-tie"></span><span class="maku-tie"></span><span class="maku-tie"></span>
+  <span class="maku-tie"></span><span class="maku-tie"></span><span class="maku-tie"></span>
+  <span class="maku-tie"></span><span class="maku-tie"></span><span class="maku-tie"></span>
+</div>
 <div class="maku" aria-hidden="true"></div>
 
 <div class="lanterns" aria-hidden="true">
@@ -414,14 +512,14 @@ footer .kin { color: var(--kin); }
 
 <header>
   <p class="eyebrow">— TAKEOM5700 PRESENTS —</p>
-  <h1>タケオのアプリ縁日</h1>
-  <p class="lede">今宵も開催中。個人開発のWebアプリが夜店のようにならぶ横丁です。気になる屋台へどうぞ。</p>
-  <p class="stats">APPS 07<span class="sep">◆</span>LIVE 06<span class="sep">◆</span>TOKYO</p>
+  <h1>タケオの縁日</h1>
+  <p class="lede">アプリをつくったり、宮本さなぎとして書いたり奏でたりしています。気になる屋台へどうぞ。</p>
+  <p class="stats">APPS 07<span class="sep">◆</span>SNS 04<span class="sep">◆</span>TOKYO</p>
 </header>
 
 <main class="grid">
   <a class="card" href="/tokyo-gakki-bukken/" style="--ac:#ffb244">
-    <span class="awning" aria-hidden="true"></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">楽</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その一</span>
@@ -433,7 +531,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="/aruite-gourmet/" style="--ac:#e0685a">
-    <span class="awning" aria-hidden="true"></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">飯</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その二</span>
@@ -445,7 +543,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="/route-app/" style="--ac:#7fa8e0">
-    <span class="awning" aria-hidden="true"></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">道</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その三</span>
@@ -457,7 +555,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="/uranai/" style="--ac:#b48ae0">
-    <span class="awning" aria-hidden="true"></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">占</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その四</span>
@@ -469,7 +567,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="/bus-coin-navi/" style="--ac:#7cc796">
-    <span class="awning" aria-hidden="true"></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">輪</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その五</span>
@@ -481,7 +579,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="/ai-shinbun/" style="--ac:#f4ead8">
-    <span class="awning" aria-hidden="true"></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">報</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その六</span>
@@ -493,7 +591,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="http://localhost:8791/driver.html" style="--ac:#9a8a80">
-    <span class="awning" aria-hidden="true"></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">運</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その七</span>
@@ -505,7 +603,66 @@ footer .kin { color: var(--kin); }
   </a>
 </main>
 
-<footer>© 2026 TAKEOM5700 <span class="kin">◆</span> またおこしください</footer>
+<div class="shimenawa-wrap">
+  <div class="shimenawa" aria-hidden="true">
+    <span class="shide"></span><span class="shide"></span><span class="shide"></span>
+    <span class="shide"></span><span class="shide"></span>
+  </div>
+  <p class="section-label">宮本さなぎとして</p>
+  <p class="section-lede">アプリとは別に、宮本さなぎ名義で書いたり話したり奏でたりしています。</p>
+</div>
+
+<section class="grid">
+  <a class="card" href="https://note.com/alert_zinnia5671" target="_blank" rel="noopener" style="--ac:#3d8f96">
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">考</span></span>
+    <span class="card-head">
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="card-num">その八</span>
+      <span class="chip chip--live">LIVE</span>
+    </span>
+    <span class="card-title">さなぎの時代考察（note）</span>
+    <span class="card-desc">AI時代の働き方・教育・社会を、肩書きではなく思考の構造から考察するnote。</span>
+    <span class="card-url">note.com/alert_zinnia5671</span>
+  </a>
+
+  <a class="card" href="https://www.instagram.com/miyamoto_sanagi" target="_blank" rel="noopener" style="--ac:#b0568a">
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">写</span></span>
+    <span class="card-head">
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="card-num">その九</span>
+      <span class="chip chip--live">LIVE</span>
+    </span>
+    <span class="card-title">宮本さなぎ（Instagram）</span>
+    <span class="card-desc">宮本さなぎとしての日々を残しているInstagram。</span>
+    <span class="card-url">instagram.com/miyamoto_sanagi</span>
+  </a>
+
+  <a class="card" href="https://www.youtube.com/@MiyamotoSanagi" target="_blank" rel="noopener" style="--ac:#e0973c">
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">声</span></span>
+    <span class="card-head">
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="card-num">その十</span>
+      <span class="chip chip--live">LIVE</span>
+    </span>
+    <span class="card-title">宮本さなぎ（YouTube）</span>
+    <span class="card-desc">宮本さなぎ名義で動画を投稿しているYouTubeチャンネル。</span>
+    <span class="card-url">youtube.com/@MiyamotoSanagi</span>
+  </a>
+
+  <a class="card" href="https://www.youtube.com/@TOKYOJAZZOFGAMEMUSIC" target="_blank" rel="noopener" style="--ac:#6c72c9">
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">奏</span></span>
+    <span class="card-head">
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="card-num">その十一</span>
+      <span class="chip chip--live">LIVE</span>
+    </span>
+    <span class="card-title">TOKYO JAZZ OF GAME MUSIC</span>
+    <span class="card-desc">ゲーム音楽をジャズにアレンジして届けるYouTubeチャンネル。</span>
+    <span class="card-url">youtube.com/@TOKYOJAZZOFGAMEMUSIC</span>
+  </a>
+</section>
+
+<footer>© 2026 TAKEOM5700 <span class="kin">◆</span> 宮本さなぎ <span class="kin">◆</span> またおこしください</footer>
 
 </div>
 
