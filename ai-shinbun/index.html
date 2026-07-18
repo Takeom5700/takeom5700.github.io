@@ -3,400 +3,384 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI新聞 - Takeom5700</title>
+<title>AI新聞 縮刷版 — バックナンバー</title>
+<meta name="description" content="AIの最新ニュースをAIエージェントが毎朝執筆・組版する模擬新聞「AI新聞」のバックナンバー一覧。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #fdfaff;
-  --text: #2a2440;
-  --text-sub: #5f5678;
-  --border: #d5c2f2;
-  --primary: #a685f2;
-  --pink: #ff9ecb;
-  --sky: #8ed1ff;
-  --mint: #8ff0c8;
-  --crimson: #b0001e;
-  --navy: #0d3461;
+  --bg: #f6f4ef;
+  --ink: #211f1b;
+  --ink-sub: #6b675e;
+  --aka: #a31f2b;
+  --line: rgba(33, 31, 27, 0.16);
+  --line-strong: rgba(33, 31, 27, 0.75);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #181715;
+    --ink: #e9e6df;
+    --ink-sub: #a09b90;
+    --aka: #d05561;
+    --line: rgba(233, 230, 223, 0.16);
+    --line-strong: rgba(233, 230, 223, 0.7);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #181715; --ink: #e9e6df; --ink-sub: #a09b90;
+  --aka: #d05561; --line: rgba(233,230,223,0.16); --line-strong: rgba(233,230,223,0.7);
+}
+:root[data-theme="light"] {
+  --bg: #f6f4ef; --ink: #211f1b; --ink-sub: #6b675e;
+  --aka: #a31f2b; --line: rgba(33,31,27,0.16); --line-strong: rgba(33,31,27,0.75);
 }
 
-html {
-  background: linear-gradient(180deg, #f3e9ff 0%, #e9d8fb 40%, #dcebfc 100%);
-  background-attachment: fixed;
-}
+html { background: var(--bg); }
 
 body {
-  font-family: "M PLUS Rounded 1c", 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
+  font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+  line-break: strict;
+  overflow-wrap: anywhere;
 }
 
-.blob {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(40px);
-  opacity: 0.65;
-  z-index: 0;
-  pointer-events: none;
-  animation: drift 12s ease-in-out infinite;
-  mix-blend-mode: multiply;
-}
-.blob--1 { width:460px; height:460px; top:-140px; left:-140px; background:radial-gradient(circle,var(--primary),transparent 72%); animation-delay:0s; }
-.blob--2 { width:420px; height:420px; top:22%; right:-160px; background:radial-gradient(circle,var(--pink),transparent 72%); animation-delay:3s; }
-.blob--3 { width:380px; height:380px; bottom:-140px; left:15%; background:radial-gradient(circle,var(--sky),transparent 72%); animation-delay:6s; }
+::selection { background: rgba(163, 31, 43, 0.18); }
+:focus-visible { outline: 2px solid var(--aka); outline-offset: 3px; }
 
-@keyframes drift {
-  0%,100% { transform:translate(0,0) scale(1); }
-  33% { transform:translate(36px,-30px) scale(1.1); }
-  66% { transform:translate(-28px,24px) scale(0.94); }
-}
-
-.sparkle { position:fixed; opacity:0.75; pointer-events:none; animation:float 5s ease-in-out infinite; z-index:0; }
-.sparkle--1  { top:8%;  left:6%;  font-size:26px; color:var(--primary); animation-delay:0s; }
-.sparkle--2  { top:12%; right:8%; font-size:18px; color:var(--pink); animation-delay:1.1s; }
-.sparkle--3  { bottom:14%; left:5%;  font-size:20px; color:var(--sky); animation-delay:2.2s; }
-.sparkle--4  { bottom:20%; right:6%; font-size:24px; color:var(--mint); animation-delay:0.6s; }
-@keyframes float {
-  0%,100% { transform:translateY(0) rotate(0deg); }
-  50% { transform:translateY(-16px) rotate(12deg); }
+.wrap {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 5vw, 2.5rem) 4rem;
 }
 
 .back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-sub);
-  text-decoration: none;
-  font-size: 0.88em;
-  padding: 10px 20px;
-  margin: 20px 0 0 20px;
-  background: rgba(255,255,255,0.7);
-  border-radius: 999px;
-  border: 1.5px solid var(--border);
-  position: relative;
-  z-index: 1;
-  transition: background 0.2s;
-}
-.back-link:hover { background: rgba(255,255,255,0.95); }
-
-header {
-  padding: 40px 24px 20px;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-
-.masthead-mini {
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-  background: rgba(255,255,255,0.92);
-  border: 2px solid var(--border);
-  border-radius: 18px;
-  padding: 14px 28px;
-  box-shadow: 0 4px 20px rgba(166,133,242,0.15);
-  margin-bottom: 18px;
-}
-
-.masthead-logo {
-  font-family: 'Noto Serif JP', serif;
-  font-size: 2rem;
-  font-weight: 900;
-  color: var(--crimson);
-  letter-spacing: 0.06em;
-  line-height: 1;
-}
-
-.masthead-sub {
-  font-size: 0.8em;
-  color: var(--text-sub);
-  line-height: 1.6;
-  text-align: left;
-}
-
-header h1 {
-  font-family: "Zen Maru Gothic", sans-serif;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-header h1 .hl {
-  background: linear-gradient(120deg, var(--primary), var(--pink) 60%, var(--sky));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-header p {
-  color: var(--text-sub);
-  margin-top: 8px;
-  font-size: 0.9em;
-}
-
-.underline {
-  width: 72px;
-  height: 4px;
-  border-radius: 4px;
-  margin: 14px auto 0;
-  background: linear-gradient(90deg, var(--primary), var(--pink));
-}
-
-.container {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 0 24px 60px;
-  position: relative;
-  z-index: 1;
-}
-
-.year-group {
-  margin-bottom: 32px;
-}
-
-.year-label {
-  font-family: "Zen Maru Gothic", sans-serif;
-  font-size: 0.85em;
-  font-weight: 700;
-  color: var(--primary);
-  letter-spacing: 0.12em;
-  padding: 4px 14px;
-  background: rgba(166,133,242,0.1);
-  border-radius: 999px;
   display: inline-block;
-  margin-bottom: 14px;
+  margin-top: 1.6rem;
+  font-size: 0.82rem;
+  color: var(--ink-sub);
+  text-decoration: none;
+}
+.back-link:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+
+/* ---- 題字 ---- */
+header {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(1.5rem, 5vw, 2.75rem);
+  padding: clamp(2.5rem, 7vh, 4rem) 0 2.2rem;
 }
 
-.newspaper-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 14px;
+.daiji {
+  flex: none;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-family: "Shippori Mincho B1", "Hiragino Mincho ProN", serif;
+  font-weight: 800;
+  font-size: clamp(2.1rem, 6vw, 2.8rem);
+  letter-spacing: 0.22em;
+  line-height: 1;
+  border: 2px solid var(--ink);
+  padding: 1.1em 0.42em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7em;
 }
+
+.daiji .seal {
+  writing-mode: horizontal-tb;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f6f4ef;
+  background: var(--aka);
+  width: 1.5em;
+  height: 1.5em;
+  display: grid;
+  place-items: center;
+  letter-spacing: 0;
+}
+
+.masthead-info h1 {
+  font-family: "Shippori Mincho B1", "Hiragino Mincho ProN", serif;
+  font-size: clamp(1.5rem, 4.5vw, 2rem);
+  font-weight: 700;
+  font-feature-settings: "palt";
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+.masthead-info .desc {
+  margin-top: 0.8rem;
+  font-size: 0.9rem;
+  color: var(--ink-sub);
+  max-width: 34em;
+}
+
+.pub-data {
+  margin-top: 1.5rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.6rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-sub);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- 目録 ---- */
+.archive-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-sub);
+  margin: 2.2rem 0 0.4rem;
+}
+
+.newspaper-list { display: block; }
 
 .newspaper-card {
-  display: block;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 0 1.1rem;
+  padding: 1.05rem 0.5rem;
+  margin: 0 -0.5rem;
+  border-bottom: 1px solid var(--line);
   text-decoration: none;
-  background: rgba(255,255,255,0.92);
-  border: 2px solid var(--border);
-  border-radius: 16px;
-  padding: 18px 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  box-shadow: 0 4px 14px rgba(166,133,242,0.1);
   color: inherit;
-  opacity: 0;
-  animation: card-in 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  transition: background-color 0.15s ease;
 }
+.newspaper-list .newspaper-card:first-of-type { border-top: 1px solid var(--line); }
 
-.newspaper-card:hover {
-  transform: translateY(-6px) scale(1.02);
-  border-color: var(--primary);
-  box-shadow: 0 12px 28px rgba(166,133,242,0.22);
-}
+.newspaper-card:hover { background: rgba(163, 31, 43, 0.05); }
+.newspaper-card:hover .card-date-num { color: var(--aka); }
+.newspaper-card:hover .card-arrow { transform: translateX(4px); }
 
 .card-date-num {
-  font-family: 'Noto Serif JP', serif;
-  font-size: 1.5rem;
-  font-weight: 900;
-  color: var(--crimson);
-  line-height: 1;
-  margin-bottom: 4px;
+  font-family: "Shippori Mincho B1", "Hiragino Mincho ProN", serif;
+  font-weight: 700;
+  font-size: 1.3rem;
+  font-feature-settings: "palt";
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  min-width: 5.2em;
+  transition: color 0.15s ease;
 }
 
 .card-date-str {
-  font-size: 0.82em;
-  color: var(--text-sub);
-  margin-bottom: 10px;
+  font-size: 0.78rem;
+  color: var(--ink-sub);
+  font-variant-numeric: tabular-nums;
 }
 
 .card-label {
-  font-family: 'Noto Serif JP', serif;
-  font-size: 0.9em;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ink-sub);
+  white-space: nowrap;
+}
+
+.card-arrow { display: inline-block; transition: transform 0.15s ease; }
+
+/* 最新号（自動挿入で常に先頭に入る） */
+.newspaper-list .newspaper-card:first-of-type { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+.newspaper-list .newspaper-card:first-of-type .card-date-num {
+  font-size: 2rem;
+  color: var(--aka);
+}
+.newspaper-list .newspaper-card:first-of-type .card-label::before {
+  content: "最新号　";
+  color: var(--aka);
   font-weight: 700;
-  color: var(--navy);
-}
-
-.card-arrow {
-  float: right;
-  font-size: 1.1em;
-  color: var(--primary);
-  margin-top: -2px;
-}
-
-@keyframes card-in {
-  0%   { opacity:0; transform:translateY(20px) scale(0.94); }
-  100% { opacity:1; transform:translateY(0) scale(1); }
+  letter-spacing: 0.1em;
 }
 
 footer {
-  text-align: center;
-  padding: 32px 24px;
-  color: var(--text-sub);
-  font-size: 0.8em;
-  position: relative;
-  z-index: 1;
+  margin-top: 3rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-sub);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  header, .newspaper-card, .archive-label, footer {
+    opacity: 0;
+    animation: settle 0.5s ease-out forwards;
+  }
+  .archive-label { animation-delay: 0.06s; }
+  .newspaper-card { animation-delay: 0.1s; }
+  footer { animation-delay: 0.15s; }
+}
+@keyframes settle { to { opacity: 1; } }
+
+@media (max-width: 520px) {
+  .newspaper-card { grid-template-columns: 1fr auto; }
+  .card-date-str { grid-column: 1; }
 }
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<div class="blob blob--1" aria-hidden="true"></div>
-<div class="blob blob--2" aria-hidden="true"></div>
-<div class="blob blob--3" aria-hidden="true"></div>
-<span class="sparkle sparkle--1" aria-hidden="true">✦</span>
-<span class="sparkle sparkle--2" aria-hidden="true">✧</span>
-<span class="sparkle sparkle--3" aria-hidden="true">✦</span>
-<span class="sparkle sparkle--4" aria-hidden="true">⋆</span>
-
-<a href="/" class="back-link">← Apps一覧に戻る</a>
+<a href="/" class="back-link">← つくったものの目次へ</a>
 
 <header>
-  <div class="masthead-mini">
-    <div class="masthead-logo">AI新聞</div>
-    <div class="masthead-sub">AIテクノロジー・経済面<br>毎朝自動生成</div>
+  <div class="daiji" aria-label="AI新聞 題字">AI新聞<span class="seal" aria-hidden="true">朝</span></div>
+  <div class="masthead-info">
+    <h1>縮刷版 バックナンバー</h1>
+    <p class="desc">AIの最新ニュースをAIエージェントが毎朝取材・執筆・組版する模擬新聞。各号は縦書きの紙面でお読みいただけます。</p>
+    <div class="pub-data">
+      <span>2026年6月28日 創刊</span>
+      <span>毎朝 自動発行</span>
+      <span>朝刊 全<span id="issue-count">19</span>号</span>
+    </div>
   </div>
-  <h1><span class="hl">バックナンバー一覧</span></h1>
-  <p>最新のAIニュースをお届けする毎日更新の模擬紙面</p>
-  <div class="underline"></div>
 </header>
 
-<div class="container">
-  <div class="year-group">
-    <div class="year-label">2026年 7月</div>
-    <div class="newspaper-list">
+<main>
+  <p class="archive-label">所蔵目録</p>
+  <div class="newspaper-list">
 
-      <a class="newspaper-card" href="newspaper_20260718.html" style="animation-delay:0.05s">
+      <a class="newspaper-card" href="newspaper_20260718.html">
         <div class="card-date-num">7月18日</div>
         <div class="card-date-str">2026年7月18日（土）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-            <a class="newspaper-card" href="newspaper_20260717.html" style="animation-delay:0.05s">
+      <a class="newspaper-card" href="newspaper_20260717.html">
         <div class="card-date-num">7月17日</div>
         <div class="card-date-str">2026年7月17日（金）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-            <a class="newspaper-card" href="newspaper_20260716.html" style="animation-delay:0.05s">
+      <a class="newspaper-card" href="newspaper_20260716.html">
         <div class="card-date-num">7月16日</div>
         <div class="card-date-str">2026年7月16日（木）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-            <a class="newspaper-card" href="newspaper_20260715.html" style="animation-delay:0.05s">
+      <a class="newspaper-card" href="newspaper_20260715.html">
         <div class="card-date-num">7月15日</div>
         <div class="card-date-str">2026年7月15日（水）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260714.html" style="animation-delay:0.08s">
+      <a class="newspaper-card" href="newspaper_20260714.html">
         <div class="card-date-num">7月14日</div>
         <div class="card-date-str">2026年7月14日（火）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-            <a class="newspaper-card" href="newspaper_20260713.html" style="animation-delay:0.05s">
+      <a class="newspaper-card" href="newspaper_20260713.html">
         <div class="card-date-num">7月13日</div>
         <div class="card-date-str">2026年7月13日（月）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260712.html" style="animation-delay:0.08s">
+      <a class="newspaper-card" href="newspaper_20260712.html">
         <div class="card-date-num">7月12日</div>
-        <div class="card-date-str">2026年7月12日（土）</div>
+        <div class="card-date-str">2026年7月12日（日）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260711.html" style="animation-delay:0.08s">
+      <a class="newspaper-card" href="newspaper_20260711.html">
         <div class="card-date-num">7月11日</div>
-        <div class="card-date-str">2026年7月11日（金）</div>
+        <div class="card-date-str">2026年7月11日（土）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260710.html" style="animation-delay:0.11s">
+      <a class="newspaper-card" href="newspaper_20260710.html">
         <div class="card-date-num">7月10日</div>
-        <div class="card-date-str">2026年7月10日（木）</div>
+        <div class="card-date-str">2026年7月10日（金）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260709.html" style="animation-delay:0.14s">
+      <a class="newspaper-card" href="newspaper_20260709.html">
         <div class="card-date-num">7月9日</div>
-        <div class="card-date-str">2026年7月9日（水）</div>
+        <div class="card-date-str">2026年7月9日（木）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260708.html" style="animation-delay:0.17s">
+      <a class="newspaper-card" href="newspaper_20260708.html">
         <div class="card-date-num">7月8日</div>
         <div class="card-date-str">2026年7月8日（水）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260707.html" style="animation-delay:0.08s">
+      <a class="newspaper-card" href="newspaper_20260707.html">
         <div class="card-date-num">7月7日</div>
         <div class="card-date-str">2026年7月7日（火）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260706.html" style="animation-delay:0.08s">
+      <a class="newspaper-card" href="newspaper_20260706.html">
         <div class="card-date-num">7月6日</div>
         <div class="card-date-str">2026年7月6日（月）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260705.html" style="animation-delay:0.10s">
+      <a class="newspaper-card" href="newspaper_20260705.html">
         <div class="card-date-num">7月5日</div>
         <div class="card-date-str">2026年7月5日（日）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260704.html" style="animation-delay:0.15s">
+      <a class="newspaper-card" href="newspaper_20260704.html">
         <div class="card-date-num">7月4日</div>
         <div class="card-date-str">2026年7月4日（土）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260703.html" style="animation-delay:0.20s">
+      <a class="newspaper-card" href="newspaper_20260703.html">
         <div class="card-date-num">7月3日</div>
         <div class="card-date-str">2026年7月3日（金）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260702.html" style="animation-delay:0.25s">
+      <a class="newspaper-card" href="newspaper_20260702.html">
         <div class="card-date-num">7月2日</div>
         <div class="card-date-str">2026年7月2日（木）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260701.html" style="animation-delay:0.30s">
+      <a class="newspaper-card" href="newspaper_20260701.html">
         <div class="card-date-num">7月1日</div>
-        <div class="card-date-str">2026年7月1日（火）</div>
+        <div class="card-date-str">2026年7月1日（水）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-    </div>
-  </div>
-
-  <div class="year-group">
-    <div class="year-label">2026年 6月</div>
-    <div class="newspaper-list">
-
-      <a class="newspaper-card" href="newspaper_20260629.html" style="animation-delay:0.35s">
+      <a class="newspaper-card" href="newspaper_20260629.html">
         <div class="card-date-num">6月29日</div>
         <div class="card-date-str">2026年6月29日（月）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-      <a class="newspaper-card" href="newspaper_20260628.html" style="animation-delay:0.40s">
+      <a class="newspaper-card" href="newspaper_20260628.html">
         <div class="card-date-num">6月28日</div>
         <div class="card-date-str">2026年6月28日（日）</div>
         <div class="card-label">朝刊 <span class="card-arrow">→</span></div>
       </a>
 
-    </div>
   </div>
+</main>
+
+<footer>© 2026 Takeom5700 — AI新聞はAIエージェントが自動生成した模擬紙面です。</footer>
+
 </div>
 
-<footer>© 2026 Takeom5700 — AI新聞はAIエージェントが自動生成した模擬紙面です</footer>
+<script>
+document.getElementById('issue-count').textContent =
+  document.querySelectorAll('.newspaper-card').length;
+</script>
 </body>
 </html>

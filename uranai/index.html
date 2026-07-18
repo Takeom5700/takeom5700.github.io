@@ -6,565 +6,480 @@
 <title>占いダッシュボード 2026/7/18</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+  /* ============================================================
+     占いダッシュボード — 夜空の天文台テーマ
+     単一テーマ（夜）を意図的に採用。自動更新スクリプトが参照する
+     クラス名・DOM構造は一切変更しないこと（date / comm-source /
+     label / score-num / score-bar / h3+tag など）
+     ============================================================ */
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  html {
-    overflow-x: hidden;
-    max-width: 100%;
-  }
+  html { overflow-x: hidden; max-width: 100%; }
 
   :root {
-    --bg-soft: #ece1fb;
-    --text: #2a2440;
-    --text-sub: #5f5678;
-    --border: #d5c2f2;
-    --primary: #a685f2;
-    --pink: #ff9ecb;
-    --sky: #8ed1ff;
-    --mint: #8ff0c8;
+    /* 新パレット（夜空） */
+    --bg: #10131f;
+    --surface: #191d2d;
+    --surface2: #212639;
+    --gold: #d8b972;
+    --good: #6cc796;
+    --warn: #dfa955;
+    --bad: #e08585;
+    --line: rgba(233, 231, 242, 0.12);
+    /* 旧変数名（本文内のインラインstyleが参照するため必ず残す） */
+    --bg-soft: #191d2d;
+    --text: #e9e7f2;
+    --text-sub: #a6a1bf;
+    --border: #3a3f5c;
+    --primary: #b9a5f0;
+    --pink: #e89bb8;
+    --sky: #8fb8e8;
+    --mint: #7fd8b0;
   }
 
-  html {
-    background: linear-gradient(180deg, #f3e9ff 0%, #e9d8fb 40%, #dcebfc 100%);
-    background-attachment: fixed;
-  }
+  html { background: var(--bg); }
 
   body {
+    font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    background: var(--bg);
     color: var(--text);
-    font-family: "M PLUS Rounded 1c", 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-    min-height: 100vh;
-    padding: 20px;
+    line-height: 1.85;
+    letter-spacing: 0.02em;
+    line-break: strict;
+    overflow-wrap: anywhere;
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 0 clamp(16px, 4vw, 40px) 70px;
     position: relative;
-    overflow-x: hidden;
   }
 
-  /* ── 背景の光玉・きらめき ───────────────────────── */
+  /* 星空（微細な固定ドット） */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 8% 12%,  rgba(233,231,242,0.55) 50%, transparent 51%),
+      radial-gradient(1px 1px at 22% 38%, rgba(233,231,242,0.35) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 34% 8%, rgba(216,185,114,0.5) 50%, transparent 51%),
+      radial-gradient(1px 1px at 48% 55%, rgba(233,231,242,0.4) 50%, transparent 51%),
+      radial-gradient(1px 1px at 61% 22%, rgba(143,184,232,0.5) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 73% 68%, rgba(233,231,242,0.3) 50%, transparent 51%),
+      radial-gradient(1px 1px at 84% 15%, rgba(233,231,242,0.5) 50%, transparent 51%),
+      radial-gradient(1px 1px at 92% 45%, rgba(216,185,114,0.4) 50%, transparent 51%),
+      radial-gradient(1px 1px at 15% 78%, rgba(143,184,232,0.4) 50%, transparent 51%),
+      radial-gradient(1px 1px at 55% 88%, rgba(233,231,242,0.35) 50%, transparent 51%);
+  }
+
+  /* 星雲（旧blob要素を静かな光に転用） */
   .blob {
     position: fixed;
     border-radius: 50%;
-    filter: blur(46px);
-    opacity: 0.55;
-    z-index: 0;
+    filter: blur(70px);
+    opacity: 0.14;
+    z-index: -1;
     pointer-events: none;
-    animation: drift 13s ease-in-out infinite;
-    mix-blend-mode: multiply;
   }
-  .blob--1 { width: 380px; height: 380px; top: -120px; left: -120px;
-    background: radial-gradient(circle, var(--primary), transparent 72%); }
-  .blob--2 { width: 360px; height: 360px; top: 40%; right: -140px;
-    background: radial-gradient(circle, var(--pink), transparent 72%); animation-delay: 3s; }
-  .blob--3 { width: 320px; height: 320px; bottom: -120px; left: 10%;
-    background: radial-gradient(circle, var(--sky), transparent 72%); animation-delay: 6s; }
+  .blob--1 { width: 480px; height: 480px; top: -160px; left: -140px; background: radial-gradient(circle, #5a4a9e, transparent 70%); }
+  .blob--2 { width: 420px; height: 420px; top: 30%; right: -180px; background: radial-gradient(circle, #2e4a7e, transparent 70%); }
+  .blob--3 { width: 380px; height: 380px; bottom: -140px; left: 20%; background: radial-gradient(circle, #7e6a3e, transparent 70%); }
 
-  @keyframes drift {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(28px, -24px) scale(1.08); }
-    66% { transform: translate(-22px, 18px) scale(0.95); }
-  }
-
+  /* 星（旧sparkle要素） */
   .sparkle {
     position: fixed;
-    opacity: 0.7;
+    color: var(--gold);
+    opacity: 0.4;
     pointer-events: none;
-    z-index: 0;
-    animation: float 5s ease-in-out infinite;
+    z-index: -1;
+    font-size: 14px;
   }
-  .sparkle--1 { top: 6%;  left: 5%;  font-size: 22px; color: var(--primary); animation-delay: 0s; }
-  .sparkle--2 { top: 10%; right: 6%; font-size: 18px; color: var(--pink); animation-delay: 1.2s; }
-  .sparkle--3 { bottom: 10%; left: 4%; font-size: 20px; color: var(--sky); animation-delay: 2.1s; }
-  .sparkle--4 { bottom: 16%; right: 5%; font-size: 24px; color: var(--primary); animation-delay: 0.6s; }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-14px) rotate(10deg); }
+  .sparkle--1 { top: 10%; left: 5%; }
+  .sparkle--2 { top: 16%; right: 7%; font-size: 11px; }
+  .sparkle--3 { bottom: 18%; left: 8%; font-size: 12px; color: var(--sky); }
+  .sparkle--4 { bottom: 26%; right: 5%; }
+  @media (prefers-reduced-motion: no-preference) {
+    .sparkle { animation: twinkle 5s ease-in-out infinite; }
+    .sparkle--2 { animation-delay: 1.3s; }
+    .sparkle--3 { animation-delay: 2.6s; }
+    .sparkle--4 { animation-delay: 3.9s; }
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.15; }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .blob, .sparkle { animation: none; }
+  ::selection { background: rgba(216, 185, 114, 0.3); }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+  .mincho, h1, h2, h3, .comm-title {
+    font-family: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    font-feature-settings: "palt";
   }
 
+  /* ---- 見出し ---- */
   h1 {
-    text-align: center;
-    font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif;
-    font-size: 1.7rem;
+    font-size: clamp(1.7rem, 5vw, 2.4rem);
     font-weight: 700;
-    background: linear-gradient(120deg, var(--primary), var(--pink) 60%, var(--sky));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    margin-bottom: 4px;
-    letter-spacing: 0.06em;
-    position: relative;
-    z-index: 1;
-    animation: mascot-bounce 3s ease-in-out infinite;
+    letter-spacing: 0.18em;
+    margin: clamp(40px, 8vh, 64px) 0 14px;
+    line-height: 1.4;
   }
-
-  @keyframes mascot-bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    h1 { animation: none; }
+  h1::after {
+    content: "";
+    display: block;
+    width: 3.2em;
+    height: 2px;
+    margin-top: 12px;
+    background: linear-gradient(90deg, var(--gold), transparent);
   }
 
   .date {
-    text-align: center;
     color: var(--text-sub);
-    font-size: 0.9rem;
-    margin-bottom: 20px;
-    position: relative;
-    z-index: 1;
+    font-size: 0.88rem;
+    max-width: 48em;
+    margin-bottom: 18px;
   }
+
   #refresh-btn {
-    display: block;
-    margin: 0 auto 20px auto;
-    padding: 8px 20px;
-    border-radius: 999px;
-    border: 1.5px solid var(--primary);
-    background: #fff;
-    color: var(--primary);
-    font-size: 0.8rem;
     font-family: inherit;
-    cursor: pointer;
-    position: relative;
-    z-index: 1;
-    transition: background 0.15s, color 0.15s;
-  }
-  #refresh-btn:hover:not(:disabled) { background: var(--primary); color: #fff; }
-  #refresh-btn:disabled { opacity: 0.5; cursor: default; }
-  #refresh-status {
-    text-align: center;
-    font-size: 0.78rem;
-    color: var(--text-sub);
-    margin-top: -12px;
-    margin-bottom: 16px;
-    position: relative;
-    z-index: 1;
-  }
-  .sign-badge {
-    text-align: center;
-    margin-bottom: 24px;
-    position: relative;
-    z-index: 1;
-  }
-  .sign-badge span {
-    display: inline-block;
-    background: #fff;
-    border: 2px solid var(--border);
-    border-radius: 999px;
-    padding: 6px 20px;
-    font-size: 1rem;
-    color: var(--primary);
-    font-weight: 700;
-    box-shadow: 0 4px 12px rgba(166, 133, 242, 0.12);
-    white-space: nowrap;
-  }
-  @media (max-width: 480px) {
-    .sign-badge span {
-      white-space: normal;
-      border-radius: 16px;
-      font-size: 0.8rem;
-      padding: 8px 16px;
-      line-height: 1.7;
-    }
-  }
-
-  /* ラッキーカラー */
-  .lucky-section {
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(6px);
-    border: 2px solid var(--border);
-    border-radius: 18px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
-    position: relative;
-    z-index: 1;
-    box-shadow: 0 8px 20px rgba(166, 133, 242, 0.08);
-  }
-  .lucky-section h2 {
-    font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif;
-    color: var(--primary);
-    font-size: 0.9rem;
-    margin-bottom: 12px;
+    font-size: 0.8rem;
     letter-spacing: 0.08em;
+    color: var(--text-sub);
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: color 0.18s ease, border-color 0.18s ease;
   }
-  .color-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .color-chip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--bg-soft);
-    border-radius: 999px;
-    padding: 8px 14px;
-    font-size: 0.85rem;
-  }
-  .color-dot {
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0,0,0,0.12);
-  }
-  .chip-label { color: var(--text-sub); font-size: 0.75rem; }
-  .chip-value { color: var(--text); font-weight: bold; }
+  #refresh-btn:hover:not(:disabled) { color: var(--gold); border-color: var(--gold); }
+  #refresh-btn:disabled { opacity: 0.45; cursor: default; }
+  #refresh-status { font-size: 0.78rem; color: var(--text-sub); margin-top: 8px; }
 
-  /* ソートボタン */
+  .sign-badge {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 7px 16px;
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    color: var(--text-sub);
+  }
+
+  /* ---- アラート ---- */
+  .alert-box {
+    margin-top: 26px;
+    padding: 20px 22px;
+    background: rgba(224, 133, 133, 0.06);
+    border: 1px solid rgba(224, 133, 133, 0.3);
+    font-size: 0.88rem;
+    line-height: 1.95;
+  }
+  .alert-box > strong:first-child { color: var(--bad); letter-spacing: 0.06em; }
+
+  /* ---- 人間関係セクション ---- */
+  .comm-section { margin-top: 46px; }
+
+  .comm-title, .lucky-section h2, .chat-section h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 16px;
+  }
+
+  .comm-period-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    margin: 22px 0 6px;
+  }
+
+  .comm-item {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 16px 18px;
+    margin-top: 10px;
+    font-size: 0.88rem;
+    line-height: 1.95;
+  }
+
+  .comm-source {
+    font-size: 0.73rem;
+    letter-spacing: 0.08em;
+    color: var(--text-sub);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* ---- ラッキーカラー ---- */
+  .lucky-section { margin-top: 46px; }
+
   .sort-controls {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
+    margin-bottom: 14px;
   }
-  .sort-controls .sort-label {
-    font-size: 0.75rem;
-    color: var(--text-sub);
-    white-space: nowrap;
-  }
+  .sort-label { font-size: 0.76rem; color: var(--text-sub); letter-spacing: 0.08em; }
   .sort-btn {
-    font-size: 0.72rem;
-    padding: 4px 13px;
-    border-radius: 999px;
-    border: 1.5px solid var(--border);
+    font-family: inherit;
+    font-size: 0.76rem;
+    letter-spacing: 0.06em;
+    padding: 5px 14px;
     background: transparent;
     color: var(--text-sub);
+    border: 1px solid var(--border);
     cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-    white-space: nowrap;
+    transition: color 0.15s ease, border-color 0.15s ease;
   }
-  .sort-btn.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: #fff;
-  }
-  .sort-btn:hover:not(.active) {
-    border-color: var(--primary);
-    color: var(--primary);
+  .sort-btn:hover { color: var(--text); }
+  .sort-btn.active { color: var(--gold); border-color: var(--gold); }
+
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 10px;
   }
 
-  /* スコアグリッド */
+  .color-chip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 12px 14px;
+    transition: border-color 0.15s ease;
+  }
+  .color-chip:hover { border-color: var(--border); }
+
+  .color-dot {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(233, 231, 242, 0.08);
+  }
+
+  .chip-label {
+    font-size: 0.7rem;
+    color: var(--text-sub);
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+  .chip-value {
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  /* ---- スコア ---- */
   .scores-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
     gap: 14px;
-    margin-bottom: 20px;
-    position: relative;
-    z-index: 1;
+    margin-top: 46px;
   }
+
   .score-card {
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(6px);
-    border: 2px solid var(--border);
-    border-radius: 16px;
-    padding: 16px;
-    text-align: center;
-    box-shadow: 0 8px 20px rgba(166, 133, 242, 0.08);
-    opacity: 0;
-    animation: card-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 20px 20px 18px;
+    transition: border-color 0.18s ease;
   }
-  .scores-grid .score-card:nth-child(1) { animation-delay: 0.05s; }
-  .scores-grid .score-card:nth-child(2) { animation-delay: 0.1s; }
-  .scores-grid .score-card:nth-child(3) { animation-delay: 0.15s; }
-  .scores-grid .score-card:nth-child(4) { animation-delay: 0.2s; }
-  .scores-grid .score-card:nth-child(5) { animation-delay: 0.25s; }
-  .scores-grid .score-card:nth-child(6) { animation-delay: 0.3s; }
-  .scores-grid .score-card:nth-child(7) { animation-delay: 0.35s; }
+  .score-card:hover { border-color: var(--border); }
 
-  @keyframes card-in {
-    0%   { opacity: 0; transform: translateY(20px) scale(0.94); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .score-card { opacity: 1; animation: none; }
-  }
-
-  .score-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 14px 26px rgba(166, 133, 242, 0.18);
-  }
   .score-card .label {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     color: var(--text-sub);
-    margin-bottom: 8px;
-  }
-  .score-card .score-num {
-    font-size: 2rem;
-    font-weight: bold;
-    line-height: 1;
-    margin-bottom: 6px;
-  }
-  .score-bar-bg {
-    background: var(--bg-soft);
-    border-radius: 4px;
-    height: 6px;
-    overflow: hidden;
-  }
-  .score-bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.5s;
-  }
-  .score-card .comment {
-    font-size: 0.72rem;
-    color: var(--text-sub);
-    margin-top: 6px;
-    text-align: left;
   }
 
-  /* ソース別サマリー */
+  .score-num {
+    font-family: "Shippori Mincho B1", "Hiragino Mincho ProN", serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+    margin: 6px 0 4px;
+  }
+  .s-high { color: var(--good); }
+  .s-mid  { color: var(--warn); }
+  .s-low  { color: var(--bad); }
+
+  .score-bar-bg {
+    height: 4px;
+    background: rgba(233, 231, 242, 0.1);
+    margin-bottom: 12px;
+  }
+  .score-bar-fill { height: 100%; }
+  .bar-high { background: var(--good); box-shadow: 0 0 8px rgba(108, 199, 150, 0.45); }
+  .bar-mid  { background: var(--warn); box-shadow: 0 0 8px rgba(223, 169, 85, 0.45); }
+  .bar-low  { background: var(--bad);  box-shadow: 0 0 8px rgba(224, 133, 133, 0.45); }
+
+  .score-card .comment {
+    font-size: 0.8rem;
+    line-height: 1.85;
+    color: var(--text-sub);
+  }
+
+  /* ---- ソース別サマリー ---- */
   .sources-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 14px;
-    margin-bottom: 20px;
-    position: relative;
-    z-index: 1;
+    margin-top: 46px;
   }
+
   .source-card {
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(6px);
-    border: 2px solid var(--border);
-    border-radius: 16px;
-    padding: 16px;
-    box-shadow: 0 8px 20px rgba(166, 133, 242, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 20px 22px;
+    transition: border-color 0.18s ease;
   }
-  .source-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 14px 26px rgba(166, 133, 242, 0.18);
-  }
+  .source-card:hover { border-color: var(--border); }
+
   .source-card h3 {
-    font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif;
-    font-size: 0.9rem;
-    color: var(--primary);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .source-card .tag {
-    font-size: 0.7rem;
-    background: var(--bg-soft);
-    border-radius: 999px;
-    padding: 2px 10px;
-    color: var(--primary);
+    font-size: 1.02rem;
     font-weight: 700;
-  }
-  .source-card p {
-    font-size: 0.82rem;
-    color: var(--text);
-    line-height: 1.7;
-  }
-  .source-card .file-link {
-    display: block;
-    margin-top: 10px;
-    font-size: 0.75rem;
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: 500;
-  }
-  .source-card .file-link:hover { color: #8a63e0; }
-
-  /* 注意事項 */
-  .alert-box {
-    background: #fff6ea;
-    border: 2px solid #ffd9a0;
-    border-radius: 16px;
-    padding: 12px 16px;
-    margin-bottom: 20px;
-    font-size: 0.82rem;
-    color: #a06a1a;
-    line-height: 1.7;
-    position: relative;
-    z-index: 1;
-  }
-  .alert-box strong { color: #c07d10; }
-
-  /* 人間関係・コミュニケーション */
-  .comm-section {
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(6px);
-    border: 2px solid var(--border);
-    border-left: 4px solid var(--sky);
-    border-radius: 16px;
-    padding: 14px 18px;
-    margin-bottom: 20px;
-    font-size: 0.82rem;
-    color: var(--text);
-    line-height: 1.8;
-    position: relative;
-    z-index: 1;
-    box-shadow: 0 8px 20px rgba(166, 133, 242, 0.08);
-  }
-  .comm-section strong { color: #4a90c0; }
-  .comm-section .comm-title {
-    font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif;
-    font-size: 0.85rem;
-    color: #4a90c0;
-    font-weight: bold;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .comm-item {
-    margin-bottom: 8px;
-    padding-left: 10px;
-    border-left: 2px solid #cfe8f7;
-  }
-  .comm-item .comm-source {
-    font-size: 0.72rem;
-    color: var(--text-sub);
-    margin-bottom: 2px;
-  }
-  .comm-period-label {
-    font-size: 0.71rem;
-    font-weight: 700;
-    color: var(--sky);
-    letter-spacing: 0.06em;
-    margin: 12px 0 6px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #cfe8f7;
-  }
-  .comm-period-label:first-child { margin-top: 2px; }
-
-  /* チャット */
-  .chat-section {
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(6px);
-    border: 2px solid var(--border);
-    border-radius: 18px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
-    position: relative;
-    z-index: 1;
-    box-shadow: 0 8px 20px rgba(166, 133, 242, 0.08);
-  }
-  .chat-section h2 {
-    font-family: "Zen Maru Gothic", "M PLUS Rounded 1c", sans-serif;
-    color: var(--primary);
-    font-size: 0.9rem;
-    margin-bottom: 12px;
     letter-spacing: 0.08em;
-  }
-  #chat-log {
-    max-height: 320px;
-    overflow-y: auto;
+    padding-bottom: 10px;
     margin-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tag {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+    border: 1px solid rgba(216, 185, 114, 0.4);
+    padding: 2px 9px;
+    margin-left: 10px;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  .source-card p {
+    font-size: 0.84rem;
+    line-height: 1.95;
+  }
+
+  .file-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 0.78rem;
+    color: var(--sky);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(143, 184, 232, 0.4);
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .file-link:hover { color: var(--gold); border-color: var(--gold); }
+
+  /* ---- チャット ---- */
+  .chat-section { margin-top: 46px; }
+
+  #chat-log {
+    min-height: 40px;
+    max-height: 340px;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-bottom: 14px;
   }
+
   .chat-msg {
-    padding: 8px 14px;
-    border-radius: 16px;
-    font-size: 0.85rem;
-    line-height: 1.6;
     max-width: 85%;
+    padding: 12px 16px;
+    font-size: 0.86rem;
+    line-height: 1.85;
     white-space: pre-wrap;
   }
   .chat-msg.user {
-    background: linear-gradient(120deg, var(--primary), var(--pink));
-    color: #fff;
     align-self: flex-end;
+    background: var(--surface2);
+    border: 1px solid var(--border);
   }
   .chat-msg.assistant {
-    background: var(--bg-soft);
-    color: var(--text);
     align-self: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--gold);
   }
-  .chat-input-row {
-    display: flex;
-    gap: 8px;
-  }
+
+  .chat-input-row { display: flex; gap: 8px; }
+
   #chat-input {
     flex: 1;
-    min-width: 0;
-    background: #fff;
-    border: 2px solid var(--border);
-    border-radius: 999px;
-    padding: 10px 16px;
+    font-family: inherit;
+    font-size: 0.88rem;
     color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 11px 14px;
+    min-width: 0;
+  }
+  #chat-input::placeholder { color: rgba(166, 161, 191, 0.6); }
+  #chat-input:focus { outline: none; border-color: var(--gold); }
+
+  #chat-send, #chat-voice {
     font-family: inherit;
-    font-size: 0.85rem;
-  }
-  #chat-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(166, 133, 242, 0.15);
-  }
-  #chat-send {
-    background: linear-gradient(135deg, var(--primary), var(--pink));
-    border: none;
-    border-radius: 999px;
-    padding: 10px 20px;
-    color: #fff;
-    font-family: inherit;
-    font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.84rem;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 11px 18px;
     cursor: pointer;
-    flex-shrink: 0;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 4px 12px rgba(166, 133, 242, 0.3);
+    transition: color 0.15s ease, border-color 0.15s ease;
   }
-  #chat-send:hover:not(:disabled) { transform: translateY(-1px); }
-  #chat-send:disabled { opacity: 0.5; cursor: default; }
-  #chat-voice {
-    background: #eaf6ff;
-    border: 2px solid var(--sky);
-    border-radius: 999px;
-    padding: 10px 14px;
-    color: #3a8fc0;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    flex-shrink: 0;
-  }
-  #chat-voice:hover { background: #d8f0ff; }
+  #chat-send:hover, #chat-voice:hover { color: var(--gold); border-color: var(--gold); }
+  #chat-send:disabled { opacity: 0.45; cursor: default; }
   #chat-voice.recording {
-    background: #ffe8ea;
-    border-color: var(--pink);
-    color: #e05575;
-    animation: pulse-rec 1s infinite;
+    color: var(--bad);
+    border-color: var(--bad);
   }
-  @keyframes pulse-rec {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+  @media (prefers-reduced-motion: no-preference) {
+    #chat-voice.recording { animation: rec-pulse 1.4s ease-in-out infinite; }
   }
-  .chat-note { font-size: 0.7rem; color: var(--text-sub); margin-top: 8px; }
-
-  @media (max-width: 480px) {
-    .chat-section { padding: 14px 10px; }
-    #chat-send { padding: 10px 14px; font-size: 0.8rem; }
-    #chat-voice { padding: 10px 10px; }
-    .chat-input-row { gap: 6px; }
+  @keyframes rec-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(224, 133, 133, 0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(224, 133, 133, 0); }
   }
 
-  footer {
-    text-align: center;
+  .chat-note {
+    margin-top: 10px;
+    font-size: 0.72rem;
     color: var(--text-sub);
-    font-size: 0.75rem;
-    margin-top: 20px;
-    position: relative;
-    z-index: 1;
   }
 
-  /* スコア色 */
-  .s-high { color: #2c8a56; }
-  .s-mid  { color: #b57a15; }
-  .s-low  { color: #c94464; }
-  .bar-high { background: linear-gradient(90deg, #6bc98f, #2c8a56); }
-  .bar-mid  { background: linear-gradient(90deg, #ffcf7a, #b57a15); }
-  .bar-low  { background: linear-gradient(90deg, #ff9eb5, #c94464); }
+  /* ---- フッター ---- */
+  footer {
+    margin-top: 56px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 0.74rem;
+    line-height: 2;
+    color: var(--text-sub);
+  }
+
+  /* 自動更新が挿入する古いインライン色の可読性補正（暗背景用） */
+  [style*="color:#2c8a56"] { color: #5fc98f !important; }
+  [style*="color:#9988bb"] { color: #a89ecf !important; }
+
+  @media (max-width: 600px) {
+    .chat-input-row { flex-wrap: wrap; }
+    #chat-input { flex-basis: 100%; }
+  }
 </style>
 </head>
 <body>
@@ -578,7 +493,7 @@
 <span class="sparkle sparkle--3" aria-hidden="true">⋆</span>
 <span class="sparkle sparkle--4" aria-hidden="true">✦</span>
 
-<h1>🔮 占いダッシュボード</h1>
+<h1>占いダッシュボード</h1>
 <p class="date">2026年7月18日（土）｜ 寅年は7/18〜20「悩みが解決し心が軽くなる」好転期。牡牛座の評価上昇期も7/19まで継続。全体は「危険信号が点滅」— 特に今日18日は事件・事故・食中毒に注意。よく寝て運気アップ。</p>
 
 <button id="refresh-btn">🔄 今すぐ更新</button>
