@@ -348,17 +348,18 @@ header .lede {
 /* 暖簾（藍染め・一枚布に一文字・下端に一本切れ込み） */
 .noren {
   position: relative;
-  height: 68px;
+  height: 78px;
   margin: 0 -22px 16px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding-top: 8px;
+  padding-top: 14px;
   background:
     radial-gradient(140% 100% at 20% 10%, rgba(255, 255, 255, 0.07), transparent 55%),
     radial-gradient(140% 100% at 82% 92%, rgba(0, 0, 0, 0.24), transparent 55%),
     var(--ai);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 58% 100%, 50% 58%, 42% 100%, 0 100%);
+  /* 切れ込みは文字より十分下（79%地点が頂点）に収め、文字を削らない */
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 54% 100%, 50% 79%, 46% 100%, 0 100%);
 }
 .noren::before {
   content: "";
