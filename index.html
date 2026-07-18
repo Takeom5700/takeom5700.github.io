@@ -3,241 +3,261 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Takeom5700 Works — 個人開発アプリの索引</title>
+<title>タケオムのアプリ縁日 — Takeom5700 Works</title>
 <meta name="description" content="Takeom5700が個人開発したWebアプリの一覧。物件検索・グルメ検索・経路・占い・AI新聞など。">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#f3f2ed" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#17191b" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#221114">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Takeom5700">
 <link rel="icon" href="/icons/icon-192.png">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=RocknRoll+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+/* タケオムのアプリ縁日 — 「奇々怪界 黒マントの謎」公式サイトの世界観を基準にした
+   和風妖怪レトロゲーム調（焦げ小豆 #221111系 × 朱赤 #C1181B × 山吹金 #FFB244）。
+   夜祭りの世界として意図した単一ダークテーマ（冷たい純黒は使わない） */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #f3f2ed;
-  --surface: #faf9f5;
-  --ink: #1e211e;
-  --ink-sub: #5d645b;
-  --line: rgba(30, 33, 30, 0.14);
-  --live: #1a7f5a;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #17191b;
-    --surface: #1e2124;
-    --ink: #e9e9e3;
-    --ink-sub: #9aa098;
-    --line: rgba(233, 233, 227, 0.14);
-    --live: #4fc394;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #17191b; --surface: #1e2124; --ink: #e9e9e3;
-  --ink-sub: #9aa098; --line: rgba(233, 233, 227, 0.14); --live: #4fc394;
-}
-:root[data-theme="light"] {
-  --bg: #f3f2ed; --surface: #faf9f5; --ink: #1e211e;
-  --ink-sub: #5d645b; --line: rgba(30, 33, 30, 0.14); --live: #1a7f5a;
+  --yoru: #221114;          /* 焦げ小豆の夜 */
+  --yoru-soft: #2d181c;
+  --card: #301b1f;
+  --washi: #f4ead8;         /* 生成りの文字 */
+  --washi-sub: #c9b09c;
+  --shu: #c1181b;           /* 朱赤 */
+  --shu-bright: #e04a3c;
+  --kin: #ffb244;           /* 山吹金 */
+  --line: rgba(244, 234, 216, 0.22);
 }
 
-html { background: var(--bg); }
+html { background: var(--yoru); }
 
 body {
   font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
-  color: var(--ink);
-  background: var(--bg);
+  color: var(--washi);
+  background: var(--yoru);
   min-height: 100vh;
   line-height: 1.8;
   letter-spacing: 0.02em;
-  overflow-wrap: anywhere;
+  overflow-x: hidden;
   line-break: strict;
+  overflow-wrap: anywhere;
 }
 
-::selection { background: rgba(26, 127, 90, 0.22); }
-:focus-visible { outline: 2px solid var(--live); outline-offset: 3px; }
-
-.mono {
-  font-family: "IBM Plex Mono", ui-monospace, "Consolas", monospace;
+.dot {
+  font-family: "DotGothic16", ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
+}
+
+::selection { background: rgba(193, 24, 27, 0.45); }
+:focus-visible { outline: 2px solid var(--kin); outline-offset: 3px; }
+
+/* 提灯の灯り（暖色の淡い光） */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(560px 420px at 12% -6%, rgba(255, 178, 68, 0.13), transparent 70%),
+    radial-gradient(480px 380px at 88% 4%, rgba(193, 24, 27, 0.16), transparent 70%),
+    radial-gradient(520px 420px at 50% 108%, rgba(255, 102, 0, 0.08), transparent 70%),
+    radial-gradient(1.5px 1.5px at 18% 32%, rgba(255, 178, 68, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 42% 16%, rgba(255, 178, 68, 0.35) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 70% 40%, rgba(255, 178, 68, 0.4) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 66%, rgba(255, 178, 68, 0.3) 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 78%, rgba(255, 178, 68, 0.35) 50%, transparent 51%);
 }
 
 .wrap {
-  max-width: 56rem;
+  max-width: 64rem;
   margin: 0 auto;
-  padding: 0 clamp(1.25rem, 5vw, 3rem);
+  padding: 0 clamp(1.25rem, 4vw, 2.5rem);
 }
 
-/* ---- masthead ---- */
+/* ---- 看板（ヘッダー） ---- */
 header {
-  padding: clamp(4rem, 12vh, 7rem) 0 2.5rem;
+  text-align: center;
+  padding: clamp(3.5rem, 10vh, 6rem) 0 2.6rem;
 }
 
 .eyebrow {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-sub);
-  margin-bottom: 1.2rem;
+  font-family: "DotGothic16", monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.4em;
+  color: var(--kin);
+  margin-bottom: 1.3rem;
 }
 
 header h1 {
-  font-size: clamp(2.5rem, 7.5vw, 4.3rem);
-  font-weight: 900;
-  line-height: 1.15;
-  letter-spacing: -0.005em;
+  font-family: "RocknRoll One", "Zen Kaku Gothic New", sans-serif;
+  font-weight: 400;
+  font-size: clamp(2rem, 6.5vw, 3.4rem);
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  color: var(--washi);
+  text-shadow: 3px 3px 0 var(--shu);
   text-wrap: balance;
-  font-feature-settings: "palt";
 }
 
 header .lede {
-  margin-top: 1.1rem;
-  color: var(--ink-sub);
-  font-size: 0.97rem;
-  max-width: 38em;
+  margin-top: 1.2rem;
+  color: var(--washi-sub);
+  font-size: 0.94rem;
 }
 
 .stats {
-  display: flex;
-  gap: 1.75rem;
-  margin-top: 2.4rem;
-  padding-top: 1.1rem;
-  border-top: 1px solid var(--ink);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  color: var(--ink-sub);
+  font-family: "DotGothic16", monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  color: var(--washi-sub);
+  margin-top: 1.8rem;
   font-variant-numeric: tabular-nums;
 }
+.stats .sep { color: var(--shu-bright); margin: 0 0.6em; }
 
-/* ---- index ---- */
-.index { padding-bottom: 2rem; }
-
-.row {
+/* ---- 屋台カード ---- */
+.grid {
   display: grid;
-  grid-template-columns: 3.2rem 1fr auto;
-  gap: 0 1rem;
-  align-items: start;
-  padding: 1.7rem 0.6rem 1.8rem;
-  margin: 0 -0.6rem;
-  border-top: 1px solid var(--line);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  padding-bottom: 2.5rem;
+}
+
+.card {
+  position: relative;
+  display: block;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 3px;
+  padding: 22px 22px 18px;
   text-decoration: none;
   color: inherit;
-  transition: background-color 0.18s ease;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
-.index .row:last-child { border-bottom: 1px solid var(--line); }
-
-.row:hover { background: var(--surface); }
-.row:hover .row-num { color: var(--ac); }
-.row:hover .row-title {
-  text-decoration: underline;
-  text-decoration-color: var(--ac);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 6px;
-}
-
-.row-num {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.8rem;
-  color: var(--ink-sub);
-  padding-top: 0.45rem;
-  font-variant-numeric: tabular-nums;
-  transition: color 0.18s ease;
+/* RPGウィンドウ風の内枠 */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(244, 234, 216, 0.14);
+  border-radius: 1px;
+  pointer-events: none;
+  transition: border-color 0.18s ease;
 }
 
-.row-title {
-  font-size: clamp(1.15rem, 2.6vw, 1.4rem);
-  font-weight: 700;
-  font-feature-settings: "palt";
-  line-height: 1.4;
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--ac);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 22px color-mix(in srgb, var(--ac) 28%, transparent);
+}
+.card:hover::before { border-color: color-mix(in srgb, var(--ac) 45%, transparent); }
+.card:hover .lantern { box-shadow: 0 0 14px var(--ac), 0 0 3px var(--ac); }
+
+.card-head {
   display: flex;
-  align-items: baseline;
-  gap: 0.55em;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.swatch {
-  flex: none;
-  width: 0.62em;
-  height: 0.62em;
+.card-num {
+  font-family: "DotGothic16", monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.15em;
+  color: var(--kin);
+}
+
+/* 提灯 */
+.lantern {
+  width: 11px;
+  height: 13px;
+  border-radius: 45% / 50%;
   background: var(--ac);
-  align-self: center;
-}
-
-.row-desc {
-  margin-top: 0.45rem;
-  font-size: 0.92rem;
-  color: var(--ink-sub);
-  max-width: 46em;
-}
-
-.row-url {
-  margin-top: 0.7rem;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.02em;
-  color: var(--ink-sub);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ac) 60%, transparent);
+  transition: box-shadow 0.18s ease;
 }
 
 .chip {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.66rem;
-  letter-spacing: 0.16em;
-  padding: 0.28em 0.75em;
-  margin-top: 0.55rem;
+  margin-left: auto;
+  font-family: "DotGothic16", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.15em;
+  padding: 2px 9px;
   border: 1px solid var(--line);
-  color: var(--ink-sub);
-  white-space: nowrap;
+  color: var(--washi-sub);
   display: inline-flex;
   align-items: center;
   gap: 0.5em;
+  white-space: nowrap;
 }
-.chip--live { border-color: transparent; color: var(--live); }
+.chip--live { color: var(--kin); border-color: rgba(255, 178, 68, 0.5); }
 .chip--live::before {
   content: "";
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: var(--live);
+  background: var(--kin);
+}
+
+.card-title {
+  font-family: "RocknRoll One", "Zen Kaku Gothic New", sans-serif;
+  font-weight: 400;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--washi);
+  margin-bottom: 6px;
+}
+
+.card-desc {
+  font-size: 0.85rem;
+  line-height: 1.85;
+  color: var(--washi-sub);
+}
+
+.card-url {
+  font-family: "DotGothic16", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--washi-sub) 75%, transparent);
+  margin-top: 12px;
+  border-top: 1px solid rgba(244, 234, 216, 0.12);
+  padding-top: 10px;
 }
 
 /* ---- footer ---- */
 footer {
-  padding: 3.5rem 0 4rem;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  color: var(--ink-sub);
+  text-align: center;
+  font-family: "DotGothic16", monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.25em;
+  color: var(--washi-sub);
+  padding: 2.5rem 0 3.5rem;
 }
+footer .kin { color: var(--kin); }
 
-/* ---- entrance ---- */
+/* ---- 登場演出 ---- */
 @media (prefers-reduced-motion: no-preference) {
-  header, .row, footer {
+  header, .card, footer {
     opacity: 0;
-    transform: translateY(10px);
-    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    transform: translateY(12px);
+    animation: appear 0.5s ease-out forwards;
   }
-  .index .row:nth-child(1) { animation-delay: 0.08s; }
-  .index .row:nth-child(2) { animation-delay: 0.14s; }
-  .index .row:nth-child(3) { animation-delay: 0.20s; }
-  .index .row:nth-child(4) { animation-delay: 0.26s; }
-  .index .row:nth-child(5) { animation-delay: 0.32s; }
-  .index .row:nth-child(6) { animation-delay: 0.38s; }
-  .index .row:nth-child(7) { animation-delay: 0.44s; }
+  .grid .card:nth-child(1) { animation-delay: 0.08s; }
+  .grid .card:nth-child(2) { animation-delay: 0.14s; }
+  .grid .card:nth-child(3) { animation-delay: 0.20s; }
+  .grid .card:nth-child(4) { animation-delay: 0.26s; }
+  .grid .card:nth-child(5) { animation-delay: 0.32s; }
+  .grid .card:nth-child(6) { animation-delay: 0.38s; }
+  .grid .card:nth-child(7) { animation-delay: 0.44s; }
   footer { animation-delay: 0.5s; }
 }
-@keyframes rise {
+@keyframes appear {
   to { opacity: 1; transform: none; }
-}
-
-@media (max-width: 560px) {
-  .row { grid-template-columns: 2.2rem 1fr; }
-  .row .chip { grid-column: 2; justify-self: start; }
 }
 </style>
 </head>
@@ -245,89 +265,92 @@ footer {
 <div class="wrap">
 
 <header>
-  <p class="eyebrow">Takeom5700 — Works Index</p>
-  <h1>つくったものの、<br>目次。</h1>
-  <p class="lede">個人開発したWebアプリの索引です。物件探しから毎朝の占いまで、暮らしの道具を少しずつ作っています。</p>
-  <div class="stats">
-    <span>07 APPS</span>
-    <span>06 LIVE</span>
-    <span>TOKYO / JP</span>
-  </div>
+  <p class="eyebrow">— TAKEOM5700 WORKS —</p>
+  <h1>タケオムのアプリ縁日</h1>
+  <p class="lede">個人開発のWebアプリが、夜店のようにならぶ縁日です。気になる屋台へどうぞ。</p>
+  <p class="stats">APPS 07<span class="sep">◆</span>LIVE 06<span class="sep">◆</span>TOKYO</p>
 </header>
 
-<main class="index">
-  <a class="row" href="/tokyo-gakki-bukken/" style="--ac:#a86b2d">
-    <span class="row-num">01</span>
-    <span>
-      <span class="row-title"><span class="swatch" aria-hidden="true"></span>東京楽器可物件検索</span>
-      <span class="row-desc" role="text">SUUMO・HOME'S・ミュージションを横断し、RC/SRC造の楽器可・防音賃貸を地図でまとめて探せる。毎時自動更新。</span>
-      <span class="row-url">takeom5700.github.io/tokyo-gakki-bukken/</span>
+<main class="grid">
+  <a class="card" href="/tokyo-gakki-bukken/" style="--ac:#ffb244">
+    <span class="card-head">
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="card-num">その一</span>
+      <span class="chip chip--live">LIVE</span>
     </span>
-    <span class="chip chip--live">LIVE</span>
+    <span class="card-title">東京楽器可物件検索</span>
+    <span class="card-desc">SUUMO・HOME'S・ミュージションを横断し、RC/SRC造の楽器可・防音賃貸を地図でまとめて探せる。毎時自動更新。</span>
+    <span class="card-url">takeom5700.github.io/tokyo-gakki-bukken/</span>
   </a>
 
-  <a class="row" href="/aruite-gourmet/" style="--ac:#c04a2b">
-    <span class="row-num">02</span>
-    <span>
-      <span class="row-title"><span class="swatch" aria-hidden="true"></span>あるいてグルメ</span>
-      <span class="row-desc">駅名・住所から徒歩5〜60分圏のレストランを検索。ジャンル・予算・雰囲気で絞り込み、地図で一覧できる。</span>
-      <span class="row-url">takeom5700.github.io/aruite-gourmet/</span>
+  <a class="card" href="/aruite-gourmet/" style="--ac:#e0685a">
+    <span class="card-head">
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="card-num">その二</span>
+      <span class="chip chip--live">LIVE</span>
     </span>
-    <span class="chip chip--live">LIVE</span>
+    <span class="card-title">あるいてグルメ</span>
+    <span class="card-desc">駅名・住所から徒歩5〜60分圏のレストランを検索。ジャンル・予算・雰囲気で絞り込み、地図で一覧できる。</span>
+    <span class="card-url">takeom5700.github.io/aruite-gourmet/</span>
   </a>
 
-  <a class="row" href="/route-app/" style="--ac:#2d5fb8">
-    <span class="row-num">03</span>
-    <span>
-      <span class="row-title"><span class="swatch" aria-hidden="true"></span>Route App</span>
-      <span class="row-desc">出発地から目的地までの経路を地図上に描画する経路検索アプリ。</span>
-      <span class="row-url">takeom5700.github.io/route-app/</span>
+  <a class="card" href="/route-app/" style="--ac:#7fa8e0">
+    <span class="card-head">
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="card-num">その三</span>
+      <span class="chip chip--live">LIVE</span>
     </span>
-    <span class="chip chip--live">LIVE</span>
+    <span class="card-title">Route App</span>
+    <span class="card-desc">出発駅と目的駅を入れるだけで、いま一番早い経路と遅延情報をすぐ確認できる。</span>
+    <span class="card-url">takeom5700.github.io/route-app/</span>
   </a>
 
-  <a class="row" href="/uranai/" style="--ac:#584a9e">
-    <span class="row-num">04</span>
-    <span>
-      <span class="row-title"><span class="swatch" aria-hidden="true"></span>占いダッシュボード</span>
-      <span class="row-desc">六星占術・しいたけ占いなど複数の占いを毎朝自動で集計するパーソナルダッシュボード。</span>
-      <span class="row-url">takeom5700.github.io/uranai/</span>
+  <a class="card" href="/uranai/" style="--ac:#b48ae0">
+    <span class="card-head">
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="card-num">その四</span>
+      <span class="chip chip--live">LIVE</span>
     </span>
-    <span class="chip chip--live">LIVE</span>
+    <span class="card-title">占いダッシュボード</span>
+    <span class="card-desc">六星占術・しいたけ占いなど複数の占いを毎朝自動で集計するパーソナルダッシュボード。</span>
+    <span class="card-url">takeom5700.github.io/uranai/</span>
   </a>
 
-  <a class="row" href="/bus-coin-navi/" style="--ac:#1a7f5a">
-    <span class="row-num">05</span>
-    <span>
-      <span class="row-title"><span class="swatch" aria-hidden="true"></span>バスコインナビ</span>
-      <span class="row-desc">QR読み取りでバス乗車を記録し、運賃とコインを管理する乗車ナビの実験アプリ。</span>
-      <span class="row-url">takeom5700.github.io/bus-coin-navi/</span>
+  <a class="card" href="/bus-coin-navi/" style="--ac:#7cc796">
+    <span class="card-head">
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="card-num">その五</span>
+      <span class="chip chip--live">LIVE</span>
     </span>
-    <span class="chip chip--live">LIVE</span>
+    <span class="card-title">バスコインナビ</span>
+    <span class="card-desc">QR読み取りでバス乗車を記録し、運賃とコインを管理する乗車ナビの実験アプリ。</span>
+    <span class="card-url">takeom5700.github.io/bus-coin-navi/</span>
   </a>
 
-  <a class="row" href="/ai-shinbun/" style="--ac:#1e211e">
-    <span class="row-num">06</span>
-    <span>
-      <span class="row-title"><span class="swatch" aria-hidden="true"></span>AI新聞</span>
-      <span class="row-desc">最新AIニュースをAIエージェントが毎朝執筆・組版。縦書き紙面のバックナンバーを閲覧できる。</span>
-      <span class="row-url">takeom5700.github.io/ai-shinbun/</span>
+  <a class="card" href="/ai-shinbun/" style="--ac:#f4ead8">
+    <span class="card-head">
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="card-num">その六</span>
+      <span class="chip chip--live">LIVE</span>
     </span>
-    <span class="chip chip--live">LIVE</span>
+    <span class="card-title">AI新聞</span>
+    <span class="card-desc">最新AIニュースをAIエージェントが毎朝執筆・組版。縦書き紙面のバックナンバーを閲覧できる。</span>
+    <span class="card-url">takeom5700.github.io/ai-shinbun/</span>
   </a>
 
-  <a class="row" href="http://localhost:8791/driver.html" style="--ac:#5d645b">
-    <span class="row-num">07</span>
-    <span>
-      <span class="row-title"><span class="swatch" aria-hidden="true"></span>ドライバーアプリ</span>
-      <span class="row-desc">バスコインナビの運転手側画面。ローカル環境でのみ動作する。</span>
-      <span class="row-url">localhost:8791/driver.html</span>
+  <a class="card" href="http://localhost:8791/driver.html" style="--ac:#9a8a80">
+    <span class="card-head">
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="card-num">その七</span>
+      <span class="chip">LOCAL</span>
     </span>
-    <span class="chip">LOCAL</span>
+    <span class="card-title">ドライバーアプリ</span>
+    <span class="card-desc">バスコインナビの運転手側画面。ローカル環境でのみ動作する。</span>
+    <span class="card-url">localhost:8791/driver.html</span>
   </a>
 </main>
 
-<footer>© 2026 TAKEOM5700 · TAKEOM5700.GITHUB.IO</footer>
+<footer>© 2026 TAKEOM5700 <span class="kin">◆</span> またおこしください</footer>
 
 </div>
 
