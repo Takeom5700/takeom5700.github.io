@@ -9,34 +9,37 @@
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   /* ============================================================
-     占いダッシュボード — 夜空の天文台テーマ
-     単一テーマ（夜）を意図的に採用。自動更新スクリプトが参照する
-     クラス名・DOM構造は一切変更しないこと（date / comm-source /
-     label / score-num / score-bar / h3+tag など）
+     占いダッシュボード — 朝の光と和紙のテーマ（温かみ重視）
+     毎朝見る個人ダッシュボードとして、生成り和紙×焦茶×金茶の
+     単一ライトテーマを意図的に採用。
+     自動更新スクリプトが参照するクラス名・DOM構造は一切変更しない
+     こと（date / comm-source / label / score-num / score-bar /
+     h3+tag など）
      ============================================================ */
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html { overflow-x: hidden; max-width: 100%; }
 
   :root {
-    /* 新パレット（夜空） */
-    --bg: #10131f;
-    --surface: #191d2d;
-    --surface2: #212639;
-    --gold: #d8b972;
-    --good: #6cc796;
-    --warn: #dfa955;
-    --bad: #e08585;
-    --line: rgba(233, 231, 242, 0.12);
+    /* 新パレット（朝の和紙） */
+    --bg: #f8f1e6;            /* 生成り和紙 */
+    --surface: #fffdf8;       /* 温白 */
+    --surface2: #f3ead9;
+    --gold: #a8762b;          /* 金茶 */
+    --gold-deep: #7e5a1e;
+    --good: #1e7a48;
+    --warn: #97701c;
+    --bad: #b3402e;           /* 茜 */
+    --line: rgba(59, 50, 38, 0.15);
     /* 旧変数名（本文内のインラインstyleが参照するため必ず残す） */
-    --bg-soft: #191d2d;
-    --text: #e9e7f2;
-    --text-sub: #a6a1bf;
-    --border: #3a3f5c;
-    --primary: #b9a5f0;
-    --pink: #e89bb8;
-    --sky: #8fb8e8;
-    --mint: #7fd8b0;
+    --bg-soft: #f3ead9;
+    --text: #3b3226;          /* 焦茶 */
+    --text-sub: #7a6d59;
+    --border: #d9c9ac;
+    --primary: #7050b0;
+    --pink: #b0447c;
+    --sky: #2b6ca8;
+    --mint: #1e7a6a;
   }
 
   html { background: var(--bg); }
@@ -55,7 +58,7 @@
     position: relative;
   }
 
-  /* 星空（微細な固定ドット） */
+  /* 朝の光の粒（ごく淡い金のドット） */
   body::before {
     content: "";
     position: fixed;
@@ -63,43 +66,40 @@
     z-index: -2;
     pointer-events: none;
     background-image:
-      radial-gradient(1px 1px at 8% 12%,  rgba(233,231,242,0.55) 50%, transparent 51%),
-      radial-gradient(1px 1px at 22% 38%, rgba(233,231,242,0.35) 50%, transparent 51%),
-      radial-gradient(1.5px 1.5px at 34% 8%, rgba(216,185,114,0.5) 50%, transparent 51%),
-      radial-gradient(1px 1px at 48% 55%, rgba(233,231,242,0.4) 50%, transparent 51%),
-      radial-gradient(1px 1px at 61% 22%, rgba(143,184,232,0.5) 50%, transparent 51%),
-      radial-gradient(1.5px 1.5px at 73% 68%, rgba(233,231,242,0.3) 50%, transparent 51%),
-      radial-gradient(1px 1px at 84% 15%, rgba(233,231,242,0.5) 50%, transparent 51%),
-      radial-gradient(1px 1px at 92% 45%, rgba(216,185,114,0.4) 50%, transparent 51%),
-      radial-gradient(1px 1px at 15% 78%, rgba(143,184,232,0.4) 50%, transparent 51%),
-      radial-gradient(1px 1px at 55% 88%, rgba(233,231,242,0.35) 50%, transparent 51%);
+      radial-gradient(1.5px 1.5px at 12% 10%, rgba(168, 118, 43, 0.35) 50%, transparent 51%),
+      radial-gradient(1px 1px at 30% 30%,  rgba(168, 118, 43, 0.22) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 55% 12%, rgba(179, 64, 46, 0.18) 50%, transparent 51%),
+      radial-gradient(1px 1px at 74% 40%,  rgba(168, 118, 43, 0.28) 50%, transparent 51%),
+      radial-gradient(1px 1px at 90% 18%,  rgba(168, 118, 43, 0.3) 50%, transparent 51%),
+      radial-gradient(1px 1px at 20% 70%,  rgba(168, 118, 43, 0.2) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 66% 82%, rgba(168, 118, 43, 0.22) 50%, transparent 51%);
   }
 
-  /* 星雲（旧blob要素を静かな光に転用） */
+  /* 朝焼けの淡い光（旧blob要素を転用） */
   .blob {
     position: fixed;
     border-radius: 50%;
-    filter: blur(70px);
-    opacity: 0.14;
+    filter: blur(80px);
+    opacity: 0.45;
     z-index: -1;
     pointer-events: none;
   }
-  .blob--1 { width: 480px; height: 480px; top: -160px; left: -140px; background: radial-gradient(circle, #5a4a9e, transparent 70%); }
-  .blob--2 { width: 420px; height: 420px; top: 30%; right: -180px; background: radial-gradient(circle, #2e4a7e, transparent 70%); }
-  .blob--3 { width: 380px; height: 380px; bottom: -140px; left: 20%; background: radial-gradient(circle, #7e6a3e, transparent 70%); }
+  .blob--1 { width: 520px; height: 520px; top: -200px; left: -160px; background: radial-gradient(circle, #f5dfb8, transparent 70%); }
+  .blob--2 { width: 460px; height: 460px; top: 28%; right: -200px; background: radial-gradient(circle, #f6d9c4, transparent 70%); }
+  .blob--3 { width: 400px; height: 400px; bottom: -160px; left: 18%; background: radial-gradient(circle, #f0e3c8, transparent 70%); }
 
-  /* 星（旧sparkle要素） */
+  /* 光のきらめき（旧sparkle要素） */
   .sparkle {
     position: fixed;
     color: var(--gold);
-    opacity: 0.4;
+    opacity: 0.45;
     pointer-events: none;
     z-index: -1;
     font-size: 14px;
   }
   .sparkle--1 { top: 10%; left: 5%; }
   .sparkle--2 { top: 16%; right: 7%; font-size: 11px; }
-  .sparkle--3 { bottom: 18%; left: 8%; font-size: 12px; color: var(--sky); }
+  .sparkle--3 { bottom: 18%; left: 8%; font-size: 12px; color: #c08a52; }
   .sparkle--4 { bottom: 26%; right: 5%; }
   @media (prefers-reduced-motion: no-preference) {
     .sparkle { animation: twinkle 5s ease-in-out infinite; }
@@ -108,11 +108,11 @@
     .sparkle--4 { animation-delay: 3.9s; }
   }
   @keyframes twinkle {
-    0%, 100% { opacity: 0.4; }
+    0%, 100% { opacity: 0.45; }
     50% { opacity: 0.15; }
   }
 
-  ::selection { background: rgba(216, 185, 114, 0.3); }
+  ::selection { background: rgba(168, 118, 43, 0.25); }
   :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 
   .mincho, h1, h2, h3, .comm-title {
@@ -149,13 +149,13 @@
     font-size: 0.8rem;
     letter-spacing: 0.08em;
     color: var(--text-sub);
-    background: transparent;
+    background: var(--surface);
     border: 1px solid var(--border);
     padding: 8px 18px;
     cursor: pointer;
     transition: color 0.18s ease, border-color 0.18s ease;
   }
-  #refresh-btn:hover:not(:disabled) { color: var(--gold); border-color: var(--gold); }
+  #refresh-btn:hover:not(:disabled) { color: var(--gold-deep); border-color: var(--gold); }
   #refresh-btn:disabled { opacity: 0.45; cursor: default; }
   #refresh-status { font-size: 0.78rem; color: var(--text-sub); margin-top: 8px; }
 
@@ -164,6 +164,7 @@
     margin-top: 16px;
     padding: 7px 16px;
     border: 1px solid var(--border);
+    background: var(--surface);
     font-size: 0.8rem;
     letter-spacing: 0.05em;
     color: var(--text-sub);
@@ -173,8 +174,8 @@
   .alert-box {
     margin-top: 26px;
     padding: 20px 22px;
-    background: rgba(224, 133, 133, 0.06);
-    border: 1px solid rgba(224, 133, 133, 0.3);
+    background: rgba(179, 64, 46, 0.06);
+    border: 1px solid rgba(179, 64, 46, 0.3);
     font-size: 0.88rem;
     line-height: 1.95;
   }
@@ -196,7 +197,7 @@
     font-size: 0.76rem;
     font-weight: 700;
     letter-spacing: 0.18em;
-    color: var(--gold);
+    color: var(--gold-deep);
     margin: 22px 0 6px;
   }
 
@@ -207,6 +208,7 @@
     margin-top: 10px;
     font-size: 0.88rem;
     line-height: 1.95;
+    box-shadow: 0 1px 2px rgba(59, 50, 38, 0.04), 0 6px 16px rgba(59, 50, 38, 0.05);
   }
 
   .comm-source {
@@ -233,14 +235,14 @@
     font-size: 0.76rem;
     letter-spacing: 0.06em;
     padding: 5px 14px;
-    background: transparent;
+    background: var(--surface);
     color: var(--text-sub);
     border: 1px solid var(--border);
     cursor: pointer;
     transition: color 0.15s ease, border-color 0.15s ease;
   }
   .sort-btn:hover { color: var(--text); }
-  .sort-btn.active { color: var(--gold); border-color: var(--gold); }
+  .sort-btn.active { color: var(--gold-deep); border-color: var(--gold); background: rgba(168, 118, 43, 0.08); }
 
   .color-grid {
     display: grid;
@@ -264,7 +266,7 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    box-shadow: 0 0 0 3px rgba(233, 231, 242, 0.08);
+    box-shadow: 0 0 0 3px rgba(59, 50, 38, 0.07);
   }
 
   .chip-label {
@@ -292,8 +294,9 @@
     border: 1px solid var(--line);
     padding: 20px 20px 18px;
     transition: border-color 0.18s ease;
+    box-shadow: 0 1px 2px rgba(59, 50, 38, 0.04), 0 6px 16px rgba(59, 50, 38, 0.05);
   }
-  .score-card:hover { border-color: var(--border); }
+  .score-card:hover { border-color: var(--gold); }
 
   .score-card .label {
     font-size: 0.82rem;
@@ -316,13 +319,13 @@
 
   .score-bar-bg {
     height: 4px;
-    background: rgba(233, 231, 242, 0.1);
+    background: rgba(59, 50, 38, 0.1);
     margin-bottom: 12px;
   }
   .score-bar-fill { height: 100%; }
-  .bar-high { background: var(--good); box-shadow: 0 0 8px rgba(108, 199, 150, 0.45); }
-  .bar-mid  { background: var(--warn); box-shadow: 0 0 8px rgba(223, 169, 85, 0.45); }
-  .bar-low  { background: var(--bad);  box-shadow: 0 0 8px rgba(224, 133, 133, 0.45); }
+  .bar-high { background: var(--good); }
+  .bar-mid  { background: var(--warn); }
+  .bar-low  { background: var(--bad); }
 
   .score-card .comment {
     font-size: 0.8rem;
@@ -343,8 +346,9 @@
     border: 1px solid var(--line);
     padding: 20px 22px;
     transition: border-color 0.18s ease;
+    box-shadow: 0 1px 2px rgba(59, 50, 38, 0.04), 0 6px 16px rgba(59, 50, 38, 0.05);
   }
-  .source-card:hover { border-color: var(--border); }
+  .source-card:hover { border-color: var(--gold); }
 
   .source-card h3 {
     font-size: 1.02rem;
@@ -360,8 +364,9 @@
     font-size: 0.66rem;
     font-weight: 500;
     letter-spacing: 0.12em;
-    color: var(--gold);
-    border: 1px solid rgba(216, 185, 114, 0.4);
+    color: var(--gold-deep);
+    border: 1px solid rgba(168, 118, 43, 0.45);
+    background: rgba(168, 118, 43, 0.06);
     padding: 2px 9px;
     margin-left: 10px;
     vertical-align: middle;
@@ -379,10 +384,10 @@
     font-size: 0.78rem;
     color: var(--sky);
     text-decoration: none;
-    border-bottom: 1px solid rgba(143, 184, 232, 0.4);
+    border-bottom: 1px solid rgba(43, 108, 168, 0.4);
     transition: color 0.15s ease, border-color 0.15s ease;
   }
-  .file-link:hover { color: var(--gold); border-color: var(--gold); }
+  .file-link:hover { color: var(--gold-deep); border-color: var(--gold); }
 
   /* ---- チャット ---- */
   .chat-section { margin-top: 46px; }
@@ -428,7 +433,7 @@
     padding: 11px 14px;
     min-width: 0;
   }
-  #chat-input::placeholder { color: rgba(166, 161, 191, 0.6); }
+  #chat-input::placeholder { color: rgba(122, 109, 89, 0.6); }
   #chat-input:focus { outline: none; border-color: var(--gold); }
 
   #chat-send, #chat-voice {
@@ -442,7 +447,7 @@
     cursor: pointer;
     transition: color 0.15s ease, border-color 0.15s ease;
   }
-  #chat-send:hover, #chat-voice:hover { color: var(--gold); border-color: var(--gold); }
+  #chat-send:hover, #chat-voice:hover { color: var(--gold-deep); border-color: var(--gold); }
   #chat-send:disabled { opacity: 0.45; cursor: default; }
   #chat-voice.recording {
     color: var(--bad);
@@ -452,8 +457,8 @@
     #chat-voice.recording { animation: rec-pulse 1.4s ease-in-out infinite; }
   }
   @keyframes rec-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(224, 133, 133, 0.4); }
-    50% { box-shadow: 0 0 0 6px rgba(224, 133, 133, 0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(179, 64, 46, 0.35); }
+    50% { box-shadow: 0 0 0 6px rgba(179, 64, 46, 0); }
   }
 
   .chat-note {
@@ -472,9 +477,13 @@
     color: var(--text-sub);
   }
 
-  /* 自動更新が挿入する古いインライン色の可読性補正（暗背景用） */
-  [style*="color:#2c8a56"] { color: #5fc98f !important; }
-  [style*="color:#9988bb"] { color: #a89ecf !important; }
+  /* 自動更新が挿入するインライン色の可読性補正（明るい和紙背景用） */
+  [style*="color:#2c8a56"] { color: #1e7a48 !important; }
+  [style*="color:#8ed1ff"] { color: #2b6ca8 !important; }
+  [style*="color:#ff8888"] { color: #b3402e !important; }
+  [style*="color:#f0c060"] { color: #97701c !important; }
+  [style*="color:#a685f2"] { color: #7050b0 !important; }
+  [style*="color:#9988bb"] { color: #6f6390 !important; }
 
   @media (max-width: 600px) {
     .chat-input-row { flex-wrap: wrap; }
