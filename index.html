@@ -169,14 +169,6 @@ body::before {
   padding: 0 clamp(1.25rem, 4vw, 2.5rem);
 }
 
-/* ---- 一本道の夜店（境界のないインタラクション） ----
-   左端に別パーツとして道を置くと「インタラクティブな部分」と「ただの
-   カード」に分離して見える、という指摘を受けて撤去。代わりに、カード
-   そのものを1本の道で直接つなぎ、道はカードの真後ろを通す。きつねは
-   その道の上＝コンテンツと同じ場所を歩き、通り過ぎたカード自身が
-   光る（別に用意したドットではなく、カード自身が反応する）。
-   詳細CSSは .market / .path-svg / .card--lit 等を参照。 */
-
 /* ---- 看板（ヘッダー） ---- */
 header {
   position: relative;
@@ -350,53 +342,24 @@ header .lede {
   margin-inline: auto;
 }
 
-/* ---- 一本道の夜店（ジグザグの一本列） ----
-   グリッドではなく、1列を左右交互にずらして「道沿いに並ぶ屋台」にする。
-   .market の中で .path-svg（道＋きつね）がカードの真後ろを通る。 */
-.market {
-  position: relative;
-}
-.path-svg {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-  z-index: 0;
-  overflow: visible;
-  pointer-events: none;
-}
-.path-base { fill: none; stroke: rgba(244, 234, 216, 0.14); stroke-width: 3; stroke-linecap: round; }
-.path-glow {
-  fill: none;
-  stroke: var(--kin);
-  stroke-width: 3;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 5px var(--kin));
-}
-.path-fox-bob { transform-box: fill-box; transform-origin: center; }
-@media (prefers-reduced-motion: no-preference) {
-  .path-fox-bob { animation: path-fox-bob 1.6s ease-in-out infinite; }
-}
-@keyframes path-fox-bob {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-3px) rotate(2deg); }
-}
-.path-fox { cursor: pointer; pointer-events: auto; }
-.path-fox--pop .path-fox-bob { animation: kitsune-pop 0.6s cubic-bezier(0.34, 1.7, 0.4, 1) !important; }
+/* ---- 夜店広場（グリッド＝どこから見てもいい） ----
+   一本道でカードを順番につないだところ「一直線＝優先順位が滲む」
+   「一本道は選ぶポータルとして機能的でない」と指摘を受けて撤去。
+   グリッドに戻し、順序を持たない配置にする。連動の仕掛けは
+   「どこか1つの決まった道」ではなく「今カーソル/フォーカスが
+   向いている場所」に置き換える＝ユーザー自身の探索が起点になる。 */
+.market { position: relative; }
 
 .grid {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(28px, 6vh, 56px);
-  padding: 12px 0 2.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  padding-bottom: 2.5rem;
 }
 
 .card {
   position: relative;
-  z-index: 1;
   display: block;
-  width: min(440px, 88%);
   background: var(--card);
   border: 2px solid var(--wood);
   border-radius: 8px;
@@ -406,31 +369,56 @@ header .lede {
   overflow: hidden;
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
-.grid .card:nth-child(odd)  { align-self: flex-start; margin-left: clamp(0px, 6vw, 54px); }
-.grid .card:nth-child(even) { align-self: flex-end;   margin-right: clamp(0px, 6vw, 54px); }
-@media (max-width: 640px) {
-  .grid .card:nth-child(odd), .grid .card:nth-child(even) {
-    align-self: center;
-    margin-left: 0;
-    margin-right: 0;
-    width: 100%;
-  }
-}
 
-.card:hover {
+.card:hover, .card:focus-visible {
   transform: translateY(-4px);
   border-color: var(--ac);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 24px color-mix(in srgb, var(--ac) 30%, transparent);
 }
-.card:hover .lantern { box-shadow: 0 0 16px var(--ac), 0 0 4px var(--ac); }
-.card:hover .noren-kanji { text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3), 0 0 14px color-mix(in srgb, var(--ac) 55%, transparent); }
+.card:hover .lantern, .card:focus-visible .lantern { box-shadow: 0 0 16px var(--ac), 0 0 4px var(--ac); }
+.card:hover .noren-kanji, .card:focus-visible .noren-kanji { text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3), 0 0 14px color-mix(in srgb, var(--ac) 55%, transparent); }
 
-/* きつねが通り過ぎた屋台は灯りがともったまま残る（一度灯したら消えない） */
-.card--lit {
-  border-color: var(--ac);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ac) 35%, transparent), 0 10px 28px rgba(0, 0, 0, 0.4), 0 0 26px color-mix(in srgb, var(--ac) 22%, transparent);
+/* 一度訪れた屋台には灯りが残る（自分で選んだ順番でよい。強制の道はない） */
+.card--visited {
+  border-color: color-mix(in srgb, var(--ac) 65%, var(--wood));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ac) 22%, transparent);
 }
-.card--lit .lantern { box-shadow: 0 0 14px var(--ac), 0 0 4px var(--ac); }
+.card--visited .lantern { box-shadow: 0 0 10px color-mix(in srgb, var(--ac) 70%, transparent); }
+
+/* きつねが顔を出す — カーソル/フォーカスが向いた屋台"だけ"に起きる、
+   かわいい変化。道でつながっているのではなく、注目そのものが合図。 */
+.card-fox {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 46px;
+  height: 46px;
+  transform: translate(-50%, 100%) rotate(-6deg);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
+  z-index: 2;
+}
+.card:hover .card-fox,
+.card:focus-visible .card-fox {
+  transform: translate(-50%, 34%) rotate(0deg);
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-fox { transition: opacity 0.2s ease; transform: translate(-50%, 34%) rotate(0deg); }
+}
+
+/* 暖簾は覗いたきつねの分だけ、ふわっと揺れる（切れ込みはない一枚布） */
+@media (prefers-reduced-motion: no-preference) {
+  .card:hover .noren, .card:focus-visible .noren { animation: noren-sway 0.7s ease; }
+}
+@keyframes noren-sway {
+  0%   { transform: rotate(0deg); }
+  30%  { transform: rotate(-1.2deg); }
+  60%  { transform: rotate(1deg); }
+  100% { transform: rotate(0deg); }
+}
 
 /* 暖簾（藍染め・一枚布に一文字）。切れ込みは入れず、無地の一枚布として
    シンプルに。SVGフィルターでフチをわずかに揺らし、手染めの風合いを出す。 */
@@ -468,13 +456,6 @@ header .lede {
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
-}
-
-.card-num {
-  font-family: "DotGothic16", monospace;
-  font-size: 0.78rem;
-  letter-spacing: 0.15em;
-  color: var(--kin);
 }
 
 /* 屋台の提灯（アプリごとの灯り） */
@@ -619,14 +600,21 @@ footer .kin { color: var(--kin); }
 </header>
 
 <div class="market" id="market">
-<svg class="path-svg" id="pathSvg" aria-hidden="true"></svg>
 
 <main class="grid">
   <a class="card" href="/tokyo-gakki-bukken/" style="--ac:#ffb244">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">楽</span></span>
+    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
+      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
+      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
+      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="card-num">その一</span>
       <span class="chip chip--live">LIVE</span>
     </span>
     <span class="card-title">東京楽器可物件検索</span>
@@ -636,9 +624,17 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="/aruite-gourmet/" style="--ac:#e0685a">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">飯</span></span>
+    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
+      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
+      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
+      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="card-num">その二</span>
       <span class="chip chip--live">LIVE</span>
     </span>
     <span class="card-title">あるいてグルメ</span>
@@ -648,9 +644,17 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="/route-app/" style="--ac:#7fa8e0">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">道</span></span>
+    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
+      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
+      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
+      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="card-num">その三</span>
       <span class="chip chip--live">LIVE</span>
     </span>
     <span class="card-title">Route App</span>
@@ -660,9 +664,17 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="/uranai/" style="--ac:#b48ae0">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">占</span></span>
+    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
+      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
+      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
+      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="card-num">その四</span>
       <span class="chip chip--live">LIVE</span>
     </span>
     <span class="card-title">占いダッシュボード</span>
@@ -672,9 +684,17 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="/bus-coin-navi/" style="--ac:#7cc796">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">輪</span></span>
+    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
+      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
+      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
+      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="card-num">その五</span>
       <span class="chip chip--live">LIVE</span>
     </span>
     <span class="card-title">バスコインナビ</span>
@@ -684,9 +704,17 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="/ai-shinbun/" style="--ac:#f4ead8">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">報</span></span>
+    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
+      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
+      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
+      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="card-num">その六</span>
       <span class="chip chip--live">LIVE</span>
     </span>
     <span class="card-title">AI新聞</span>
@@ -696,9 +724,17 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="http://localhost:8791/driver.html" style="--ac:#9a8a80">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">運</span></span>
+    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
+      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
+      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
+      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="card-num">その七</span>
       <span class="chip">LOCAL</span>
     </span>
     <span class="card-title">ドライバーアプリ</span>
@@ -721,9 +757,17 @@ footer .kin { color: var(--kin); }
 <section class="grid">
   <a class="card" href="https://note.com/alert_zinnia5671" target="_blank" rel="noopener" style="--ac:#3d8f96">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">考</span></span>
+    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
+      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
+      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
+      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="card-num">その八</span>
       <span class="chip chip--live">LIVE</span>
     </span>
     <span class="card-title">さなぎの時代考察（note）</span>
@@ -733,9 +777,17 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="https://www.instagram.com/miyamoto_sanagi" target="_blank" rel="noopener" style="--ac:#b0568a">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">写</span></span>
+    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
+      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
+      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
+      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="card-num">その九</span>
       <span class="chip chip--live">LIVE</span>
     </span>
     <span class="card-title">宮本さなぎ（Instagram）</span>
@@ -745,9 +797,17 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="https://www.youtube.com/@MiyamotoSanagi" target="_blank" rel="noopener" style="--ac:#e0973c">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">声</span></span>
+    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
+      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
+      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
+      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="card-num">その十</span>
       <span class="chip chip--live">LIVE</span>
     </span>
     <span class="card-title">宮本さなぎ（YouTube）</span>
@@ -757,9 +817,17 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="https://www.youtube.com/@TOKYOJAZZOFGAMEMUSIC" target="_blank" rel="noopener" style="--ac:#6c72c9">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">奏</span></span>
+    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
+      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
+      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
+      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="card-num">その十一</span>
       <span class="chip chip--live">LIVE</span>
     </span>
     <span class="card-title">TOKYO JAZZ OF GAME MUSIC</span>
@@ -914,128 +982,19 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <script>
-/* 一本道の夜店 — カード自身を1本の道でつなぎ、道はカードの真後ろを通す。
-   きつねはコンテンツと同じ場所（道の上）を歩き、通り過ぎたカード自身が
-   光る。左に別パーツの道を置いた前回の実装が「分離して見える」と
-   指摘されたため、道とコンテンツを同じ空間に統合した。 */
+/* 夜店広場 — 決まった道はない。どのカードから見てもよく、見た（触れた）
+   カードだけに、かわいい変化（きつねが覗く・暖簾が揺れる）が起きる。
+   それはCSSの:hover/:focus-visibleだけで完結する。JSの役目は
+   「一度見た屋台には灯りを残す」という、自分で選んだ順番を尊重する
+   記録だけにする（強制される道・進捗バーは置かない）。 */
 (function () {
   var market = document.getElementById('market');
-  var svg = document.getElementById('pathSvg');
-  if (!market || !svg) return;
-
+  if (!market) return;
   var cards = Array.prototype.slice.call(market.querySelectorAll('.card'));
-  if (!cards.length) return;
-
-  var NS = 'http://www.w3.org/2000/svg';
-  function svgEl(tag) { return document.createElementNS(NS, tag); }
-
-  var basePath = svgEl('path');
-  basePath.setAttribute('class', 'path-base');
-  var glowPath = svgEl('path');
-  glowPath.setAttribute('class', 'path-glow');
-  svg.appendChild(basePath);
-  svg.appendChild(glowPath);
-
-  var foxOuter = svgEl('g');
-  foxOuter.setAttribute('class', 'path-fox');
-  foxOuter.setAttribute('tabindex', '0');
-  foxOuter.setAttribute('role', 'button');
-  foxOuter.setAttribute('aria-label', 'きつね（クリックで反応します）');
-  var foxBob = svgEl('g');
-  foxBob.setAttribute('class', 'path-fox-bob');
-  foxBob.innerHTML =
-    '<polygon points="-9,-17 -14,-27 -3,-22" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>' +
-    '<polygon points="9,-17 14,-27 3,-22" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>' +
-    '<ellipse cx="0" cy="-11" rx="13" ry="11.5" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6"/>' +
-    '<ellipse cx="-8" cy="-13.5" rx="4" ry="5.6" fill="var(--shu)" opacity="0.85" transform="rotate(-18 -8 -13.5)"/>' +
-    '<ellipse cx="8" cy="-13.5" rx="4" ry="5.6" fill="var(--shu)" opacity="0.85" transform="rotate(18 8 -13.5)"/>' +
-    '<circle cx="-4.5" cy="-11.5" r="1.7" fill="#241a14"/>' +
-    '<circle cx="4.5" cy="-11.5" r="1.7" fill="#241a14"/>';
-  foxOuter.appendChild(foxBob);
-  svg.appendChild(foxOuter);
-
-  var pathLen = 0;
-
-  function buildPath() {
-    var marketRect = market.getBoundingClientRect();
-    var scrollY = window.scrollY;
-    var mHeight = market.scrollHeight;
-    svg.setAttribute('viewBox', '0 0 ' + marketRect.width + ' ' + mHeight);
-    svg.style.height = mHeight + 'px';
-
-    var pts = cards.map(function (card) {
-      var r = card.getBoundingClientRect();
-      return {
-        x: r.left - marketRect.left + r.width / 2,
-        y: r.top - marketRect.top + scrollY + r.height / 2
-      };
-    });
-
-    var d = 'M ' + pts[0].x.toFixed(1) + ' ' + pts[0].y.toFixed(1);
-    for (var i = 1; i < pts.length; i++) {
-      var p0 = pts[i - 1], p1 = pts[i];
-      var midY = (p0.y + p1.y) / 2;
-      d += ' C ' + p0.x.toFixed(1) + ' ' + midY.toFixed(1) + ', ' +
-                   p1.x.toFixed(1) + ' ' + midY.toFixed(1) + ', ' +
-                   p1.x.toFixed(1) + ' ' + p1.y.toFixed(1);
-    }
-    basePath.setAttribute('d', d);
-    glowPath.setAttribute('d', d);
-    pathLen = basePath.getTotalLength();
-    glowPath.style.strokeDasharray = pathLen;
-    glowPath.style.strokeDashoffset = pathLen;
-  }
-
-  buildPath();
-  window.addEventListener('resize', buildPath);
-  window.addEventListener('load', buildPath);
-
-  if ('IntersectionObserver' in window) {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) entry.target.classList.add('card--lit');
-      });
-    }, { threshold: 0.4 });
-    cards.forEach(function (c) { io.observe(c); });
-  }
-
-  var cheered = false;
-  var ticking = false;
-  function update() {
-    ticking = false;
-    if (pathLen <= 0) return;
-    var marketTop = market.getBoundingClientRect().top + window.scrollY;
-    var mHeight = market.scrollHeight;
-    var viewFocus = window.scrollY + window.innerHeight * 0.4;
-    var progress = (viewFocus - marketTop) / mHeight;
-    progress = Math.max(0, Math.min(1, progress));
-
-    glowPath.style.strokeDashoffset = pathLen * (1 - progress);
-    var pt = basePath.getPointAtLength(pathLen * progress);
-    var ptAhead = basePath.getPointAtLength(Math.min(pathLen, pathLen * progress + 2));
-    var angle = Math.atan2(ptAhead.y - pt.y, ptAhead.x - pt.x) * 180 / Math.PI;
-    foxOuter.setAttribute('transform', 'translate(' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1) + ') rotate(' + (angle * 0.12).toFixed(1) + ')');
-
-    if (!cheered && progress >= 0.985) {
-      cheered = true;
-      foxOuter.classList.add('path-fox--pop');
-    }
-  }
-  function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
-  update();
-  window.addEventListener('scroll', onScroll, { passive: true });
-
-  function react() {
-    foxOuter.classList.remove('path-fox--pop');
-    void foxOuter.getBoundingClientRect();
-    foxOuter.classList.add('path-fox--pop');
-  }
-  foxBob.addEventListener('animationend', function (e) {
-    if (e.animationName === 'kitsune-pop') foxOuter.classList.remove('path-fox--pop');
-  });
-  foxOuter.addEventListener('click', react);
-  foxOuter.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); react(); }
+  cards.forEach(function (card) {
+    var mark = function () { card.classList.add('card--visited'); };
+    card.addEventListener('mouseenter', mark);
+    card.addEventListener('focus', mark);
   });
 })();
 </script>
