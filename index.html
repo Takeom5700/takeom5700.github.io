@@ -340,29 +340,21 @@ header .lede {
 .card:hover .lantern { box-shadow: 0 0 16px var(--ac), 0 0 4px var(--ac); }
 .card:hover .noren-kanji { text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3), 0 0 14px color-mix(in srgb, var(--ac) 55%, transparent); }
 
-/* 暖簾（藍染め・一枚布は上部だけで繋がり、下から縦に真っ直ぐ切り込みを
-   2本入れて3枚に分かれる — 実際の暖簾の「割れ」構造）。
-   三角の尖った切れ込みは実在しないため直線の縦スリットに変更。
-   カードごとに切り込みの位置・高さをわずかに変え（4パターン巡回）、
-   SVGフィルターでフチを揺らして手染め・手切りの風合いを出す。 */
+/* 暖簾（藍染め・一枚布に一文字）。切れ込みは入れず、無地の一枚布として
+   シンプルに。SVGフィルターでフチをわずかに揺らし、手染めの風合いを出す。 */
 .noren {
   position: relative;
-  height: 84px;
+  height: 70px;
   margin: 0 -22px 16px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding-top: 13px;
   background:
     radial-gradient(140% 100% at 20% 10%, rgba(255, 255, 255, 0.07), transparent 55%),
     radial-gradient(140% 100% at 82% 92%, rgba(0, 0, 0, 0.24), transparent 55%),
     var(--ai);
   filter: url(#fabric-edge);
 }
-.noren--a { clip-path: polygon(0 0, 100% 0, 100% 100%, 68% 100%, 68% 58%, 64% 58%, 64% 100%, 38% 100%, 38% 60%, 34% 60%, 34% 100%, 0 100%); }
-.noren--b { clip-path: polygon(0 0, 100% 0, 100% 100%, 70% 100%, 70% 62%, 66% 62%, 66% 100%, 41% 100%, 41% 55%, 37% 55%, 37% 100%, 0 100%); }
-.noren--c { clip-path: polygon(0 0, 100% 0, 100% 100%, 65% 100%, 65% 60%, 61% 60%, 61% 100%, 35% 100%, 35% 64%, 31% 64%, 31% 100%, 0 100%); }
-.noren--d { clip-path: polygon(0 0, 100% 0, 100% 100%, 72% 100%, 72% 56%, 68% 56%, 68% 100%, 43% 100%, 43% 58%, 39% 58%, 39% 100%, 0 100%); }
 .noren::before {
   content: "";
   position: absolute;
@@ -537,7 +529,7 @@ footer .kin { color: var(--kin); }
 
 <main class="grid">
   <a class="card" href="/tokyo-gakki-bukken/" style="--ac:#ffb244">
-    <span class="noren noren--a" aria-hidden="true"><span class="noren-kanji">楽</span></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">楽</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その一</span>
@@ -549,7 +541,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="/aruite-gourmet/" style="--ac:#e0685a">
-    <span class="noren noren--b" aria-hidden="true"><span class="noren-kanji">飯</span></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">飯</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その二</span>
@@ -561,7 +553,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="/route-app/" style="--ac:#7fa8e0">
-    <span class="noren noren--c" aria-hidden="true"><span class="noren-kanji">道</span></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">道</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その三</span>
@@ -573,7 +565,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="/uranai/" style="--ac:#b48ae0">
-    <span class="noren noren--d" aria-hidden="true"><span class="noren-kanji">占</span></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">占</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その四</span>
@@ -585,7 +577,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="/bus-coin-navi/" style="--ac:#7cc796">
-    <span class="noren noren--a" aria-hidden="true"><span class="noren-kanji">輪</span></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">輪</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その五</span>
@@ -597,7 +589,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="/ai-shinbun/" style="--ac:#f4ead8">
-    <span class="noren noren--b" aria-hidden="true"><span class="noren-kanji">報</span></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">報</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その六</span>
@@ -609,7 +601,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="http://localhost:8791/driver.html" style="--ac:#9a8a80">
-    <span class="noren noren--c" aria-hidden="true"><span class="noren-kanji">運</span></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">運</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その七</span>
@@ -634,7 +626,7 @@ footer .kin { color: var(--kin); }
 
 <section class="grid">
   <a class="card" href="https://note.com/alert_zinnia5671" target="_blank" rel="noopener" style="--ac:#3d8f96">
-    <span class="noren noren--d" aria-hidden="true"><span class="noren-kanji">考</span></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">考</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その八</span>
@@ -646,7 +638,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="https://www.instagram.com/miyamoto_sanagi" target="_blank" rel="noopener" style="--ac:#b0568a">
-    <span class="noren noren--a" aria-hidden="true"><span class="noren-kanji">写</span></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">写</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その九</span>
@@ -658,7 +650,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="https://www.youtube.com/@MiyamotoSanagi" target="_blank" rel="noopener" style="--ac:#e0973c">
-    <span class="noren noren--b" aria-hidden="true"><span class="noren-kanji">声</span></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">声</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その十</span>
@@ -670,7 +662,7 @@ footer .kin { color: var(--kin); }
   </a>
 
   <a class="card" href="https://www.youtube.com/@TOKYOJAZZOFGAMEMUSIC" target="_blank" rel="noopener" style="--ac:#6c72c9">
-    <span class="noren noren--c" aria-hidden="true"><span class="noren-kanji">奏</span></span>
+    <span class="noren" aria-hidden="true"><span class="noren-kanji">奏</span></span>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
       <span class="card-num">その十一</span>
