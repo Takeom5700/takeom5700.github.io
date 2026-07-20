@@ -169,78 +169,13 @@ body::before {
   padding: 0 clamp(1.25rem, 4vw, 2.5rem);
 }
 
-/* ---- 灯り追いの小径 ----
-   サイト全体を「夜店を歩く」体験にする仕掛け。スクロールする行為そのものが
-   小径を進むことになり、きつねが道を先導しながら、通り過ぎた屋台の提灯を
-   1つずつ灯していく。ページ全体に散らばる単一の大きなインタラクションで、
-   単発のクリック演出（きつね面のポップ）とは別のレイヤーとして機能する。
-   幅の狭い画面では余白が足りないため非表示にする(1150px以上で表示)。 */
-.trail {
-  position: absolute;
-  top: 0;
-  left: clamp(8px, 2vw, 26px);
-  width: 24px;
-  display: none;
-  z-index: 2;
-  pointer-events: none;
-}
-@media (min-width: 1150px) {
-  .trail { display: block; }
-}
-.trail-line {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 2px;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, transparent, rgba(244, 234, 216, 0.16) 4%, rgba(244, 234, 216, 0.16) 96%, transparent);
-}
-.trail-dot {
-  position: absolute;
-  left: 50%;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(244, 234, 216, 0.16);
-  box-shadow: inset 0 0 0 1px rgba(244, 234, 216, 0.22);
-  transition: background-color 0.5s ease, box-shadow 0.5s ease;
-}
-.trail-dot--lit {
-  background: var(--kin);
-  box-shadow: 0 0 10px var(--kin), 0 0 3px var(--kin);
-}
-.trail-fox {
-  position: absolute;
-  left: 50%;
-  top: 40px;
-  transform: translate(-50%, -50%);
-}
-.trail-fox svg { display: block; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5)); }
-@media (prefers-reduced-motion: no-preference) {
-  .trail-fox svg { animation: trail-fox-bob 1.6s ease-in-out infinite; }
-}
-@keyframes trail-fox-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-.trail-progress {
-  position: fixed;
-  left: clamp(8px, 2vw, 26px);
-  bottom: 16px;
-  font-family: "DotGothic16", monospace;
-  font-size: 0.64rem;
-  letter-spacing: 0.06em;
-  color: var(--washi-sub);
-  display: none;
-  z-index: 3;
-  font-variant-numeric: tabular-nums;
-}
-@media (min-width: 1150px) {
-  .trail-progress { display: block; }
-}
+/* ---- 一本道の夜店（境界のないインタラクション） ----
+   左端に別パーツとして道を置くと「インタラクティブな部分」と「ただの
+   カード」に分離して見える、という指摘を受けて撤去。代わりに、カード
+   そのものを1本の道で直接つなぎ、道はカードの真後ろを通す。きつねは
+   その道の上＝コンテンツと同じ場所を歩き、通り過ぎたカード自身が
+   光る（別に用意したドットではなく、カード自身が反応する）。
+   詳細CSSは .market / .path-svg / .card--lit 等を参照。 */
 
 /* ---- 看板（ヘッダー） ---- */
 header {
@@ -284,7 +219,7 @@ header::before {
   from { transform: rotate(-3deg); }
   to   { transform: rotate(3deg); }
 }
-.kitsune--pop, .trail-fox--cheer svg { animation: kitsune-pop 0.6s cubic-bezier(0.34, 1.7, 0.4, 1) !important; }
+.kitsune--pop { animation: kitsune-pop 0.6s cubic-bezier(0.34, 1.7, 0.4, 1) !important; }
 @keyframes kitsune-pop {
   0%   { transform: scale(1, 1) rotate(0deg); }
   32%  { transform: scale(1.16, 0.86) rotate(-4deg); }
@@ -359,6 +294,8 @@ header .lede {
 
 /* ---- 区切り: 注連縄と紙垂 ---- */
 .shimenawa-wrap {
+  position: relative;
+  z-index: 1;
   padding: 2.6rem 0 2.2rem;
   text-align: center;
 }
@@ -413,17 +350,53 @@ header .lede {
   margin-inline: auto;
 }
 
-/* ---- 屋台カード ---- */
+/* ---- 一本道の夜店（ジグザグの一本列） ----
+   グリッドではなく、1列を左右交互にずらして「道沿いに並ぶ屋台」にする。
+   .market の中で .path-svg（道＋きつね）がカードの真後ろを通る。 */
+.market {
+  position: relative;
+}
+.path-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  z-index: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.path-base { fill: none; stroke: rgba(244, 234, 216, 0.14); stroke-width: 3; stroke-linecap: round; }
+.path-glow {
+  fill: none;
+  stroke: var(--kin);
+  stroke-width: 3;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px var(--kin));
+}
+.path-fox-bob { transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .path-fox-bob { animation: path-fox-bob 1.6s ease-in-out infinite; }
+}
+@keyframes path-fox-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(2deg); }
+}
+.path-fox { cursor: pointer; pointer-events: auto; }
+.path-fox--pop .path-fox-bob { animation: kitsune-pop 0.6s cubic-bezier(0.34, 1.7, 0.4, 1) !important; }
+
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  padding-bottom: 2.5rem;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 6vh, 56px);
+  padding: 12px 0 2.5rem;
 }
 
 .card {
   position: relative;
+  z-index: 1;
   display: block;
+  width: min(440px, 88%);
   background: var(--card);
   border: 2px solid var(--wood);
   border-radius: 8px;
@@ -433,6 +406,16 @@ header .lede {
   overflow: hidden;
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
+.grid .card:nth-child(odd)  { align-self: flex-start; margin-left: clamp(0px, 6vw, 54px); }
+.grid .card:nth-child(even) { align-self: flex-end;   margin-right: clamp(0px, 6vw, 54px); }
+@media (max-width: 640px) {
+  .grid .card:nth-child(odd), .grid .card:nth-child(even) {
+    align-self: center;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+  }
+}
 
 .card:hover {
   transform: translateY(-4px);
@@ -441,6 +424,13 @@ header .lede {
 }
 .card:hover .lantern { box-shadow: 0 0 16px var(--ac), 0 0 4px var(--ac); }
 .card:hover .noren-kanji { text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3), 0 0 14px color-mix(in srgb, var(--ac) 55%, transparent); }
+
+/* きつねが通り過ぎた屋台は灯りがともったまま残る（一度灯したら消えない） */
+.card--lit {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ac) 35%, transparent), 0 10px 28px rgba(0, 0, 0, 0.4), 0 0 26px color-mix(in srgb, var(--ac) 22%, transparent);
+}
+.card--lit .lantern { box-shadow: 0 0 14px var(--ac), 0 0 4px var(--ac); }
 
 /* 暖簾（藍染め・一枚布に一文字）。切れ込みは入れず、無地の一枚布として
    シンプルに。SVGフィルターでフチをわずかに揺らし、手染めの風合いを出す。 */
@@ -590,21 +580,6 @@ footer .kin { color: var(--kin); }
 
 <canvas id="fireflies" aria-hidden="true"></canvas>
 
-<div class="trail" id="trail" aria-hidden="true">
-  <div class="trail-fox" id="trailFox">
-    <svg viewBox="0 0 40 38" width="26" height="26">
-      <polygon points="10,13 5,2 16,8" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>
-      <polygon points="30,13 35,2 24,8" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>
-      <ellipse cx="20" cy="21" rx="13" ry="11.5" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6"/>
-      <ellipse cx="12" cy="18.5" rx="4" ry="5.6" fill="var(--shu)" opacity="0.85" transform="rotate(-18 12 18.5)"/>
-      <ellipse cx="28" cy="18.5" rx="4" ry="5.6" fill="var(--shu)" opacity="0.85" transform="rotate(18 28 18.5)"/>
-      <circle cx="15.5" cy="20.5" r="1.7" fill="#241a14"/>
-      <circle cx="24.5" cy="20.5" r="1.7" fill="#241a14"/>
-    </svg>
-  </div>
-</div>
-<p class="trail-progress" id="trailProgress">灯した提灯 0 / 11</p>
-
 <div class="lanterns" aria-hidden="true">
   <span class="chochin"></span>
   <span class="chochin"></span>
@@ -642,6 +617,9 @@ footer .kin { color: var(--kin); }
   <p class="lede">アプリをつくったり、宮本さなぎとして書いたり奏でたりしています。気になる屋台へどうぞ。</p>
   <p class="stats">APPS 07<span class="sep">◆</span>SNS 04<span class="sep">◆</span>TOKYO</p>
 </header>
+
+<div class="market" id="market">
+<svg class="path-svg" id="pathSvg" aria-hidden="true"></svg>
 
 <main class="grid">
   <a class="card" href="/tokyo-gakki-bukken/" style="--ac:#ffb244">
@@ -790,6 +768,8 @@ footer .kin { color: var(--kin); }
   </a>
 </section>
 
+</div>
+
 <footer>© 2026 TAKEOM5700 <span class="kin">◆</span> 宮本さなぎ <span class="kin">◆</span> またおこしください</footer>
 
 </div>
@@ -934,79 +914,129 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <script>
-/* 灯り追いの小径 — スクロール = 小径を歩く行為そのものにする。
-   きつねが道を先導し、通り過ぎた屋台の提灯を1つずつ灯していく。
-   単発の演出ではなく、ページ全体に効く唯一の大きな仕掛み。 */
+/* 一本道の夜店 — カード自身を1本の道でつなぎ、道はカードの真後ろを通す。
+   きつねはコンテンツと同じ場所（道の上）を歩き、通り過ぎたカード自身が
+   光る。左に別パーツの道を置いた前回の実装が「分離して見える」と
+   指摘されたため、道とコンテンツを同じ空間に統合した。 */
 (function () {
-  var trail = document.getElementById('trail');
-  var fox = document.getElementById('trailFox');
-  var progressLabel = document.getElementById('trailProgress');
-  if (!trail || !fox) return;
+  var market = document.getElementById('market');
+  var svg = document.getElementById('pathSvg');
+  if (!market || !svg) return;
 
-  var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+  var cards = Array.prototype.slice.call(market.querySelectorAll('.card'));
   if (!cards.length) return;
 
-  var line = document.createElement('div');
-  line.className = 'trail-line';
-  trail.insertBefore(line, fox);
+  var NS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag) { return document.createElementNS(NS, tag); }
 
-  var dots = cards.map(function () {
-    var d = document.createElement('span');
-    d.className = 'trail-dot';
-    trail.insertBefore(d, fox);
-    return d;
-  });
+  var basePath = svgEl('path');
+  basePath.setAttribute('class', 'path-base');
+  var glowPath = svgEl('path');
+  glowPath.setAttribute('class', 'path-glow');
+  svg.appendChild(basePath);
+  svg.appendChild(glowPath);
 
-  function layout() {
-    trail.style.height = document.body.scrollHeight + 'px';
-    cards.forEach(function (card, i) {
-      var rect = card.getBoundingClientRect();
-      var top = rect.top + window.scrollY + rect.height / 2;
-      dots[i].style.top = top + 'px';
+  var foxOuter = svgEl('g');
+  foxOuter.setAttribute('class', 'path-fox');
+  foxOuter.setAttribute('tabindex', '0');
+  foxOuter.setAttribute('role', 'button');
+  foxOuter.setAttribute('aria-label', 'きつね（クリックで反応します）');
+  var foxBob = svgEl('g');
+  foxBob.setAttribute('class', 'path-fox-bob');
+  foxBob.innerHTML =
+    '<polygon points="-9,-17 -14,-27 -3,-22" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>' +
+    '<polygon points="9,-17 14,-27 3,-22" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>' +
+    '<ellipse cx="0" cy="-11" rx="13" ry="11.5" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6"/>' +
+    '<ellipse cx="-8" cy="-13.5" rx="4" ry="5.6" fill="var(--shu)" opacity="0.85" transform="rotate(-18 -8 -13.5)"/>' +
+    '<ellipse cx="8" cy="-13.5" rx="4" ry="5.6" fill="var(--shu)" opacity="0.85" transform="rotate(18 8 -13.5)"/>' +
+    '<circle cx="-4.5" cy="-11.5" r="1.7" fill="#241a14"/>' +
+    '<circle cx="4.5" cy="-11.5" r="1.7" fill="#241a14"/>';
+  foxOuter.appendChild(foxBob);
+  svg.appendChild(foxOuter);
+
+  var pathLen = 0;
+
+  function buildPath() {
+    var marketRect = market.getBoundingClientRect();
+    var scrollY = window.scrollY;
+    var mHeight = market.scrollHeight;
+    svg.setAttribute('viewBox', '0 0 ' + marketRect.width + ' ' + mHeight);
+    svg.style.height = mHeight + 'px';
+
+    var pts = cards.map(function (card) {
+      var r = card.getBoundingClientRect();
+      return {
+        x: r.left - marketRect.left + r.width / 2,
+        y: r.top - marketRect.top + scrollY + r.height / 2
+      };
     });
-  }
-  layout();
-  window.addEventListener('resize', layout);
-  window.addEventListener('load', layout);
 
-  var lit = 0;
+    var d = 'M ' + pts[0].x.toFixed(1) + ' ' + pts[0].y.toFixed(1);
+    for (var i = 1; i < pts.length; i++) {
+      var p0 = pts[i - 1], p1 = pts[i];
+      var midY = (p0.y + p1.y) / 2;
+      d += ' C ' + p0.x.toFixed(1) + ' ' + midY.toFixed(1) + ', ' +
+                   p1.x.toFixed(1) + ' ' + midY.toFixed(1) + ', ' +
+                   p1.x.toFixed(1) + ' ' + p1.y.toFixed(1);
+    }
+    basePath.setAttribute('d', d);
+    glowPath.setAttribute('d', d);
+    pathLen = basePath.getTotalLength();
+    glowPath.style.strokeDasharray = pathLen;
+    glowPath.style.strokeDashoffset = pathLen;
+  }
+
+  buildPath();
+  window.addEventListener('resize', buildPath);
+  window.addEventListener('load', buildPath);
+
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
-        var idx = cards.indexOf(entry.target);
-        if (idx === -1 || !entry.isIntersecting) return;
-        if (dots[idx].classList.contains('trail-dot--lit')) return;
-        dots[idx].classList.add('trail-dot--lit');
-        lit++;
-        if (progressLabel) {
-          progressLabel.textContent = '灯した提灯 ' + lit + ' / ' + cards.length;
-        }
-        if (lit === cards.length) {
-          fox.classList.add('trail-fox--cheer');
-          if (progressLabel) progressLabel.textContent = '灯した提灯 ' + lit + ' / ' + cards.length + ' ◆ すべて回りきりました';
-        }
+        if (entry.isIntersecting) entry.target.classList.add('card--lit');
       });
     }, { threshold: 0.4 });
     cards.forEach(function (c) { io.observe(c); });
   }
-  fox.addEventListener('animationend', function (e) {
-    if (e.animationName === 'kitsune-pop') fox.classList.remove('trail-fox--cheer');
-  });
 
+  var cheered = false;
   var ticking = false;
-  function updateFoxPosition() {
+  function update() {
     ticking = false;
-    var docHeight = document.body.scrollHeight;
-    var target = window.scrollY + 210;
-    if (target < 30) target = 30;
-    if (target > docHeight - 30) target = docHeight - 30;
-    fox.style.top = target + 'px';
+    if (pathLen <= 0) return;
+    var marketTop = market.getBoundingClientRect().top + window.scrollY;
+    var mHeight = market.scrollHeight;
+    var viewFocus = window.scrollY + window.innerHeight * 0.4;
+    var progress = (viewFocus - marketTop) / mHeight;
+    progress = Math.max(0, Math.min(1, progress));
+
+    glowPath.style.strokeDashoffset = pathLen * (1 - progress);
+    var pt = basePath.getPointAtLength(pathLen * progress);
+    var ptAhead = basePath.getPointAtLength(Math.min(pathLen, pathLen * progress + 2));
+    var angle = Math.atan2(ptAhead.y - pt.y, ptAhead.x - pt.x) * 180 / Math.PI;
+    foxOuter.setAttribute('transform', 'translate(' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1) + ') rotate(' + (angle * 0.12).toFixed(1) + ')');
+
+    if (!cheered && progress >= 0.985) {
+      cheered = true;
+      foxOuter.classList.add('path-fox--pop');
+    }
   }
-  function onScroll() {
-    if (!ticking) { ticking = true; requestAnimationFrame(updateFoxPosition); }
-  }
-  updateFoxPosition();
+  function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+  update();
   window.addEventListener('scroll', onScroll, { passive: true });
+
+  function react() {
+    foxOuter.classList.remove('path-fox--pop');
+    void foxOuter.getBoundingClientRect();
+    foxOuter.classList.add('path-fox--pop');
+  }
+  foxBob.addEventListener('animationend', function (e) {
+    if (e.animationName === 'kitsune-pop') foxOuter.classList.remove('path-fox--pop');
+  });
+  foxOuter.addEventListener('click', react);
+  foxOuter.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); react(); }
+  });
 })();
 </script>
 </body>
