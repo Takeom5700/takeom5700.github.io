@@ -169,6 +169,79 @@ body::before {
   padding: 0 clamp(1.25rem, 4vw, 2.5rem);
 }
 
+/* ---- 灯り追いの小径 ----
+   サイト全体を「夜店を歩く」体験にする仕掛け。スクロールする行為そのものが
+   小径を進むことになり、きつねが道を先導しながら、通り過ぎた屋台の提灯を
+   1つずつ灯していく。ページ全体に散らばる単一の大きなインタラクションで、
+   単発のクリック演出（きつね面のポップ）とは別のレイヤーとして機能する。
+   幅の狭い画面では余白が足りないため非表示にする(1150px以上で表示)。 */
+.trail {
+  position: absolute;
+  top: 0;
+  left: clamp(8px, 2vw, 26px);
+  width: 24px;
+  display: none;
+  z-index: 2;
+  pointer-events: none;
+}
+@media (min-width: 1150px) {
+  .trail { display: block; }
+}
+.trail-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, transparent, rgba(244, 234, 216, 0.16) 4%, rgba(244, 234, 216, 0.16) 96%, transparent);
+}
+.trail-dot {
+  position: absolute;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(244, 234, 216, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(244, 234, 216, 0.22);
+  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+}
+.trail-dot--lit {
+  background: var(--kin);
+  box-shadow: 0 0 10px var(--kin), 0 0 3px var(--kin);
+}
+.trail-fox {
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  transform: translate(-50%, -50%);
+}
+.trail-fox svg { display: block; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5)); }
+@media (prefers-reduced-motion: no-preference) {
+  .trail-fox svg { animation: trail-fox-bob 1.6s ease-in-out infinite; }
+}
+@keyframes trail-fox-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.trail-progress {
+  position: fixed;
+  left: clamp(8px, 2vw, 26px);
+  bottom: 16px;
+  font-family: "DotGothic16", monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  color: var(--washi-sub);
+  display: none;
+  z-index: 3;
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 1150px) {
+  .trail-progress { display: block; }
+}
+
 /* ---- 看板（ヘッダー） ---- */
 header {
   position: relative;
@@ -211,7 +284,7 @@ header::before {
   from { transform: rotate(-3deg); }
   to   { transform: rotate(3deg); }
 }
-.kitsune--pop { animation: kitsune-pop 0.6s cubic-bezier(0.34, 1.7, 0.4, 1) !important; }
+.kitsune--pop, .trail-fox--cheer svg { animation: kitsune-pop 0.6s cubic-bezier(0.34, 1.7, 0.4, 1) !important; }
 @keyframes kitsune-pop {
   0%   { transform: scale(1, 1) rotate(0deg); }
   32%  { transform: scale(1.16, 0.86) rotate(-4deg); }
@@ -516,6 +589,21 @@ footer .kin { color: var(--kin); }
 </svg>
 
 <canvas id="fireflies" aria-hidden="true"></canvas>
+
+<div class="trail" id="trail" aria-hidden="true">
+  <div class="trail-fox" id="trailFox">
+    <svg viewBox="0 0 40 38" width="26" height="26">
+      <polygon points="10,13 5,2 16,8" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>
+      <polygon points="30,13 35,2 24,8" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>
+      <ellipse cx="20" cy="21" rx="13" ry="11.5" fill="var(--washi)" stroke="var(--rope)" stroke-width="1.6"/>
+      <ellipse cx="12" cy="18.5" rx="4" ry="5.6" fill="var(--shu)" opacity="0.85" transform="rotate(-18 12 18.5)"/>
+      <ellipse cx="28" cy="18.5" rx="4" ry="5.6" fill="var(--shu)" opacity="0.85" transform="rotate(18 28 18.5)"/>
+      <circle cx="15.5" cy="20.5" r="1.7" fill="#241a14"/>
+      <circle cx="24.5" cy="20.5" r="1.7" fill="#241a14"/>
+    </svg>
+  </div>
+</div>
+<p class="trail-progress" id="trailProgress">灯した提灯 0 / 11</p>
 
 <div class="lanterns" aria-hidden="true">
   <span class="chochin"></span>
@@ -842,6 +930,83 @@ if ('serviceWorker' in navigator) {
   fox.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); react(); }
   });
+})();
+</script>
+
+<script>
+/* 灯り追いの小径 — スクロール = 小径を歩く行為そのものにする。
+   きつねが道を先導し、通り過ぎた屋台の提灯を1つずつ灯していく。
+   単発の演出ではなく、ページ全体に効く唯一の大きな仕掛み。 */
+(function () {
+  var trail = document.getElementById('trail');
+  var fox = document.getElementById('trailFox');
+  var progressLabel = document.getElementById('trailProgress');
+  if (!trail || !fox) return;
+
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+  if (!cards.length) return;
+
+  var line = document.createElement('div');
+  line.className = 'trail-line';
+  trail.insertBefore(line, fox);
+
+  var dots = cards.map(function () {
+    var d = document.createElement('span');
+    d.className = 'trail-dot';
+    trail.insertBefore(d, fox);
+    return d;
+  });
+
+  function layout() {
+    trail.style.height = document.body.scrollHeight + 'px';
+    cards.forEach(function (card, i) {
+      var rect = card.getBoundingClientRect();
+      var top = rect.top + window.scrollY + rect.height / 2;
+      dots[i].style.top = top + 'px';
+    });
+  }
+  layout();
+  window.addEventListener('resize', layout);
+  window.addEventListener('load', layout);
+
+  var lit = 0;
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        var idx = cards.indexOf(entry.target);
+        if (idx === -1 || !entry.isIntersecting) return;
+        if (dots[idx].classList.contains('trail-dot--lit')) return;
+        dots[idx].classList.add('trail-dot--lit');
+        lit++;
+        if (progressLabel) {
+          progressLabel.textContent = '灯した提灯 ' + lit + ' / ' + cards.length;
+        }
+        if (lit === cards.length) {
+          fox.classList.add('trail-fox--cheer');
+          if (progressLabel) progressLabel.textContent = '灯した提灯 ' + lit + ' / ' + cards.length + ' ◆ すべて回りきりました';
+        }
+      });
+    }, { threshold: 0.4 });
+    cards.forEach(function (c) { io.observe(c); });
+  }
+  fox.addEventListener('animationend', function (e) {
+    if (e.animationName === 'kitsune-pop') fox.classList.remove('trail-fox--cheer');
+  });
+
+  var ticking = false;
+  function updateFoxPosition() {
+    ticking = false;
+    var docHeight = document.body.scrollHeight;
+    var target = window.scrollY + 210;
+    if (target < 30) target = 30;
+    if (target > docHeight - 30) target = docHeight - 30;
+    fox.style.top = target + 'px';
+  }
+  function onScroll() {
+    if (!ticking) { ticking = true; requestAnimationFrame(updateFoxPosition); }
+  }
+  updateFoxPosition();
+  window.addEventListener('scroll', onScroll, { passive: true });
 })();
 </script>
 </body>
