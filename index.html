@@ -75,59 +75,17 @@ body::before {
     radial-gradient(1px 1px at 28% 76%, rgba(255, 178, 68, 0.35) 50%, transparent 51%);
 }
 
-/* ---- 紅白幕の紐（吊り下げの結び目） ---- */
-.maku-ties {
-  display: flex;
-  justify-content: space-evenly;
-  padding: 0 5%;
-  margin-bottom: -4px;
-  position: relative;
-  z-index: 1;
-}
-.maku-tie {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #8a6544, var(--rope) 55%, #3a2418 100%);
-  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
-}
-
-/* ---- 紅白幕（入口の幕・裾はまっすぐ） ---- */
-.maku {
-  position: relative;
-  height: 42px;
-  background: repeating-linear-gradient(90deg, var(--shu) 0 30px, #efe3c9 30px 60px);
-}
-/* 手染めのムラ・折りジワ */
-.maku::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.22) 0%, transparent 42%, transparent 68%, rgba(0, 0, 0, 0.14) 100%),
-    radial-gradient(220px 50px at 14% 40%, rgba(0, 0, 0, 0.1), transparent),
-    radial-gradient(260px 50px at 63% 60%, rgba(255, 255, 255, 0.06), transparent),
-    radial-gradient(200px 50px at 88% 35%, rgba(0, 0, 0, 0.08), transparent);
-  pointer-events: none;
-}
-/* 房（下端の飾り） */
-.maku::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; bottom: -8px;
-  height: 8px;
-  background-image: radial-gradient(circle, rgba(40, 20, 14, 0.55) 2px, transparent 2.5px);
-  background-size: 17px 8px;
-  background-position: 8px 0;
-}
+/* 紅白幕は「儀式・慶事」の幕であり夜店の顔としては不自然なため撤去。
+   ヘッダーは連提灯を主役にする（これが実際の夜祭りの顔） */
 
 /* ---- 連提灯 ---- */
 .lanterns {
   display: flex;
   justify-content: center;
-  gap: clamp(20px, 6vw, 64px);
-  padding-top: 12px;
-  min-height: 86px;
+  align-items: flex-end;
+  gap: clamp(18px, 6vw, 58px);
+  padding-top: clamp(1.6rem, 4vh, 2.6rem);
+  min-height: 96px;
 }
 
 .chochin {
@@ -321,18 +279,21 @@ header .lede {
   background: repeating-linear-gradient(115deg, #7a5638 0 5px, #4a3120 5px 9px, #7a5638 9px 14px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   display: flex;
-  justify-content: space-evenly;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(20px, 6vw, 40px);
 }
+/* 紙垂(しで): 伝統は4枚。稲妻を模した大きな折りを2〜3回で表現し、
+   細かい規則的なギザギザにはしない。1枚ずつ回転・大きさ・垂れ方を
+   わずかに変え、完全に均一な間隔・同一形状にならないようにする
+   （実物の紙垂は手折りで、間隔も形も揃いすぎることはない） */
 .shide {
-  width: 11px;
-  height: 30px;
-  margin-top: 11px;
+  width: 12px;
+  height: 32px;
   background: var(--washi);
   opacity: 0.92;
   clip-path: polygon(
-    0% 0%, 100% 0%, 100% 16%, 25% 26%, 100% 36%,
-    25% 46%, 100% 56%, 25% 66%, 100% 76%,
-    100% 100%, 0% 100%
+    0% 0%, 100% 0%, 100% 34%, 22% 48%, 100% 62%, 22% 76%, 100% 100%, 0% 100%
   );
 }
 .section-label {
@@ -379,28 +340,29 @@ header .lede {
 .card:hover .lantern { box-shadow: 0 0 16px var(--ac), 0 0 4px var(--ac); }
 .card:hover .noren-kanji { text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3), 0 0 14px color-mix(in srgb, var(--ac) 55%, transparent); }
 
-/* 暖簾（藍染め・一枚布に一文字）
-   切れ込みはカードごとに違う不揃いな形にし（4パターン巡回）、
-   SVGフィルターでフチをわずかに揺らして手染め・手切りの風合いを出す。
-   文字より十分下に切れ込みの頂点を置き、文字は削らない。 */
+/* 暖簾（藍染め・一枚布は上部だけで繋がり、下から縦に真っ直ぐ切り込みを
+   2本入れて3枚に分かれる — 実際の暖簾の「割れ」構造）。
+   三角の尖った切れ込みは実在しないため直線の縦スリットに変更。
+   カードごとに切り込みの位置・高さをわずかに変え（4パターン巡回）、
+   SVGフィルターでフチを揺らして手染め・手切りの風合いを出す。 */
 .noren {
   position: relative;
-  height: 78px;
+  height: 84px;
   margin: 0 -22px 16px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 14px;
+  padding-top: 13px;
   background:
     radial-gradient(140% 100% at 20% 10%, rgba(255, 255, 255, 0.07), transparent 55%),
     radial-gradient(140% 100% at 82% 92%, rgba(0, 0, 0, 0.24), transparent 55%),
     var(--ai);
   filter: url(#fabric-edge);
 }
-.noren--a { clip-path: polygon(0 0, 100% 0, 100% 100%, 88% 97%, 84% 100%, 57% 100%, 52% 78%, 47% 100%, 0 100%); }
-.noren--b { clip-path: polygon(0 0, 100% 0, 100% 100%, 60% 100%, 55% 82%, 50% 100%, 18% 100%, 14% 95%, 0 100%); }
-.noren--c { clip-path: polygon(0 0, 100% 0, 100% 100%, 95% 98%, 92% 100%, 53% 100%, 48% 74%, 43% 100%, 0 100%); }
-.noren--d { clip-path: polygon(0 0, 100% 0, 100% 100%, 66% 98%, 62% 100%, 51% 100%, 47% 84%, 42% 100%, 30% 97%, 0 100%); }
+.noren--a { clip-path: polygon(0 0, 100% 0, 100% 100%, 68% 100%, 68% 58%, 64% 58%, 64% 100%, 38% 100%, 38% 60%, 34% 60%, 34% 100%, 0 100%); }
+.noren--b { clip-path: polygon(0 0, 100% 0, 100% 100%, 70% 100%, 70% 62%, 66% 62%, 66% 100%, 41% 100%, 41% 55%, 37% 55%, 37% 100%, 0 100%); }
+.noren--c { clip-path: polygon(0 0, 100% 0, 100% 100%, 65% 100%, 65% 60%, 61% 60%, 61% 100%, 35% 100%, 35% 64%, 31% 64%, 31% 100%, 0 100%); }
+.noren--d { clip-path: polygon(0 0, 100% 0, 100% 100%, 72% 100%, 72% 56%, 68% 56%, 68% 100%, 43% 100%, 43% 58%, 39% 58%, 39% 100%, 0 100%); }
 .noren::before {
   content: "";
   position: absolute;
@@ -411,7 +373,7 @@ header .lede {
 .noren-kanji {
   font-family: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
   font-weight: 700;
-  font-size: 1.85rem;
+  font-size: 1.7rem;
   color: var(--washi);
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
   transition: text-shadow 0.18s ease;
@@ -531,13 +493,6 @@ footer .kin { color: var(--kin); }
     <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5" xChannelSelector="R" yChannelSelector="G"/>
   </filter>
 </svg>
-
-<div class="maku-ties" aria-hidden="true">
-  <span class="maku-tie"></span><span class="maku-tie"></span><span class="maku-tie"></span>
-  <span class="maku-tie"></span><span class="maku-tie"></span><span class="maku-tie"></span>
-  <span class="maku-tie"></span><span class="maku-tie"></span><span class="maku-tie"></span>
-</div>
-<div class="maku" aria-hidden="true"></div>
 
 <div class="lanterns" aria-hidden="true">
   <span class="chochin"></span>
@@ -668,8 +623,10 @@ footer .kin { color: var(--kin); }
 
 <div class="shimenawa-wrap">
   <div class="shimenawa" aria-hidden="true">
-    <span class="shide"></span><span class="shide"></span><span class="shide"></span>
-    <span class="shide"></span><span class="shide"></span>
+    <span class="shide" style="margin-top:9px; transform:rotate(-4deg) scale(0.94);"></span>
+    <span class="shide" style="margin-top:14px; transform:rotate(2deg) scale(1.06);"></span>
+    <span class="shide" style="margin-top:8px; transform:rotate(-1deg) scale(0.98);"></span>
+    <span class="shide" style="margin-top:12px; transform:rotate(4deg) scale(1.02);"></span>
   </div>
   <p class="section-label">宮本さなぎとして</p>
   <p class="section-lede">アプリとは別に、宮本さなぎ名義で書いたり話したり奏でたりしています。</p>
