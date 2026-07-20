@@ -57,22 +57,18 @@ body {
 ::selection { background: rgba(193, 24, 27, 0.45); }
 :focus-visible { outline: 2px solid var(--kin); outline-offset: 3px; }
 
-/* 祭りの夜空: 提灯の残光と遠くの明かり */
+/* 赤みがかった夜の奥行き（点の光は#firefliesのCanvasが担当するため
+   ここは面の淡いグローのみ） */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(620px 460px at 10% -8%, rgba(255, 178, 68, 0.16), transparent 70%),
-    radial-gradient(540px 420px at 90% 2%, rgba(193, 24, 27, 0.2), transparent 70%),
-    radial-gradient(700px 300px at 50% 112%, rgba(255, 102, 0, 0.12), transparent 70%),
-    radial-gradient(1.5px 1.5px at 18% 34%, rgba(255, 178, 68, 0.5) 50%, transparent 51%),
-    radial-gradient(1px 1px at 42% 18%, rgba(255, 178, 68, 0.35) 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 70% 42%, rgba(255, 178, 68, 0.4) 50%, transparent 51%),
-    radial-gradient(1px 1px at 88% 64%, rgba(255, 178, 68, 0.3) 50%, transparent 51%),
-    radial-gradient(1px 1px at 28% 76%, rgba(255, 178, 68, 0.35) 50%, transparent 51%);
+    radial-gradient(620px 460px at 10% -8%, rgba(255, 178, 68, 0.14), transparent 70%),
+    radial-gradient(540px 420px at 90% 2%, rgba(193, 24, 27, 0.22), transparent 70%),
+    radial-gradient(700px 300px at 50% 112%, rgba(255, 102, 0, 0.1), transparent 70%);
 }
 
 /* 紅白幕は「儀式・慶事」の幕であり夜店の顔としては不自然なため撤去。
@@ -151,36 +147,18 @@ body::before {
   .chochin:nth-child(n+6) { display: none; }
 }
 
-/* ---- 火の粉 ---- */
-.ember {
+/* ---- 蛍の背景アート(Canvas) ----
+   夏の夜、赤みがかった黒の中をゆっくり漂う蛍。単純なCSSの点の上昇では
+   物足りないため、揺らぎ・明滅・マウスへのやさしい反応を持つ生成アート
+   として描く（本体は#fireflies-scriptのJSを参照） */
+#fireflies {
   position: fixed;
-  bottom: -2vh;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--kin);
-  box-shadow: 0 0 7px var(--kin);
-  opacity: 0;
+  inset: 0;
+  z-index: -1;
   pointer-events: none;
-  z-index: 0;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .ember { animation: rise linear infinite; }
-  .ember:nth-child(1) { left: 8%;  animation-duration: 15s; animation-delay: 0s; }
-  .ember:nth-child(2) { left: 24%; animation-duration: 19s; animation-delay: 5s; width: 3px; height: 3px; }
-  .ember:nth-child(3) { left: 46%; animation-duration: 13s; animation-delay: 9s; }
-  .ember:nth-child(4) { left: 66%; animation-duration: 21s; animation-delay: 3s; width: 3px; height: 3px; }
-  .ember:nth-child(5) { left: 82%; animation-duration: 16s; animation-delay: 12s; }
-  .ember:nth-child(6) { left: 93%; animation-duration: 18s; animation-delay: 7s; width: 3px; height: 3px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ember { display: none; }
-}
-@keyframes rise {
-  0%   { transform: translate(0, 0); opacity: 0; }
-  8%   { opacity: 0.75; }
-  55%  { opacity: 0.5; }
-  100% { transform: translate(26px, -108vh); opacity: 0; }
+  #fireflies { display: none; }
 }
 
 .wrap {
@@ -214,21 +192,61 @@ header::before {
   z-index: -1;
 }
 
-/* きつね面のマスコット */
+/* きつね面のマスコット — この縁日の「愛でる」中心。
+   ただの飾りにせず、瞬き(生きている)とクリック反応(触れ合える)を持たせる */
 .kitsune {
   display: block;
-  width: 76px;
+  width: 84px;
   height: auto;
   margin: 0 auto 12px;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.4));
   transform-origin: 50% -8px;
+  cursor: pointer;
 }
+.kitsune:focus-visible { outline: 2px solid var(--kin); outline-offset: 6px; border-radius: 50%; }
 @media (prefers-reduced-motion: no-preference) {
   .kitsune { animation: kitsune-sway 4.2s ease-in-out infinite alternate; }
 }
 @keyframes kitsune-sway {
   from { transform: rotate(-3deg); }
   to   { transform: rotate(3deg); }
+}
+.kitsune--pop { animation: kitsune-pop 0.6s cubic-bezier(0.34, 1.7, 0.4, 1) !important; }
+@keyframes kitsune-pop {
+  0%   { transform: scale(1, 1) rotate(0deg); }
+  32%  { transform: scale(1.16, 0.86) rotate(-4deg); }
+  60%  { transform: scale(0.93, 1.09) rotate(3deg); }
+  100% { transform: scale(1, 1) rotate(0deg); }
+}
+.kitsune-eye { transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .kitsune-eye--l { animation: kitsune-blink 5.4s ease-in-out infinite; }
+  .kitsune-eye--r { animation: kitsune-blink 5.4s ease-in-out infinite; animation-delay: 0.1s; }
+}
+@keyframes kitsune-blink {
+  0%, 93%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.08); }
+}
+.kitsune--pop .kitsune-mouth { d: path("M44 71 Q50 80 56 71"); }
+
+.kitsune-spark {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--kin);
+  box-shadow: 0 0 6px var(--kin);
+  pointer-events: none;
+  z-index: 60;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .kitsune-spark { animation: spark-fly 0.7s ease-out forwards; }
+}
+@keyframes spark-fly {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.2); opacity: 0; }
 }
 
 .eyebrow {
@@ -271,17 +289,28 @@ header .lede {
   padding: 2.6rem 0 2.2rem;
   text-align: center;
 }
+/* 縄本体は::beforeの12px帯。下に紙垂がぶら下がる分の高さは
+   padding-topで実際にレイアウトへ確保する（重なりバグの原因は
+   固定heightで縄だけの高さにし、紙垂のはみ出しを計算に入れて
+   いなかったこと。paddingで実高さに含める） */
 .shimenawa {
-  height: 12px;
+  position: relative;
   max-width: 30rem;
   margin: 0 auto;
-  border-radius: 7px;
-  background: repeating-linear-gradient(115deg, #7a5638 0 5px, #4a3120 5px 9px, #7a5638 9px 14px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  padding-top: 12px;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   gap: clamp(20px, 6vw, 40px);
+}
+.shimenawa::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 12px;
+  border-radius: 7px;
+  background: repeating-linear-gradient(115deg, #7a5638 0 5px, #4a3120 5px 9px, #7a5638 9px 14px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 /* 紙垂(しで): 伝統は4枚。稲妻を模した大きな折りを2〜3回で表現し、
    細かい規則的なギザギザにはしない。1枚ずつ回転・大きさ・垂れ方を
@@ -486,6 +515,8 @@ footer .kin { color: var(--kin); }
   </filter>
 </svg>
 
+<canvas id="fireflies" aria-hidden="true"></canvas>
+
 <div class="lanterns" aria-hidden="true">
   <span class="chochin"></span>
   <span class="chochin"></span>
@@ -496,30 +527,27 @@ footer .kin { color: var(--kin); }
   <span class="chochin"></span>
 </div>
 
-<span class="ember" aria-hidden="true"></span>
-<span class="ember" aria-hidden="true"></span>
-<span class="ember" aria-hidden="true"></span>
-<span class="ember" aria-hidden="true"></span>
-<span class="ember" aria-hidden="true"></span>
-<span class="ember" aria-hidden="true"></span>
-
 <div class="wrap">
 
 <header>
-  <svg class="kitsune" viewBox="0 0 100 96" aria-hidden="true">
+  <svg class="kitsune" viewBox="0 0 100 96" role="button" tabindex="0" aria-label="きつね面（クリックで反応します）">
     <line x1="50" y1="0" x2="50" y2="9" stroke="rgba(244,234,216,0.4)" stroke-width="2"/>
     <polygon points="28,34 18,6 42,22" fill="var(--washi)" stroke="var(--rope)" stroke-width="2.5" stroke-linejoin="round"/>
     <polygon points="72,34 82,6 58,22" fill="var(--washi)" stroke="var(--rope)" stroke-width="2.5" stroke-linejoin="round"/>
     <ellipse cx="50" cy="56" rx="34" ry="30" fill="var(--washi)" stroke="var(--rope)" stroke-width="2.5"/>
     <ellipse cx="30" cy="50" rx="10" ry="15" fill="var(--shu)" opacity="0.85" transform="rotate(-18 30 50)"/>
     <ellipse cx="70" cy="50" rx="10" ry="15" fill="var(--shu)" opacity="0.85" transform="rotate(18 70 50)"/>
-    <ellipse cx="38" cy="54" rx="4.2" ry="6" fill="#241a14"/>
-    <ellipse cx="62" cy="54" rx="4.2" ry="6" fill="#241a14"/>
-    <circle cx="39.5" cy="51" r="1.4" fill="#fff"/>
-    <circle cx="63.5" cy="51" r="1.4" fill="#fff"/>
+    <g class="kitsune-eye kitsune-eye--l">
+      <ellipse cx="38" cy="54" rx="4.2" ry="6" fill="#241a14"/>
+      <circle cx="39.5" cy="51" r="1.4" fill="#fff"/>
+    </g>
+    <g class="kitsune-eye kitsune-eye--r">
+      <ellipse cx="62" cy="54" rx="4.2" ry="6" fill="#241a14"/>
+      <circle cx="63.5" cy="51" r="1.4" fill="#fff"/>
+    </g>
     <circle cx="34" cy="66" r="4.5" fill="#ff9ab0" opacity="0.55"/>
     <circle cx="66" cy="66" r="4.5" fill="#ff9ab0" opacity="0.55"/>
-    <path d="M45 72 Q50 76 55 72" fill="none" stroke="var(--rope)" stroke-width="2" stroke-linecap="round"/>
+    <path class="kitsune-mouth" d="M45 72 Q50 76 55 72" fill="none" stroke="var(--rope)" stroke-width="2" stroke-linecap="round"/>
   </svg>
   <p class="eyebrow">— TAKEOM5700 PRESENTS —</p>
   <h1>タケオの縁日</h1>
@@ -684,6 +712,137 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
   });
 }
+</script>
+
+<script>
+/* 蛍の背景アート — 赤みがかった夜を漂う光。単純な上昇アニメーションではなく
+   個体ごとにランダムな漂い・明滅・カーソルへのやさしい反応を持たせる */
+(function () {
+  var canvas = document.getElementById('fireflies');
+  if (!canvas || !canvas.getContext) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var ctx = canvas.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var w, h;
+
+  function resize() {
+    w = innerWidth; h = innerHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function spawn() {
+    return {
+      x: Math.random() * w,
+      y: h + Math.random() * 60,
+      vx: (Math.random() - 0.5) * 0.16,
+      vy: -0.06 - Math.random() * 0.14,
+      r: 1.1 + Math.random() * 1.6,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.5 + Math.random() * 0.9,
+      hue: Math.random() < 0.75 ? 42 : 14
+    };
+  }
+  var COUNT = Math.max(16, Math.min(40, Math.round((w * h) / 28000)));
+  var flies = [];
+  for (var i = 0; i < COUNT; i++) {
+    var f = spawn();
+    f.y = Math.random() * h;
+    flies.push(f);
+  }
+
+  var mx = -9999, my = -9999;
+  window.addEventListener('pointermove', function (e) { mx = e.clientX; my = e.clientY; });
+  window.addEventListener('pointerleave', function () { mx = -9999; my = -9999; });
+
+  var t = 0;
+  function tick() {
+    t += 0.016;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    for (var i = 0; i < flies.length; i++) {
+      var fl = flies[i];
+      fl.x += fl.vx + Math.sin(t * fl.speed + fl.phase) * 0.14;
+      fl.y += fl.vy;
+
+      var dx = fl.x - mx, dy = fl.y - my;
+      var d2 = dx * dx + dy * dy;
+      if (d2 < 6500) {
+        var d = Math.sqrt(d2) || 1;
+        fl.x += (dx / d) * 0.5;
+        fl.y += (dy / d) * 0.5;
+      }
+      if (fl.y < -12) { flies[i] = spawn(); continue; }
+      if (fl.x < -12) fl.x = w + 12;
+      if (fl.x > w + 12) fl.x = -12;
+
+      var flicker = 0.32 + 0.68 * (0.5 + 0.5 * Math.sin(t * 2.1 * fl.speed + fl.phase * 3));
+      var alpha = flicker * 0.9;
+      var glow = ctx.createRadialGradient(fl.x, fl.y, 0, fl.x, fl.y, fl.r * 5.5);
+      glow.addColorStop(0, 'hsla(' + fl.hue + ', 92%, 68%, ' + alpha + ')');
+      glow.addColorStop(1, 'hsla(' + fl.hue + ', 92%, 60%, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(fl.x, fl.y, fl.r * 5.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = 'hsla(' + fl.hue + ', 96%, 86%, ' + alpha + ')';
+      ctx.beginPath();
+      ctx.arc(fl.x, fl.y, fl.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+<script>
+/* きつね面 — クリック/タップで少し驚いて、金の光が散る */
+(function () {
+  var fox = document.querySelector('.kitsune');
+  if (!fox) return;
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function burst() {
+    if (reduced) return;
+    var rect = fox.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    var n = 6;
+    for (var i = 0; i < n; i++) {
+      var angle = (Math.PI * 2 * i) / n + Math.random() * 0.6;
+      var dist = 24 + Math.random() * 18;
+      var s = document.createElement('span');
+      s.className = 'kitsune-spark';
+      s.style.left = cx + 'px';
+      s.style.top = cy + 'px';
+      s.style.setProperty('--dx', (Math.cos(angle) * dist) + 'px');
+      s.style.setProperty('--dy', (Math.sin(angle) * dist - 8) + 'px');
+      document.body.appendChild(s);
+      s.addEventListener('animationend', function () { this.remove(); });
+      setTimeout(function (el) { return function () { if (el.parentNode) el.remove(); }; }(s), 900);
+    }
+  }
+
+  function react() {
+    fox.classList.remove('kitsune--pop');
+    void fox.getBoundingClientRect();
+    fox.classList.add('kitsune--pop');
+    burst();
+  }
+
+  fox.addEventListener('animationend', function (e) {
+    if (e.animationName === 'kitsune-pop') fox.classList.remove('kitsune--pop');
+  });
+  fox.addEventListener('click', react);
+  fox.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); react(); }
+  });
+})();
 </script>
 </body>
 </html>
