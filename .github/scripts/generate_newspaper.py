@@ -71,19 +71,41 @@ print(f"Generating newspaper for {date_str} using Gemini with Google Search...")
 
 candidate_models = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.0-flash']
 
-response = None
+def is_complete_newspaper(html):
+    """Guards against truncated output (e.g. hitting max_output_tokens mid-generation),
+    which used to silently save a broken half-finished page with no closing tags and
+    missing the bottom 3 articles."""
+    if not html.rstrip().endswith('</html>'):
+        return False
+    if html.count('<foreignObject') != 13:
+        return False
+    return True
+
+html_content = None
 last_error = None
-for model_name in candidate_models:
+attempts = [(m, mo) for m in candidate_models for mo in (24000, 32000)]
+for model_name, max_tokens in attempts:
     try:
-        print(f"Trying model: {model_name}")
+        print(f"Trying model: {model_name} (max_output_tokens={max_tokens})")
         response = client.models.generate_content(
             model=model_name,
             contents=prompt,
             config=types.GenerateContentConfig(
                 tools=[types.Tool(google_search=types.GoogleSearch())],
-                max_output_tokens=16000,
+                max_output_tokens=max_tokens,
             )
         )
+        candidate_html = response.text
+        match = re.search(r'<!DOCTYPE html>.*?</html>', candidate_html, re.DOTALL | re.IGNORECASE)
+        if match:
+            candidate_html = match.group(0)
+
+        if not is_complete_newspaper(candidate_html):
+            print(f"Model {model_name} returned incomplete/truncated output ({len(candidate_html)} chars), retrying...")
+            last_error = RuntimeError(f"Incomplete output from {model_name}")
+            continue
+
+        html_content = candidate_html
         print(f"Success with model: {model_name}")
         break
     except Exception as e:
@@ -91,14 +113,8 @@ for model_name in candidate_models:
         print(f"Model {model_name} failed: {e}")
         continue
 
-if response is None:
-    raise RuntimeError(f"All candidate models failed. Last error: {last_error}")
-
-html_content = response.text
-
-match = re.search(r'<!DOCTYPE html>.*?</html>', html_content, re.DOTALL | re.IGNORECASE)
-if match:
-    html_content = match.group(0)
+if html_content is None:
+    raise RuntimeError(f"All candidate models failed or returned incomplete output. Last error: {last_error}")
 
 def strip_span_from_svg_text(html):
     """<span> is invalid inside SVG <text>/<tspan> and breaks the whole page's
