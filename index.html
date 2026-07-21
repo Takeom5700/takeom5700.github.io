@@ -1155,7 +1155,7 @@ if ('serviceWorker' in navigator) {
       y: h + Math.random() * 60,
       vx: (Math.random() - 0.5) * 0.16,
       vy: -0.06 - Math.random() * 0.14,
-      r: 1.1 + Math.random() * 1.6,
+      r: 1.6 + Math.random() * 2.2,
       phase: Math.random() * Math.PI * 2,
       speed: 0.5 + Math.random() * 0.9,
       hue: Math.random() < 0.75 ? 42 : 14
@@ -1341,20 +1341,20 @@ if ('serviceWorker' in navigator) {
     });
   }
   function burstFirework(fw) {
-    var n = 58 + Math.floor(Math.random() * 20);
+    var n = 74 + Math.floor(Math.random() * 24);
     var willow = fw.style === 'yanagi';
     var double = fw.style === 'double';
     var parts = [];
     for (var i = 0; i < n; i++) {
       var ang = (Math.PI * 2 * i) / n + Math.random() * 0.1;
       var ring = double && i % 2 === 0 ? 0.55 : 1;
-      var spd = ((willow ? 1.7 : 2.1) + Math.random() * 1.6) * ring;
+      var spd = ((willow ? 2.3 : 2.9) + Math.random() * 2) * ring;
       parts.push({
         x: fw.x, y: fw.y,
         vx: Math.cos(ang) * spd,
         vy: Math.sin(ang) * spd,
         life: 1,
-        decay: willow ? 0.0046 : (double ? 0.006 : 0.0056),
+        decay: willow ? 0.0036 : (double ? 0.0048 : 0.0044),
         gravity: willow ? 0.086 : 0.05,
         drag: willow ? 0.991 : 0.985,
         trail: []
@@ -1391,9 +1391,16 @@ if ('serviceWorker' in navigator) {
       if (fw.phase === 'rise') {
         fw.y += fw.vy;
         fw.vy *= 0.992;
+        var riseGlow = ctx.createRadialGradient(fw.x, fw.y, 0, fw.x, fw.y, 6);
+        riseGlow.addColorStop(0, hexA(fw.color.glow, 0.95));
+        riseGlow.addColorStop(1, hexA(fw.color.a, 0));
+        ctx.fillStyle = riseGlow;
         ctx.beginPath();
-        ctx.arc(fw.x, fw.y, 2, 0, Math.PI * 2);
-        ctx.fillStyle = fw.color.a;
+        ctx.arc(fw.x, fw.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = fw.color.glow;
+        ctx.beginPath();
+        ctx.arc(fw.x, fw.y, 2.2, 0, Math.PI * 2);
         ctx.fill();
         if (fw.y <= fw.targetY || fw.vy > -0.25) {
           if (fw.hang > 0) { fw.hang--; fw.vy *= 0.4; }
@@ -1427,17 +1434,24 @@ if ('serviceWorker' in navigator) {
             ctx.moveTo(pt.trail[0].x, pt.trail[0].y);
             for (var tI = 1; tI < pt.trail.length; tI++) ctx.lineTo(pt.trail[tI].x, pt.trail[tI].y);
             ctx.lineTo(pt.x, pt.y);
-            ctx.strokeStyle = hexA(stageColor, a * 0.55);
-            ctx.lineWidth = 1.3;
+            ctx.strokeStyle = hexA(stageColor, a * 0.8);
+            ctx.lineWidth = 2.2;
             ctx.stroke();
           }
 
-          var glow = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, 3.6);
+          var glow = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, 7.5);
           glow.addColorStop(0, hexA(fw.color.glow, a));
+          glow.addColorStop(0.4, hexA(fw.color.glow, a * 0.7));
           glow.addColorStop(1, hexA(stageColor, 0));
           ctx.fillStyle = glow;
           ctx.beginPath();
-          ctx.arc(pt.x, pt.y, 3.6, 0, Math.PI * 2);
+          ctx.arc(pt.x, pt.y, 7.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          /* 芯の粒（一番明るい核。遠目にも花火の粒だと分かるように） */
+          ctx.fillStyle = hexA(fw.color.glow, a);
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 1.8, 0, Math.PI * 2);
           ctx.fill();
 
           /* 川面への映り込み（長岡花火が信濃川に映るように） */
@@ -1445,12 +1459,12 @@ if ('serviceWorker' in navigator) {
           if (pt.y < waterline) {
             var ry = waterline + (waterline - pt.y) * 0.82;
             if (ry < h + 10) {
-              var rGlow = ctx.createRadialGradient(pt.x, ry, 0, pt.x, ry, 3.2);
-              rGlow.addColorStop(0, hexA(fw.color.glow, a * 0.3));
+              var rGlow = ctx.createRadialGradient(pt.x, ry, 0, pt.x, ry, 5.5);
+              rGlow.addColorStop(0, hexA(fw.color.glow, a * 0.4));
               rGlow.addColorStop(1, hexA(stageColor, 0));
               ctx.fillStyle = rGlow;
               ctx.beginPath();
-              ctx.ellipse(pt.x, ry, 3.2, 1.4, 0, 0, Math.PI * 2);
+              ctx.ellipse(pt.x, ry, 5.5, 2.4, 0, 0, Math.PI * 2);
               ctx.fill();
             }
           }
