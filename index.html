@@ -36,6 +36,12 @@
   --wood: #5f3d31;          /* 屋台の木枠 */
   --rope: #6b4a2e;
   --line: rgba(244, 234, 216, 0.2);
+  /* ダイナミックデザイン: 花火が爆ぜた瞬間、JSがこの3つを一斉に
+     書き換える。背景全面のフラッシュとカードの中身が同じ値を参照する
+     ことで、1つの現象がページ全体に影響する */
+  --flash: 0;
+  --flash-x: 50%;
+  --flash-y: 35%;
 }
 
 html { background: var(--yoru); }
@@ -58,7 +64,8 @@ body {
 :focus-visible { outline: 2px solid var(--kin); outline-offset: 3px; }
 
 /* 赤みがかった夜の奥行き（点の光は#firefliesのCanvasが担当するため
-   ここは面の淡いグローのみ） */
+   ここは面の淡いグローのみ）。常時ゆっくり呼吸させ、背景が完全な
+   静止画にならないようにする（ダイナミックデザインの土台） */
 body::before {
   content: "";
   position: fixed;
@@ -69,6 +76,26 @@ body::before {
     radial-gradient(620px 460px at 10% -8%, rgba(255, 178, 68, 0.14), transparent 70%),
     radial-gradient(540px 420px at 90% 2%, rgba(193, 24, 27, 0.22), transparent 70%),
     radial-gradient(700px 300px at 50% 112%, rgba(255, 102, 0, 0.1), transparent 70%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  body::before { animation: sky-breathe 52s ease-in-out infinite; }
+}
+@keyframes sky-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.68; }
+}
+
+/* ダイナミックデザイン: 花火の閃光が一瞬でページ全体を照らす。
+   --flashが0のときは完全に透明で存在しない */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--flash-x) var(--flash-y), rgba(255, 214, 160, 0.95), transparent 62%);
+  opacity: var(--flash);
+  mix-blend-mode: screen;
 }
 
 /* 紅白幕は「儀式・慶事」の幕であり夜店の顔としては不自然なため撤去。
@@ -485,6 +512,18 @@ header .lede {
   color: inherit;
   overflow: hidden;
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* ダイナミックデザイン: 花火が爆ぜた瞬間、暗いカードの中身にまで
+   同じ光が一斉に及ぶ（body::afterと同じ--flash変数を共有） */
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 205, 140, 0.9);
+  opacity: calc(var(--flash) * 0.55);
+  mix-blend-mode: screen;
+  pointer-events: none;
 }
 
 .card:hover, .card:focus-visible {
@@ -1010,11 +1049,18 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <script>
-/* 蛍と金魚の背景アート — 赤みがかった夜を漂う光と泳ぐ影。
-   単純な上昇アニメーションではなく、個体ごとにランダムな漂い・明滅・
-   カーソルへのやさしい反応を持たせる。金魚は同じcanvasに乗せ、
-   横に泳ぐ・尾びれが揺れるという蛍とは違う動きの生き物にする
-   （ぼんやり漂う光＝蛍、水平に泳ぐ影＝金魚、で役割を分ける）。 */
+/* 蛍と金魚と花火の背景アート — 赤みがかった夜を漂う光と泳ぐ影、
+   そして打ち上がる花火。単純な上昇アニメーションではなく、個体ごとに
+   ランダムな漂い・明滅・カーソルへのやさしい反応を持たせる。金魚は
+   同じcanvasに乗せ、横に泳ぐ・尾びれが揺れるという蛍とは違う動きの
+   生き物にする（ぼんやり漂う光＝蛍、水平に泳ぐ影＝金魚、で役割を分ける）。
+
+   ダイナミックデザイン: 花火が爆ぜる瞬間だけ、CSS変数--flashを
+   一斉に上げ下げする。この変数は背景全面のフラッシュ(body::after)と
+   全カードの中身(.card::after)が同時に参照しているため、1つの花火が
+   背景そのもの・カードの暗い中身にまで一斉に光を及ぼす。
+   自動で定期的に上がるほか、背景（カードやきつね・たぬき以外の場所）を
+   クリック/タップするとその場に打ち上がる＝ダイナミックかつインタラクティブ。 */
 (function () {
   var canvas = document.getElementById('fireflies');
   if (!canvas || !canvas.getContext) return;
@@ -1177,9 +1223,108 @@ if ('serviceWorker' in navigator) {
 
       ctx.restore();
     }
+
+    drawFireworks();
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
+
+  /* ---- 花火 ---- */
+  var fireworks = [];
+  var FW_COLORS = [
+    ['#ffb244', '#ffe2a4'],
+    ['#e04a3c', '#ff9a86'],
+    ['#e089b0', '#ffd6ea'],
+    ['#8ecbe0', '#e8f7ff']
+  ];
+  function hexA(hex, a) {
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+  function launchFirework(x, y) {
+    var burstY = y != null ? y : h * (0.16 + Math.random() * 0.3);
+    var startX = x != null ? x : Math.random() * w;
+    fireworks.push({
+      phase: 'rise',
+      x: startX,
+      y: h + 10,
+      targetY: burstY,
+      vy: -(6.2 + Math.random() * 1.6),
+      color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)],
+      particles: null
+    });
+  }
+  function burstFirework(fw) {
+    var n = 46 + Math.floor(Math.random() * 26);
+    var parts = [];
+    for (var i = 0; i < n; i++) {
+      var ang = (Math.PI * 2 * i) / n + Math.random() * 0.2;
+      var spd = 1.6 + Math.random() * 2.6;
+      parts.push({ x: fw.x, y: fw.y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, life: 1 });
+    }
+    fw.phase = 'burst';
+    fw.particles = parts;
+
+    var root = document.documentElement;
+    root.style.setProperty('--flash-x', ((fw.x / w) * 100) + '%');
+    root.style.setProperty('--flash-y', ((fw.y / h) * 100) + '%');
+    var start = performance.now();
+    (function decay(now) {
+      var v = Math.max(0, 1 - (now - start) / 550);
+      root.style.setProperty('--flash', v.toFixed(3));
+      if (v > 0) requestAnimationFrame(decay);
+    })(start);
+  }
+  function drawFireworks() {
+    for (var i = fireworks.length - 1; i >= 0; i--) {
+      var fw = fireworks[i];
+      if (fw.phase === 'rise') {
+        fw.y += fw.vy;
+        ctx.beginPath();
+        ctx.arc(fw.x, fw.y, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = fw.color[0];
+        ctx.fill();
+        if (fw.y <= fw.targetY) burstFirework(fw);
+        continue;
+      }
+      var alive = false;
+      for (var p = 0; p < fw.particles.length; p++) {
+        var pt = fw.particles[p];
+        if (pt.life <= 0) continue;
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.vy += 0.045;
+        pt.vx *= 0.985;
+        pt.life -= 0.014;
+        if (pt.life > 0) {
+          alive = true;
+          var a = Math.max(0, pt.life);
+          var glow = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, 4.5);
+          glow.addColorStop(0, hexA(fw.color[1], a));
+          glow.addColorStop(1, hexA(fw.color[0], 0));
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      if (!alive) fireworks.splice(i, 1);
+    }
+  }
+
+  /* このIIFEはファイル冒頭で prefers-reduced-motion: reduce の場合に
+     既にreturn済みのため、ここに到達した時点でモーション許可は確定している */
+  (function scheduleAuto() {
+    setTimeout(function () { launchFirework(); scheduleAuto(); }, 10000 + Math.random() * 9000);
+  })();
+  setTimeout(function () { launchFirework(); }, 2800);
+
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('a, .kitsune, .tanuki, button, input, textarea')) return;
+    launchFirework(e.clientX, e.clientY);
+  });
 })();
 </script>
 
