@@ -342,6 +342,96 @@ header .lede {
   margin-inline: auto;
 }
 
+/* ---- たぬき（きつねの相棒。狐と狸は化かし合いの間柄として古くから
+   対で語られる） ----
+   境目（縄）に座る門番として配置。クリックでお腹を叩き、音符が飛ぶ
+   ——きつねのポップ＆光の粒とは別の、たぬき固有のリアクションにする。 */
+.tanuki {
+  display: block;
+  width: 64px;
+  height: auto;
+  margin: 1.6rem auto 0;
+  cursor: pointer;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.4));
+}
+.tanuki:focus-visible { outline: 2px solid var(--kin); outline-offset: 6px; border-radius: 50%; }
+@media (prefers-reduced-motion: no-preference) {
+  .tanuki { animation: tanuki-breathe 3.6s ease-in-out infinite; }
+}
+@keyframes tanuki-breathe {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.03); }
+}
+.tanuki--drum { animation: tanuki-drum 0.7s ease !important; }
+@keyframes tanuki-drum {
+  0%, 100%  { transform: scaleY(1) scaleX(1); }
+  15%  { transform: scaleY(0.9) scaleX(1.08); }
+  30%  { transform: scaleY(1.05) scaleX(0.96); }
+  45%  { transform: scaleY(0.92) scaleX(1.06); }
+  60%  { transform: scaleY(1.04) scaleX(0.97); }
+  75%  { transform: scaleY(0.96) scaleX(1.02); }
+}
+.tanuki-belly { transform-box: fill-box; transform-origin: center; }
+.tanuki--drum .tanuki-belly { animation: tanuki-belly-pat 0.7s ease !important; }
+@keyframes tanuki-belly-pat {
+  0%, 100% { transform: scale(1); }
+  20% { transform: scale(1.14); }
+  40% { transform: scale(0.92); }
+  60% { transform: scale(1.12); }
+  80% { transform: scale(0.95); }
+}
+
+.tanuki-note {
+  position: fixed;
+  left: 0;
+  top: 0;
+  color: var(--kin);
+  font-size: 1.15rem;
+  font-weight: 700;
+  pointer-events: none;
+  z-index: 60;
+  transform: translate(-50%, -50%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tanuki-note { animation: note-float 0.9s ease-out forwards; }
+}
+@keyframes note-float {
+  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  22%  { opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.2); opacity: 0; }
+}
+
+/* ---- 提灯お化け（たまに瞬く小さな驚き） ----
+   提灯そのものが妖怪になる「提灯お化け」は縁日の定番のあやかし。
+   常時ではなく、ランダムな間隔でどれか1つだけ瞬く——ずっと見ていると
+   たまに良いことがある、という報酬にする。 */
+.chochin-face {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+.chochin-eye {
+  display: block;
+  width: 7px;
+  height: 9px;
+  margin: 0 auto;
+  background: #241a14;
+  border-radius: 50%;
+}
+.chochin-tongue {
+  display: block;
+  width: 5px;
+  height: 11px;
+  margin: 1px auto 0;
+  background: #a8382f;
+  border-radius: 0 0 3px 3px;
+}
+.chochin--wink .chochin-face { transform: translate(-50%, -50%) scale(1); }
+
 /* ---- 夜店広場（グリッド＝どこから見てもいい） ----
    一本道でカードを順番につないだところ「一直線＝優先順位が滲む」
    「一本道は選ぶポータルとして機能的でない」と指摘を受けて撤去。
@@ -562,13 +652,13 @@ footer .kin { color: var(--kin); }
 <canvas id="fireflies" aria-hidden="true"></canvas>
 
 <div class="lanterns" aria-hidden="true">
-  <span class="chochin"></span>
-  <span class="chochin"></span>
-  <span class="chochin"></span>
-  <span class="chochin"></span>
-  <span class="chochin"></span>
-  <span class="chochin"></span>
-  <span class="chochin"></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
 </div>
 
 <div class="wrap">
@@ -750,6 +840,25 @@ footer .kin { color: var(--kin); }
     <span class="shide" style="margin-top:8px; transform:rotate(-1deg) scale(0.98);"></span>
     <span class="shide" style="margin-top:12px; transform:rotate(4deg) scale(1.02);"></span>
   </div>
+  <svg class="tanuki" viewBox="0 0 80 90" role="button" tabindex="0" aria-label="たぬき（クリックでお腹を叩きます）">
+    <ellipse cx="60" cy="58" rx="9" ry="15" fill="#6b4a2e" stroke="var(--rope)" stroke-width="2" transform="rotate(28 60 58)"/>
+    <ellipse cx="40" cy="58" rx="25" ry="23" fill="#8a6a4a" stroke="var(--rope)" stroke-width="2.5"/>
+    <ellipse class="tanuki-belly" cx="40" cy="62" rx="15.5" ry="13.5" fill="#ecdec2"/>
+    <ellipse cx="26" cy="80" rx="7.5" ry="5.6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+    <ellipse cx="54" cy="80" rx="7.5" ry="5.6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+    <circle cx="40" cy="30" r="19" fill="#8a6a4a" stroke="var(--rope)" stroke-width="2.5"/>
+    <circle cx="25" cy="15" r="6.5" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+    <circle cx="55" cy="15" r="6.5" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+    <ellipse cx="30" cy="30" rx="6.6" ry="7.6" fill="#4a3626" opacity="0.55"/>
+    <ellipse cx="50" cy="30" rx="6.6" ry="7.6" fill="#4a3626" opacity="0.55"/>
+    <circle cx="31" cy="30" r="2.8" fill="#241a14"/>
+    <circle cx="49" cy="30" r="2.8" fill="#241a14"/>
+    <circle cx="32" cy="28.6" r="1" fill="#fff"/>
+    <circle cx="50" cy="28.6" r="1" fill="#fff"/>
+    <ellipse cx="40" cy="36.5" rx="5.6" ry="4.2" fill="#ecdec2"/>
+    <circle cx="40" cy="35" r="1.5" fill="#241a14"/>
+    <path d="M40 6 Q46 2 44 10 Q40 12 40 6 Z" fill="#5a8a52" stroke="#3a5a34" stroke-width="1"/>
+  </svg>
   <p class="section-label">宮本さなぎとして</p>
   <p class="section-lede">アプリとは別に、宮本さなぎ名義で書いたり話したり奏でたりしています。</p>
 </div>
@@ -851,8 +960,11 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <script>
-/* 蛍の背景アート — 赤みがかった夜を漂う光。単純な上昇アニメーションではなく
-   個体ごとにランダムな漂い・明滅・カーソルへのやさしい反応を持たせる */
+/* 蛍と金魚の背景アート — 赤みがかった夜を漂う光と泳ぐ影。
+   単純な上昇アニメーションではなく、個体ごとにランダムな漂い・明滅・
+   カーソルへのやさしい反応を持たせる。金魚は同じcanvasに乗せ、
+   横に泳ぐ・尾びれが揺れるという蛍とは違う動きの生き物にする
+   （ぼんやり漂う光＝蛍、水平に泳ぐ影＝金魚、で役割を分ける）。 */
 (function () {
   var canvas = document.getElementById('fireflies');
   if (!canvas || !canvas.getContext) return;
@@ -889,6 +1001,22 @@ if ('serviceWorker' in navigator) {
     f.y = Math.random() * h;
     flies.push(f);
   }
+
+  function spawnFish() {
+    return {
+      x: Math.random() * w,
+      y: h * (0.12 + Math.random() * 0.7),
+      vx: (Math.random() < 0.5 ? -1 : 1) * (0.22 + Math.random() * 0.18),
+      phase: Math.random() * Math.PI * 2,
+      amp: 6 + Math.random() * 9,
+      speed: 0.4 + Math.random() * 0.35,
+      size: 5 + Math.random() * 3,
+      tailPhase: Math.random() * Math.PI * 2
+    };
+  }
+  var FISH_COUNT = Math.max(3, Math.min(6, Math.round(w / 380)));
+  var fishes = [];
+  for (var j = 0; j < FISH_COUNT; j++) fishes.push(spawnFish());
 
   var mx = -9999, my = -9999;
   window.addEventListener('pointermove', function (e) { mx = e.clientX; my = e.clientY; });
@@ -929,6 +1057,45 @@ if ('serviceWorker' in navigator) {
       ctx.beginPath();
       ctx.arc(fl.x, fl.y, fl.r, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    for (var k = 0; k < fishes.length; k++) {
+      var fs = fishes[k];
+      fs.x += fs.vx;
+      var baseY = fs.y + Math.sin(t * fs.speed + fs.phase) * fs.amp * 0.3;
+      fs.tailPhase += 0.11;
+
+      var fdx = fs.x - mx, fdy = baseY - my;
+      var fd2 = fdx * fdx + fdy * fdy;
+      if (fd2 < 5000) {
+        var fd = Math.sqrt(fd2) || 1;
+        fs.x += (fdx / fd) * 0.7;
+      }
+      if (fs.vx > 0 && fs.x > w + 24) fs.x = -24;
+      if (fs.vx < 0 && fs.x < -24) fs.x = w + 24;
+
+      var dir = fs.vx > 0 ? 1 : -1;
+      var tailWag = Math.sin(fs.tailPhase) * 0.5;
+
+      ctx.save();
+      ctx.translate(fs.x, baseY);
+      ctx.scale(dir, 1);
+      ctx.save();
+      ctx.translate(-fs.size, 0);
+      ctx.rotate(tailWag);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-fs.size * 1.4, -fs.size * 0.7);
+      ctx.lineTo(-fs.size * 1.4, fs.size * 0.7);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(224, 104, 74, 0.4)';
+      ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = 'rgba(224, 104, 74, 0.5)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, fs.size, fs.size * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
     requestAnimationFrame(tick);
   }
@@ -996,6 +1163,70 @@ if ('serviceWorker' in navigator) {
     card.addEventListener('mouseenter', mark);
     card.addEventListener('focus', mark);
   });
+})();
+</script>
+
+<script>
+/* たぬき — きつねの相棒。クリックでお腹を叩き、音符が飛ぶ。
+   きつねの光の粒とは違う、たぬき固有のリアクションにする。 */
+(function () {
+  var tanuki = document.querySelector('.tanuki');
+  if (!tanuki) return;
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function burst() {
+    if (reduced) return;
+    var rect = tanuki.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height * 0.4;
+    var notes = ['♪', '♩', '♫', '♪'];
+    for (var i = 0; i < notes.length; i++) {
+      var s = document.createElement('span');
+      s.className = 'tanuki-note';
+      s.textContent = notes[i];
+      var dx = (i - (notes.length - 1) / 2) * 22 + (Math.random() - 0.5) * 10;
+      s.style.left = cx + 'px';
+      s.style.top = cy + 'px';
+      s.style.setProperty('--dx', dx + 'px');
+      s.style.setProperty('--dy', (-36 - Math.random() * 20) + 'px');
+      document.body.appendChild(s);
+      s.addEventListener('animationend', function () { this.remove(); });
+      setTimeout(function (el) { return function () { if (el.parentNode) el.remove(); }; }(s), 1000);
+    }
+  }
+
+  function react() {
+    tanuki.classList.remove('tanuki--drum');
+    void tanuki.getBoundingClientRect();
+    tanuki.classList.add('tanuki--drum');
+    burst();
+  }
+
+  tanuki.addEventListener('animationend', function (e) {
+    if (e.animationName === 'tanuki-drum') tanuki.classList.remove('tanuki--drum');
+  });
+  tanuki.addEventListener('click', react);
+  tanuki.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); react(); }
+  });
+})();
+</script>
+
+<script>
+/* 提灯お化け — ランダムな間隔でどれか1つだけ瞬く。ずっと見ていると
+   たまに良いことがある、という報酬として仕込む小さな驚き。 */
+(function () {
+  var lanterns = Array.prototype.slice.call(document.querySelectorAll('.chochin'));
+  if (!lanterns.length) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  function wink() {
+    var el = lanterns[Math.floor(Math.random() * lanterns.length)];
+    el.classList.add('chochin--wink');
+    setTimeout(function () { el.classList.remove('chochin--wink'); }, 850);
+    setTimeout(wink, 9000 + Math.random() * 9000);
+  }
+  setTimeout(wink, 4000 + Math.random() * 4000);
 })();
 </script>
 </body>
