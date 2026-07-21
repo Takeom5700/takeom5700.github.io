@@ -408,26 +408,53 @@ header .lede {
    たまに良いことがある、という報酬にする。 */
 .chochin-face {
   position: absolute;
-  top: 42%;
+  top: 36%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0);
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
+  text-align: center;
 }
+/* 白目+黒目+輪郭線で、提灯の地色(朱・白どちらでも)に負けない目にする */
 .chochin-eye {
   display: block;
-  width: 7px;
-  height: 9px;
+  width: 15px;
+  height: 17px;
   margin: 0 auto;
+  background: #fdfaf2;
+  border: 1.6px solid #241a14;
+  border-radius: 50%;
+  position: relative;
+}
+.chochin-eye::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 7px; height: 7px;
+  margin: -3.5px 0 0 -3.5px;
   background: #241a14;
   border-radius: 50%;
 }
-.chochin-tongue {
+/* 口は暗い地に明るい舌でコントラストを作る（舌単体だと地色に溶けていた） */
+.chochin-mouth {
   display: block;
-  width: 5px;
-  height: 11px;
-  margin: 1px auto 0;
-  background: #a8382f;
+  width: 13px;
+  height: 9px;
+  margin: 2px auto 0;
+  background: #1c1410;
+  border: 1.6px solid #241a14;
+  border-radius: 1px 1px 7px 7px;
+  position: relative;
+  overflow: hidden;
+}
+.chochin-tongue {
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  width: 7px;
+  height: 9px;
+  margin-left: -3.5px;
+  background: #e0645a;
   border-radius: 0 0 3px 3px;
 }
 .chochin--wink .chochin-face { transform: translate(-50%, -50%) scale(1); }
@@ -475,9 +502,12 @@ header .lede {
 }
 .card--visited .lantern { box-shadow: 0 0 10px color-mix(in srgb, var(--ac) 70%, transparent); }
 
-/* きつねが顔を出す — カーソル/フォーカスが向いた屋台"だけ"に起きる、
-   かわいい変化。道でつながっているのではなく、注目そのものが合図。 */
-.card-fox {
+/* 仲間が顔を出す — カーソル/フォーカスが向いた屋台"だけ"に起きる、
+   かわいい変化。道でつながっているのではなく、注目そのものが合図。
+   きつね・たぬき・金魚を巡回で割り当て、カードごとに出会う顔を変える。
+   スマホ(ホバー不可)では.card--peekをJSがランダムに付け外しして
+   同じ変化を起こす（4.のスマホ向け仕掛け）。 */
+.card-critter {
   position: absolute;
   left: 50%;
   bottom: 0;
@@ -490,18 +520,27 @@ header .lede {
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
   z-index: 2;
 }
-.card:hover .card-fox,
-.card:focus-visible .card-fox {
+.card:hover .card-critter,
+.card:focus-visible .card-critter,
+.card--peek .card-critter {
   transform: translate(-50%, 34%) rotate(0deg);
   opacity: 1;
 }
 @media (prefers-reduced-motion: reduce) {
-  .card-fox { transition: opacity 0.2s ease; transform: translate(-50%, 34%) rotate(0deg); }
+  .card-critter { transition: opacity 0.2s ease; transform: translate(-50%, 34%) rotate(0deg); }
 }
 
-/* 暖簾は覗いたきつねの分だけ、ふわっと揺れる（切れ込みはない一枚布） */
+.card--peek {
+  transform: translateY(-4px);
+  border-color: var(--ac);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 24px color-mix(in srgb, var(--ac) 30%, transparent);
+}
+.card--peek .lantern { box-shadow: 0 0 16px var(--ac), 0 0 4px var(--ac); }
+.card--peek .noren-kanji { text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3), 0 0 14px color-mix(in srgb, var(--ac) 55%, transparent); }
+
+/* 暖簾は覗いた仲間の分だけ、ふわっと揺れる（切れ込みはない一枚布） */
 @media (prefers-reduced-motion: no-preference) {
-  .card:hover .noren, .card:focus-visible .noren { animation: noren-sway 0.7s ease; }
+  .card:hover .noren, .card:focus-visible .noren, .card--peek .noren { animation: noren-sway 0.7s ease; }
 }
 @keyframes noren-sway {
   0%   { transform: rotate(0deg); }
@@ -652,13 +691,13 @@ footer .kin { color: var(--kin); }
 <canvas id="fireflies" aria-hidden="true"></canvas>
 
 <div class="lanterns" aria-hidden="true">
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-tongue"></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
+  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
 </div>
 
 <div class="wrap">
@@ -694,7 +733,7 @@ footer .kin { color: var(--kin); }
 <main class="grid">
   <a class="card" href="/tokyo-gakki-bukken/" style="--ac:#ffb244">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">楽</span></span>
-    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+    <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
       <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
       <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
       <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
@@ -714,14 +753,16 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="/aruite-gourmet/" style="--ac:#e0685a">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">飯</span></span>
-    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
-      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
-      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
-      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
-      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
-      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
+      <circle cx="10" cy="10" r="6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <circle cx="36" cy="10" r="6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <path d="M6 24 Q23 5 40 24 L40 40 L6 40 Z" fill="#8a6a4a" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="22" rx="5.4" ry="6.2" fill="#4a3626" opacity="0.6"/>
+      <ellipse cx="31" cy="22" rx="5.4" ry="6.2" fill="#4a3626" opacity="0.6"/>
+      <circle cx="16" cy="22.5" r="2" fill="#241a14"/>
+      <circle cx="30" cy="22.5" r="2" fill="#241a14"/>
+      <ellipse cx="23" cy="30" rx="5.4" ry="4" fill="#ecdec2"/>
+      <circle cx="23" cy="28.6" r="1.4" fill="#241a14"/>
     </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
@@ -734,14 +775,15 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="/route-app/" style="--ac:#7fa8e0">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">道</span></span>
-    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
-      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
-      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
-      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
-      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
-      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
+      <g transform="translate(23 26) rotate(-8)">
+        <path d="M-16 0 L-23 -8 L-23 8 Z" fill="#e2784a" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>
+        <ellipse cx="0" cy="0" rx="15" ry="9.5" fill="#e2784a" stroke="var(--rope)" stroke-width="1.6"/>
+        <path d="M-3 -9 L1 -16 L6 -8 Z" fill="#e2784a" stroke="var(--rope)" stroke-width="1.4" stroke-linejoin="round"/>
+        <ellipse cx="1" cy="4" rx="10" ry="3.2" fill="#f7ba8c" opacity="0.6"/>
+        <circle cx="9.5" cy="-1.5" r="2.2" fill="#241a14"/>
+        <circle cx="10.1" cy="-2.1" r="0.7" fill="#fff"/>
+      </g>
     </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
@@ -754,7 +796,7 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="/uranai/" style="--ac:#b48ae0">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">占</span></span>
-    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+    <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
       <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
       <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
       <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
@@ -774,14 +816,16 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="/bus-coin-navi/" style="--ac:#7cc796">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">輪</span></span>
-    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
-      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
-      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
-      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
-      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
-      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
+      <circle cx="10" cy="10" r="6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <circle cx="36" cy="10" r="6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <path d="M6 24 Q23 5 40 24 L40 40 L6 40 Z" fill="#8a6a4a" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="22" rx="5.4" ry="6.2" fill="#4a3626" opacity="0.6"/>
+      <ellipse cx="31" cy="22" rx="5.4" ry="6.2" fill="#4a3626" opacity="0.6"/>
+      <circle cx="16" cy="22.5" r="2" fill="#241a14"/>
+      <circle cx="30" cy="22.5" r="2" fill="#241a14"/>
+      <ellipse cx="23" cy="30" rx="5.4" ry="4" fill="#ecdec2"/>
+      <circle cx="23" cy="28.6" r="1.4" fill="#241a14"/>
     </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
@@ -794,14 +838,15 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="/ai-shinbun/" style="--ac:#f4ead8">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">報</span></span>
-    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
-      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
-      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
-      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
-      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
-      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
+      <g transform="translate(23 26) rotate(-8)">
+        <path d="M-16 0 L-23 -8 L-23 8 Z" fill="#e2784a" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>
+        <ellipse cx="0" cy="0" rx="15" ry="9.5" fill="#e2784a" stroke="var(--rope)" stroke-width="1.6"/>
+        <path d="M-3 -9 L1 -16 L6 -8 Z" fill="#e2784a" stroke="var(--rope)" stroke-width="1.4" stroke-linejoin="round"/>
+        <ellipse cx="1" cy="4" rx="10" ry="3.2" fill="#f7ba8c" opacity="0.6"/>
+        <circle cx="9.5" cy="-1.5" r="2.2" fill="#241a14"/>
+        <circle cx="10.1" cy="-2.1" r="0.7" fill="#fff"/>
+      </g>
     </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
@@ -814,7 +859,7 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="http://localhost:8791/driver.html" style="--ac:#9a8a80">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">運</span></span>
-    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+    <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
       <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
       <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
       <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
@@ -866,14 +911,16 @@ footer .kin { color: var(--kin); }
 <section class="grid">
   <a class="card" href="https://note.com/alert_zinnia5671" target="_blank" rel="noopener" style="--ac:#3d8f96">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">考</span></span>
-    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
-      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
-      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
-      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
-      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
-      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
+      <circle cx="10" cy="10" r="6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <circle cx="36" cy="10" r="6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <path d="M6 24 Q23 5 40 24 L40 40 L6 40 Z" fill="#8a6a4a" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="22" rx="5.4" ry="6.2" fill="#4a3626" opacity="0.6"/>
+      <ellipse cx="31" cy="22" rx="5.4" ry="6.2" fill="#4a3626" opacity="0.6"/>
+      <circle cx="16" cy="22.5" r="2" fill="#241a14"/>
+      <circle cx="30" cy="22.5" r="2" fill="#241a14"/>
+      <ellipse cx="23" cy="30" rx="5.4" ry="4" fill="#ecdec2"/>
+      <circle cx="23" cy="28.6" r="1.4" fill="#241a14"/>
     </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
@@ -886,14 +933,15 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="https://www.instagram.com/miyamoto_sanagi" target="_blank" rel="noopener" style="--ac:#b0568a">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">写</span></span>
-    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
-      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
-      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
-      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
-      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
-      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
+      <g transform="translate(23 26) rotate(-8)">
+        <path d="M-16 0 L-23 -8 L-23 8 Z" fill="#e2784a" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>
+        <ellipse cx="0" cy="0" rx="15" ry="9.5" fill="#e2784a" stroke="var(--rope)" stroke-width="1.6"/>
+        <path d="M-3 -9 L1 -16 L6 -8 Z" fill="#e2784a" stroke="var(--rope)" stroke-width="1.4" stroke-linejoin="round"/>
+        <ellipse cx="1" cy="4" rx="10" ry="3.2" fill="#f7ba8c" opacity="0.6"/>
+        <circle cx="9.5" cy="-1.5" r="2.2" fill="#241a14"/>
+        <circle cx="10.1" cy="-2.1" r="0.7" fill="#fff"/>
+      </g>
     </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
@@ -906,7 +954,7 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="https://www.youtube.com/@MiyamotoSanagi" target="_blank" rel="noopener" style="--ac:#e0973c">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">声</span></span>
-    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
+    <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
       <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
       <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
       <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
@@ -926,14 +974,16 @@ footer .kin { color: var(--kin); }
 
   <a class="card" href="https://www.youtube.com/@TOKYOJAZZOFGAMEMUSIC" target="_blank" rel="noopener" style="--ac:#6c72c9">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">奏</span></span>
-    <svg class="card-fox" aria-hidden="true" viewBox="0 0 46 40">
-      <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <polygon points="36,20 42,6 28,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M6 22 Q23 4 40 22 L40 40 L6 40 Z" fill="var(--washi)" stroke="var(--rope)" stroke-width="2"/>
-      <ellipse cx="15" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(-16 15 19)"/>
-      <ellipse cx="31" cy="19" rx="4.6" ry="6.4" fill="var(--shu)" opacity="0.85" transform="rotate(16 31 19)"/>
-      <circle cx="18.5" cy="21" r="2" fill="#241a14"/>
-      <circle cx="27.5" cy="21" r="2" fill="#241a14"/>
+    <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
+      <circle cx="10" cy="10" r="6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <circle cx="36" cy="10" r="6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <path d="M6 24 Q23 5 40 24 L40 40 L6 40 Z" fill="#8a6a4a" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="15" cy="22" rx="5.4" ry="6.2" fill="#4a3626" opacity="0.6"/>
+      <ellipse cx="31" cy="22" rx="5.4" ry="6.2" fill="#4a3626" opacity="0.6"/>
+      <circle cx="16" cy="22.5" r="2" fill="#241a14"/>
+      <circle cx="30" cy="22.5" r="2" fill="#241a14"/>
+      <ellipse cx="23" cy="30" rx="5.4" ry="4" fill="#ecdec2"/>
+      <circle cx="23" cy="28.6" r="1.4" fill="#241a14"/>
     </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
@@ -1005,16 +1055,16 @@ if ('serviceWorker' in navigator) {
   function spawnFish() {
     return {
       x: Math.random() * w,
-      y: h * (0.12 + Math.random() * 0.7),
+      y: h * (0.1 + Math.random() * 0.72),
       vx: (Math.random() < 0.5 ? -1 : 1) * (0.22 + Math.random() * 0.18),
       phase: Math.random() * Math.PI * 2,
       amp: 6 + Math.random() * 9,
       speed: 0.4 + Math.random() * 0.35,
-      size: 5 + Math.random() * 3,
+      size: 10 + Math.random() * 6,
       tailPhase: Math.random() * Math.PI * 2
     };
   }
-  var FISH_COUNT = Math.max(3, Math.min(6, Math.round(w / 380)));
+  var FISH_COUNT = Math.max(4, Math.min(7, Math.round(w / 340)));
   var fishes = [];
   for (var j = 0; j < FISH_COUNT; j++) fishes.push(spawnFish());
 
@@ -1080,21 +1130,51 @@ if ('serviceWorker' in navigator) {
       ctx.save();
       ctx.translate(fs.x, baseY);
       ctx.scale(dir, 1);
+
+      /* 尾びれ */
       ctx.save();
-      ctx.translate(-fs.size, 0);
+      ctx.translate(-fs.size * 0.95, 0);
       ctx.rotate(tailWag);
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(-fs.size * 1.4, -fs.size * 0.7);
-      ctx.lineTo(-fs.size * 1.4, fs.size * 0.7);
+      ctx.lineTo(-fs.size * 1.5, -fs.size * 0.85);
+      ctx.lineTo(-fs.size * 1.5, fs.size * 0.85);
       ctx.closePath();
-      ctx.fillStyle = 'rgba(224, 104, 74, 0.4)';
+      ctx.fillStyle = 'rgba(232, 122, 64, 0.88)';
       ctx.fill();
       ctx.restore();
-      ctx.fillStyle = 'rgba(224, 104, 74, 0.5)';
+
+      /* 胴体 */
       ctx.beginPath();
-      ctx.ellipse(0, 0, fs.size, fs.size * 0.6, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, fs.size, fs.size * 0.62, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(232, 122, 64, 0.92)';
       ctx.fill();
+
+      /* 背びれ */
+      ctx.beginPath();
+      ctx.moveTo(-fs.size * 0.1, -fs.size * 0.52);
+      ctx.lineTo(fs.size * 0.18, -fs.size * 0.95);
+      ctx.lineTo(fs.size * 0.4, -fs.size * 0.48);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(232, 122, 64, 0.85)';
+      ctx.fill();
+
+      /* 腹の明るいハイライト（形をはっきりさせる） */
+      ctx.beginPath();
+      ctx.ellipse(fs.size * 0.15, fs.size * 0.22, fs.size * 0.62, fs.size * 0.24, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 197, 140, 0.55)';
+      ctx.fill();
+
+      /* 目 */
+      ctx.beginPath();
+      ctx.arc(fs.size * 0.58, -fs.size * 0.06, fs.size * 0.16, 0, Math.PI * 2);
+      ctx.fillStyle = '#2a1810';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(fs.size * 0.62, -fs.size * 0.12, fs.size * 0.05, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fill();
+
       ctx.restore();
     }
     requestAnimationFrame(tick);
@@ -1163,6 +1243,42 @@ if ('serviceWorker' in navigator) {
     card.addEventListener('mouseenter', mark);
     card.addEventListener('focus', mark);
   });
+})();
+</script>
+
+<script>
+/* スマホ(ホバーできない画面)向け — hoverの代わりに、画面内に見えている
+   カードのどれかをランダムに選んで、同じ「仲間が覗く」変化を自動で
+   起こす。PCはホバーで自分から選んで見つける、スマホは向こうから
+   ときどき顔を出しにくる、という違いにする。 */
+(function () {
+  var market = document.getElementById('market');
+  if (!market) return;
+  var canHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+  if (canHover) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var cards = Array.prototype.slice.call(market.querySelectorAll('.card'));
+  if (!cards.length) return;
+
+  function visibleCards() {
+    var vh = window.innerHeight;
+    return cards.filter(function (c) {
+      var r = c.getBoundingClientRect();
+      return r.bottom > 40 && r.top < vh - 40;
+    });
+  }
+
+  function peek() {
+    var pool = visibleCards();
+    if (pool.length) {
+      var card = pool[Math.floor(Math.random() * pool.length)];
+      card.classList.add('card--peek', 'card--visited');
+      setTimeout(function () { card.classList.remove('card--peek'); }, 1700);
+    }
+    setTimeout(peek, 3000 + Math.random() * 2600);
+  }
+  setTimeout(peek, 1600);
 })();
 </script>
 
