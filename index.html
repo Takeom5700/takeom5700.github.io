@@ -278,13 +278,29 @@ header::before {
 
 /* きつね面のマスコット — この縁日の「愛でる」中心。
    ただの飾りにせず、瞬き(生きている)とクリック反応(触れ合える)を持たせる */
+/* きつね・たぬきは画面に固定して縦横無尽に歩き回る（roamer）。
+   歩き回るための移動(translate)は外側の.roamerラッパーがJSで担い、
+   中の.kitsune/.tanuki自身は今まで通り呼吸・スウェイ・ポップの
+   アニメーションだけを担当する。CSSアニメーションはtransformを
+   上書きしてしまう(インラインstyleより強い)ため、移動と個体アニメを
+   同じ要素のtransformに同居させると壊れる — 親子で分離するのが鍵。 */
+.roamer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  pointer-events: none;
+  will-change: transform;
+}
+.roamer > * { pointer-events: auto; }
+
 .kitsune {
   display: block;
   width: 84px;
   height: auto;
-  margin: 0 auto 12px;
+  margin: -81px 0 0 -42px;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.4));
-  transform-origin: 50% -8px;
+  transform-origin: 50% 100%;
   cursor: pointer;
 }
 .kitsune:focus-visible { outline: 2px solid var(--kin); outline-offset: 6px; border-radius: 50%; }
@@ -428,13 +444,14 @@ header .lede {
 
 /* ---- たぬき（きつねの相棒。狐と狸は化かし合いの間柄として古くから
    対で語られる） ----
-   境目（縄）に座る門番として配置。クリックでお腹を叩き、音符が飛ぶ
-   ——きつねのポップ＆光の粒とは別の、たぬき固有のリアクションにする。 */
+   1箇所に固定せず、きつねと同じ.roamer方式で画面を自由に歩き回る。
+   クリックでお腹を叩き、音符が飛ぶ——きつねのポップ＆光の粒とは
+   別の、たぬき固有のリアクションにする。 */
 .tanuki {
   display: block;
   width: 64px;
   height: auto;
-  margin: 1.6rem auto 0;
+  margin: -72px 0 0 -32px;
   cursor: pointer;
   transform-origin: 50% 100%;
   filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.4));
@@ -807,25 +824,27 @@ footer .kin { color: var(--kin); }
 <div class="wrap">
 
 <header>
-  <svg class="kitsune" viewBox="0 0 100 96" role="button" tabindex="0" aria-label="きつね面（クリックで反応します）">
-    <line x1="50" y1="0" x2="50" y2="9" stroke="rgba(244,234,216,0.4)" stroke-width="2"/>
-    <polygon points="28,34 18,6 42,22" fill="var(--washi)" stroke="var(--rope)" stroke-width="2.5" stroke-linejoin="round"/>
-    <polygon points="72,34 82,6 58,22" fill="var(--washi)" stroke="var(--rope)" stroke-width="2.5" stroke-linejoin="round"/>
-    <ellipse cx="50" cy="56" rx="34" ry="30" fill="var(--washi)" stroke="var(--rope)" stroke-width="2.5"/>
-    <ellipse cx="30" cy="50" rx="10" ry="15" fill="var(--shu)" opacity="0.85" transform="rotate(-18 30 50)"/>
-    <ellipse cx="70" cy="50" rx="10" ry="15" fill="var(--shu)" opacity="0.85" transform="rotate(18 70 50)"/>
-    <g class="kitsune-eye kitsune-eye--l">
-      <ellipse cx="38" cy="54" rx="4.2" ry="6" fill="#241a14"/>
-      <circle cx="39.5" cy="51" r="1.4" fill="#fff"/>
-    </g>
-    <g class="kitsune-eye kitsune-eye--r">
-      <ellipse cx="62" cy="54" rx="4.2" ry="6" fill="#241a14"/>
-      <circle cx="63.5" cy="51" r="1.4" fill="#fff"/>
-    </g>
-    <circle cx="34" cy="66" r="4.5" fill="#ff9ab0" opacity="0.55"/>
-    <circle cx="66" cy="66" r="4.5" fill="#ff9ab0" opacity="0.55"/>
-    <path class="kitsune-mouth" d="M45 72 Q50 76 55 72" fill="none" stroke="var(--rope)" stroke-width="2" stroke-linecap="round"/>
-  </svg>
+  <div class="roamer" id="kitsuneRoamer">
+    <svg class="kitsune" viewBox="0 0 100 96" role="button" tabindex="0" aria-label="きつね面（クリックで反応します）">
+      <line x1="50" y1="0" x2="50" y2="9" stroke="rgba(244,234,216,0.4)" stroke-width="2"/>
+      <polygon points="28,34 18,6 42,22" fill="var(--washi)" stroke="var(--rope)" stroke-width="2.5" stroke-linejoin="round"/>
+      <polygon points="72,34 82,6 58,22" fill="var(--washi)" stroke="var(--rope)" stroke-width="2.5" stroke-linejoin="round"/>
+      <ellipse cx="50" cy="56" rx="34" ry="30" fill="var(--washi)" stroke="var(--rope)" stroke-width="2.5"/>
+      <ellipse cx="30" cy="50" rx="10" ry="15" fill="var(--shu)" opacity="0.85" transform="rotate(-18 30 50)"/>
+      <ellipse cx="70" cy="50" rx="10" ry="15" fill="var(--shu)" opacity="0.85" transform="rotate(18 70 50)"/>
+      <g class="kitsune-eye kitsune-eye--l">
+        <ellipse cx="38" cy="54" rx="4.2" ry="6" fill="#241a14"/>
+        <circle cx="39.5" cy="51" r="1.4" fill="#fff"/>
+      </g>
+      <g class="kitsune-eye kitsune-eye--r">
+        <ellipse cx="62" cy="54" rx="4.2" ry="6" fill="#241a14"/>
+        <circle cx="63.5" cy="51" r="1.4" fill="#fff"/>
+      </g>
+      <circle cx="34" cy="66" r="4.5" fill="#ff9ab0" opacity="0.55"/>
+      <circle cx="66" cy="66" r="4.5" fill="#ff9ab0" opacity="0.55"/>
+      <path class="kitsune-mouth" d="M45 72 Q50 76 55 72" fill="none" stroke="var(--rope)" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
   <p class="eyebrow">— TAKEOM5700 PRESENTS —</p>
   <h1>タケオの縁日</h1>
   <p class="lede">アプリをつくったり、宮本さなぎとして書いたり奏でたりしています。気になる屋台へどうぞ。</p>
@@ -989,25 +1008,27 @@ footer .kin { color: var(--kin); }
     <span class="shide" style="margin-top:8px; transform:rotate(-1deg) scale(0.98);"></span>
     <span class="shide" style="margin-top:12px; transform:rotate(4deg) scale(1.02);"></span>
   </div>
-  <svg class="tanuki" viewBox="0 0 80 90" role="button" tabindex="0" aria-label="たぬき（クリックでお腹を叩きます）">
-    <ellipse cx="60" cy="58" rx="9" ry="15" fill="#6b4a2e" stroke="var(--rope)" stroke-width="2" transform="rotate(28 60 58)"/>
-    <ellipse cx="40" cy="58" rx="25" ry="23" fill="#8a6a4a" stroke="var(--rope)" stroke-width="2.5"/>
-    <ellipse class="tanuki-belly" cx="40" cy="62" rx="15.5" ry="13.5" fill="#ecdec2"/>
-    <ellipse cx="26" cy="80" rx="7.5" ry="5.6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
-    <ellipse cx="54" cy="80" rx="7.5" ry="5.6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
-    <circle cx="40" cy="30" r="19" fill="#8a6a4a" stroke="var(--rope)" stroke-width="2.5"/>
-    <circle cx="25" cy="15" r="6.5" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
-    <circle cx="55" cy="15" r="6.5" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
-    <ellipse cx="30" cy="30" rx="6.6" ry="7.6" fill="#4a3626" opacity="0.55"/>
-    <ellipse cx="50" cy="30" rx="6.6" ry="7.6" fill="#4a3626" opacity="0.55"/>
-    <circle cx="31" cy="30" r="2.8" fill="#241a14"/>
-    <circle cx="49" cy="30" r="2.8" fill="#241a14"/>
-    <circle cx="32" cy="28.6" r="1" fill="#fff"/>
-    <circle cx="50" cy="28.6" r="1" fill="#fff"/>
-    <ellipse cx="40" cy="36.5" rx="5.6" ry="4.2" fill="#ecdec2"/>
-    <circle cx="40" cy="35" r="1.5" fill="#241a14"/>
-    <path d="M40 6 Q46 2 44 10 Q40 12 40 6 Z" fill="#5a8a52" stroke="#3a5a34" stroke-width="1"/>
-  </svg>
+  <div class="roamer" id="tanukiRoamer">
+    <svg class="tanuki" viewBox="0 0 80 90" role="button" tabindex="0" aria-label="たぬき（クリックでお腹を叩きます）">
+      <ellipse cx="60" cy="58" rx="9" ry="15" fill="#6b4a2e" stroke="var(--rope)" stroke-width="2" transform="rotate(28 60 58)"/>
+      <ellipse cx="40" cy="58" rx="25" ry="23" fill="#8a6a4a" stroke="var(--rope)" stroke-width="2.5"/>
+      <ellipse class="tanuki-belly" cx="40" cy="62" rx="15.5" ry="13.5" fill="#ecdec2"/>
+      <ellipse cx="26" cy="80" rx="7.5" ry="5.6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="54" cy="80" rx="7.5" ry="5.6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <circle cx="40" cy="30" r="19" fill="#8a6a4a" stroke="var(--rope)" stroke-width="2.5"/>
+      <circle cx="25" cy="15" r="6.5" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <circle cx="55" cy="15" r="6.5" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
+      <ellipse cx="30" cy="30" rx="6.6" ry="7.6" fill="#4a3626" opacity="0.55"/>
+      <ellipse cx="50" cy="30" rx="6.6" ry="7.6" fill="#4a3626" opacity="0.55"/>
+      <circle cx="31" cy="30" r="2.8" fill="#241a14"/>
+      <circle cx="49" cy="30" r="2.8" fill="#241a14"/>
+      <circle cx="32" cy="28.6" r="1" fill="#fff"/>
+      <circle cx="50" cy="28.6" r="1" fill="#fff"/>
+      <ellipse cx="40" cy="36.5" rx="5.6" ry="4.2" fill="#ecdec2"/>
+      <circle cx="40" cy="35" r="1.5" fill="#241a14"/>
+      <path d="M40 6 Q46 2 44 10 Q40 12 40 6 Z" fill="#5a8a52" stroke="#3a5a34" stroke-width="1"/>
+    </svg>
+  </div>
   <p class="section-label">宮本さなぎとして</p>
   <p class="section-lede">アプリとは別に、宮本さなぎ名義で書いたり話したり奏でたりしています。</p>
 </div>
@@ -1409,12 +1430,17 @@ if ('serviceWorker' in navigator) {
         continue;
       }
       var alive = false;
+      var burstAge = fw.burstAge = (fw.burstAge || 0) + 1;
       for (var p = 0; p < fw.particles.length; p++) {
         var pt = fw.particles[p];
         if (pt.life <= 0) continue;
 
+        /* 尾は起点(爆心)からの全履歴を持たせる。短い直近5フレームだけだと
+           単なる「移動方向の短い線」にしかならず、菊・柳の"中心から伸びて
+           垂れる筋"という花火本来の形にならない。寿命が尽きるまでの
+           数十〜200フレーム分をそのまま蓄積し、起点から現在位置までの
+           曲線をまるごと描く（本数×点数は多いが2D canvasには軽い処理）。 */
         pt.trail.push({ x: pt.x, y: pt.y });
-        if (pt.trail.length > 5) pt.trail.shift();
 
         pt.x += pt.vx;
         pt.y += pt.vy;
@@ -1427,31 +1453,35 @@ if ('serviceWorker' in navigator) {
           alive = true;
           var stageColor = pt.life > 0.5 ? fw.color.a : fw.color.b;
           var a = Math.min(1, pt.life * 1.3);
+          /* 開いた直後だけ核が白く強く光る(本物の花火の"パッ"という瞬間) */
+          var flashMix = Math.max(0, 1 - burstAge / 10);
+          var headColor = flashMix > 0 ? '#ffffff' : fw.color.glow;
+          var headAlpha = flashMix > 0 ? Math.min(1, a + flashMix * 0.6) : a;
 
-          /* 菊・柳の垂れる尾（曲線的な軌跡） */
+          /* 起点から現在位置までの光条(放射状に開く花火の主形) */
           if (pt.trail.length > 1) {
             ctx.beginPath();
             ctx.moveTo(pt.trail[0].x, pt.trail[0].y);
             for (var tI = 1; tI < pt.trail.length; tI++) ctx.lineTo(pt.trail[tI].x, pt.trail[tI].y);
             ctx.lineTo(pt.x, pt.y);
-            ctx.strokeStyle = hexA(stageColor, a * 0.8);
-            ctx.lineWidth = 2.2;
+            ctx.strokeStyle = hexA(stageColor, a * 0.85);
+            ctx.lineWidth = 2.6;
+            ctx.lineCap = 'round';
             ctx.stroke();
           }
 
-          var glow = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, 7.5);
-          glow.addColorStop(0, hexA(fw.color.glow, a));
-          glow.addColorStop(0.4, hexA(fw.color.glow, a * 0.7));
+          var glow = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, 6);
+          glow.addColorStop(0, hexA(headColor, headAlpha));
           glow.addColorStop(1, hexA(stageColor, 0));
           ctx.fillStyle = glow;
           ctx.beginPath();
-          ctx.arc(pt.x, pt.y, 7.5, 0, Math.PI * 2);
+          ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
           ctx.fill();
 
           /* 芯の粒（一番明るい核。遠目にも花火の粒だと分かるように） */
-          ctx.fillStyle = hexA(fw.color.glow, a);
+          ctx.fillStyle = hexA(headColor, headAlpha);
           ctx.beginPath();
-          ctx.arc(pt.x, pt.y, 1.8, 0, Math.PI * 2);
+          ctx.arc(pt.x, pt.y, 2.2, 0, Math.PI * 2);
           ctx.fill();
 
           /* 川面への映り込み（長岡花火が信濃川に映るように） */
@@ -1629,6 +1659,72 @@ if ('serviceWorker' in navigator) {
   tanuki.addEventListener('click', react);
   tanuki.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); react(); }
+  });
+})();
+</script>
+
+<script>
+/* きつね・たぬきの徘徊AI — 1箇所に留まらず、画面(ビューポート)を
+   縦横無尽に歩き回る。目的地をランダムに選び、そこへゆっくり歩いて
+   着いたら少し休み、また次の目的地へ——という単純な「行っては休む」
+   ふるまい。移動(translate)は.roamerラッパーが担当し、中の
+   .kitsune/.tanuki自身の呼吸・スウェイ・クリック演出とは干渉しない
+   （CSSアニメーションのtransformが親のtranslateを上書きしないよう、
+   親子で役割を分けているのが肝）。 */
+(function () {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  function makeRoamer(el, opts) {
+    if (!el) return;
+    var speed = opts.speed;
+    var pauseMin = opts.pauseMin, pauseMax = opts.pauseMax;
+    var marginX = 50, marginTop = 90, marginBottom = 140;
+
+    var x = opts.startX, y = opts.startY;
+    var targetX = x, targetY = y;
+    var paused = true;
+    var pauseUntil = performance.now() + opts.initialPause;
+
+    function pickTarget() {
+      var maxW = Math.max(innerWidth - marginX * 2, 100);
+      var maxH = Math.max(innerHeight - marginTop - marginBottom, 100);
+      targetX = marginX + Math.random() * maxW;
+      targetY = marginTop + Math.random() * maxH;
+    }
+
+    function frame(now) {
+      if (paused) {
+        if (now >= pauseUntil) { paused = false; pickTarget(); }
+      } else {
+        var dx = targetX - x, dy = targetY - y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 8) {
+          paused = true;
+          pauseUntil = now + pauseMin + Math.random() * (pauseMax - pauseMin);
+        } else {
+          x += (dx / dist) * speed;
+          y += (dy / dist) * speed;
+        }
+      }
+      var facing = (targetX < x - 4) ? -1 : (targetX > x + 4 ? 1 : (el.__facing || 1));
+      el.__facing = facing;
+      el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scaleX(' + facing + ')';
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  makeRoamer(document.getElementById('kitsuneRoamer'), {
+    speed: 0.55,
+    pauseMin: 2200, pauseMax: 4200,
+    initialPause: 3000,
+    startX: innerWidth * 0.5, startY: 230
+  });
+  makeRoamer(document.getElementById('tanukiRoamer'), {
+    speed: 0.4,
+    pauseMin: 2600, pauseMax: 5000,
+    initialPause: 3600,
+    startX: innerWidth * 0.5, startY: innerHeight * 0.6
   });
 })();
 </script>
