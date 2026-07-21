@@ -88,6 +88,58 @@ body::before {
   50% { opacity: 0.68; }
 }
 
+/* ---- 遠景: 山並みと川面（自然と文化の美） ----
+   背景が「ただ黒い」ままでは日本の自然美・情緒を感じられない、との
+   指摘を受けて追加。長岡花火が信濃川の川面に映るように、この縁日も
+   谷あいの川べりで開かれている——という体で、遠くの山並みと、
+   手前の川面（花火が映り込む水鏡）を敷いた。 */
+.scenery {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  overflow: hidden;
+}
+.scenery-mountains {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 13vh;
+  width: 100%;
+  height: 24vh;
+  min-height: 130px;
+}
+.scenery-water {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 13vh;
+  min-height: 84px;
+  background: linear-gradient(180deg, rgba(18, 26, 38, 0.55), rgba(9, 13, 20, 0.88));
+  border-top: 1px solid rgba(244, 234, 216, 0.07);
+  overflow: hidden;
+}
+.scenery-water::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 140% at 50% 0%, rgba(255, 178, 68, 0.06), transparent 70%);
+}
+.scenery-water::after {
+  content: "";
+  position: absolute;
+  inset: -10% -50%;
+  background: repeating-linear-gradient(100deg, transparent 0 40px, rgba(244, 234, 216, 0.035) 40px 42px, transparent 42px 90px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scenery-water::after { animation: water-shimmer 16s linear infinite; }
+}
+@keyframes water-shimmer {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-90px); }
+}
+
 /* ダイナミックデザイン: 花火が咲いている間だけ、その花火自身の色を
    ごく淡く長く映す残照。フラッシュ（白い閃光）ではなく、遠くで
    咲いた花火の色が空気にじんわり乗るような気配に留める
@@ -732,6 +784,14 @@ footer .kin { color: var(--kin); }
   </filter>
 </svg>
 
+<div class="scenery" aria-hidden="true">
+  <svg class="scenery-mountains" viewBox="0 0 1440 220" preserveAspectRatio="none">
+    <path d="M0,220 L0,132 L110,78 L215,118 L330,46 L455,102 L590,58 L730,124 L865,64 L1005,108 L1150,50 L1290,96 L1440,62 L1440,220 Z" fill="#233247" opacity="0.5"/>
+    <path d="M0,220 L0,168 L150,122 L290,152 L420,96 L555,142 L695,104 L840,156 L985,110 L1130,148 L1280,102 L1440,140 L1440,220 Z" fill="#161f2c" opacity="0.78"/>
+  </svg>
+  <div class="scenery-water"></div>
+</div>
+
 <canvas id="fireflies" aria-hidden="true"></canvas>
 
 <div class="lanterns" aria-hidden="true">
@@ -1048,7 +1108,11 @@ footer .kin { color: var(--kin); }
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js');
+    /* updateViaCache:'none' でsw.js自体の更新チェックをブラウザの
+       HTTPキャッシュから完全に外す（これがないとsw.js自体が古いまま
+       になり、中身をどれだけ直しても永遠に反映されないことがある） */
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+    navigator.serviceWorker.getRegistration().then((reg) => reg && reg.update());
   });
 }
 </script>
@@ -1375,6 +1439,21 @@ if ('serviceWorker' in navigator) {
           ctx.beginPath();
           ctx.arc(pt.x, pt.y, 3.6, 0, Math.PI * 2);
           ctx.fill();
+
+          /* 川面への映り込み（長岡花火が信濃川に映るように） */
+          var waterline = h * 0.865;
+          if (pt.y < waterline) {
+            var ry = waterline + (waterline - pt.y) * 0.82;
+            if (ry < h + 10) {
+              var rGlow = ctx.createRadialGradient(pt.x, ry, 0, pt.x, ry, 3.2);
+              rGlow.addColorStop(0, hexA(fw.color.glow, a * 0.3));
+              rGlow.addColorStop(1, hexA(stageColor, 0));
+              ctx.fillStyle = rGlow;
+              ctx.beginPath();
+              ctx.ellipse(pt.x, ry, 3.2, 1.4, 0, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
         }
       }
       if (!alive) fireworks.splice(i, 1);

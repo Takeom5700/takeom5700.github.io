@@ -1,4 +1,4 @@
-const CACHE_NAME = "takeom5700-portal-v18";
+const CACHE_NAME = "takeom5700-portal-v19";
 const PRECACHE_URLS = [
   "/",
   "/index.html",
@@ -25,14 +25,16 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-/* ネットワーク優先: 更新のたびに「2回リロードしないと反映されない」
-   という混乱が繰り返し起きたため、キャッシュ優先から切り替えた。
-   オンライン時は常に最新を取得し、オフライン時だけキャッシュに
-   フォールバックする（PWAとしてのオフライン耐性は維持） */
+/* ネットワーク優先＋ブラウザのHTTPキャッシュも明示的にバイパス。
+   前回「network-firstにした」だけでは不十分だった: fetch()に
+   cacheオプションを指定しないと、GitHub PagesのCache-Control
+   (max-age=600)により、SW自身のfetchがブラウザのHTTPキャッシュから
+   古い応答を受け取ってしまうことがある。no-storeで確実にネットワーク
+   まで到達させる。オフライン時のみCache Storageにフォールバック */
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "no-store" })
       .then((response) => {
         if (response.ok) {
           const clone = response.clone();
