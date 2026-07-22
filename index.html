@@ -513,6 +513,8 @@ header::before {
   z-index: 6;
   pointer-events: none;
   will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 .bird-svg {
   display: block;
@@ -2355,7 +2357,11 @@ if ('serviceWorker' in navigator) {
     var removed = false;
 
     function setPos(px, py) {
-      wrap.style.transform = 'translate(' + px.toFixed(1) + 'px,' + py.toFixed(1) + 'px) scaleX(' + facing + ')';
+      /* translate3dでGPUレイヤーに昇格させる。translate(2D)のままだと
+         Chromeがfixed要素を「遅いスクロールパス」で扱うことがあり、
+         スクロール中に描画が追いつかず「ついてくる」ように見える
+         ことがあるため */
+      wrap.style.transform = 'translate3d(' + px.toFixed(1) + 'px,' + py.toFixed(1) + 'px,0) scaleX(' + facing + ')';
     }
     setPos(x, y);
 
