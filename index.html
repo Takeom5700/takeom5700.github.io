@@ -155,6 +155,74 @@ body::after {
   mix-blend-mode: screen;
 }
 
+/* ---- 花火（DOM/CSS版） ----
+   Canvasでの実装が「柔らかい円形の光」にしか見えないという指摘が
+   続いたため、確実に見える方式に作り替えた。各火花は実体を持つ
+   div要素で、中心の1点から放射状に伸びる棒（transform-originを
+   起点に固定し、rotateで角度・heightで長さを持たせる）として描く。
+   ソフトなグローのぼかしに頼らず、はっきりした筋そのものを主役にする。 */
+.hanabi-rocket {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+  box-shadow: 0 0 10px 3px currentColor, 0 10px 16px -4px currentColor;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hanabi-rocket { animation: hanabi-rise cubic-bezier(0.22, 0.6, 0.4, 1) forwards; }
+}
+@keyframes hanabi-rise {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(var(--rise, -400px)); opacity: 1; }
+}
+
+.hanabi-burst {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.hanabi-spark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3.5px;
+  height: 0;
+  border-radius: 3px;
+  transform-origin: top center;
+  transform: rotate(var(--ang));
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hanabi-spark {
+    animation: hanabi-spark-fly var(--dur, 1.7s) cubic-bezier(0.13, 0.8, 0.28, 1) forwards,
+               hanabi-spark-hue 1.7s ease-in forwards;
+    animation-delay: var(--delay, 0s);
+  }
+}
+@keyframes hanabi-spark-fly {
+  0%   { height: 0; opacity: 0; transform: rotate(var(--ang)) translateY(0); }
+  9%   { opacity: 1; }
+  40%  { height: var(--len, 90px); opacity: 1; transform: rotate(var(--ang)) translateY(0); }
+  72%  { height: calc(var(--len, 90px) * 0.72); opacity: 0.9; transform: rotate(var(--ang)) translateY(var(--reach, 46px)); }
+  100% { height: calc(var(--len, 90px) * 0.2); opacity: 0; transform: rotate(var(--ang)) translateY(calc(var(--reach, 46px) + var(--fall, 70px))); }
+}
+@keyframes hanabi-spark-hue {
+  0%, 45% { filter: hue-rotate(0deg) brightness(1.25); }
+  100%    { filter: hue-rotate(var(--hue-shift, 26deg)) brightness(0.95); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hanabi-rocket, .hanabi-spark { display: none; }
+}
+
 /* 紅白幕は「儀式・慶事」の幕であり夜店の顔としては不自然なため撤去。
    ヘッダーは連提灯を主役にする（これが実際の夜祭りの顔） */
 
@@ -293,6 +361,30 @@ header::before {
   will-change: transform;
 }
 .roamer > * { pointer-events: auto; }
+
+/* 歩くたびに足元へ残す土煙（「歩いている」実感の仕上げ） */
+.roam-dust {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(205, 180, 158, 0.55), transparent 70%);
+  z-index: 5;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .roam-dust { animation: roam-dust-fade 0.65s ease-out forwards; }
+}
+@keyframes roam-dust-fade {
+  0%   { transform: scale(0.4); opacity: 0.7; }
+  100% { transform: scale(1.7) translateY(4px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .roam-dust { display: none; }
+}
 
 .kitsune {
   display: block;
@@ -481,6 +573,19 @@ header .lede {
   40% { transform: scale(0.92); }
   60% { transform: scale(1.12); }
   80% { transform: scale(0.95); }
+}
+
+/* きつね・たぬきに加えた3体目。地面をぴょんぴょん跳ねる金魚
+   （縁日らしい少し可笑しみのある光景として）。動きの主役は
+   roamer側のbounce/squash・土煙で、ここでは静止時の大きさ・
+   起点だけを決める。 */
+.roam-fish {
+  display: block;
+  width: 40px;
+  height: auto;
+  margin: -35px 0 0 -20px;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+  cursor: default;
 }
 
 .tanuki-note {
@@ -1029,6 +1134,18 @@ footer .kin { color: var(--kin); }
       <path d="M40 6 Q46 2 44 10 Q40 12 40 6 Z" fill="#5a8a52" stroke="#3a5a34" stroke-width="1"/>
     </svg>
   </div>
+  <div class="roamer" id="fishRoamer">
+    <svg class="roam-fish" viewBox="0 0 46 40" role="button" tabindex="0" aria-label="金魚（地面をぴょんぴょん跳ねています）">
+      <g transform="translate(23 26) rotate(-8)">
+        <path d="M-16 0 L-23 -8 L-23 8 Z" fill="#e2784a" stroke="var(--rope)" stroke-width="1.6" stroke-linejoin="round"/>
+        <ellipse cx="0" cy="0" rx="15" ry="9.5" fill="#e2784a" stroke="var(--rope)" stroke-width="1.6"/>
+        <path d="M-3 -9 L1 -16 L6 -8 Z" fill="#e2784a" stroke="var(--rope)" stroke-width="1.4" stroke-linejoin="round"/>
+        <ellipse cx="1" cy="4" rx="10" ry="3.2" fill="#f7ba8c" opacity="0.6"/>
+        <circle cx="9.5" cy="-1.5" r="2.2" fill="#241a14"/>
+        <circle cx="10.1" cy="-2.1" r="0.7" fill="#fff"/>
+      </g>
+    </svg>
+  </div>
   <p class="section-label">宮本さなぎとして</p>
   <p class="section-lede">アプリとは別に、宮本さなぎ名義で書いたり話したり奏でたりしています。</p>
 </div>
@@ -1316,204 +1433,123 @@ if ('serviceWorker' in navigator) {
       ctx.restore();
     }
 
-    drawFireworks();
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
+})();
+</script>
 
-  /* ---- 花火 ----
-     花火の魅力は画面が明るくなることではなく、菊のように尾を引いて
-     垂れる火花の曲線、咲きながら色が変わる「色変わり」、内と外で
-     時差咲きする「二重芯」、しだれ落ちる「柳」——その形と、消えて
-     いくときの名残惜しさにある。長岡の花火のような、鳴り物入りの
-     祝祭ではなく静かな情緒を目指す。背景・カードへの影響も画面を
-     光らせるのではなく、その花火自身の色をごく淡く長く映す残照に
-     留める（ambientTimeline）。 */
-  var fireworks = [];
-  var FW_COLORS = [
-    { a: '#ffcf7a', b: '#e0503f', glow: '#fff3d6' }, /* 金 → 紅（色変わりの定番） */
-    { a: '#eef3ff', b: '#3a4f74', glow: '#ffffff' },  /* 銀白 → 藍（暖簾の藍と呼応） */
-    { a: '#ffd0e0', b: '#ffb244', glow: '#fff0f6' },  /* 桜 → 金 */
-    { a: '#ff8a6a', b: '#f2c46a', glow: '#fff0d8' }   /* 緋 → 山吹金 */
+<script>
+/* 花火（DOM/CSS版） — 実体を持つdiv要素で放射状の光条を描く。
+   Canvasの毎フレーム描画は「柔らかい円形の光」にしか見えないという
+   指摘が続いたため、確実に見える方式に作り替えた。打ち上げ(丸が
+   上昇するだけのシンプルなCSSアニメーション)→頂点でJSが光条を
+   N本生成→各光条はCSSアニメーションだけで伸びる・飛ぶ・消える。
+   ブラウザの通常のDOM描画に乗るため、要素はF12のElementsパネルで
+   実際に増えているのを目視確認できる。 */
+(function () {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var PALETTES = [
+    { grad: 'linear-gradient(to bottom, #fff8e0, #ffb244)', tail: '#ffb244', ambient: '255,205,140', hue: 24 },
+    { grad: 'linear-gradient(to bottom, #ffffff, #7fa8e0)', tail: '#7fa8e0', ambient: '210,224,255', hue: -20 },
+    { grad: 'linear-gradient(to bottom, #fff0f6, #e089b0)', tail: '#e089b0', ambient: '255,220,235', hue: 22 },
+    { grad: 'linear-gradient(to bottom, #fff3e0, #e0503f)', tail: '#e0503f', ambient: '255,190,160', hue: -16 }
   ];
-  function hexA(hex, a) {
-    var r = parseInt(hex.slice(1, 3), 16);
-    var g = parseInt(hex.slice(3, 5), 16);
-    var b = parseInt(hex.slice(5, 7), 16);
-    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
-  }
-  function hexRgbTriplet(hex) {
-    return parseInt(hex.slice(1, 3), 16) + ', ' + parseInt(hex.slice(3, 5), 16) + ', ' + parseInt(hex.slice(5, 7), 16);
-  }
-  function launchFirework(x, y) {
-    var burstY = y != null ? y : h * (0.14 + Math.random() * 0.28);
-    var startX = x != null ? x : Math.random() * w;
-    var roll = Math.random();
-    fireworks.push({
-      phase: 'rise',
-      x: startX,
-      y: h + 10,
-      targetY: burstY,
-      vy: -(6.4 + Math.random() * 1.3),
-      hang: 4 + Math.floor(Math.random() * 5),
-      style: roll < 0.3 ? 'yanagi' : (roll < 0.62 ? 'double' : 'kiku'),
-      color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)],
-      particles: null
-    });
-  }
-  function burstFirework(fw) {
-    var n = 74 + Math.floor(Math.random() * 24);
-    var willow = fw.style === 'yanagi';
-    var double = fw.style === 'double';
-    var parts = [];
-    for (var i = 0; i < n; i++) {
-      var ang = (Math.PI * 2 * i) / n + Math.random() * 0.1;
-      var ring = double && i % 2 === 0 ? 0.55 : 1;
-      var spd = ((willow ? 2.3 : 2.9) + Math.random() * 2) * ring;
-      parts.push({
-        x: fw.x, y: fw.y,
-        vx: Math.cos(ang) * spd,
-        vy: Math.sin(ang) * spd,
-        life: 1,
-        decay: willow ? 0.0036 : (double ? 0.0048 : 0.0044),
-        gravity: willow ? 0.086 : 0.05,
-        drag: willow ? 0.991 : 0.985,
-        trail: []
-      });
-    }
-    fw.phase = 'burst';
-    fw.particles = parts;
-    ambientTimeline(fw);
-  }
-  function ambientTimeline(fw) {
+
+  function setAmbient(x, y, ambientRgb) {
     var root = document.documentElement;
-    root.style.setProperty('--hanabi-x', ((fw.x / w) * 100) + '%');
-    root.style.setProperty('--hanabi-y', ((fw.y / h) * 100) + '%');
+    root.style.setProperty('--hanabi-x', ((x / innerWidth) * 100) + '%');
+    root.style.setProperty('--hanabi-y', ((y / innerHeight) * 100) + '%');
+    root.style.setProperty('--hanabi-rgb', ambientRgb);
     var start = performance.now();
-    var RISE = 480, HOLD = 1500, FADE = 1300;
-    var TOTAL = RISE + HOLD + FADE;
+    var RISE = 450, HOLD = 1400, FADE = 1200, TOTAL = RISE + HOLD + FADE;
     (function step(now) {
       var el = now - start;
-      var v;
-      if (el < RISE) v = el / RISE;
-      else if (el < RISE + HOLD) v = 1;
-      else if (el < TOTAL) v = Math.max(0, 1 - (el - RISE - HOLD) / FADE);
-      else v = 0;
+      var v = el < RISE ? el / RISE : el < RISE + HOLD ? 1 : Math.max(0, 1 - (el - RISE - HOLD) / FADE);
       root.style.setProperty('--hanabi-glow', (v * 0.13).toFixed(3));
-      var hex = el < RISE + HOLD * 0.45 ? fw.color.a : fw.color.b;
-      root.style.setProperty('--hanabi-rgb', hexRgbTriplet(hex));
       if (el < TOTAL) requestAnimationFrame(step);
       else root.style.setProperty('--hanabi-glow', '0');
     })(start);
   }
-  function drawFireworks() {
-    for (var i = fireworks.length - 1; i >= 0; i--) {
-      var fw = fireworks[i];
-      if (fw.phase === 'rise') {
-        fw.y += fw.vy;
-        fw.vy *= 0.992;
-        var riseGlow = ctx.createRadialGradient(fw.x, fw.y, 0, fw.x, fw.y, 6);
-        riseGlow.addColorStop(0, hexA(fw.color.glow, 0.95));
-        riseGlow.addColorStop(1, hexA(fw.color.a, 0));
-        ctx.fillStyle = riseGlow;
-        ctx.beginPath();
-        ctx.arc(fw.x, fw.y, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = fw.color.glow;
-        ctx.beginPath();
-        ctx.arc(fw.x, fw.y, 2.2, 0, Math.PI * 2);
-        ctx.fill();
-        if (fw.y <= fw.targetY || fw.vy > -0.25) {
-          if (fw.hang > 0) { fw.hang--; fw.vy *= 0.4; }
-          else burstFirework(fw);
-        }
-        continue;
-      }
-      var alive = false;
-      var burstAge = fw.burstAge = (fw.burstAge || 0) + 1;
-      for (var p = 0; p < fw.particles.length; p++) {
-        var pt = fw.particles[p];
-        if (pt.life <= 0) continue;
 
-        /* 尾は起点(爆心)からの全履歴を持たせる。短い直近5フレームだけだと
-           単なる「移動方向の短い線」にしかならず、菊・柳の"中心から伸びて
-           垂れる筋"という花火本来の形にならない。寿命が尽きるまでの
-           数十〜200フレーム分をそのまま蓄積し、起点から現在位置までの
-           曲線をまるごと描く（本数×点数は多いが2D canvasには軽い処理）。 */
-        pt.trail.push({ x: pt.x, y: pt.y });
+  function burst(x, y, palette) {
+    setAmbient(x, y, palette.ambient);
 
-        pt.x += pt.vx;
-        pt.y += pt.vy;
-        pt.vy += pt.gravity;
-        pt.vx *= pt.drag;
-        pt.vy *= pt.drag;
-        pt.life -= pt.decay;
+    var wrap = document.createElement('div');
+    wrap.className = 'hanabi-burst';
+    wrap.style.left = x + 'px';
+    wrap.style.top = y + 'px';
 
-        if (pt.life > 0) {
-          alive = true;
-          var stageColor = pt.life > 0.5 ? fw.color.a : fw.color.b;
-          var a = Math.min(1, pt.life * 1.3);
-          /* 開いた直後だけ核が白く強く光る(本物の花火の"パッ"という瞬間) */
-          var flashMix = Math.max(0, 1 - burstAge / 10);
-          var headColor = flashMix > 0 ? '#ffffff' : fw.color.glow;
-          var headAlpha = flashMix > 0 ? Math.min(1, a + flashMix * 0.6) : a;
+    var styleRoll = Math.random();
+    var willow = styleRoll < 0.3;
+    var double = !willow && styleRoll < 0.62;
+    var n = 26 + Math.floor(Math.random() * 10);
+    var maxLife = 0;
 
-          /* 起点から現在位置までの光条(放射状に開く花火の主形) */
-          if (pt.trail.length > 1) {
-            ctx.beginPath();
-            ctx.moveTo(pt.trail[0].x, pt.trail[0].y);
-            for (var tI = 1; tI < pt.trail.length; tI++) ctx.lineTo(pt.trail[tI].x, pt.trail[tI].y);
-            ctx.lineTo(pt.x, pt.y);
-            ctx.strokeStyle = hexA(stageColor, a * 0.85);
-            ctx.lineWidth = 2.6;
-            ctx.lineCap = 'round';
-            ctx.stroke();
-          }
+    for (var i = 0; i < n; i++) {
+      var ang = (360 / n) * i + (Math.random() - 0.5) * 8;
+      var ring = double && i % 2 === 0;
+      var len = (ring ? 55 : 85) + Math.random() * 30;
+      var reach = (willow ? 30 : (ring ? 30 : 46)) + Math.random() * 22;
+      var fall = (willow ? 100 : 65) + Math.random() * 30;
+      var dur = (willow ? 2.1 : 1.6) + Math.random() * 0.35;
+      var delay = Math.random() * 0.12;
 
-          var glow = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, 6);
-          glow.addColorStop(0, hexA(headColor, headAlpha));
-          glow.addColorStop(1, hexA(stageColor, 0));
-          ctx.fillStyle = glow;
-          ctx.beginPath();
-          ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
-          ctx.fill();
-
-          /* 芯の粒（一番明るい核。遠目にも花火の粒だと分かるように） */
-          ctx.fillStyle = hexA(headColor, headAlpha);
-          ctx.beginPath();
-          ctx.arc(pt.x, pt.y, 2.2, 0, Math.PI * 2);
-          ctx.fill();
-
-          /* 川面への映り込み（長岡花火が信濃川に映るように） */
-          var waterline = h * 0.865;
-          if (pt.y < waterline) {
-            var ry = waterline + (waterline - pt.y) * 0.82;
-            if (ry < h + 10) {
-              var rGlow = ctx.createRadialGradient(pt.x, ry, 0, pt.x, ry, 5.5);
-              rGlow.addColorStop(0, hexA(fw.color.glow, a * 0.4));
-              rGlow.addColorStop(1, hexA(stageColor, 0));
-              ctx.fillStyle = rGlow;
-              ctx.beginPath();
-              ctx.ellipse(pt.x, ry, 5.5, 2.4, 0, 0, Math.PI * 2);
-              ctx.fill();
-            }
-          }
-        }
-      }
-      if (!alive) fireworks.splice(i, 1);
+      var s = document.createElement('span');
+      s.className = 'hanabi-spark';
+      s.style.setProperty('--ang', ang + 'deg');
+      s.style.setProperty('--len', len + 'px');
+      s.style.setProperty('--reach', reach + 'px');
+      s.style.setProperty('--fall', fall + 'px');
+      s.style.setProperty('--dur', dur + 's');
+      s.style.setProperty('--delay', delay + 's');
+      s.style.setProperty('--hue-shift', palette.hue + 'deg');
+      s.style.background = palette.grad;
+      wrap.appendChild(s);
+      maxLife = Math.max(maxLife, dur + delay);
     }
+
+    document.body.appendChild(wrap);
+    setTimeout(function () { wrap.remove(); }, (maxLife + 0.15) * 1000);
   }
 
-  /* このIIFEはファイル冒頭で prefers-reduced-motion: reduce の場合に
-     既にreturn済みのため、ここに到達した時点でモーション許可は確定している */
+  function launchHanabi(x, y) {
+    var palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
+    var startX = x != null ? x : 60 + Math.random() * (innerWidth - 120);
+    var targetY = y != null ? y : innerHeight * (0.16 + Math.random() * 0.26);
+    var startY = innerHeight + 10;
+    var rise = startY - targetY;
+    var dur = Math.max(0.9, rise / 480);
+
+    var rocket = document.createElement('div');
+    rocket.className = 'hanabi-rocket';
+    rocket.style.left = startX + 'px';
+    rocket.style.top = startY + 'px';
+    rocket.style.color = palette.tail;
+    rocket.style.setProperty('--rise', (-rise) + 'px');
+    rocket.style.animationDuration = dur + 's';
+    document.body.appendChild(rocket);
+
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      rocket.remove();
+      burst(startX, targetY, palette);
+    }
+    rocket.addEventListener('animationend', finish);
+    setTimeout(finish, dur * 1000 + 200);
+  }
+
   (function scheduleAuto() {
-    setTimeout(function () { launchFirework(); scheduleAuto(); }, 12000 + Math.random() * 9000);
+    setTimeout(function () { launchHanabi(); scheduleAuto(); }, 12000 + Math.random() * 9000);
   })();
-  setTimeout(function () { launchFirework(); }, 3000);
+  setTimeout(function () { launchHanabi(); }, 2600);
 
   document.addEventListener('click', function (e) {
     if (e.target.closest('a, .kitsune, .tanuki, button, input, textarea')) return;
-    launchFirework(e.clientX, e.clientY);
+    launchHanabi(e.clientX, e.clientY);
   });
 })();
 </script>
@@ -1664,26 +1700,37 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <script>
-/* きつね・たぬきの徘徊AI — 1箇所に留まらず、画面(ビューポート)を
-   縦横無尽に歩き回る。目的地をランダムに選び、そこへゆっくり歩いて
-   着いたら少し休み、また次の目的地へ——という単純な「行っては休む」
-   ふるまい。移動(translate)は.roamerラッパーが担当し、中の
-   .kitsune/.tanuki自身の呼吸・スウェイ・クリック演出とは干渉しない
-   （CSSアニメーションのtransformが親のtranslateを上書きしないよう、
-   親子で役割を分けているのが肝）。 */
+/* きつね・たぬき・金魚の徘徊AI — 1箇所に留まらず、画面(ビューポート)を
+   縦横無尽に歩き回る。「ただ画像が横にスライドしてくる」だけに見える
+   という指摘を受け、(1)速度を大幅に上げ、(2)移動中だけ歩幅に応じて
+   跳ねる(bounce)・squash-stretchする、(3)着地のたびに足元へ土煙を
+   残す——の3点で「歩いている実感」を作る。移動(translate)は.roamer
+   ラッパーが担当し、中の.kitsune/.tanuki自身の呼吸・スウェイ・クリック
+   演出とは干渉しない。 */
 (function () {
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  function spawnDust(px, py) {
+    var d = document.createElement('span');
+    d.className = 'roam-dust';
+    d.style.left = px + 'px';
+    d.style.top = py + 'px';
+    document.body.appendChild(d);
+    setTimeout(function () { d.remove(); }, 650);
+  }
 
   function makeRoamer(el, opts) {
     if (!el) return;
     var speed = opts.speed;
     var pauseMin = opts.pauseMin, pauseMax = opts.pauseMax;
+    var bounceH = opts.bounceH;
     var marginX = 50, marginTop = 90, marginBottom = 140;
 
     var x = opts.startX, y = opts.startY;
     var targetX = x, targetY = y;
     var paused = true;
     var pauseUntil = performance.now() + opts.initialPause;
+    var stepPhase = 0, lastPhaseMod = 0;
 
     function pickTarget() {
       var maxW = Math.max(innerWidth - marginX * 2, 100);
@@ -1693,6 +1740,7 @@ if ('serviceWorker' in navigator) {
     }
 
     function frame(now) {
+      var moving = false;
       if (paused) {
         if (now >= pauseUntil) { paused = false; pickTarget(); }
       } else {
@@ -1702,29 +1750,50 @@ if ('serviceWorker' in navigator) {
           paused = true;
           pauseUntil = now + pauseMin + Math.random() * (pauseMax - pauseMin);
         } else {
+          moving = true;
           x += (dx / dist) * speed;
           y += (dy / dist) * speed;
         }
       }
+
+      var bounce = 0, squash = 1;
+      if (moving) {
+        stepPhase += speed * 0.15;
+        var sPhase = Math.abs(Math.sin(stepPhase));
+        bounce = -sPhase * bounceH;
+        squash = 1 + Math.sin(stepPhase * 2) * 0.05;
+        var phaseMod = stepPhase % Math.PI;
+        if (phaseMod < lastPhaseMod) spawnDust(x, y + 6);
+        lastPhaseMod = phaseMod;
+      } else {
+        stepPhase = 0; lastPhaseMod = 0;
+      }
+
       var facing = (targetX < x - 4) ? -1 : (targetX > x + 4 ? 1 : (el.__facing || 1));
       el.__facing = facing;
-      el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scaleX(' + facing + ')';
+      el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + (y + bounce).toFixed(1) + 'px) scale(' + facing + ',' + squash.toFixed(3) + ')';
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
   }
 
   makeRoamer(document.getElementById('kitsuneRoamer'), {
-    speed: 0.55,
-    pauseMin: 2200, pauseMax: 4200,
-    initialPause: 3000,
+    speed: 1.9, bounceH: 9,
+    pauseMin: 1600, pauseMax: 3200,
+    initialPause: 2600,
     startX: innerWidth * 0.5, startY: 230
   });
   makeRoamer(document.getElementById('tanukiRoamer'), {
-    speed: 0.4,
-    pauseMin: 2600, pauseMax: 5000,
-    initialPause: 3600,
+    speed: 1.6, bounceH: 14,
+    pauseMin: 1800, pauseMax: 3600,
+    initialPause: 3400,
     startX: innerWidth * 0.5, startY: innerHeight * 0.6
+  });
+  makeRoamer(document.getElementById('fishRoamer'), {
+    speed: 1.3, bounceH: 11,
+    pauseMin: 1400, pauseMax: 2800,
+    initialPause: 4200,
+    startX: innerWidth * 0.3, startY: innerHeight * 0.42
   });
 })();
 </script>
