@@ -2291,7 +2291,10 @@ if ('serviceWorker' in navigator) {
   var BIRD_PALETTES = [
     { body: '#8a6a48', dark: '#6b4f32', beak: '#4a3626' },
     { body: '#92a4b0', dark: '#6d818f', beak: '#e0954a' },
-    { body: '#c17a52', dark: '#96593a', beak: '#ffb244', belly: '#f4ead8' }
+    { body: '#c17a52', dark: '#96593a', beak: '#ffb244', belly: '#f4ead8' },
+    { body: '#d4a843', dark: '#a67f2e', beak: '#5c4530' },
+    { body: '#5f9e8f', dark: '#3f7568', beak: '#e0954a' },
+    { body: '#9077b0', dark: '#6b5488', beak: '#ffb244' }
   ];
   var SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -2417,10 +2420,13 @@ if ('serviceWorker' in navigator) {
     requestAnimationFrame(frame);
   }
 
+  /* 「複数出てきてもいいくらい」との指摘を受け、間隔を詰めて同時に
+     2〜3羽くらい画面にいる頻度にした */
   (function schedule() {
-    setTimeout(function () { spawnBird(); schedule(); }, 5000 + Math.random() * 6000);
+    setTimeout(function () { spawnBird(); schedule(); }, 2600 + Math.random() * 3200);
   })();
-  setTimeout(spawnBird, 1800);
+  setTimeout(spawnBird, 1200);
+  setTimeout(spawnBird, 2800);
 })();
 </script>
 
