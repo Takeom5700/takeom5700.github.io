@@ -2319,14 +2319,14 @@ if ('serviceWorker' in navigator) {
   }
 
   function spawnBird() {
-    var cards = document.querySelectorAll('.card');
-    if (!cards.length) return;
-    var card = cards[Math.floor(Math.random() * cards.length)];
-    var rect = card.getBoundingClientRect();
-    if (rect.width < 10 || rect.bottom < 0 || rect.top > innerHeight) return;
-
-    var landX = rect.left + rect.width * (0.25 + Math.random() * 0.5);
-    var landY = rect.top + rect.height * (0.1 + Math.random() * 0.12);
+    /* 着地先はカード要素のgetBoundingClientRect()を参照していたが、
+       スクロールするたびに「今見えているカード」を狙うため、鳥がずっと
+       スクロール位置についてくるように見えてしまっていた。ページ内容
+       (スクロールで動くもの)を一切参照せず、今のビューポート内の
+       ランダムな点に着地させることで、正真正銘スクロールと無関係な
+       画面固定の存在にする */
+    var landX = innerWidth * (0.08 + Math.random() * 0.84);
+    var landY = innerHeight * (0.28 + Math.random() * 0.5);
 
     var edge = Math.floor(Math.random() * 3); // 0:左から 1:右から 2:上から
     var startX, startY, facing;
