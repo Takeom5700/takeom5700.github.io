@@ -201,6 +201,12 @@ body::after {
   transform: rotate(var(--ang));
   opacity: 0;
 }
+/* 牡丹(ぼたん) — 菊のように尾を引かず、丸い花弁が短く開いてすっと消える。
+   色変わりもしない一色咲きなので、線を太く短く・角も丸くする */
+.hanabi-spark--botan {
+  width: 6px;
+  border-radius: 5px;
+}
 @media (prefers-reduced-motion: no-preference) {
   .hanabi-spark {
     animation: hanabi-spark-fly var(--dur, 1.7s) cubic-bezier(0.13, 0.8, 0.28, 1) forwards,
@@ -665,6 +671,76 @@ header .lede {
 }
 .chochin--wink .chochin-face { transform: translate(-50%, -50%) scale(1); }
 
+/* 提灯当てゲーム — 1つだけが「当たり」。タップして探す */
+.chochin[role="button"] { cursor: pointer; }
+.chochin:focus-visible { outline: 2px solid var(--kin); outline-offset: 4px; }
+
+.chochin-toast {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, 4px) scale(0.85);
+  margin-bottom: 10px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  background: var(--washi);
+  color: #2a1810;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.chochin-toast::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border: 5px solid transparent;
+  border-top-color: var(--washi);
+}
+.chochin-toast--show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.chochin-toast--hit { background: var(--kin); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .chochin--hit  { animation: chochin-hit-bounce 0.62s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
+  .chochin--miss { animation: chochin-miss-shake 0.42s ease !important; }
+}
+@keyframes chochin-hit-bounce {
+  0%   { transform: scale(1) rotate(0deg); }
+  30%  { transform: scale(1.22) rotate(-6deg); }
+  55%  { transform: scale(0.94) rotate(4deg); }
+  78%  { transform: scale(1.07) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes chochin-miss-shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  50% { transform: rotate(4deg); }
+  75% { transform: rotate(-3deg); }
+}
+
+/* きつねの光の粒(spark-fly)を流用し、当たり時に金の光を散らす */
+.chochin-spark {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--kin);
+  box-shadow: 0 0 6px var(--kin);
+  pointer-events: none;
+  z-index: 60;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chochin-spark { animation: spark-fly 0.7s ease-out forwards; }
+}
+
 /* ---- 夜店広場（グリッド＝どこから見てもいい） ----
    一本道でカードを順番につないだところ「一直線＝優先順位が滲む」
    「一本道は選ぶポータルとして機能的でない」と指摘を受けて撤去。
@@ -916,14 +992,14 @@ footer .kin { color: var(--kin); }
 
 <canvas id="fireflies" aria-hidden="true"></canvas>
 
-<div class="lanterns" aria-hidden="true">
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
-  <span class="chochin"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span></span>
+<div class="lanterns" role="group" aria-label="提灯当てゲーム。当たりの提灯をタップして探してみてください">
+  <span class="chochin" role="button" tabindex="0" aria-label="提灯"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span><span class="chochin-toast" aria-hidden="true"></span></span>
+  <span class="chochin" role="button" tabindex="0" aria-label="提灯"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span><span class="chochin-toast" aria-hidden="true"></span></span>
+  <span class="chochin" role="button" tabindex="0" aria-label="提灯"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span><span class="chochin-toast" aria-hidden="true"></span></span>
+  <span class="chochin" role="button" tabindex="0" aria-label="提灯"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span><span class="chochin-toast" aria-hidden="true"></span></span>
+  <span class="chochin" role="button" tabindex="0" aria-label="提灯"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span><span class="chochin-toast" aria-hidden="true"></span></span>
+  <span class="chochin" role="button" tabindex="0" aria-label="提灯"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span><span class="chochin-toast" aria-hidden="true"></span></span>
+  <span class="chochin" role="button" tabindex="0" aria-label="提灯"><span class="chochin-face" aria-hidden="true"><span class="chochin-eye"></span><span class="chochin-mouth"><span class="chochin-tongue"></span></span></span><span class="chochin-toast" aria-hidden="true"></span></span>
 </div>
 
 <div class="wrap">
@@ -1473,6 +1549,10 @@ if ('serviceWorker' in navigator) {
     })(start);
   }
 
+  /* 5種の花火を用意し、毎回ランダムでどれかになる:
+     菊(尾を引いて色変わり)・柳(長く垂れて落ちる)・二重芯(内外二重の輪)・
+     牡丹(丸く短く一色でぱっと開く)・千輪崩し(飛んだ先で小さな子花火が
+     さらに開く、崩し系の割物) */
   function burst(x, y, palette) {
     setAmbient(x, y, palette.ambient);
 
@@ -1482,34 +1562,102 @@ if ('serviceWorker' in navigator) {
     wrap.style.top = y + 'px';
 
     var styleRoll = Math.random();
-    var willow = styleRoll < 0.3;
-    var double = !willow && styleRoll < 0.62;
-    var n = 26 + Math.floor(Math.random() * 10);
+    var style = styleRoll < 0.26 ? 'kiku'
+      : styleRoll < 0.46 ? 'botan'
+      : styleRoll < 0.64 ? 'yanagi'
+      : styleRoll < 0.82 ? 'double'
+      : 'senrin';
+    var n = (style === 'botan' ? 22 : 26) + Math.floor(Math.random() * 10);
     var maxLife = 0;
+    var crackles = [];
 
     for (var i = 0; i < n; i++) {
       var ang = (360 / n) * i + (Math.random() - 0.5) * 8;
-      var ring = double && i % 2 === 0;
-      var len = (ring ? 55 : 85) + Math.random() * 30;
-      var reach = (willow ? 30 : (ring ? 30 : 46)) + Math.random() * 22;
-      var fall = (willow ? 100 : 65) + Math.random() * 30;
-      var dur = (willow ? 2.1 : 1.6) + Math.random() * 0.35;
+      var ring = style === 'double' && i % 2 === 0;
+      var len, reach, fall, dur, hueShift;
+
+      if (style === 'botan') {
+        len = 42 + Math.random() * 18;
+        reach = 16 + Math.random() * 12;
+        fall = 16 + Math.random() * 16;
+        dur = 1.0 + Math.random() * 0.3;
+        hueShift = palette.hue * 0.12;
+      } else if (style === 'yanagi') {
+        len = 85 + Math.random() * 30;
+        reach = 30 + Math.random() * 22;
+        fall = 100 + Math.random() * 30;
+        dur = 2.1 + Math.random() * 0.35;
+        hueShift = palette.hue;
+      } else if (style === 'double') {
+        len = (ring ? 55 : 85) + Math.random() * 30;
+        reach = (ring ? 30 : 46) + Math.random() * 22;
+        fall = 65 + Math.random() * 30;
+        dur = 1.6 + Math.random() * 0.35;
+        hueShift = palette.hue;
+      } else {
+        len = 85 + Math.random() * 30;
+        reach = 46 + Math.random() * 22;
+        fall = 65 + Math.random() * 30;
+        dur = 1.6 + Math.random() * 0.35;
+        hueShift = palette.hue;
+      }
       var delay = Math.random() * 0.12;
 
       var s = document.createElement('span');
-      s.className = 'hanabi-spark';
+      s.className = 'hanabi-spark' + (style === 'botan' ? ' hanabi-spark--botan' : '');
       s.style.setProperty('--ang', ang + 'deg');
       s.style.setProperty('--len', len + 'px');
       s.style.setProperty('--reach', reach + 'px');
       s.style.setProperty('--fall', fall + 'px');
       s.style.setProperty('--dur', dur + 's');
       s.style.setProperty('--delay', delay + 's');
-      s.style.setProperty('--hue-shift', palette.hue + 'deg');
+      s.style.setProperty('--hue-shift', hueShift + 'deg');
       s.style.background = palette.grad;
       wrap.appendChild(s);
       maxLife = Math.max(maxLife, dur + delay);
+
+      if (style === 'senrin' && i % 5 === 0) {
+        var angRad = ang * Math.PI / 180;
+        crackles.push({
+          x: x + len * 0.9 * Math.sin(angRad),
+          y: y + len * 0.9 * Math.cos(angRad),
+          at: (delay + dur * 0.4) * 1000
+        });
+      }
     }
 
+    document.body.appendChild(wrap);
+    setTimeout(function () { wrap.remove(); }, (maxLife + 0.15) * 1000);
+
+    crackles.forEach(function (c) {
+      setTimeout(function () { crackle(c.x, c.y, palette); }, c.at);
+    });
+  }
+
+  /* 千輪崩しの「崩し」部分 — 飛び散った先で開く小さな子花火 */
+  function crackle(x, y, palette) {
+    var wrap = document.createElement('div');
+    wrap.className = 'hanabi-burst';
+    wrap.style.left = x + 'px';
+    wrap.style.top = y + 'px';
+    var n = 8 + Math.floor(Math.random() * 5);
+    var maxLife = 0;
+    for (var i = 0; i < n; i++) {
+      var ang = (360 / n) * i + (Math.random() - 0.5) * 20;
+      var dur = 0.5 + Math.random() * 0.2;
+      var s = document.createElement('span');
+      s.className = 'hanabi-spark';
+      s.style.setProperty('--ang', ang + 'deg');
+      s.style.setProperty('--len', (20 + Math.random() * 16) + 'px');
+      s.style.setProperty('--reach', (10 + Math.random() * 8) + 'px');
+      s.style.setProperty('--fall', (10 + Math.random() * 10) + 'px');
+      s.style.setProperty('--dur', dur + 's');
+      s.style.setProperty('--delay', '0s');
+      s.style.setProperty('--hue-shift', (palette.hue * 0.5) + 'deg');
+      s.style.background = palette.grad;
+      wrap.appendChild(s);
+      maxLife = Math.max(maxLife, dur);
+    }
     document.body.appendChild(wrap);
     setTimeout(function () { wrap.remove(); }, (maxLife + 0.15) * 1000);
   }
@@ -1799,20 +1947,91 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <script>
-/* 提灯お化け — ランダムな間隔でどれか1つだけ瞬く。ずっと見ていると
-   たまに良いことがある、という報酬として仕込む小さな驚き。 */
+/* 提灯当てゲーム — 7つのうち1つだけがひそかに「当たり」。ときどき
+   勝手に顔をのぞかせる(ヒント)。外れを引くと「こっちでした」と当たりの
+   提灯が顔を出して教えてくれる。当たりを引くとお祝いして次のラウンドへ。 */
 (function () {
   var lanterns = Array.prototype.slice.call(document.querySelectorAll('.chochin'));
   if (!lanterns.length) return;
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function wink() {
-    var el = lanterns[Math.floor(Math.random() * lanterns.length)];
-    el.classList.add('chochin--wink');
-    setTimeout(function () { el.classList.remove('chochin--wink'); }, 850);
-    setTimeout(wink, 9000 + Math.random() * 9000);
+  var targetIndex = Math.floor(Math.random() * lanterns.length);
+
+  function restart(el, cls, ms) {
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+    clearTimeout(el['__t_' + cls]);
+    el['__t_' + cls] = setTimeout(function () { el.classList.remove(cls); }, ms);
   }
-  setTimeout(wink, 4000 + Math.random() * 4000);
+
+  function toastOn(el, text, hitStyle) {
+    var toast = el.querySelector('.chochin-toast');
+    if (!toast) return;
+    clearTimeout(toast.__hideTimer);
+    toast.textContent = text;
+    toast.classList.toggle('chochin-toast--hit', !!hitStyle);
+    toast.classList.add('chochin-toast--show');
+    toast.__hideTimer = setTimeout(function () { toast.classList.remove('chochin-toast--show'); }, 1100);
+  }
+
+  function sparkleAt(el) {
+    if (reduced) return;
+    var rect = el.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    var n = 8;
+    for (var i = 0; i < n; i++) {
+      var angle = (Math.PI * 2 * i) / n + Math.random() * 0.5;
+      var dist = 26 + Math.random() * 20;
+      var s = document.createElement('span');
+      s.className = 'chochin-spark';
+      s.style.left = cx + 'px';
+      s.style.top = cy + 'px';
+      s.style.setProperty('--dx', (Math.cos(angle) * dist) + 'px');
+      s.style.setProperty('--dy', (Math.sin(angle) * dist - 10) + 'px');
+      document.body.appendChild(s);
+      s.addEventListener('animationend', function () { this.remove(); });
+      setTimeout(function (node) { return function () { if (node.parentNode) node.remove(); }; }(s), 900);
+    }
+  }
+
+  function pickNewTarget() {
+    if (lanterns.length < 2) return;
+    var next;
+    do { next = Math.floor(Math.random() * lanterns.length); } while (next === targetIndex);
+    targetIndex = next;
+  }
+
+  function tap(i) {
+    var el = lanterns[i];
+    if (i === targetIndex) {
+      restart(el, 'chochin--wink', 700);
+      restart(el, 'chochin--hit', 620);
+      sparkleAt(el);
+      toastOn(el, '当たり!', true);
+      pickNewTarget();
+    } else {
+      restart(el, 'chochin--miss', 420);
+      toastOn(el, '残念…');
+      var correct = lanterns[targetIndex];
+      restart(correct, 'chochin--wink', 900);
+      toastOn(correct, 'こっちでした!');
+    }
+  }
+
+  lanterns.forEach(function (el, i) {
+    el.addEventListener('click', function () { tap(i); });
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(i); }
+    });
+  });
+
+  function hint() {
+    restart(lanterns[targetIndex], 'chochin--wink', 850);
+    setTimeout(hint, 9000 + Math.random() * 9000);
+  }
+  if (!reduced) setTimeout(hint, 4000 + Math.random() * 4000);
 })();
 </script>
 </body>
