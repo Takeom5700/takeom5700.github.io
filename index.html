@@ -507,14 +507,18 @@ header::before {
    飛び去る。ずっと画面を飛び回るのではなく「たまに来ては去る」頻度を
    大事にする。クリックすると驚いて飛び立つ */
 .bird {
-  position: fixed;
+  /* position:fixedのはずが「スクロールに合わせて一緒に動く」との報告が
+     何度修正しても直らなかったため、CSSのfixedに頼らず、JS側で毎フレーム
+     現在のスクロール量を読んで明示的に打ち消す方式に変更した(position:
+     absoluteの要素を、スクロール量を加算した座標に置き続けることで、
+     見た目には画面固定と同じ結果を強制的に作り出す) */
+  position: absolute;
   left: 0;
   top: 0;
   z-index: 6;
   pointer-events: none;
   will-change: transform;
   backface-visibility: hidden;
-  transform: translateZ(0);
 }
 .bird-svg {
   display: block;
@@ -2357,11 +2361,13 @@ if ('serviceWorker' in navigator) {
     var removed = false;
 
     function setPos(px, py) {
-      /* translate3dでGPUレイヤーに昇格させる。translate(2D)のままだと
-         Chromeがfixed要素を「遅いスクロールパス」で扱うことがあり、
-         スクロール中に描画が追いつかず「ついてくる」ように見える
-         ことがあるため */
-      wrap.style.transform = 'translate3d(' + px.toFixed(1) + 'px,' + py.toFixed(1) + 'px,0) scaleX(' + facing + ')';
+      /* position:absoluteの要素を「現在のスクロール量 + 見せたい
+         ビューポート座標」に置くことで、画面上は常に同じ位置に
+         見えるようにする(毎フレーム呼ぶことで、スクロール中も
+         リアルタイムに追従して打ち消す) */
+      var sx = window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0;
+      var sy = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+      wrap.style.transform = 'translate3d(' + (px + sx).toFixed(1) + 'px,' + (py + sy).toFixed(1) + 'px,0) scaleX(' + facing + ')';
     }
     setPos(x, y);
 
@@ -2393,7 +2399,6 @@ if ('serviceWorker' in navigator) {
         var ease = 1 - Math.pow(1 - p, 3);
         x = segFromX + (segToX - segFromX) * ease;
         y = segFromY + (segToY - segFromY) * ease - Math.sin(p * Math.PI) * (state === 'in' ? 24 : 16);
-        setPos(x, y);
         if (p >= 1) {
           if (state === 'in') {
             state = 'landing';
@@ -2421,6 +2426,9 @@ if ('serviceWorker' in navigator) {
         }
         if (now - perchSince > perchDur) flyAway();
       }
+      /* 状態に関わらず毎フレーム呼ぶ。x,yが変わらないlanding/perched中も
+         スクロール量の打ち消しだけは常に最新にし続ける必要があるため */
+      setPos(x, y);
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
