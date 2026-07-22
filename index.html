@@ -277,13 +277,12 @@ body::after {
                hanabi-spark-hue 1.7s ease-in forwards;
     animation-delay: var(--delay, 0s);
   }
-  /* 冠(かむろ) — 菊のように大輪に開いた後、しばらく満開のまま保持してから
-     長く尾を引いて垂れ落ちる。他の型とはタイミングの形そのものが違う */
+  /* 柳・冠 — 「回転して落ちる」のではなく「その場から重力に従って
+     まっすぐ垂れ下がる」ようにしたいとの指摘を受け、開いた本体は
+     回転させず(rotateを一切変化させない)そのまま静止・退場させ、
+     垂れ下がりは本体の先端に生える"別の"まっすぐ下向きの光条
+     (JS側でspawnDroopが生成、ang固定0度)に完全に任せる方式にした */
   .hanabi-spark--kamuro { animation-name: hanabi-spark-fly-kamuro, hanabi-spark-hue; }
-  /* 柳・冠共通: 「もっと下に、しだれ桜のようになだらかに垂れ下がる」との
-     指摘を受け、開いた後の角度を--ang-fallへ寄せて、放射状に飛び出した
-     火花が枝垂れるように下向きへ収束していく動きを加えた */
-  .hanabi-spark--yanagi { animation-name: hanabi-spark-fly-yanagi, hanabi-spark-hue; }
   /* 飛遊星(ひゆうせい) — 開いた後、不規則に向きを変えながら飛び回る */
   .hanabi-spark--hiyuusei { animation-name: hanabi-spark-wander, hanabi-spark-hue; }
 }
@@ -294,19 +293,12 @@ body::after {
   72%  { height: calc(var(--len, 90px) * 0.72); opacity: 0.9; transform: rotate(var(--ang)) translateY(var(--reach, 46px)); }
   100% { height: calc(var(--len, 90px) * 0.2); opacity: 0; transform: rotate(var(--ang)) translateY(calc(var(--reach, 46px) + var(--fall, 70px))); }
 }
-@keyframes hanabi-spark-fly-yanagi {
-  0%   { height: 0; opacity: 0; transform: rotate(var(--ang)) translateY(0); }
-  9%   { opacity: 1; }
-  38%  { height: var(--len, 90px); opacity: 1; transform: rotate(var(--ang)) translateY(0); }
-  70%  { height: calc(var(--len, 90px) * 0.78); opacity: 0.9; transform: rotate(var(--ang-fall, var(--ang))) translateY(var(--reach, 46px)); }
-  100% { height: calc(var(--len, 90px) * 0.24); opacity: 0; transform: rotate(var(--ang-fall, var(--ang))) translateY(calc(var(--reach, 46px) + var(--fall, 70px))); }
-}
 @keyframes hanabi-spark-fly-kamuro {
   0%   { height: 0; opacity: 0; transform: rotate(var(--ang)) translateY(0); }
   9%   { opacity: 1; }
-  32%  { height: var(--len, 100px); opacity: 1; transform: rotate(var(--ang)) translateY(0); }
-  52%  { height: var(--len, 100px); opacity: 1; transform: rotate(var(--ang)) translateY(calc(var(--reach, 55px) * 0.15)); }
-  100% { height: calc(var(--len, 100px) * 0.16); opacity: 0; transform: rotate(var(--ang-fall, var(--ang))) translateY(calc(var(--reach, 55px) + var(--fall, 180px))); }
+  34%  { height: var(--len, 100px); opacity: 1; transform: rotate(var(--ang)) translateY(0); }
+  70%  { height: var(--len, 100px); opacity: 1; transform: rotate(var(--ang)) translateY(0); }
+  100% { height: calc(var(--len, 100px) * 0.85); opacity: 0; transform: rotate(var(--ang)) translateY(0); }
 }
 @keyframes hanabi-spark-wander {
   0%   { height: 0; opacity: 0; transform: rotate(var(--ang)) translateY(0); }
@@ -1732,10 +1724,12 @@ if ('serviceWorker' in navigator) {
         dur = 1.0 + Math.random() * 0.3;
         hueShift = palette.hue * 0.12;
       } else if (style === 'yanagi') {
-        len = 85 + Math.random() * 30;
-        reach = 30 + Math.random() * 22;
-        fall = 100 + Math.random() * 30;
-        dur = 2.1 + Math.random() * 0.35;
+        /* 柳 — 本体は菊よりやや小ぶりに素早く開いて退場させ、垂れ下がりは
+           先端に生える別要素(spawnDroop)に完全に任せる */
+        len = 70 + Math.random() * 22;
+        reach = 8 + Math.random() * 6;
+        fall = 12 + Math.random() * 8;
+        dur = 1.05 + Math.random() * 0.25;
         hueShift = palette.hue;
       } else if (style === 'double') {
         len = (ring ? 55 : 85) + Math.random() * 30;
@@ -1810,7 +1804,6 @@ if ('serviceWorker' in navigator) {
       var s = document.createElement('span');
       var modifierClass = style === 'botan' ? ' hanabi-spark--botan'
         : style === 'kamuro' ? ' hanabi-spark--kamuro'
-        : style === 'yanagi' ? ' hanabi-spark--yanagi'
         : style === 'hanarai' ? ' hanabi-spark--hanarai'
         : style === 'hiyuusei' ? ' hanabi-spark--hiyuusei'
         : '';
@@ -1825,12 +1818,25 @@ if ('serviceWorker' in navigator) {
       s.style.background = palette.grad;
 
       if (style === 'yanagi' || style === 'kamuro') {
-        /* しだれ桜のように、放射状に開いた後は下向きへ収束させる。
-           角度を-180〜180に正規化してから縮めることで、どちら向きに
-           開いた火花でも必ず「まっすぐ下」寄りへ収束する */
-        var angNorm = ((ang % 360) + 540) % 360 - 180;
-        var damp = style === 'kamuro' ? 0.12 : 0.18;
-        s.style.setProperty('--ang-fall', (angNorm * damp) + 'deg');
+        /* 「回転して落ちるのではなく、その場から重力に従ってまっすぐ
+           垂れ下がる」との指摘を受け、回転では表現しない方式に変更。
+           本体の先端(角度angの方向にlen進んだ位置)から、常に真下
+           (ang固定0度)へ伸びる別の光条を生やすことで、位置は先端
+           そのままに動きだけ純粋な下方向にする */
+        var dropAngRad = ang * Math.PI / 180;
+        var tipX = len * Math.sin(dropAngRad);
+        var tipY = len * Math.cos(dropAngRad);
+        var isKamuro = style === 'kamuro';
+        var droopDelay = (delay + dur * (isKamuro ? 0.62 : 0.55)) * 1000;
+        var droopLen = isKamuro ? 46 + Math.random() * 22 : 30 + Math.random() * 16;
+        var droopReach = isKamuro ? 22 + Math.random() * 16 : 14 + Math.random() * 10;
+        var droopFall = isKamuro ? 150 + Math.random() * 55 : 95 + Math.random() * 35;
+        var droopDur = isKamuro ? 1.9 + Math.random() * 0.4 : 1.35 + Math.random() * 0.3;
+        (function (dx, dy, dDelay, dLen, dReach, dFall, dDur, dHue) {
+          setTimeout(function () {
+            spawnDroop(x + dx, y + dy, palette, dLen, dReach, dFall, dDur, dHue);
+          }, dDelay);
+        })(tipX, tipY, droopDelay, droopLen, droopReach, droopFall, droopDur, hueShift);
       }
 
       if (style === 'hiyuusei') {
@@ -1911,6 +1917,30 @@ if ('serviceWorker' in navigator) {
     }
     document.body.appendChild(wrap);
     setTimeout(function () { wrap.remove(); }, (maxLife + 0.15) * 1000);
+  }
+
+  /* 柳・冠の「垂れ下がり」担当 — 本体先端の位置から、回転させずに
+     まっすぐ下(ang固定0度)へ伸びる光条を1本生やす。位置は先端の
+     ままで、動きは重力に従う下方向だけにするため、回転(curling)して
+     見える問題を避けられる */
+  function spawnDroop(x, y, palette, len, reach, fall, dur, hueShift) {
+    var wrap = document.createElement('div');
+    wrap.className = 'hanabi-burst';
+    wrap.style.left = x + 'px';
+    wrap.style.top = y + 'px';
+    var s = document.createElement('span');
+    s.className = 'hanabi-spark';
+    s.style.setProperty('--ang', '0deg');
+    s.style.setProperty('--len', len + 'px');
+    s.style.setProperty('--reach', reach + 'px');
+    s.style.setProperty('--fall', fall + 'px');
+    s.style.setProperty('--dur', dur + 's');
+    s.style.setProperty('--delay', '0s');
+    s.style.setProperty('--hue-shift', hueShift + 'deg');
+    s.style.background = palette.grad;
+    wrap.appendChild(s);
+    document.body.appendChild(wrap);
+    setTimeout(function () { wrap.remove(); }, (dur + 0.15) * 1000);
   }
 
   function launchHanabi(x, y) {
