@@ -1,4 +1,4 @@
-const CACHE_NAME = "takeom5700-portal-v24";
+const CACHE_NAME = "takeom5700-portal-v25";
 const PRECACHE_URLS = [
   "/",
   "/index.html",

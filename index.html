@@ -166,9 +166,13 @@ body::before {
    3層の奥行きで重ねた。 */
 .range-view {
   position: relative;
+  width: 100%;
   min-height: min(64vh, 560px);
   overflow: hidden;
-  background: linear-gradient(180deg, var(--yoru) 0%, #0d1520 55%, #0a0f16 100%);
+  /* 暗色の山を暗色の空に置くと沈んで見えなくなっていたため、山頂の
+     裏に暖色の残照(夕景の残り火のような帯)を通し、輪郭が確実に
+     浮かび上がるようにした */
+  background: linear-gradient(180deg, #1c0f10 0%, #2f1814 28%, #6b3620 55%, #8a4a2c 64%, #4a2519 78%, #1d0e0c 100%);
 }
 .range-view-svg {
   position: absolute;
@@ -256,12 +260,22 @@ body::after {
   width: 6px;
   border-radius: 5px;
 }
+/* 花雷(はならい) — バンバンと強く発光する、太く明るい火花 */
+.hanabi-spark--hanarai {
+  width: 4.6px;
+  filter: brightness(1.35);
+}
 @media (prefers-reduced-motion: no-preference) {
   .hanabi-spark {
     animation: hanabi-spark-fly var(--dur, 1.7s) cubic-bezier(0.13, 0.8, 0.28, 1) forwards,
                hanabi-spark-hue 1.7s ease-in forwards;
     animation-delay: var(--delay, 0s);
   }
+  /* 冠(かむろ) — 菊のように大輪に開いた後、しばらく満開のまま保持してから
+     長く尾を引いて垂れ落ちる。他の型とはタイミングの形そのものが違う */
+  .hanabi-spark--kamuro { animation-name: hanabi-spark-fly-kamuro, hanabi-spark-hue; }
+  /* 飛遊星(ひゆうせい) — 開いた後、不規則に向きを変えながら飛び回る */
+  .hanabi-spark--hiyuusei { animation-name: hanabi-spark-wander, hanabi-spark-hue; }
 }
 @keyframes hanabi-spark-fly {
   0%   { height: 0; opacity: 0; transform: rotate(var(--ang)) translateY(0); }
@@ -270,12 +284,50 @@ body::after {
   72%  { height: calc(var(--len, 90px) * 0.72); opacity: 0.9; transform: rotate(var(--ang)) translateY(var(--reach, 46px)); }
   100% { height: calc(var(--len, 90px) * 0.2); opacity: 0; transform: rotate(var(--ang)) translateY(calc(var(--reach, 46px) + var(--fall, 70px))); }
 }
+@keyframes hanabi-spark-fly-kamuro {
+  0%   { height: 0; opacity: 0; transform: rotate(var(--ang)) translateY(0); }
+  9%   { opacity: 1; }
+  32%  { height: var(--len, 100px); opacity: 1; transform: rotate(var(--ang)) translateY(0); }
+  52%  { height: var(--len, 100px); opacity: 1; transform: rotate(var(--ang)) translateY(calc(var(--reach, 55px) * 0.15)); }
+  100% { height: calc(var(--len, 100px) * 0.16); opacity: 0; transform: rotate(var(--ang)) translateY(calc(var(--reach, 55px) + var(--fall, 180px))); }
+}
+@keyframes hanabi-spark-wander {
+  0%   { height: 0; opacity: 0; transform: rotate(var(--ang)) translateY(0); }
+  8%   { opacity: 1; }
+  30%  { height: var(--len, 70px); opacity: 1; transform: rotate(var(--ang)) translateY(0); }
+  46%  { transform: rotate(var(--ang2, var(--ang))) translateY(var(--w1, 18px)); }
+  62%  { transform: rotate(var(--ang3, var(--ang))) translateY(var(--w2, 32px)); }
+  80%  { transform: rotate(var(--ang4, var(--ang))) translateY(var(--w3, 46px)); opacity: 0.85; }
+  100% { height: calc(var(--len, 70px) * 0.3); opacity: 0; transform: rotate(var(--ang5, var(--ang))) translateY(var(--w4, 60px)); }
+}
 @keyframes hanabi-spark-hue {
   0%, 45% { filter: hue-rotate(0deg) brightness(1.25); }
   100%    { filter: hue-rotate(var(--hue-shift, 26deg)) brightness(0.95); }
 }
+/* 花雷の「バンバン」という連続した光の破裂(局所的な一瞬の明るさで、
+   画面全体を光らせるフラッシュ演出とは別物 — あくまで着火点だけの
+   小さな閃光) */
+.hanabi-bang {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(255, 205, 140, 0.5) 45%, transparent 72%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hanabi-bang { animation: hanabi-bang-pulse 0.34s ease-out forwards; }
+}
+@keyframes hanabi-bang-pulse {
+  0%   { transform: scale(0.3); opacity: 1; }
+  100% { transform: scale(3.6); opacity: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .hanabi-rocket, .hanabi-spark { display: none; }
+  .hanabi-rocket, .hanabi-spark, .hanabi-bang { display: none; }
 }
 
 /* 紅白幕は「儀式・慶事」の幕であり夜店の顔としては不自然なため撤去。
@@ -1034,9 +1086,11 @@ footer .kin { color: var(--kin); }
 <div class="scenery" aria-hidden="true">
   <svg class="scenery-mountains" viewBox="0 0 1440 220" preserveAspectRatio="none">
     <!-- タワーカルスト(イポーの山々を参考): 稜線でつながる山並みではなく、
-         平地からいきなり垂直気味の壁で立つ独立した塔状の山。頂上は尖らず丸い -->
-    <path d="M0,190 L10,190 L4,180.5 Q31.3,98 81,73.3 Q136.3,98 166,180.5 L160,190 L220,190 L216,188 Q237.4,122 278,102.2 Q314.4,122 334,188 L330,190 L470,190 L462,181 Q496.7,86 559,57.5 Q629.7,86 668,181 L660,190 L700,190 L697,187 Q714.9,130 749.5,112.9 Q781.4,130 798,187 L795,190 L965,190 L958,192.8 Q988.9,102 1044.5,74.8 Q1104.4,102 1137,192.8 L1130,190 L1220,190 L1215,187.6 Q1239.2,118 1284,97.1 Q1323.2,118 1345,187.6 L1340,190 L1470,190 L1464,185 Q1494.8,94 1552.5,66.7 Q1617.3,94 1651,185 L1645,190 L1440,190 L1440,220 L0,220 Z" fill="#233247" opacity="0.5"/>
-    <path d="M0,200 L-10,200 L-18,130.4 Q7.7,68 49,49.3 Q98.7,68 128,130.4 L120,200 L220,200 L215,155.3 Q235.5,104 271.5,88.6 Q302,104 320,155.3 L315,200 L505,200 L495,108 Q525.1,42 572,22.2 Q630.1,42 665,108 L655,200 L725,200 L721,160.8 Q737.9,116 768,102.6 Q793.9,116 809,160.8 L805,200 L1015,200 L1006,124.4 Q1034.5,60 1080,40.7 Q1132.5,60 1164,124.4 L1155,200 L1265,200 L1259,150 Q1281.5,100 1320,85 Q1351.5,100 1371,150 L1365,200 L1440,200 L1440,220 L0,220 Z" fill="#161f2c" opacity="0.78"/>
+         平地からいきなり垂直気味の壁で立つ独立した塔状の山。頂上は尖らず丸い。
+         暗色×暗色では沈んで見えなくなるため、地の暖色(--yoru系)より
+         明確に暗い暖褐色シルエットにしてコントラストを確保する -->
+    <path d="M-30,190 L-12.7,190 L-18.7,180.5 Q8.6,98 58.3,73.3 Q113.6,98 143.3,180.5 L137.3,190 L200.6,190 L196.6,188 Q218,122 258.6,102.2 Q295,122 314.6,188 L310.6,190 L414.2,190 L406.2,181 Q440.9,86 503.2,57.5 Q573.9,86 612.2,181 L604.2,190 L644.5,190 L641.5,187 Q659.3,130 694,112.9 Q725.8,130 742.5,187 L739.5,190 L854.6,190 L847.6,192.8 Q878.4,102 934.1,74.8 Q993.9,102 1026.6,192.8 L1019.6,190 L1088.7,190 L1083.7,187.6 Q1107.9,118 1152.7,97.1 Q1191.9,118 1213.7,187.6 L1208.7,190 L1295,190 L1289,185 Q1319.8,94 1377.5,66.7 Q1442.3,94 1470,185 L1470,190 L1470,250 L-30,250 Z" fill="#170d0a" opacity="0.55"/>
+    <path d="M-25,200 L-5.4,200 L-13.4,130.4 Q12.3,68 53.6,49.3 Q103.3,68 132.6,130.4 L124.6,200 L262,200 L257,155.3 Q277.5,104 313.5,88.6 Q344,104 362,155.3 L357,200 L563.1,200 L553.1,108 Q583.2,42 630.1,22.2 Q688.2,42 723.1,108 L713.1,200 L801.5,200 L797.5,160.8 Q814.4,116 844.5,102.6 Q870.4,116 885.5,160.8 L881.5,200 L1097.4,200 L1088.4,124.4 Q1116.9,60 1162.4,40.7 Q1214.9,60 1246.4,124.4 L1237.4,200 L1365,200 L1359,150 Q1381.5,100 1420,85 Q1451.5,100 1465,150 L1465,200 L1465,260 L-25,260 Z" fill="#0c0605" opacity="0.85"/>
   </svg>
   <div class="scenery-mist" aria-hidden="true"></div>
   <div class="scenery-water"></div>
@@ -1369,9 +1423,9 @@ footer .kin { color: var(--kin); }
 
 <section class="range-view" aria-hidden="true">
   <svg class="range-view-svg" viewBox="0 0 1440 480" preserveAspectRatio="none">
-    <path d="M0,190 L10,190 L4,180.5 Q31.3,98 81,73.3 Q136.3,98 166,180.5 L160,190 L220,190 L216,188 Q237.4,122 278,102.2 Q314.4,122 334,188 L330,190 L470,190 L462,181 Q496.7,86 559,57.5 Q629.7,86 668,181 L660,190 L700,190 L697,187 Q714.9,130 749.5,112.9 Q781.4,130 798,187 L795,190 L965,190 L958,192.8 Q988.9,102 1044.5,74.8 Q1104.4,102 1137,192.8 L1130,190 L1220,190 L1215,187.6 Q1239.2,118 1284,97.1 Q1323.2,118 1345,187.6 L1340,190 L1470,190 L1464,185 Q1494.8,94 1552.5,66.7 Q1617.3,94 1651,185 L1645,190 L1440,190 L1440,480 L0,480 Z" fill="#22303f" opacity="0.5"/>
-    <path d="M0,340 L-20,340 L-30,248.5 Q1.3,190 51,172.5 Q92.3,190 120,248.5 L110,340 L200,340 L194,280 Q213.8,230 246,215 Q283.8,230 306,280 L300,340 L500,340 L488,225.9 Q524.2,165 580.5,146.7 Q625.7,165 657,225.9 L645,340 L705,340 L700,289.2 Q716.9,245 744.5,231.7 Q776.4,245 795,289.2 L790,340 L1010,340 L996,214 Q1031,150 1080,130.8 Q1143,150 1184,214 L1170,340 L1270,340 L1263,272.8 Q1288,220 1330,204.2 Q1365,220 1387,272.8 L1380,340 L1440,340 L1440,480 L0,480 Z" fill="#161f2b" opacity="0.85"/>
-    <path d="M0,440 L-30,440 L-46,280 Q-7.4,210 45.5,189 Q115.2,210 161,280 L145,440 L405,440 L395,329.8 Q426.9,270 478,252.1 Q517.9,270 545,329.8 L535,440 L875,440 L857,252.2 Q899.3,180 956,158.3 Q1032.3,180 1083,252.2 L1065,440 L1215,440 L1207,350 Q1231.8,300 1271,285 Q1301.8,300 1323,350 L1315,440 L1575,440 L1563,305.1 Q1595.6,240 1643.5,220.5 Q1704.1,240 1742,305.1 L1730,440 L1440,440 L1440,480 L0,480 Z" fill="#0c131c"/>
+    <path d="M-30,190 L-12.7,190 L-18.7,180.5 Q8.6,98 58.3,73.3 Q113.6,98 143.3,180.5 L137.3,190 L200.6,190 L196.6,188 Q218,122 258.6,102.2 Q295,122 314.6,188 L310.6,190 L414.2,190 L406.2,181 Q440.9,86 503.2,57.5 Q573.9,86 612.2,181 L604.2,190 L644.5,190 L641.5,187 Q659.3,130 694,112.9 Q725.8,130 742.5,187 L739.5,190 L854.6,190 L847.6,192.8 Q878.4,102 934.1,74.8 Q993.9,102 1026.6,192.8 L1019.6,190 L1088.7,190 L1083.7,187.6 Q1107.9,118 1152.7,97.1 Q1191.9,118 1213.7,187.6 L1208.7,190 L1295,190 L1289,185 Q1319.8,94 1377.5,66.7 Q1442.3,94 1470,185 L1470,190 L1470,480 L-30,480 Z" fill="#180d0b" opacity="0.65"/>
+    <path d="M-35,340 L-16,340 L-26,248.5 Q5.3,190 55,172.5 Q96.3,190 124,248.5 L114,340 L237.7,340 L231.7,280 Q251.5,230 283.7,215 Q321.5,230 343.7,280 L337.7,340 L547,340 L535,225.9 Q571.1,165 627.5,146.7 Q672.6,165 704,225.9 L692,340 L768,340 L763,289.2 Q779.9,245 807.5,231.7 Q839.4,245 858,289.2 L853,340 L1081.3,340 L1067.3,214 Q1102.3,150 1151.3,130.8 Q1214.3,150 1255.3,214 L1241.3,340 L1365,340 L1358,272.8 Q1383,220 1425,204.2 Q1460,220 1475,272.8 L1475,340 L1475,480 L-35,480 Z" fill="#0f0807" opacity="0.9"/>
+    <path d="M-40,440 L-23.6,440 L-39.6,280 Q-1,210 51.9,189 Q121.5,210 167.4,280 L151.4,440 L358.9,440 L348.9,329.8 Q380.8,270 431.9,252.1 Q471.8,270 498.9,329.8 L488.9,440 L740.1,440 L722.1,252.2 Q764.4,180 821.1,158.3 Q897.4,180 948.1,252.2 L930.1,440 L1039.3,440 L1031.3,350 Q1056.1,300 1095.3,285 Q1126.1,300 1147.3,350 L1139.3,440 L1325,440 L1313,305.1 Q1345.5,240 1393.5,220.5 Q1454,240 1480,305.1 L1480,440 L1480,480 L-40,480 Z" fill="#060302"/>
   </svg>
   <div class="range-view-mist"></div>
 </section>
@@ -1611,11 +1665,13 @@ if ('serviceWorker' in navigator) {
   }
 
   /* 8種の花火を用意し、毎回ランダムでどれかになる(参考: kurahiro.tepco.co.jp
-     の割物・小割物分類):
+     の割物・小割物・ポカ物分類):
      菊(尾を引いて色変わり)・柳(長く垂れて落ちる)・二重芯(内外二重の輪)・
      牡丹(丸く短く一色でぱっと開く)・千輪(飛んだ先で小さな子花火がさらに
-     開く)・冠(大輪に開いた後もさらに長く尾を引いて垂れ落ちる)・
-     型物(古典的なハート曲線をなぞる)・万華鏡(8方向対称に開く八方咲き)。
+     開く)・冠(大輪に開いて満開のまま少し留まり、さらに長く尾を引いて
+     垂れ落ちる)・型物(古典的なハート曲線をなぞる)・万華鏡(8方向対称に
+     開く八方咲き)・花雷(バンバンと強く発光する)・飛遊星(開いた後、
+     不規則に向きを変えながら飛び回る)。
      線香花火・ロケット花火・噴出花火などの玩具花火は手持ち/据置きの
      別物(打ち上げて上空で開く割物ではない)なので対象外とした。 */
   function burst(x, y, palette) {
@@ -1627,20 +1683,24 @@ if ('serviceWorker' in navigator) {
     wrap.style.top = y + 'px';
 
     var styleRoll = Math.random();
-    var style = styleRoll < 0.16 ? 'kiku'
-      : styleRoll < 0.30 ? 'botan'
-      : styleRoll < 0.42 ? 'yanagi'
-      : styleRoll < 0.54 ? 'double'
-      : styleRoll < 0.66 ? 'senrin'
-      : styleRoll < 0.78 ? 'kamuro'
-      : styleRoll < 0.90 ? 'katamono'
-      : 'mangekyo';
+    var style = styleRoll < 0.14 ? 'kiku'
+      : styleRoll < 0.26 ? 'botan'
+      : styleRoll < 0.36 ? 'yanagi'
+      : styleRoll < 0.46 ? 'double'
+      : styleRoll < 0.56 ? 'senrin'
+      : styleRoll < 0.66 ? 'kamuro'
+      : styleRoll < 0.76 ? 'katamono'
+      : styleRoll < 0.84 ? 'mangekyo'
+      : styleRoll < 0.92 ? 'hanarai'
+      : 'hiyuusei';
     var n = style === 'botan' ? 22 + Math.floor(Math.random() * 10)
       : style === 'katamono' ? 32
       : style === 'mangekyo' ? 24
+      : style === 'hiyuusei' ? 14 + Math.floor(Math.random() * 6)
       : 26 + Math.floor(Math.random() * 10);
     var maxLife = 0;
     var crackles = [];
+    var bangs = [];
     var mangekyoSpin = Math.random() * 45;
 
     for (var i = 0; i < n; i++) {
@@ -1703,6 +1763,24 @@ if ('serviceWorker' in navigator) {
         fall = 55 + Math.random() * 18;
         dur = 1.6 + Math.random() * 0.3;
         hueShift = palette.hue;
+      } else if (style === 'hanarai') {
+        /* 花雷(はならい) — バンバンと強く発光しながら火の粉を散らす。
+           太く明るい火花・短く鋭い燃焼時間にし、着火点に小さな閃光を
+           2〜3発重ねて「連続した破裂音」の気配を作る(画面全体を
+           光らせるのではなく、あくまで着火点だけの小さな閃光) */
+        len = 70 + Math.random() * 26;
+        reach = 42 + Math.random() * 20;
+        fall = 55 + Math.random() * 22;
+        dur = 1.05 + Math.random() * 0.25;
+        hueShift = palette.hue * 0.8;
+      } else if (style === 'hiyuusei') {
+        /* 飛遊星(ひゆうせい) — 開いた後、不規則に向きを変えながら
+           飛び回る。星の数を絞り、1本1本の軌道が見えるようにする */
+        len = 55 + Math.random() * 20;
+        reach = 0;
+        fall = 0;
+        dur = 1.35 + Math.random() * 0.45;
+        hueShift = palette.hue * 0.6;
       } else {
         len = 85 + Math.random() * 30;
         reach = 46 + Math.random() * 22;
@@ -1713,7 +1791,12 @@ if ('serviceWorker' in navigator) {
       var delay = Math.random() * 0.12;
 
       var s = document.createElement('span');
-      s.className = 'hanabi-spark' + (style === 'botan' ? ' hanabi-spark--botan' : '');
+      var modifierClass = style === 'botan' ? ' hanabi-spark--botan'
+        : style === 'kamuro' ? ' hanabi-spark--kamuro'
+        : style === 'hanarai' ? ' hanabi-spark--hanarai'
+        : style === 'hiyuusei' ? ' hanabi-spark--hiyuusei'
+        : '';
+      s.className = 'hanabi-spark' + modifierClass;
       s.style.setProperty('--ang', ang + 'deg');
       s.style.setProperty('--len', len + 'px');
       s.style.setProperty('--reach', reach + 'px');
@@ -1722,16 +1805,35 @@ if ('serviceWorker' in navigator) {
       s.style.setProperty('--delay', delay + 's');
       s.style.setProperty('--hue-shift', hueShift + 'deg');
       s.style.background = palette.grad;
+
+      if (style === 'hiyuusei') {
+        /* 不規則な進路: 3つの中間地点でそれぞれ別の角度へ折れ曲がる */
+        s.style.setProperty('--ang2', (ang + (Math.random() - 0.5) * 70) + 'deg');
+        s.style.setProperty('--ang3', (ang + (Math.random() - 0.5) * 90) + 'deg');
+        s.style.setProperty('--ang4', (ang + (Math.random() - 0.5) * 100) + 'deg');
+        s.style.setProperty('--ang5', (ang + (Math.random() - 0.5) * 110) + 'deg');
+        s.style.setProperty('--w1', (16 + Math.random() * 10) + 'px');
+        s.style.setProperty('--w2', (28 + Math.random() * 14) + 'px');
+        s.style.setProperty('--w3', (40 + Math.random() * 18) + 'px');
+        s.style.setProperty('--w4', (52 + Math.random() * 22) + 'px');
+      }
+
       wrap.appendChild(s);
       maxLife = Math.max(maxLife, dur + delay);
 
-      if (style === 'senrin' && i % 5 === 0) {
+      if (style === 'senrin' && i % 3 === 0) {
+        /* 千輪は主開花と同じ骨格だが「時間差で開く」のが本質のため、
+           主火花がしっかり燃え広がった後(0.75あたり)に子花火を
+           発生させ、菊との違いが分かる「二段構え」にする */
         var angRad = ang * Math.PI / 180;
         crackles.push({
-          x: x + len * 0.9 * Math.sin(angRad),
-          y: y + len * 0.9 * Math.cos(angRad),
-          at: (delay + dur * 0.4) * 1000
+          x: x + len * 0.95 * Math.sin(angRad),
+          y: y + len * 0.95 * Math.cos(angRad),
+          at: (delay + dur * 0.75) * 1000
         });
+      }
+      if (style === 'hanarai' && i % 9 === 0) {
+        bangs.push(true);
       }
     }
 
@@ -1741,6 +1843,19 @@ if ('serviceWorker' in navigator) {
     crackles.forEach(function (c) {
       setTimeout(function () { crackle(c.x, c.y, palette); }, c.at);
     });
+    bangs.forEach(function (_, bi) {
+      setTimeout(function () { bang(x, y); }, bi * 110);
+    });
+  }
+
+  /* 花雷の着火点で小さく連続して光る「バンバン」という破裂の気配 */
+  function bang(x, y) {
+    var b = document.createElement('div');
+    b.className = 'hanabi-bang';
+    b.style.left = x + 'px';
+    b.style.top = y + 'px';
+    document.body.appendChild(b);
+    setTimeout(function () { b.remove(); }, 400);
   }
 
   /* 千輪崩しの「崩し」部分 — 飛び散った先で開く小さな子花火 */
@@ -2119,7 +2234,6 @@ if ('serviceWorker' in navigator) {
       restart(el, 'chochin--hit', 620);
       sparkleAt(el);
       toastOn(el, '当たり!', true);
-      pickNewTarget();
     } else {
       restart(el, 'chochin--miss', 420);
       toastOn(el, '残念…');
@@ -2127,6 +2241,10 @@ if ('serviceWorker' in navigator) {
       restart(correct, 'chochin--wink', 900);
       toastOn(correct, 'こっちでした!');
     }
+    /* 当たり外れに関わらず、押すたびに次の当たりの場所を必ず入れ替える。
+       (以前は外れた時だけ据え置きだったため、外れて場所を知ってから
+       すぐそこを押けば確実に当たってしまっていた) */
+    pickNewTarget();
   }
 
   lanterns.forEach(function (el, i) {
