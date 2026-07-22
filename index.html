@@ -503,31 +503,21 @@ header::before {
 }
 
 /* ---- 鳥 ----
-   気まぐれに飛んできて、カードの上にぴょこんと止まってついばみ、また
-   飛び去る。ずっと画面を飛び回るのではなく「たまに来ては去る」頻度を
-   大事にする。クリックすると驚いて飛び立つ */
-.bird {
-  /* position:fixedのはずが「スクロールに合わせて一緒に動く」との報告が
-     何度修正しても直らなかったため、CSSのfixedに頼らず、JS側で毎フレーム
-     現在のスクロール量を読んで明示的に打ち消す方式に変更した(position:
-     absoluteの要素を、スクロール量を加算した座標に置き続けることで、
-     見た目には画面固定と同じ結果を強制的に作り出す) */
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 6;
-  pointer-events: none;
-  will-change: transform;
-  backface-visibility: hidden;
-}
+   気まぐれに飛んできて、ぴょこんと止まってついばみ、また飛び去る。
+   動的にdocument.body.appendChild()する方式(旧実装)では「スクロール
+   に合わせて一緒に動く」現象が何度直しても解消しなかった。たぬきと
+   同じ手法(ページ読み込み時から存在する静的なHTML要素を.roamerで
+   動かすだけ)に切り替えたところ問題が起きなかったため、鳥も同じ
+   構造(常にDOMに存在し、JSはtransform/表示切り替えだけを行う)にした */
 .bird-svg {
   display: block;
   width: 30px;
   height: auto;
   margin: -12px 0 0 -15px;
-  pointer-events: auto;
   cursor: pointer;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+  opacity: 0;
+  transition: opacity 0.25s ease;
 }
 .bird-wing { transform-box: fill-box; transform-origin: 78% 35%; }
 @media (prefers-reduced-motion: no-preference) {
@@ -554,7 +544,7 @@ header::before {
   45%      { transform: translateY(3px) rotate(10deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bird { display: none; }
+  .bird-svg { display: none; }
 }
 
 .kitsune {
@@ -1392,6 +1382,47 @@ footer .kin { color: var(--kin); }
       </g>
     </svg>
   </div>
+  <div class="roamer" id="birdRoamer1">
+    <svg class="bird-svg" viewBox="0 0 34 24" role="button" tabindex="0" aria-label="鳥（クリックすると驚いて飛び立ちます）">
+      <path d="M8 12 L1 7 L1 16 Z" fill="#6b4f32"/>
+      <ellipse cx="16" cy="13" rx="10" ry="6.5" fill="#8a6a48"/>
+      <path class="bird-wing" d="M14 11 Q6 6 3 12 Q10 14.5 16 12.5 Z" fill="#6b4f32"/>
+      <circle cx="25" cy="8.5" r="4.6" fill="#8a6a48"/>
+      <path d="M29 8.2 L33.5 7.3 L29.6 9.9 Z" fill="#4a3626"/>
+      <circle cx="26.2" cy="7.4" r="0.9" fill="#241a14"/>
+    </svg>
+  </div>
+  <div class="roamer" id="birdRoamer2">
+    <svg class="bird-svg" viewBox="0 0 34 24" role="button" tabindex="0" aria-label="鳥（クリックすると驚いて飛び立ちます）">
+      <path d="M8 12 L1 7 L1 16 Z" fill="#6d818f"/>
+      <ellipse cx="16" cy="13" rx="10" ry="6.5" fill="#92a4b0"/>
+      <path class="bird-wing" d="M14 11 Q6 6 3 12 Q10 14.5 16 12.5 Z" fill="#6d818f"/>
+      <circle cx="25" cy="8.5" r="4.6" fill="#92a4b0"/>
+      <path d="M29 8.2 L33.5 7.3 L29.6 9.9 Z" fill="#e0954a"/>
+      <circle cx="26.2" cy="7.4" r="0.9" fill="#241a14"/>
+    </svg>
+  </div>
+  <div class="roamer" id="birdRoamer3">
+    <svg class="bird-svg" viewBox="0 0 34 24" role="button" tabindex="0" aria-label="鳥（クリックすると驚いて飛び立ちます）">
+      <path d="M8 12 L1 7 L1 16 Z" fill="#96593a"/>
+      <ellipse cx="16" cy="13" rx="10" ry="6.5" fill="#c17a52"/>
+      <ellipse cx="17" cy="15.5" rx="6" ry="3" fill="#f4ead8" opacity="0.75"/>
+      <path class="bird-wing" d="M14 11 Q6 6 3 12 Q10 14.5 16 12.5 Z" fill="#96593a"/>
+      <circle cx="25" cy="8.5" r="4.6" fill="#c17a52"/>
+      <path d="M29 8.2 L33.5 7.3 L29.6 9.9 Z" fill="#ffb244"/>
+      <circle cx="26.2" cy="7.4" r="0.9" fill="#241a14"/>
+    </svg>
+  </div>
+  <div class="roamer" id="birdRoamer4">
+    <svg class="bird-svg" viewBox="0 0 34 24" role="button" tabindex="0" aria-label="鳥（クリックすると驚いて飛び立ちます）">
+      <path d="M8 12 L1 7 L1 16 Z" fill="#6b5488"/>
+      <ellipse cx="16" cy="13" rx="10" ry="6.5" fill="#9077b0"/>
+      <path class="bird-wing" d="M14 11 Q6 6 3 12 Q10 14.5 16 12.5 Z" fill="#6b5488"/>
+      <circle cx="25" cy="8.5" r="4.6" fill="#9077b0"/>
+      <path d="M29 8.2 L33.5 7.3 L29.6 9.9 Z" fill="#ffb244"/>
+      <circle cx="26.2" cy="7.4" r="0.9" fill="#241a14"/>
+    </svg>
+  </div>
   <p class="section-label">宮本さなぎとして</p>
   <p class="section-lede">アプリとは別に、宮本さなぎ名義で書いたり話したり奏でたりしています。</p>
 </div>
@@ -2036,7 +2067,7 @@ if ('serviceWorker' in navigator) {
   document.addEventListener('click', function (e) {
     /* 提灯ゲームや鳥をタップした時は、その判定(当たり外れ・飛び立ち)を
        主役にする。花火まで一緒に上がると気が散るので出さない */
-    if (e.target.closest('a, .kitsune, .tanuki, .chochin, .bird, button, input, textarea')) return;
+    if (e.target.closest('a, .kitsune, .tanuki, .chochin, .bird-svg, button, input, textarea')) return;
     launchHanabi(e.clientX, e.clientY);
   });
 })();
@@ -2287,92 +2318,55 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <script>
-/* 鳥 — 気まぐれにカードの上へ飛んできて、ぴょこんと着地してついばみ、
-   また飛び去る。ずっと飛び回るのではなく「たまに来ては去る」頻度が
-   大事なので、一定間隔で新しい鳥を1羽ずつ迎え入れる。クリックすると
-   驚いて飛び立つ。 */
+/* 鳥 — たぬき・きつね・金魚と全く同じ手法(ページ読み込み時から存在する
+   静的なHTML要素を.roamerで動かすだけ)にした。以前はdocument.body.
+   appendChild()で動的に生成していたが、それだと「スクロールに合わせて
+   一緒に動く」現象が何度直しても解消しなかった。たぬきはこの現象が
+   起きないとの報告を受け、たぬきと同じ「常にDOMに存在し、JSはtransform
+   と表示/非表示の切り替えだけを行う」構造に切り替えた。
+   気まぐれに飛んできて、ぴょこんと着地してついばみ、また飛び去る
+   ——を、4羽それぞれが独立したタイミングで繰り返す。クリック/Enter
+   キーで驚いて飛び立つ。 */
 (function () {
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  var BIRD_PALETTES = [
-    { body: '#8a6a48', dark: '#6b4f32', beak: '#4a3626' },
-    { body: '#92a4b0', dark: '#6d818f', beak: '#e0954a' },
-    { body: '#c17a52', dark: '#96593a', beak: '#ffb244', belly: '#f4ead8' },
-    { body: '#d4a843', dark: '#a67f2e', beak: '#5c4530' },
-    { body: '#5f9e8f', dark: '#3f7568', beak: '#e0954a' },
-    { body: '#9077b0', dark: '#6b5488', beak: '#ffb244' }
-  ];
-  var SVG_NS = 'http://www.w3.org/2000/svg';
+  function makeBirdRoamer(el, opts) {
+    if (!el) return;
+    var svg = el.querySelector('.bird-svg');
+    if (!svg) return;
 
-  function svgEl(tag, attrs) {
-    var e = document.createElementNS(SVG_NS, tag);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    return e;
-  }
-
-  function buildBird(p) {
-    var svg = svgEl('svg', { viewBox: '0 0 34 24' });
-    svg.appendChild(svgEl('path', { d: 'M8 12 L1 7 L1 16 Z', fill: p.dark }));
-    svg.appendChild(svgEl('ellipse', { cx: 16, cy: 13, rx: 10, ry: 6.5, fill: p.body }));
-    if (p.belly) svg.appendChild(svgEl('ellipse', { cx: 17, cy: 15.5, rx: 6, ry: 3, fill: p.belly, opacity: 0.75 }));
-    var wing = svgEl('path', { d: 'M14 11 Q6 6 3 12 Q10 14.5 16 12.5 Z', fill: p.dark });
-    wing.setAttribute('class', 'bird-wing');
-    svg.appendChild(wing);
-    svg.appendChild(svgEl('circle', { cx: 25, cy: 8.5, r: 4.6, fill: p.body }));
-    svg.appendChild(svgEl('path', { d: 'M29 8.2 L33.5 7.3 L29.6 9.9 Z', fill: p.beak }));
-    svg.appendChild(svgEl('circle', { cx: 26.2, cy: 7.4, r: 0.9, fill: '#241a14' }));
-    return svg;
-  }
-
-  function spawnBird() {
-    /* 着地先はカード要素のgetBoundingClientRect()を参照していたが、
-       スクロールするたびに「今見えているカード」を狙うため、鳥がずっと
-       スクロール位置についてくるように見えてしまっていた。ページ内容
-       (スクロールで動くもの)を一切参照せず、今のビューポート内の
-       ランダムな点に着地させることで、正真正銘スクロールと無関係な
-       画面固定の存在にする */
-    var landX = innerWidth * (0.08 + Math.random() * 0.84);
-    var landY = innerHeight * (0.28 + Math.random() * 0.5);
-
-    var edge = Math.floor(Math.random() * 3); // 0:左から 1:右から 2:上から
-    var startX, startY, facing;
-    if (edge === 0) { startX = -40; startY = landY - 60 - Math.random() * 140; facing = 1; }
-    else if (edge === 1) { startX = innerWidth + 40; startY = landY - 60 - Math.random() * 140; facing = -1; }
-    else { startX = landX + (Math.random() - 0.5) * 320; startY = -40; facing = Math.random() < 0.5 ? 1 : -1; }
-
-    var wrap = document.createElement('div');
-    wrap.className = 'bird';
-    var palette = BIRD_PALETTES[Math.floor(Math.random() * BIRD_PALETTES.length)];
-    var svg = buildBird(palette);
-    svg.setAttribute('class', 'bird-svg bird-svg--flying');
-    svg.setAttribute('role', 'button');
-    svg.setAttribute('tabindex', '0');
-    svg.setAttribute('aria-label', '鳥（クリックすると驚いて飛び立ちます）');
-    wrap.appendChild(svg);
-    document.body.appendChild(wrap);
-
-    var state = 'in';
-    var x = startX, y = startY;
-    var segStart = performance.now();
-    var segFromX = startX, segFromY = startY, segToX = landX, segToY = landY, segDur = 1300 + Math.random() * 900;
-    var perchDur = 2800 + Math.random() * 3200;
-    var perchSince = 0;
+    var state = 'hidden';
+    var x = 0, y = 0, facing = 1;
+    var segStart = 0, segFromX = 0, segFromY = 0, segToX = 0, segToY = 0, segDur = 1000;
+    var perchSince = 0, perchDur = 0;
     var peckPhase = Math.random() * 10;
-    var removed = false;
+    var hiddenUntil = performance.now() + opts.initialDelay;
 
     function setPos(px, py) {
-      /* position:absoluteの要素を「現在のスクロール量 + 見せたい
-         ビューポート座標」に置くことで、画面上は常に同じ位置に
-         見えるようにする(毎フレーム呼ぶことで、スクロール中も
-         リアルタイムに追従して打ち消す) */
-      var sx = window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0;
-      var sy = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-      wrap.style.transform = 'translate3d(' + (px + sx).toFixed(1) + 'px,' + (py + sy).toFixed(1) + 'px,0) scaleX(' + facing + ')';
+      el.style.transform = 'translate(' + px.toFixed(1) + 'px,' + py.toFixed(1) + 'px) scaleX(' + facing + ')';
     }
-    setPos(x, y);
+
+    function beginFlight() {
+      var landX = innerWidth * (0.08 + Math.random() * 0.84);
+      var landY = innerHeight * (0.28 + Math.random() * 0.5);
+      var edge = Math.floor(Math.random() * 3); // 0:左から 1:右から 2:上から
+      var startX, startY;
+      if (edge === 0) { startX = -40; startY = landY - 60 - Math.random() * 140; facing = 1; }
+      else if (edge === 1) { startX = innerWidth + 40; startY = landY - 60 - Math.random() * 140; facing = -1; }
+      else { startX = landX + (Math.random() - 0.5) * 320; startY = -40; facing = Math.random() < 0.5 ? 1 : -1; }
+      x = startX; y = startY;
+      segFromX = startX; segFromY = startY; segToX = landX; segToY = landY;
+      segDur = 1300 + Math.random() * 900;
+      segStart = performance.now();
+      svg.style.opacity = '1';
+      svg.classList.remove('bird-svg--perched');
+      svg.classList.add('bird-svg--flying');
+      setPos(x, y);
+      state = 'in';
+    }
 
     function flyAway() {
-      if (state === 'out' || removed) return;
+      if (state === 'out' || state === 'hidden') return;
       state = 'out';
       facing = Math.random() < 0.5 ? -1 : 1;
       segFromX = x; segFromY = y;
@@ -2393,12 +2387,14 @@ if ('serviceWorker' in navigator) {
     });
 
     function frame(now) {
-      if (removed) return;
-      if (state === 'in' || state === 'out') {
+      if (state === 'hidden') {
+        if (now >= hiddenUntil) beginFlight();
+      } else if (state === 'in' || state === 'out') {
         var p = Math.min(1, (now - segStart) / segDur);
         var ease = 1 - Math.pow(1 - p, 3);
         x = segFromX + (segToX - segFromX) * ease;
         y = segFromY + (segToY - segFromY) * ease - Math.sin(p * Math.PI) * (state === 'in' ? 24 : 16);
+        setPos(x, y);
         if (p >= 1) {
           if (state === 'in') {
             state = 'landing';
@@ -2406,14 +2402,15 @@ if ('serviceWorker' in navigator) {
             svg.classList.remove('bird-svg--flying');
             svg.classList.add('bird-svg--hop');
           } else {
-            removed = true;
-            wrap.remove();
-            return;
+            state = 'hidden';
+            svg.style.opacity = '0';
+            hiddenUntil = now + opts.hiddenMin + Math.random() * (opts.hiddenMax - opts.hiddenMin);
           }
         }
       } else if (state === 'landing') {
         if (now - perchSince > 260) {
           state = 'perched';
+          perchDur = opts.perchMin + Math.random() * (opts.perchMax - opts.perchMin);
           svg.classList.remove('bird-svg--hop');
           svg.classList.add('bird-svg--perched');
           perchSince = now;
@@ -2426,21 +2423,15 @@ if ('serviceWorker' in navigator) {
         }
         if (now - perchSince > perchDur) flyAway();
       }
-      /* 状態に関わらず毎フレーム呼ぶ。x,yが変わらないlanding/perched中も
-         スクロール量の打ち消しだけは常に最新にし続ける必要があるため */
-      setPos(x, y);
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
   }
 
-  /* 「複数出てきてもいいくらい」との指摘を受け、間隔を詰めて同時に
-     2〜3羽くらい画面にいる頻度にした */
-  (function schedule() {
-    setTimeout(function () { spawnBird(); schedule(); }, 2600 + Math.random() * 3200);
-  })();
-  setTimeout(spawnBird, 1200);
-  setTimeout(spawnBird, 2800);
+  makeBirdRoamer(document.getElementById('birdRoamer1'), { initialDelay: 1200, hiddenMin: 2200, hiddenMax: 5200, perchMin: 2800, perchMax: 6000 });
+  makeBirdRoamer(document.getElementById('birdRoamer2'), { initialDelay: 2600, hiddenMin: 2400, hiddenMax: 5600, perchMin: 2800, perchMax: 6000 });
+  makeBirdRoamer(document.getElementById('birdRoamer3'), { initialDelay: 4000, hiddenMin: 2000, hiddenMax: 5000, perchMin: 2800, perchMax: 6000 });
+  makeBirdRoamer(document.getElementById('birdRoamer4'), { initialDelay: 5400, hiddenMin: 2600, hiddenMax: 5800, perchMin: 2800, perchMax: 6000 });
 })();
 </script>
 
