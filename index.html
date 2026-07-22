@@ -166,13 +166,19 @@ body::before {
    3層の奥行きで重ねた。 */
 .range-view {
   position: relative;
-  width: 100%;
+  /* 100vwブレイクアウト: 親要素の制約に関わらず、必ずビューポート
+     幅いっぱいまで届かせる(左右が余って見える不具合の対策) */
+  width: 100vw;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
   min-height: min(64vh, 560px);
   overflow: hidden;
-  /* 暗色の山を暗色の空に置くと沈んで見えなくなっていたため、山頂の
-     裏に暖色の残照(夕景の残り火のような帯)を通し、輪郭が確実に
-     浮かび上がるようにした */
-  background: linear-gradient(180deg, #1c0f10 0%, #2f1814 28%, #6b3620 55%, #8a4a2c 64%, #4a2519 78%, #1d0e0c 100%);
+  /* 完全な夜ではなく「夕方に差し掛かる頃」の明るさに変更。暗色の山を
+     暗色の空に置くと沈んで見えなくなっていたため、山の裏に明るい
+     琥珀色の残照帯を通し、輪郭がくっきり浮かび上がるようにした */
+  background: linear-gradient(180deg, #362a3a 0%, #4a3238 20%, #935635 38%, #d99a4e 52%, #a8582e 64%, #4a2318 80%, #190d0a 100%);
 }
 .range-view-svg {
   position: absolute;
@@ -274,6 +280,10 @@ body::after {
   /* 冠(かむろ) — 菊のように大輪に開いた後、しばらく満開のまま保持してから
      長く尾を引いて垂れ落ちる。他の型とはタイミングの形そのものが違う */
   .hanabi-spark--kamuro { animation-name: hanabi-spark-fly-kamuro, hanabi-spark-hue; }
+  /* 柳・冠共通: 「もっと下に、しだれ桜のようになだらかに垂れ下がる」との
+     指摘を受け、開いた後の角度を--ang-fallへ寄せて、放射状に飛び出した
+     火花が枝垂れるように下向きへ収束していく動きを加えた */
+  .hanabi-spark--yanagi { animation-name: hanabi-spark-fly-yanagi, hanabi-spark-hue; }
   /* 飛遊星(ひゆうせい) — 開いた後、不規則に向きを変えながら飛び回る */
   .hanabi-spark--hiyuusei { animation-name: hanabi-spark-wander, hanabi-spark-hue; }
 }
@@ -284,12 +294,19 @@ body::after {
   72%  { height: calc(var(--len, 90px) * 0.72); opacity: 0.9; transform: rotate(var(--ang)) translateY(var(--reach, 46px)); }
   100% { height: calc(var(--len, 90px) * 0.2); opacity: 0; transform: rotate(var(--ang)) translateY(calc(var(--reach, 46px) + var(--fall, 70px))); }
 }
+@keyframes hanabi-spark-fly-yanagi {
+  0%   { height: 0; opacity: 0; transform: rotate(var(--ang)) translateY(0); }
+  9%   { opacity: 1; }
+  38%  { height: var(--len, 90px); opacity: 1; transform: rotate(var(--ang)) translateY(0); }
+  70%  { height: calc(var(--len, 90px) * 0.78); opacity: 0.9; transform: rotate(var(--ang-fall, var(--ang))) translateY(var(--reach, 46px)); }
+  100% { height: calc(var(--len, 90px) * 0.24); opacity: 0; transform: rotate(var(--ang-fall, var(--ang))) translateY(calc(var(--reach, 46px) + var(--fall, 70px))); }
+}
 @keyframes hanabi-spark-fly-kamuro {
   0%   { height: 0; opacity: 0; transform: rotate(var(--ang)) translateY(0); }
   9%   { opacity: 1; }
   32%  { height: var(--len, 100px); opacity: 1; transform: rotate(var(--ang)) translateY(0); }
   52%  { height: var(--len, 100px); opacity: 1; transform: rotate(var(--ang)) translateY(calc(var(--reach, 55px) * 0.15)); }
-  100% { height: calc(var(--len, 100px) * 0.16); opacity: 0; transform: rotate(var(--ang)) translateY(calc(var(--reach, 55px) + var(--fall, 180px))); }
+  100% { height: calc(var(--len, 100px) * 0.16); opacity: 0; transform: rotate(var(--ang-fall, var(--ang))) translateY(calc(var(--reach, 55px) + var(--fall, 180px))); }
 }
 @keyframes hanabi-spark-wander {
   0%   { height: 0; opacity: 0; transform: rotate(var(--ang)) translateY(0); }
@@ -1793,6 +1810,7 @@ if ('serviceWorker' in navigator) {
       var s = document.createElement('span');
       var modifierClass = style === 'botan' ? ' hanabi-spark--botan'
         : style === 'kamuro' ? ' hanabi-spark--kamuro'
+        : style === 'yanagi' ? ' hanabi-spark--yanagi'
         : style === 'hanarai' ? ' hanabi-spark--hanarai'
         : style === 'hiyuusei' ? ' hanabi-spark--hiyuusei'
         : '';
@@ -1805,6 +1823,15 @@ if ('serviceWorker' in navigator) {
       s.style.setProperty('--delay', delay + 's');
       s.style.setProperty('--hue-shift', hueShift + 'deg');
       s.style.background = palette.grad;
+
+      if (style === 'yanagi' || style === 'kamuro') {
+        /* しだれ桜のように、放射状に開いた後は下向きへ収束させる。
+           角度を-180〜180に正規化してから縮めることで、どちら向きに
+           開いた火花でも必ず「まっすぐ下」寄りへ収束する */
+        var angNorm = ((ang % 360) + 540) % 360 - 180;
+        var damp = style === 'kamuro' ? 0.12 : 0.18;
+        s.style.setProperty('--ang-fall', (angNorm * damp) + 'deg');
+      }
 
       if (style === 'hiyuusei') {
         /* 不規則な進路: 3つの中間地点でそれぞれ別の角度へ折れ曲がる */
