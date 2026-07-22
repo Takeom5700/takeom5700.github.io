@@ -2330,6 +2330,21 @@ if ('serviceWorker' in navigator) {
 (function () {
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+  /* 「ランダムな場所に浮いて止まる」のではなく、カード・注連縄・提灯・
+     暖簾の文字・見出しなど、実際にそこにある物の上に乗って休んでいる
+     ように見せる。今画面内に見えている候補だけを対象にする */
+  function pickPerchTarget() {
+    var candidates = document.querySelectorAll('.card, .shimenawa, .chochin, .noren, h1');
+    var visible = [];
+    for (var i = 0; i < candidates.length; i++) {
+      var r = candidates[i].getBoundingClientRect();
+      if (r.width > 10 && r.bottom > 0 && r.top < innerHeight) visible.push(r);
+    }
+    if (!visible.length) return null;
+    var r = visible[Math.floor(Math.random() * visible.length)];
+    return { x: r.left + r.width * (0.2 + Math.random() * 0.6), y: r.top + 2 };
+  }
+
   function makeBirdRoamer(el, opts) {
     if (!el) return;
     var svg = el.querySelector('.bird-svg');
@@ -2347,8 +2362,9 @@ if ('serviceWorker' in navigator) {
     }
 
     function beginFlight() {
-      var landX = innerWidth * (0.08 + Math.random() * 0.84);
-      var landY = innerHeight * (0.28 + Math.random() * 0.5);
+      var target = pickPerchTarget();
+      var landX = target ? target.x : innerWidth * (0.08 + Math.random() * 0.84);
+      var landY = target ? target.y : innerHeight * (0.28 + Math.random() * 0.5);
       var edge = Math.floor(Math.random() * 3); // 0:左から 1:右から 2:上から
       var startX, startY;
       if (edge === 0) { startX = -40; startY = landY - 60 - Math.random() * 140; facing = 1; }
