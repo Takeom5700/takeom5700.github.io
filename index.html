@@ -109,6 +109,24 @@ body::before {
   height: 24vh;
   min-height: 130px;
 }
+/* カルスト山の谷間にたまる朝霧・夜霧(イポーの山々の湿った低地の気配) */
+.scenery-mist {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10vh;
+  height: 12vh;
+  min-height: 60px;
+  background: linear-gradient(180deg, transparent, rgba(205, 200, 190, 0.1) 45%, rgba(205, 200, 190, 0.16) 60%, transparent);
+  filter: blur(2px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scenery-mist { animation: mist-drift 22s ease-in-out infinite alternate; }
+}
+@keyframes mist-drift {
+  from { transform: translateX(0) scaleY(1); opacity: 0.75; }
+  to   { transform: translateX(2.5%) scaleY(1.08); opacity: 1; }
+}
 .scenery-water {
   position: absolute;
   left: 0;
@@ -138,6 +156,37 @@ body::before {
 @keyframes water-shimmer {
   from { transform: translateX(0); }
   to   { transform: translateX(-90px); }
+}
+
+/* ---- 遠景パノラマ(下までスクロールすると辿り着く、山並みの終景) ----
+   常時表示の小さなアンビエントscenery(fixed)とは別に、こちらはページ
+   本文の一部として実在するセクション。スクロールで実際に「たどり着く」
+   体験にするため、通常のドキュメントフローに置く。イポー(マレーシア)の
+   タワーカルストを参考に、平地から垂直気味に立つ独立した塔状の山を
+   3層の奥行きで重ねた。 */
+.range-view {
+  position: relative;
+  min-height: min(64vh, 560px);
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--yoru) 0%, #0d1520 55%, #0a0f16 100%);
+}
+.range-view-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.range-view-mist {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28%;
+  height: 22%;
+  background: linear-gradient(180deg, transparent, rgba(205, 200, 190, 0.12) 45%, rgba(205, 200, 190, 0.2) 62%, transparent);
+  filter: blur(3px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .range-view-mist { animation: mist-drift 26s ease-in-out infinite alternate; }
 }
 
 /* ダイナミックデザイン: 花火が咲いている間だけ、その花火自身の色を
@@ -984,9 +1033,12 @@ footer .kin { color: var(--kin); }
 
 <div class="scenery" aria-hidden="true">
   <svg class="scenery-mountains" viewBox="0 0 1440 220" preserveAspectRatio="none">
-    <path d="M0,220 L0,132 L110,78 L215,118 L330,46 L455,102 L590,58 L730,124 L865,64 L1005,108 L1150,50 L1290,96 L1440,62 L1440,220 Z" fill="#233247" opacity="0.5"/>
-    <path d="M0,220 L0,168 L150,122 L290,152 L420,96 L555,142 L695,104 L840,156 L985,110 L1130,148 L1280,102 L1440,140 L1440,220 Z" fill="#161f2c" opacity="0.78"/>
+    <!-- タワーカルスト(イポーの山々を参考): 稜線でつながる山並みではなく、
+         平地からいきなり垂直気味の壁で立つ独立した塔状の山。頂上は尖らず丸い -->
+    <path d="M0,190 L10,190 L4,180.5 Q31.3,98 81,73.3 Q136.3,98 166,180.5 L160,190 L220,190 L216,188 Q237.4,122 278,102.2 Q314.4,122 334,188 L330,190 L470,190 L462,181 Q496.7,86 559,57.5 Q629.7,86 668,181 L660,190 L700,190 L697,187 Q714.9,130 749.5,112.9 Q781.4,130 798,187 L795,190 L965,190 L958,192.8 Q988.9,102 1044.5,74.8 Q1104.4,102 1137,192.8 L1130,190 L1220,190 L1215,187.6 Q1239.2,118 1284,97.1 Q1323.2,118 1345,187.6 L1340,190 L1470,190 L1464,185 Q1494.8,94 1552.5,66.7 Q1617.3,94 1651,185 L1645,190 L1440,190 L1440,220 L0,220 Z" fill="#233247" opacity="0.5"/>
+    <path d="M0,200 L-10,200 L-18,130.4 Q7.7,68 49,49.3 Q98.7,68 128,130.4 L120,200 L220,200 L215,155.3 Q235.5,104 271.5,88.6 Q302,104 320,155.3 L315,200 L505,200 L495,108 Q525.1,42 572,22.2 Q630.1,42 665,108 L655,200 L725,200 L721,160.8 Q737.9,116 768,102.6 Q793.9,116 809,160.8 L805,200 L1015,200 L1006,124.4 Q1034.5,60 1080,40.7 Q1132.5,60 1164,124.4 L1155,200 L1265,200 L1259,150 Q1281.5,100 1320,85 Q1351.5,100 1371,150 L1365,200 L1440,200 L1440,220 L0,220 Z" fill="#161f2c" opacity="0.78"/>
   </svg>
+  <div class="scenery-mist" aria-hidden="true"></div>
   <div class="scenery-water"></div>
 </div>
 
@@ -1315,6 +1367,15 @@ footer .kin { color: var(--kin); }
 
 </div>
 
+<section class="range-view" aria-hidden="true">
+  <svg class="range-view-svg" viewBox="0 0 1440 480" preserveAspectRatio="none">
+    <path d="M0,190 L10,190 L4,180.5 Q31.3,98 81,73.3 Q136.3,98 166,180.5 L160,190 L220,190 L216,188 Q237.4,122 278,102.2 Q314.4,122 334,188 L330,190 L470,190 L462,181 Q496.7,86 559,57.5 Q629.7,86 668,181 L660,190 L700,190 L697,187 Q714.9,130 749.5,112.9 Q781.4,130 798,187 L795,190 L965,190 L958,192.8 Q988.9,102 1044.5,74.8 Q1104.4,102 1137,192.8 L1130,190 L1220,190 L1215,187.6 Q1239.2,118 1284,97.1 Q1323.2,118 1345,187.6 L1340,190 L1470,190 L1464,185 Q1494.8,94 1552.5,66.7 Q1617.3,94 1651,185 L1645,190 L1440,190 L1440,480 L0,480 Z" fill="#22303f" opacity="0.5"/>
+    <path d="M0,340 L-20,340 L-30,248.5 Q1.3,190 51,172.5 Q92.3,190 120,248.5 L110,340 L200,340 L194,280 Q213.8,230 246,215 Q283.8,230 306,280 L300,340 L500,340 L488,225.9 Q524.2,165 580.5,146.7 Q625.7,165 657,225.9 L645,340 L705,340 L700,289.2 Q716.9,245 744.5,231.7 Q776.4,245 795,289.2 L790,340 L1010,340 L996,214 Q1031,150 1080,130.8 Q1143,150 1184,214 L1170,340 L1270,340 L1263,272.8 Q1288,220 1330,204.2 Q1365,220 1387,272.8 L1380,340 L1440,340 L1440,480 L0,480 Z" fill="#161f2b" opacity="0.85"/>
+    <path d="M0,440 L-30,440 L-46,280 Q-7.4,210 45.5,189 Q115.2,210 161,280 L145,440 L405,440 L395,329.8 Q426.9,270 478,252.1 Q517.9,270 545,329.8 L535,440 L875,440 L857,252.2 Q899.3,180 956,158.3 Q1032.3,180 1083,252.2 L1065,440 L1215,440 L1207,350 Q1231.8,300 1271,285 Q1301.8,300 1323,350 L1315,440 L1575,440 L1563,305.1 Q1595.6,240 1643.5,220.5 Q1704.1,240 1742,305.1 L1730,440 L1440,440 L1440,480 L0,480 Z" fill="#0c131c"/>
+  </svg>
+  <div class="range-view-mist"></div>
+</section>
+
 <footer>© 2026 TAKEOM5700 <span class="kin">◆</span> 宮本さなぎ <span class="kin">◆</span> またおこしください</footer>
 
 </div>
@@ -1549,10 +1610,14 @@ if ('serviceWorker' in navigator) {
     })(start);
   }
 
-  /* 5種の花火を用意し、毎回ランダムでどれかになる:
+  /* 8種の花火を用意し、毎回ランダムでどれかになる(参考: kurahiro.tepco.co.jp
+     の割物・小割物分類):
      菊(尾を引いて色変わり)・柳(長く垂れて落ちる)・二重芯(内外二重の輪)・
-     牡丹(丸く短く一色でぱっと開く)・千輪崩し(飛んだ先で小さな子花火が
-     さらに開く、崩し系の割物) */
+     牡丹(丸く短く一色でぱっと開く)・千輪(飛んだ先で小さな子花火がさらに
+     開く)・冠(大輪に開いた後もさらに長く尾を引いて垂れ落ちる)・
+     型物(古典的なハート曲線をなぞる)・万華鏡(8方向対称に開く八方咲き)。
+     線香花火・ロケット花火・噴出花火などの玩具花火は手持ち/据置きの
+     別物(打ち上げて上空で開く割物ではない)なので対象外とした。 */
   function burst(x, y, palette) {
     setAmbient(x, y, palette.ambient);
 
@@ -1562,14 +1627,21 @@ if ('serviceWorker' in navigator) {
     wrap.style.top = y + 'px';
 
     var styleRoll = Math.random();
-    var style = styleRoll < 0.26 ? 'kiku'
-      : styleRoll < 0.46 ? 'botan'
-      : styleRoll < 0.64 ? 'yanagi'
-      : styleRoll < 0.82 ? 'double'
-      : 'senrin';
-    var n = (style === 'botan' ? 22 : 26) + Math.floor(Math.random() * 10);
+    var style = styleRoll < 0.16 ? 'kiku'
+      : styleRoll < 0.30 ? 'botan'
+      : styleRoll < 0.42 ? 'yanagi'
+      : styleRoll < 0.54 ? 'double'
+      : styleRoll < 0.66 ? 'senrin'
+      : styleRoll < 0.78 ? 'kamuro'
+      : styleRoll < 0.90 ? 'katamono'
+      : 'mangekyo';
+    var n = style === 'botan' ? 22 + Math.floor(Math.random() * 10)
+      : style === 'katamono' ? 32
+      : style === 'mangekyo' ? 24
+      : 26 + Math.floor(Math.random() * 10);
     var maxLife = 0;
     var crackles = [];
+    var mangekyoSpin = Math.random() * 45;
 
     for (var i = 0; i < n; i++) {
       var ang = (360 / n) * i + (Math.random() - 0.5) * 8;
@@ -1593,6 +1665,43 @@ if ('serviceWorker' in navigator) {
         reach = (ring ? 30 : 46) + Math.random() * 22;
         fall = 65 + Math.random() * 30;
         dur = 1.6 + Math.random() * 0.35;
+        hueShift = palette.hue;
+      } else if (style === 'kamuro') {
+        /* 冠(かむろ) — 菊のように大輪に開いた後も、おかっぱ頭のように
+           さらに長く尾を引いて地面近くまで垂れ落ちる */
+        len = 85 + Math.random() * 30;
+        reach = 46 + Math.random() * 22;
+        fall = 150 + Math.random() * 45;
+        dur = 2.5 + Math.random() * 0.4;
+        hueShift = palette.hue * 0.3;
+      } else if (style === 'katamono') {
+        /* 型物(ハート) — 古典的な心臓曲線 x=16sin³t, y=13cos t-5cos2t-2cos3t-cos4t
+           を極座標(角度・長さ)に変換し、その通りに光条を並べて輪郭をなぞる。
+           型物は星の配置が精密なので、菊などと違って散らばりを抑える */
+        var ht = (2 * Math.PI * i) / n;
+        var hx = 16 * Math.pow(Math.sin(ht), 3);
+        var hy = 13 * Math.cos(ht) - 5 * Math.cos(2 * ht) - 2 * Math.cos(3 * ht) - Math.cos(4 * ht);
+        var hScale = 5.6 + Math.random() * 0.4;
+        var hdx = hx * hScale, hdy = -hy * hScale;
+        len = Math.sqrt(hdx * hdx + hdy * hdy) + 4;
+        ang = (Math.atan2(hdx, hdy) * 180) / Math.PI;
+        reach = len * 0.06;
+        fall = len * 0.05;
+        dur = 1.5 + Math.random() * 0.3;
+        hueShift = palette.hue * 0.1;
+      } else if (style === 'mangekyo') {
+        /* 万華鏡(八方咲き) — ランダムな散らばりではなく、決まった小さな
+           模様(長・中・短の3本)を等間隔に8回対称コピーして「揃った柄」を作る */
+        var folds = 8, patternSize = 3;
+        var fold = i % folds;
+        var slot = Math.floor(i / folds) % patternSize;
+        var slotOffset = [0, 13, 27][slot];
+        var slotLen = [100, 68, 84][slot];
+        ang = (360 / folds) * fold + slotOffset + mangekyoSpin;
+        len = slotLen + Math.random() * 8;
+        reach = 40 + Math.random() * 14;
+        fall = 55 + Math.random() * 18;
+        dur = 1.6 + Math.random() * 0.3;
         hueShift = palette.hue;
       } else {
         len = 85 + Math.random() * 30;
