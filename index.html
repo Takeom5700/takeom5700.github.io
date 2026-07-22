@@ -502,6 +502,55 @@ header::before {
   .roam-dust { display: none; }
 }
 
+/* ---- 鳥 ----
+   気まぐれに飛んできて、カードの上にぴょこんと止まってついばみ、また
+   飛び去る。ずっと画面を飛び回るのではなく「たまに来ては去る」頻度を
+   大事にする。クリックすると驚いて飛び立つ */
+.bird {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 6;
+  pointer-events: none;
+  will-change: transform;
+}
+.bird-svg {
+  display: block;
+  width: 30px;
+  height: auto;
+  margin: -12px 0 0 -15px;
+  pointer-events: auto;
+  cursor: pointer;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+}
+.bird-wing { transform-box: fill-box; transform-origin: 78% 35%; }
+@media (prefers-reduced-motion: no-preference) {
+  .bird-svg--flying .bird-wing { animation: bird-flap 0.12s ease-in-out infinite alternate; }
+  .bird-svg--perched .bird-wing { animation: bird-wing-fold 5.6s ease-in-out infinite; }
+  .bird-svg--hop { animation: bird-hop 0.26s ease-out; }
+  .bird-svg--peck { animation: bird-peck 0.34s ease-in-out; }
+}
+@keyframes bird-flap {
+  from { transform: rotate(-6deg) scaleY(1); }
+  to   { transform: rotate(40deg) scaleY(0.8); }
+}
+@keyframes bird-wing-fold {
+  0%, 92%, 100% { transform: rotate(-2deg); }
+  95% { transform: rotate(6deg); }
+}
+@keyframes bird-hop {
+  0%   { transform: translateY(-10px) scale(1, 0.9); }
+  55%  { transform: translateY(2px) scale(1.05, 0.9); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+@keyframes bird-peck {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  45%      { transform: translateY(3px) rotate(10deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bird { display: none; }
+}
+
 .kitsune {
   display: block;
   width: 84px;
@@ -1828,10 +1877,12 @@ if ('serviceWorker' in navigator) {
         var tipY = len * Math.cos(dropAngRad);
         var isKamuro = style === 'kamuro';
         var droopDelay = (delay + dur * (isKamuro ? 0.62 : 0.55)) * 1000;
-        var droopLen = isKamuro ? 46 + Math.random() * 22 : 30 + Math.random() * 16;
-        var droopReach = isKamuro ? 22 + Math.random() * 16 : 14 + Math.random() * 10;
-        var droopFall = isKamuro ? 150 + Math.random() * 55 : 95 + Math.random() * 35;
-        var droopDur = isKamuro ? 1.9 + Math.random() * 0.4 : 1.35 + Math.random() * 0.3;
+        /* 「もっと線を長く、下の方まで減衰しながら時間をかけて下がる」との
+           指摘を受け、垂れ下がりの距離・所要時間を大幅に伸ばした */
+        var droopLen = isKamuro ? 54 + Math.random() * 26 : 36 + Math.random() * 20;
+        var droopReach = isKamuro ? 34 + Math.random() * 20 : 22 + Math.random() * 14;
+        var droopFall = isKamuro ? 300 + Math.random() * 100 : 190 + Math.random() * 65;
+        var droopDur = isKamuro ? 3.0 + Math.random() * 0.7 : 2.2 + Math.random() * 0.5;
         (function (dx, dy, dDelay, dLen, dReach, dFall, dDur, dHue) {
           setTimeout(function () {
             spawnDroop(x + dx, y + dy, palette, dLen, dReach, dFall, dDur, dHue);
@@ -1977,7 +2028,9 @@ if ('serviceWorker' in navigator) {
   setTimeout(function () { launchHanabi(); }, 2600);
 
   document.addEventListener('click', function (e) {
-    if (e.target.closest('a, .kitsune, .tanuki, button, input, textarea')) return;
+    /* 提灯ゲームや鳥をタップした時は、その判定(当たり外れ・飛び立ち)を
+       主役にする。花火まで一緒に上がると気が散るので出さない */
+    if (e.target.closest('a, .kitsune, .tanuki, .chochin, .bird, button, input, textarea')) return;
     launchHanabi(e.clientX, e.clientY);
   });
 })();
@@ -2224,6 +2277,150 @@ if ('serviceWorker' in navigator) {
     initialPause: 4200,
     startX: innerWidth * 0.3, startY: innerHeight * 0.42
   });
+})();
+</script>
+
+<script>
+/* 鳥 — 気まぐれにカードの上へ飛んできて、ぴょこんと着地してついばみ、
+   また飛び去る。ずっと飛び回るのではなく「たまに来ては去る」頻度が
+   大事なので、一定間隔で新しい鳥を1羽ずつ迎え入れる。クリックすると
+   驚いて飛び立つ。 */
+(function () {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var BIRD_PALETTES = [
+    { body: '#8a6a48', dark: '#6b4f32', beak: '#4a3626' },
+    { body: '#92a4b0', dark: '#6d818f', beak: '#e0954a' },
+    { body: '#c17a52', dark: '#96593a', beak: '#ffb244', belly: '#f4ead8' }
+  ];
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function svgEl(tag, attrs) {
+    var e = document.createElementNS(SVG_NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  function buildBird(p) {
+    var svg = svgEl('svg', { viewBox: '0 0 34 24' });
+    svg.appendChild(svgEl('path', { d: 'M8 12 L1 7 L1 16 Z', fill: p.dark }));
+    svg.appendChild(svgEl('ellipse', { cx: 16, cy: 13, rx: 10, ry: 6.5, fill: p.body }));
+    if (p.belly) svg.appendChild(svgEl('ellipse', { cx: 17, cy: 15.5, rx: 6, ry: 3, fill: p.belly, opacity: 0.75 }));
+    var wing = svgEl('path', { d: 'M14 11 Q6 6 3 12 Q10 14.5 16 12.5 Z', fill: p.dark });
+    wing.setAttribute('class', 'bird-wing');
+    svg.appendChild(wing);
+    svg.appendChild(svgEl('circle', { cx: 25, cy: 8.5, r: 4.6, fill: p.body }));
+    svg.appendChild(svgEl('path', { d: 'M29 8.2 L33.5 7.3 L29.6 9.9 Z', fill: p.beak }));
+    svg.appendChild(svgEl('circle', { cx: 26.2, cy: 7.4, r: 0.9, fill: '#241a14' }));
+    return svg;
+  }
+
+  function spawnBird() {
+    var cards = document.querySelectorAll('.card');
+    if (!cards.length) return;
+    var card = cards[Math.floor(Math.random() * cards.length)];
+    var rect = card.getBoundingClientRect();
+    if (rect.width < 10 || rect.bottom < 0 || rect.top > innerHeight) return;
+
+    var landX = rect.left + rect.width * (0.25 + Math.random() * 0.5);
+    var landY = rect.top + rect.height * (0.1 + Math.random() * 0.12);
+
+    var edge = Math.floor(Math.random() * 3); // 0:左から 1:右から 2:上から
+    var startX, startY, facing;
+    if (edge === 0) { startX = -40; startY = landY - 60 - Math.random() * 140; facing = 1; }
+    else if (edge === 1) { startX = innerWidth + 40; startY = landY - 60 - Math.random() * 140; facing = -1; }
+    else { startX = landX + (Math.random() - 0.5) * 320; startY = -40; facing = Math.random() < 0.5 ? 1 : -1; }
+
+    var wrap = document.createElement('div');
+    wrap.className = 'bird';
+    var palette = BIRD_PALETTES[Math.floor(Math.random() * BIRD_PALETTES.length)];
+    var svg = buildBird(palette);
+    svg.setAttribute('class', 'bird-svg bird-svg--flying');
+    svg.setAttribute('role', 'button');
+    svg.setAttribute('tabindex', '0');
+    svg.setAttribute('aria-label', '鳥（クリックすると驚いて飛び立ちます）');
+    wrap.appendChild(svg);
+    document.body.appendChild(wrap);
+
+    var state = 'in';
+    var x = startX, y = startY;
+    var segStart = performance.now();
+    var segFromX = startX, segFromY = startY, segToX = landX, segToY = landY, segDur = 1300 + Math.random() * 900;
+    var perchDur = 2800 + Math.random() * 3200;
+    var perchSince = 0;
+    var peckPhase = Math.random() * 10;
+    var removed = false;
+
+    function setPos(px, py) {
+      wrap.style.transform = 'translate(' + px.toFixed(1) + 'px,' + py.toFixed(1) + 'px) scaleX(' + facing + ')';
+    }
+    setPos(x, y);
+
+    function flyAway() {
+      if (state === 'out' || removed) return;
+      state = 'out';
+      facing = Math.random() < 0.5 ? -1 : 1;
+      segFromX = x; segFromY = y;
+      segToX = x + facing * (280 + Math.random() * 320);
+      segToY = y - 180 - Math.random() * 160;
+      segDur = 1100 + Math.random() * 700;
+      segStart = performance.now();
+      svg.classList.remove('bird-svg--perched');
+      svg.classList.add('bird-svg--flying');
+    }
+    function react(e) {
+      if (e) e.stopPropagation();
+      flyAway();
+    }
+    svg.addEventListener('click', react);
+    svg.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); react(e); }
+    });
+
+    function frame(now) {
+      if (removed) return;
+      if (state === 'in' || state === 'out') {
+        var p = Math.min(1, (now - segStart) / segDur);
+        var ease = 1 - Math.pow(1 - p, 3);
+        x = segFromX + (segToX - segFromX) * ease;
+        y = segFromY + (segToY - segFromY) * ease - Math.sin(p * Math.PI) * (state === 'in' ? 24 : 16);
+        setPos(x, y);
+        if (p >= 1) {
+          if (state === 'in') {
+            state = 'landing';
+            perchSince = now;
+            svg.classList.remove('bird-svg--flying');
+            svg.classList.add('bird-svg--hop');
+          } else {
+            removed = true;
+            wrap.remove();
+            return;
+          }
+        }
+      } else if (state === 'landing') {
+        if (now - perchSince > 260) {
+          state = 'perched';
+          svg.classList.remove('bird-svg--hop');
+          svg.classList.add('bird-svg--perched');
+          perchSince = now;
+        }
+      } else if (state === 'perched') {
+        peckPhase += 0.02;
+        if (Math.sin(peckPhase) > 0.996 && !svg.classList.contains('bird-svg--peck')) {
+          svg.classList.add('bird-svg--peck');
+          setTimeout(function () { svg.classList.remove('bird-svg--peck'); }, 340);
+        }
+        if (now - perchSince > perchDur) flyAway();
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  (function schedule() {
+    setTimeout(function () { spawnBird(); schedule(); }, 5000 + Math.random() * 6000);
+  })();
+  setTimeout(spawnBird, 1800);
 })();
 </script>
 
