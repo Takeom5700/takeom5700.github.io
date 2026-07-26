@@ -374,6 +374,25 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
   margin-top:14px; min-height:1.5em}
 .dact{display:flex; gap:9px; justify-content:flex-end; margin-top:20px}
 
+/* ---------- 5つの軸 ---------- */
+.axes{display:flex; gap:6px; margin-top:11px}
+.ax{flex:1; display:flex; align-items:center; gap:4px; min-width:0}
+.ax .axk{font-family:var(--f-disp); font-weight:800; font-size:13px; flex:none}
+.ax.dom .axk{text-shadow:0 0 0 currentColor}
+.axbar{flex:1; height:7px; border:2px solid var(--ink); border-radius:var(--r-pill);
+  background:var(--paper); overflow:hidden; min-width:14px}
+.axbar i{display:block; height:100%; transition:width .8s cubic-bezier(.22,1,.36,1)}
+.axrow{display:grid; grid-template-columns:26px 1fr 90px 40px; gap:9px; align-items:center;
+  padding:5px 0; font-size:12px}
+.axrow b{font-family:var(--f-disp); font-size:16px}
+.axrow em{font-style:normal; color:var(--ink-sub); font-size:11.5px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.axrow .axn{font-family:var(--f-num); font-size:11px; color:var(--ink-sub); text-align:right}
+.axrow.dom{background:color-mix(in srgb,var(--sun) 12%,transparent); border-radius:8px;
+  padding:5px 8px; margin:0 -8px}
+.panel .note{font-size:12px; color:var(--ink-sub); line-height:1.8; margin:0}
+@media (max-width:720px){ .axrow{grid-template-columns:24px 1fr 56px 34px} }
+
 /* ---------- バーコードで本を足す ---------- */
 .scanbar{display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin:4px 0 2px}
 .scanhint{font-size:11.5px; color:var(--ink-sub); line-height:1.6; flex:1; min-width:140px}
@@ -484,6 +503,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <span>なでた回数 <b id="mPat">0</b></span>
         <span>仲間 <b id="mFriend">0</b></span>
       </div>
+      <div class="axes" id="petAxes"></div>
       <div class="evo">
         <div class="evo-lbl"><span id="evoNext">つぎの姿まで</span><span id="evoNum"></span></div>
         <div class="evo-bar"><i id="evoBar"></i></div>
@@ -548,8 +568,14 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <div class="evolist" id="evolist"></div>
       </div>
       <div class="panel">
+        <h3>何によって育つか</h3>
+        <p>読んだ本の分野と、書名の言葉から5つの軸が伸びます。伸び方で進化先が変わります。</p>
+        <div id="axisPanel"></div>
+      </div>
+      <div class="panel">
         <h3>仲間</h3>
-        <p>地域の霧をぜんぶ晴らすと、その土地の子が仲間になります。</p>
+        <p>地域で本を読み終えるほど、その土地の子が増えていきます（1・3・6・10冊…）。
+           本が増えても、いちど仲間になった子はいなくなりません。</p>
         <div class="friends" id="friends"></div>
       </div>
       <div class="panel">
@@ -1031,50 +1057,140 @@ function rgnOpen(R){
 }
 
 /* ============================================================
-   4. 相棒
+   4. 相棒 — 読んだ本によって育ち方が分かれる
+   系統20 × 属性8 × 称号8 = 1,280 種類の最終形態。
+   さらに体色12色がかかるので見た目は 15,360 通り。
    ============================================================ */
-/* 読書は一生つづく。だから「育ち切って終わり」にはしない。
-   絆(きずな) … いまの世代でためたXP。世代が替わると0から。5段階で育ち切る
-   世代    … 育ち切った相棒は旅立って守り神になり、次のたまごが来る。無限に続く
-   レベル・累計ページ・称号 … 世代をまたいで永遠に増える軸 */
-const BOND=[0,900,2600,5600,10500];      /* 推薦図書20冊 ≒ 10,100XP で第5段階の手前 */
-const DEPART=15600;                       /* 旅立ちに必要な絆 */
-const STAGES=[
-  {n:"たまご",   say:["ふるふる…","なかから こえが する"]},
-  {n:"もやのこ", say:["ふわ…","きり、おいしい"]},
-  {n:"きりまる", say:["きょうも よむ？","もっと たべたいな"]},
-  {n:"かすみ",   say:["とおくまで みえるよ","つぎの しま、いこう"]},
-  {n:"きりのぬし",say:["ずいぶん とおくまで きたね","そろそろ 旅に でる ときかも"]}
+/* 読書で育つ5つの軸 */
+const AXES=[
+ {k:"理", yomi:"ことわり", d:"論理と分析", c:"#3AA5EE"},
+ {k:"情", yomi:"こころ",   d:"人と言葉",   c:"#FF4D6D"},
+ {k:"匠", yomi:"わざ",     d:"実務と技術", c:"#FBB711"},
+ {k:"統", yomi:"おさ",     d:"統率と経営", c:"#9163EC"},
+ {k:"玄", yomi:"くろ",     d:"未知の探求", c:"#0FA9B8"}
 ];
-function bondXp(){ return Math.max(0, totalXp()-(S.genBase||0)); }
+/* 分類名から軸へ */
+const CAT_HINT=[
+ [/課題|問題|論点|仮説|統計|データ|分析|機械学習|数理|科学|思考/,0],
+ [/コミュ|伝達|日本語|要約|顧客|UX|営業|交渉|提案|接客|対人/,1],
+ [/アウトプット|設計|実務|技術|開発|基盤|資料|業務|基本動作|情報/,2],
+ [/マネジ|経営|戦略|組織|リーダー|人材|投資|会計|ファイナンス|統率/,3],
+ [/生成AI|AI|未来|哲学|教養|宇宙|探索|研究|創発/,4]
+];
+/* 書名の言葉からも軸が育つ。同じ分類でも本によって寄り方が変わる */
+const WORD_HINT=[
+ [/思考|論理|問い|イシュー|仮説|分析|統計|数字|データ|科学|理科|論点|本質/,0],
+ [/伝え|話|聞|書|文|言葉|相手|心|コミュ|要約|プレゼン|作文|年収|人/,1],
+ [/技術|設計|教科書|入門|実務|スキル|術|マンガ|わかる|作成|運用|安全/,2],
+ [/経営|マネ|戦略|組織|リーダー|成果|管理|マネージャー|最強|論/,3],
+ [/AI|未来|世界|なぜ|教養|哲学|宇宙|生成|人工知能|変わる|動いて/,4]
+];
+function axisScores(){
+  const v=[0,0,0,0,0];
+  books().forEach(b=>{
+    const read=Math.min(st(b.id).page,b.p);
+    if(read<=0) return;
+    const w=read/100;
+    let ai=-1;
+    for(const h of CAT_HINT) if(h[0].test(b.cat||"")){ ai=h[1]; break; }
+    if(ai<0) ai=hash(b.cat||"x")%5;      /* 知らない分類でも必ずどこかへ寄る */
+    v[ai]+=w;
+    const txt=(b.t||"")+(b.sub||"");
+    for(const h of WORD_HINT) if(h[0].test(txt)) v[h[1]]+=w*0.45;
+  });
+  return v;
+}
+function profile(){
+  const v=axisScores(), tot=v.reduce((a,b)=>a+b,0);
+  const ord=v.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]||a[1]-b[1]).map(x=>x[1]);
+  const spread=v[ord[0]]>0 ? (v[ord[0]]-v[ord[4]])/v[ord[0]] : 0;
+  return {v,tot,ord,dom:ord[0],sec:ord[1],third:ord[2],spread};
+}
+
+/* 系統20 = 主軸5 × 副軸4。読む分野の「一番」と「二番目」で決まる */
+const ARCH=[
+ /* 理 */
+ {n:"フクロウ",body:"round",ear:"tuft",back:"wingFeather",tail:"short",legs:"claw",eye:"big",mouth:"beak"},
+ {n:"クラゲ",  body:"bell", ear:"none",back:"none",       tail:"tenta",legs:"none",eye:"dot",mouth:"none"},
+ {n:"トカゲ",  body:"long", ear:"frill",back:"spike",     tail:"long", legs:"paw",  eye:"sharp",mouth:"smile"},
+ {n:"カラクリ",body:"boxy", ear:"antenna",back:"none",    tail:"none", legs:"paw",  eye:"visor",mouth:"none"},
+ /* 情 */
+ {n:"ネコ",    body:"round",ear:"point",back:"none",      tail:"curl", legs:"paw",  eye:"big",  mouth:"smile"},
+ {n:"ウサギ",  body:"round",ear:"long", back:"none",      tail:"puff", legs:"paw",  eye:"big",  mouth:"smile"},
+ {n:"イヌ",    body:"wide", ear:"flop", back:"none",      tail:"fluff",legs:"paw",  eye:"big",  mouth:"tongue"},
+ {n:"コトリ",  body:"round",ear:"none", back:"wingFeather",tail:"fan", legs:"claw", eye:"dot",  mouth:"beak"},
+ /* 匠 */
+ {n:"クマ",    body:"wide", ear:"round",back:"none",      tail:"short",legs:"paw",  eye:"dot",  mouth:"smile"},
+ {n:"カニ",    body:"boxy", ear:"none", back:"none",      tail:"none", legs:"claw", eye:"stalk",mouth:"none"},
+ {n:"モグラ",  body:"round",ear:"none", back:"none",      tail:"short",legs:"dig",  eye:"line", mouth:"smile"},
+ {n:"カブト",  body:"boxy", ear:"horn1",back:"shell",     tail:"none", legs:"claw", eye:"dot",  mouth:"none"},
+ /* 統 */
+ {n:"リュウ",  body:"long", ear:"horn2",back:"wingBat",   tail:"long", legs:"claw", eye:"sharp",mouth:"fang"},
+ {n:"シシ",    body:"wide", ear:"round",back:"mane",      tail:"tuft", legs:"paw",  eye:"sharp",mouth:"fang"},
+ {n:"オオカミ",body:"long", ear:"point",back:"none",      tail:"fluff",legs:"paw",  eye:"sharp",mouth:"fang"},
+ {n:"ウマ",    body:"tall", ear:"point",back:"mane",      tail:"fluff",legs:"hoof", eye:"big",  mouth:"smile"},
+ /* 玄 */
+ {n:"ホシビト",body:"tall", ear:"antenna",back:"halo",    tail:"none", legs:"none", eye:"tri",  mouth:"none"},
+ {n:"セイレイ",body:"bell", ear:"none", back:"halo",      tail:"wisp", legs:"none", eye:"dot",  mouth:"none"},
+ {n:"キツネ",  body:"long", ear:"point",back:"none",      tail:"nine", legs:"paw",  eye:"sharp",mouth:"smile"},
+ {n:"チョウ",  body:"round",ear:"antenna",back:"wingBig", tail:"none", legs:"none", eye:"big",  mouth:"none"}
+];
+/* 属性8 = 読み方の偏りぐあいから決まる */
+const ELEM=[
+ {n:"ホムラ",c:"#FF6B35",fx:"flame"},{n:"コオリ",c:"#7FD4F5",fx:"shard"},
+ {n:"イカヅチ",c:"#FFD23F",fx:"bolt"},{n:"カゼ",c:"#8FE3A8",fx:"swirl"},
+ {n:"ツチ",c:"#C98A4B",fx:"rock"},   {n:"ミズ",c:"#4FA8E8",fx:"drop"},
+ {n:"ヒカリ",c:"#FFE9A8",fx:"ray"},  {n:"ヤミ",c:"#8A6BC1",fx:"mist"}
+];
+/* 称号8 = 「どう読んだか」。速さ・深さ・継続・広さ・会社/個人・冊数・愛着 */
+const EPITHET=["疾き","深き","絶えざる","遍き","仕えし","おのれの","積みし","慈しむ"];
+const EPITHET_D=["ページを速く進める","理解度を高くつける","毎日つづける","分野を広く読む",
+                 "会社の推薦図書を読む","自分で選んだ本を読む","冊数を積む","相棒をなでる"];
+const EPI_ACC=["scarf","glasses","halo2","compass","medal","cape","bell","crown"];
+
+function archIndex(p){
+  const others=[0,1,2,3,4].filter(i=>i!==p.dom);
+  const r=others.indexOf(p.sec);
+  return p.dom*4 + (r<0?0:r);
+}
+function elemIndex(p){
+  const b=Math.min(3,Math.floor(p.spread*4));
+  return ((p.third*3)+(p.ord[3]*2)+b)%8;
+}
+function epithetIndex(){
+  const done=books().filter(isDone);
+  const days=Math.max(1,Object.keys(S.dayXp||{}).length);
+  const comps=done.map(b=>st(b.id).comp||0).filter(x=>x>0);
+  const avgC=comps.length? comps.reduce((a,b)=>a+b,0)/comps.length : 0;
+  const cats=new Set(done.map(b=>b.cat)).size;
+  const co=done.filter(b=>b.origin==="company").length, n=Math.max(1,done.length);
+  const s=[ pagesRead()/days/45, avgC/5, (S.streak||0)/14, cats/6,
+            co/n, (done.length-co)/n, done.length/22, (S.pat||0)/70 ];
+  let bi=0; s.forEach((x,i)=>{ if(x>s[bi]) bi=i; });
+  return bi;
+}
+/* 進化の段階。読むほど「何になるか」が少しずつ明かされていく */
+const BOND=[0,500,1500,3600,7200,13000];
+const DEPART=19000;
+const STAGE_N=["たまご","もや","幼体","中間体","成体","究極体"];
+function bondXp(){ return Math.max(0,totalXp()-(S.genBase||0)); }
 function stageIdx(){ let s=0; BOND.forEach((v,i)=>{ if(bondXp()>=v) s=i; }); return s; }
-function canDepart(){ return stageIdx()===4 && bondXp()>=DEPART; }
+function canDepart(){ return stageIdx()===5 && bondXp()>=DEPART; }
 function genNo(){ return S.gen||1; }
 
-/* 称号は累計ページ数で決まる。上限を作らず、いつまでも上がっていく */
-const TITLES=[[0,"読みはじめ"],[900,"読み手"],[2600,"旅の読み手"],[6000,"踏破者"],
-  [13000,"万巻の徒"],[26000,"大読破者"],[52000,"書架のぬし"]];
-function title(){
-  const p=pagesRead(); let t=TITLES[0][1];
-  TITLES.forEach(([n,s])=>{ if(p>=n) t=s; });
-  if(p>=104000) t=`第${Math.floor(Math.log2(p/52000))+1}階梯の賢者`;
-  return t;
+/* いまの相棒の姿。段階に応じて決まっている情報だけを使う */
+function petSpec(){
+  const p=profile(), si=stageIdx();
+  return {stage:si, arch:archIndex(p), elem:elemIndex(p), epi:epithetIndex(),
+          hue:petHue(), dom:p.dom, prof:p};
 }
-function nextTitle(){
-  const p=pagesRead();
-  const nx=TITLES.find(([n])=>p<n);
-  return nx? {need:nx[0]-p, name:nx[1]} : null;
-}
-/* 旅立ち: 相棒は地図の守り神になり、記録として永久に残る */
-function depart(){
-  S.ancestors=S.ancestors||[];
-  S.ancestors.push({name:S.name, hue:petHue(), gen:genNo(),
-    pages:pagesRead(), books:doneCount(), at:Date.now()});
-  S.gen=genNo()+1; S.genBase=totalXp(); S.name="たまご";
-  save(); selected=null; renderAll();
-  toast(`${S.ancestors[S.ancestors.length-1].name}は 旅立った。あたらしい たまごが とどいた`);
-  setTimeout(()=>{ document.getElementById("nName").value="";
-    document.getElementById("nameDlg").showModal(); },900);
+function speciesName(sp){
+  if(sp.stage<=0) return "たまご";
+  if(sp.stage===1) return "もや";
+  if(sp.stage===2) return AXES[sp.dom].k+"のこ";
+  if(sp.stage===3) return "コ"+ARCH[sp.arch].n;
+  if(sp.stage===4) return ELEM[sp.elem].n+ARCH[sp.arch].n;
+  return EPITHET[sp.epi]+ELEM[sp.elem].n+ARCH[sp.arch].n;
 }
 function petHue(){
   let best=null,bv=-1;
@@ -1089,140 +1205,253 @@ function mood(){
   if((S.streak||0)>=3) return "happy";
   return "ok";
 }
-/* 段階と気分から相棒のSVGを組み立てる */
-function petSVG(si, md, hue, size){
-  const s=size||120, k=s/120;
-  const R=[19,23,28,32,36][si]*k, cy=s*0.60, cx=s/2;
-  const ink="var(--ink)", body="var(--card)";
+
+/* ---------- 姿を組み立てる（部位の組み合わせで作る） ---------- */
+function creatureSVG(sp,size,md){
+  const s=size||120, k=s/120, cx=s/2;
+  const st_=sp.stage|0;
+  const A=ARCH[sp.arch]||ARCH[0], E=ELEM[sp.elem]||ELEM[0];
+  const hue=sp.hue||"#FF8A3D";
+  const ink="var(--ink)", skin="var(--card)";
+  const w=(2.6*k).toFixed(2), w2=(2.1*k).toFixed(2);
+  const R=[15,20,25,30,35,39][st_]*k;
+  const cy=s*0.60;
   let g=`<svg viewBox="0 0 ${s} ${s}" aria-hidden="true"><g class="pet-body">`;
-  /* 影 */
-  g+=`<ellipse cx="${cx}" cy="${cy+R*0.98}" rx="${R*0.86}" ry="${R*0.2}"
-        fill="${ink}" opacity=".16"/>`;
-  if(si===0){
-    g+=`<ellipse cx="${cx}" cy="${cy}" rx="${R}" ry="${R*1.24}" fill="${body}"
-          stroke="${ink}" stroke-width="${3*k}"/>`;
-    g+=`<path d="M${cx-R*0.6},${cy-R*0.1} l${R*0.4},${R*0.22} l${-R*0.3},${R*0.26} l${R*0.55},${R*0.2}"
-          fill="none" stroke="${ink}" stroke-width="${2.4*k}" stroke-linejoin="round"/>`;
-    g+=`<circle cx="${cx-R*0.34}" cy="${cy+R*0.55}" r="${R*0.15}" fill="${hue}" opacity=".55"/>`;
-    g+=`<circle cx="${cx+R*0.36}" cy="${cy+R*0.5}" r="${R*0.13}" fill="${hue}" opacity=".45"/>`;
-    g+=`</g></svg>`; return g;
+  g+=`<ellipse cx="${cx}" cy="${cy+R*1.02}" rx="${R*0.9}" ry="${R*0.2}" fill="${ink}" opacity=".16"/>`;
+  if(st_===0){
+    g+=`<ellipse cx="${cx}" cy="${cy}" rx="${R}" ry="${R*1.25}" fill="${skin}" stroke="${ink}" stroke-width="${w}"/>`
+     +`<path d="M${cx-R*0.6},${cy-R*0.1} l${R*0.4},${R*0.22} l${-R*0.3},${R*0.26} l${R*0.55},${R*0.2}"
+        fill="none" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`
+     +`<circle cx="${cx-R*0.34}" cy="${cy+R*0.55}" r="${R*0.15}" fill="${hue}" opacity=".5"/>`;
+    return g+`</g></svg>`;
   }
-  /* 冠・たてがみ(最終段階) */
-  if(si>=4){
-    g+=`<path d="M${cx-R*0.75},${cy-R*0.92} l${R*0.3},${-R*0.5} l${R*0.45},${R*0.3}
-          l${R*0.45},${-R*0.44} l${R*0.42},${R*0.42} l${R*0.3},${-R*0.28} l${R*0.05},${R*0.62} z"
-          fill="${hue}" stroke="${ink}" stroke-width="${2.6*k}" stroke-linejoin="round"/>`;
-  }
-  /* 耳 */
-  if(si>=2){
-    [-1,1].forEach(d=>{
-      g+=`<path d="M${cx+d*R*0.62},${cy-R*0.62} q${d*R*0.5},${-R*0.72} ${d*R*0.72},${-R*0.02}
-            q${-d*R*0.3},${R*0.28} ${-d*R*0.72},${R*0.04} z"
-            fill="${body}" stroke="${ink}" stroke-width="${2.8*k}" stroke-linejoin="round"/>`;
-    });
-  }
-  /* 羽 */
-  if(si>=3){
-    [-1,1].forEach(d=>{
-      g+=`<path d="M${cx+d*R*0.82},${cy-R*0.1} q${d*R*0.86},${-R*0.5} ${d*R*0.98},${R*0.16}
-            q${-d*R*0.2},${R*0.44} ${-d*R*0.98},${R*0.06} z"
-            fill="${hue}" opacity=".72" stroke="${ink}" stroke-width="${2.4*k}" stroke-linejoin="round"/>`;
-    });
-  }
-  /* しっぽ */
-  if(si>=3){
-    g+=`<path d="M${cx+R*0.86},${cy+R*0.4} q${R*0.7},${R*0.2} ${R*0.5},${-R*0.5}"
-          fill="none" stroke="${ink}" stroke-width="${2.8*k}" stroke-linecap="round"/>
-        <circle cx="${cx+R*1.36}" cy="${cy-R*0.12}" r="${R*0.2}" fill="${hue}"
-          stroke="${ink}" stroke-width="${2.4*k}"/>`;
-  }
-  /* からだ */
-  g+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${body}" stroke="${ink}" stroke-width="${3.2*k}"/>`;
-  /* ほっぺ */
-  g+=`<circle cx="${cx-R*0.56}" cy="${cy+R*0.2}" r="${R*0.19}" fill="${hue}" opacity=".62"/>
-      <circle cx="${cx+R*0.56}" cy="${cy+R*0.2}" r="${R*0.19}" fill="${hue}" opacity=".62"/>`;
-  /* 目 */
-  const ey=cy-R*0.14, ex=R*0.34;
-  if(md==="happy"||md==="full"){
-    [-1,1].forEach(d=>{ g+=`<path d="M${cx+d*ex-R*0.17},${ey+R*0.04}
-      q${R*0.17},${-R*0.24} ${R*0.34},0" fill="none" stroke="${ink}"
-      stroke-width="${3*k}" stroke-linecap="round"/>`; });
-  }else{
-    [-1,1].forEach(d=>{
-      g+=`<g class="pet-eye" style="transform-origin:${cx+d*ex}px ${ey}px">
-        <circle cx="${cx+d*ex}" cy="${ey}" r="${R*0.19}" fill="${ink}"/>
-        <circle cx="${cx+d*ex+R*0.07}" cy="${ey-R*0.07}" r="${R*0.062}" fill="#fff"/></g>`;
-    });
-    if(md==="hungry") [-1,1].forEach(d=>{
-      g+=`<path d="M${cx+d*ex-R*0.2},${ey-R*0.36} q${R*0.2},${-R*0.1} ${R*0.4},${R*0.03}"
-        fill="none" stroke="${ink}" stroke-width="${2.2*k}" stroke-linecap="round"
-        transform="scale(${d},1) translate(${d<0?-2*cx:0},0)"/>`; });
-  }
-  /* くち */
-  const my=cy+R*0.36;
-  if(md==="full")
-    g+=`<ellipse cx="${cx}" cy="${my}" rx="${R*0.2}" ry="${R*0.16}" fill="${ink}"/>`;
-  else if(md==="hungry")
-    g+=`<path d="M${cx-R*0.15},${my+R*0.05} q${R*0.15},${-R*0.12} ${R*0.3},0"
-          fill="none" stroke="${ink}" stroke-width="${2.6*k}" stroke-linecap="round"/>`;
+  const showArch=st_>=3, showElem=st_>=4, showEpi=st_>=5;
+  const ec=showElem? E.c : hue;
+  /* --- うしろの部位 --- */
+  const back=showElem? A.back : (showArch&&A.back==="mane"?"mane":"none");
+  const B={
+   wingFeather:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.7},${cy-R*0.35} q${d*R*1.25},${-R*0.75} ${d*R*1.35},${R*0.35} q${-d*R*0.45},${R*0.45} ${-d*R*1.35},${R*0.05} z" fill="${ec}" opacity=".85" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
+   wingBig:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.4},${cy-R*0.4} q${d*R*1.7},${-R*1.1} ${d*R*1.55},${R*0.25} q${d*R*0.35},${R*0.95} ${-d*R*1.55},${R*0.35} z" fill="${ec}" opacity=".82" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
+   wingBat:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.72},${cy-R*0.3} L${cx+d*R*1.6},${cy-R*0.95} L${cx+d*R*1.5},${cy-R*0.2} L${cx+d*R*1.75},${cy+R*0.2} L${cx+d*R*0.8},${cy+R*0.3} z" fill="${ec}" opacity=".85" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
+   fin:()=>`<path d="M${cx},${cy-R*1.15} l${R*0.5},${R*0.6} l${-R*1.0},0 z" fill="${ec}" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`,
+   shell:()=>`<ellipse cx="${cx}" cy="${cy-R*0.15}" rx="${R*1.06}" ry="${R*0.92}" fill="${ec}" opacity=".9" stroke="${ink}" stroke-width="${w}"/>`,
+   mane:()=>`<circle cx="${cx}" cy="${cy-R*0.1}" r="${R*1.28}" fill="${ec}" opacity=".9" stroke="${ink}" stroke-width="${w}" stroke-dasharray="${R*0.42} ${R*0.16}"/>`,
+   spike:()=>[0,1,2].map(i=>`<path d="M${cx-R*0.5+i*R*0.5},${cy-R*0.9} l${R*0.24},${-R*0.42} l${R*0.24},${R*0.42} z" fill="${ec}" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
+   halo:()=>`<ellipse cx="${cx}" cy="${cy-R*1.35}" rx="${R*0.68}" ry="${R*0.2}" fill="none" stroke="${ec}" stroke-width="${(3.2*k).toFixed(2)}"/>`,
+   none:()=>""
+  };
+  g+=(B[back]||B.none)();
+  /* --- しっぽ --- */
+  const tail=showArch? A.tail : "none";
+  const T={
+   long:()=>`<path d="M${cx+R*0.85},${cy+R*0.35} q${R*0.9},${R*0.3} ${R*0.7},${-R*0.7}" fill="none" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}" stroke-linecap="round"/><circle cx="${cx+R*1.6}" cy="${cy-R*0.3}" r="${R*0.2}" fill="${ec}" stroke="${ink}" stroke-width="${w2}"/>`,
+   curl:()=>`<path d="M${cx+R*0.8},${cy+R*0.3} q${R*0.85},${-R*0.1} ${R*0.55},${-R*0.75} q${-R*0.3},${-R*0.35} ${-R*0.6},${R*0.05}" fill="none" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}" stroke-linecap="round"/>`,
+   fluff:()=>`<ellipse cx="${cx+R*1.15}" cy="${cy+R*0.1}" rx="${R*0.42}" ry="${R*0.3}" fill="${ec}" stroke="${ink}" stroke-width="${w2}" transform="rotate(-22 ${cx+R*1.15} ${cy+R*0.1})"/>`,
+   puff:()=>`<circle cx="${cx+R*0.98}" cy="${cy+R*0.42}" r="${R*0.27}" fill="${skin}" stroke="${ink}" stroke-width="${w2}"/>`,
+   short:()=>`<path d="M${cx+R*0.82},${cy+R*0.45} q${R*0.4},${R*0.12} ${R*0.42},${-R*0.2}" fill="none" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}" stroke-linecap="round"/>`,
+   tuft:()=>`<path d="M${cx+R*0.8},${cy+R*0.4} q${R*0.6},${R*0.1} ${R*0.55},${-R*0.45}" fill="none" stroke="${ink}" stroke-width="${(2.8*k).toFixed(2)}" stroke-linecap="round"/><circle cx="${cx+R*1.36}" cy="${cy-R*0.06}" r="${R*0.22}" fill="${ec}" stroke="${ink}" stroke-width="${w2}"/>`,
+   fan:()=>[-14,0,14].map(a=>`<path d="M${cx+R*0.7},${cy+R*0.3} l${R*0.72},${R*0.1}" stroke="${ec}" stroke-width="${(3.4*k).toFixed(2)}" stroke-linecap="round" transform="rotate(${a} ${cx+R*0.7} ${cy+R*0.3})"/>`).join(""),
+   nine:()=>[-26,-8,10,28].map(a=>`<path d="M${cx+R*0.7},${cy+R*0.2} q${R*0.7},${-R*0.1} ${R*1.0},${-R*0.5}" fill="none" stroke="${ec}" stroke-width="${(3.6*k).toFixed(2)}" stroke-linecap="round" transform="rotate(${a} ${cx+R*0.7} ${cy+R*0.2})" opacity=".9"/>`).join(""),
+   tenta:()=>[-1,-0.35,0.35,1].map(d=>`<path d="M${cx+d*R*0.5},${cy+R*0.75} q${d*R*0.2},${R*0.5} ${-d*R*0.1},${R*0.85}" fill="none" stroke="${ec}" stroke-width="${(2.8*k).toFixed(2)}" stroke-linecap="round"/>`).join(""),
+   wisp:()=>`<path d="M${cx},${cy+R*0.8} q${R*0.4},${R*0.45} 0,${R*0.9} q${-R*0.4},${-R*0.45} 0,${-R*0.9}" fill="${ec}" opacity=".6"/>`,
+   none:()=>""
+  };
+  g+=(T[tail]||T.none)();
+  /* --- からだ --- */
+  const bd=showArch? A.body : "round";
+  const bw={round:1,long:1.18,tall:0.86,wide:1.24,boxy:1.06,bell:1.0}[bd]||1;
+  const bh={round:1,long:0.86,tall:1.2,wide:0.9,boxy:0.98,bell:1.05}[bd]||1;
+  if(bd==="boxy")
+    g+=`<rect x="${cx-R*bw}" y="${cy-R*bh}" width="${R*bw*2}" height="${R*bh*2}" rx="${R*0.3}" fill="${skin}" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}"/>`;
+  else if(bd==="bell")
+    g+=`<path d="M${cx-R},${cy+R*0.4} a${R},${R*1.15} 0 1,1 ${R*2},0 q${-R*0.5},${R*0.3} ${-R},0 q${-R*0.5},${R*0.3} ${-R},0 z" fill="${skin}" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}"/>`;
   else
-    g+=`<path d="M${cx-R*0.18},${my-R*0.05} q${R*0.18},${R*0.2} ${R*0.36},0"
-          fill="none" stroke="${ink}" stroke-width="${2.6*k}" stroke-linecap="round"/>`;
-  /* あし */
-  if(si>=1) [-1,1].forEach(d=>{
-    g+=`<ellipse cx="${cx+d*R*0.38}" cy="${cy+R*0.96}" rx="${R*0.22}" ry="${R*0.13}"
-      fill="${body}" stroke="${ink}" stroke-width="${2.6*k}"/>`; });
-  /* きらめき(控えめに2つ) */
-  if(si>=3){
-    g+=`<path d="M${cx-R*1.25},${cy-R*0.9} l${R*0.09},${R*0.22} l${R*0.22},${R*0.09}
-      l${-R*0.22},${R*0.09} l${-R*0.09},${R*0.22} l${-R*0.09},${-R*0.22}
-      l${-R*0.22},${-R*0.09} l${R*0.22},${-R*0.09} z" fill="${hue}"/>`;
+    g+=`<ellipse cx="${cx}" cy="${cy}" rx="${R*bw}" ry="${R*bh}" fill="${skin}" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}"/>`;
+  /* ほっぺ */
+  g+=`<circle cx="${cx-R*0.58}" cy="${cy+R*0.22}" r="${R*0.18}" fill="${hue}" opacity=".6"/>`
+   + `<circle cx="${cx+R*0.58}" cy="${cy+R*0.22}" r="${R*0.18}" fill="${hue}" opacity=".6"/>`;
+  /* --- あし --- */
+  const legs=showArch? A.legs : "paw";
+  const L={
+   paw:()=>[-1,1].map(d=>`<ellipse cx="${cx+d*R*0.42}" cy="${cy+R*(bh*0.96)}" rx="${R*0.24}" ry="${R*0.14}" fill="${skin}" stroke="${ink}" stroke-width="${w2}"/>`).join(""),
+   claw:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.55},${cy+R*bh*0.86} l0,${R*0.24} m${-R*0.16},0 l${R*0.32},0" stroke="${ink}" stroke-width="${w2}" stroke-linecap="round" fill="none"/>`).join(""),
+   hoof:()=>[-1,1].map(d=>`<rect x="${cx+d*R*0.42-R*0.13}" y="${cy+R*bh*0.84}" width="${R*0.26}" height="${R*0.3}" rx="${R*0.06}" fill="${ink}"/>`).join(""),
+   dig:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.5},${cy+R*bh*0.8} l${d*R*0.34},${R*0.3} l${-d*R*0.5},${R*0.02} z" fill="${skin}" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
+   none:()=>""
+  };
+  g+=(L[legs]||L.paw)();
+  /* --- 耳・角 --- */
+  const ear=showArch? A.ear : (st_>=2? "round":"none");
+  const EAR={
+   round:()=>[-1,1].map(d=>`<circle cx="${cx+d*R*0.66}" cy="${cy-R*bh*0.78}" r="${R*0.26}" fill="${skin}" stroke="${ink}" stroke-width="${w2}"/>`).join(""),
+   point:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.3},${cy-R*bh*0.8} L${cx+d*R*0.72},${cy-R*bh*1.5} L${cx+d*R*0.86},${cy-R*bh*0.62} z" fill="${skin}" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
+   long:()=>[-1,1].map(d=>`<ellipse cx="${cx+d*R*0.42}" cy="${cy-R*bh*1.32}" rx="${R*0.19}" ry="${R*0.58}" fill="${skin}" stroke="${ink}" stroke-width="${w2}" transform="rotate(${d*13} ${cx+d*R*0.42} ${cy-R*bh*1.32})"/>`).join(""),
+   flop:()=>[-1,1].map(d=>`<ellipse cx="${cx+d*R*0.85}" cy="${cy-R*bh*0.42}" rx="${R*0.2}" ry="${R*0.42}" fill="${skin}" stroke="${ink}" stroke-width="${w2}" transform="rotate(${d*22} ${cx+d*R*0.85} ${cy-R*bh*0.42})"/>`).join(""),
+   horn2:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.4},${cy-R*bh*0.82} q${d*R*0.36},${-R*0.62} ${d*R*0.16},${-R*0.92}" fill="none" stroke="${ec}" stroke-width="${(3.4*k).toFixed(2)}" stroke-linecap="round"/>`).join(""),
+   horn1:()=>`<path d="M${cx},${cy-R*bh*0.86} l0,${-R*0.86} l${R*0.3},${R*0.26}" fill="none" stroke="${ec}" stroke-width="${(3.4*k).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round"/>`,
+   antenna:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.24},${cy-R*bh*0.85} q${d*R*0.2},${-R*0.6} ${d*R*0.5},${-R*0.78}" fill="none" stroke="${ink}" stroke-width="${w2}" stroke-linecap="round"/><circle cx="${cx+d*R*0.74}" cy="${cy-R*bh*0.85-R*0.78}" r="${R*0.15}" fill="${ec}" stroke="${ink}" stroke-width="${(1.6*k).toFixed(2)}"/>`).join(""),
+   tuft:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.34},${cy-R*bh*0.8} l${d*R*0.16},${-R*0.5} l${d*R*0.3},${R*0.3} z" fill="${skin}" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
+   frill:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.7},${cy-R*0.3} q${d*R*0.55},${-R*0.2} ${d*R*0.5},${R*0.42} z" fill="${ec}" opacity=".85" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
+   none:()=>""
+  };
+  g+=(EAR[ear]||EAR.none)();
+  /* --- 目 --- */
+  const ey=cy-R*0.16, ex=R*0.35, eye=showArch? A.eye : "dot";
+  if(md==="happy"||md==="full"){
+    g+=[-1,1].map(d=>`<path d="M${cx+d*ex-R*0.17},${ey+R*0.05} q${R*0.17},${-R*0.26} ${R*0.34},0" fill="none" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}" stroke-linecap="round"/>`).join("");
+  }else{
+    const E2={
+     dot:d=>`<g class="pet-eye" style="transform-origin:${cx+d*ex}px ${ey}px"><circle cx="${cx+d*ex}" cy="${ey}" r="${R*0.18}" fill="${ink}"/><circle cx="${cx+d*ex+R*0.06}" cy="${ey-R*0.06}" r="${R*0.06}" fill="#fff"/></g>`,
+     big:d=>`<g class="pet-eye" style="transform-origin:${cx+d*ex}px ${ey}px"><ellipse cx="${cx+d*ex}" cy="${ey}" rx="${R*0.22}" ry="${R*0.26}" fill="${ink}"/><circle cx="${cx+d*ex+R*0.08}" cy="${ey-R*0.09}" r="${R*0.085}" fill="#fff"/></g>`,
+     sharp:d=>`<path d="M${cx+d*ex-R*0.22},${ey-R*0.12} L${cx+d*ex+R*0.2},${ey+R*0.02} L${cx+d*ex-R*0.14},${ey+R*0.16} z" fill="${ink}"/>`,
+     line:d=>`<path d="M${cx+d*ex-R*0.18},${ey} l${R*0.36},0" stroke="${ink}" stroke-width="${(2.6*k).toFixed(2)}" stroke-linecap="round"/>`,
+     visor:d=>d<0?`<rect x="${cx-R*0.62}" y="${ey-R*0.2}" width="${R*1.24}" height="${R*0.4}" rx="${R*0.2}" fill="${ink}"/><rect x="${cx-R*0.3}" y="${ey-R*0.08}" width="${R*0.5}" height="${R*0.16}" rx="${R*0.08}" fill="${ec}"/>`:"",
+     stalk:d=>`<path d="M${cx+d*ex*0.7},${cy-R*bh*0.75} l${d*R*0.12},${-R*0.42}" stroke="${ink}" stroke-width="${w2}" stroke-linecap="round" fill="none"/><circle cx="${cx+d*ex*0.7+d*R*0.12}" cy="${cy-R*bh*0.75-R*0.42}" r="${R*0.15}" fill="${ink}"/>`,
+     tri:d=>d<0?`<path d="M${cx},${ey-R*0.26} L${cx+R*0.26},${ey+R*0.16} L${cx-R*0.26},${ey+R*0.16} z" fill="${ink}"/>`:`<circle cx="${cx+d*ex*1.3}" cy="${ey+R*0.1}" r="${R*0.1}" fill="${ink}"/><circle cx="${cx-d*ex*1.3}" cy="${ey+R*0.1}" r="${R*0.1}" fill="${ink}"/>`
+    };
+    const fn=E2[eye]||E2.dot;
+    g+=fn(-1)+fn(1);
+    if(md==="hungry") g+=[-1,1].map(d=>`<path d="M${cx+d*ex-R*0.2},${ey-R*0.38} q${R*0.2},${-R*0.1} ${R*0.4},${R*0.03}" fill="none" stroke="${ink}" stroke-width="${(2*k).toFixed(2)}" stroke-linecap="round"/>`).join("");
   }
-  g+=`</g></svg>`;
-  return g;
+  /* --- くち --- */
+  const my=cy+R*0.4, mouth=showArch? A.mouth : "smile";
+  const M={
+   smile:()=>`<path d="M${cx-R*0.17},${my-R*0.05} q${R*0.17},${R*0.2} ${R*0.34},0" fill="none" stroke="${ink}" stroke-width="${(2.5*k).toFixed(2)}" stroke-linecap="round"/>`,
+   fang:()=>`<path d="M${cx-R*0.2},${my-R*0.05} q${R*0.2},${R*0.22} ${R*0.4},0" fill="none" stroke="${ink}" stroke-width="${(2.5*k).toFixed(2)}" stroke-linecap="round"/><path d="M${cx-R*0.1},${my+R*0.03} l${R*0.07},${R*0.14} l${R*0.07},${-R*0.14}" fill="#fff" stroke="${ink}" stroke-width="${(1.4*k).toFixed(2)}"/>`,
+   beak:()=>`<path d="M${cx-R*0.16},${my-R*0.08} L${cx+R*0.16},${my-R*0.08} L${cx},${my+R*0.22} z" fill="${ec}" stroke="${ink}" stroke-width="${(1.8*k).toFixed(2)}" stroke-linejoin="round"/>`,
+   tongue:()=>`<path d="M${cx-R*0.17},${my-R*0.05} q${R*0.17},${R*0.24} ${R*0.34},0" fill="none" stroke="${ink}" stroke-width="${(2.5*k).toFixed(2)}" stroke-linecap="round"/><ellipse cx="${cx}" cy="${my+R*0.16}" rx="${R*0.1}" ry="${R*0.13}" fill="#F2748C" stroke="${ink}" stroke-width="${(1.4*k).toFixed(2)}"/>`,
+   none:()=>""
+  };
+  if(md==="full") g+=`<ellipse cx="${cx}" cy="${my}" rx="${R*0.19}" ry="${R*0.15}" fill="${ink}"/>`;
+  else g+=(M[mouth]||M.smile)();
+  /* --- 属性の効果（成体から） --- */
+  if(showElem){
+    const F={
+     flame:`<path d="M${cx-R*1.35},${cy-R*0.7} q${R*0.2},${-R*0.4} ${R*0.05},${-R*0.62} q${R*0.4},${R*0.22} ${R*0.1},${R*0.62} z" fill="${E.c}"/>`,
+     shard:`<path d="M${cx-R*1.32},${cy-R*0.55} l${R*0.16},${-R*0.4} l${R*0.16},${R*0.4} l${-R*0.16},${R*0.3} z" fill="${E.c}"/>`,
+     bolt:`<path d="M${cx-R*1.3},${cy-R*0.95} l${R*0.3},0 l${-R*0.14},${R*0.3} l${R*0.26},0 l${-R*0.44},${R*0.6} l${R*0.1},${-R*0.42} l${-R*0.24},0 z" fill="${E.c}"/>`,
+     swirl:`<path d="M${cx-R*1.5},${cy-R*0.5} q${R*0.5},${-R*0.35} ${R*0.62},${R*0.05} q${R*0.08},${R*0.3} ${-R*0.3},${R*0.2}" fill="none" stroke="${E.c}" stroke-width="${(2.4*k).toFixed(2)}" stroke-linecap="round"/>`,
+     rock:`<path d="M${cx-R*1.4},${cy+R*0.55} l${R*0.24},${-R*0.26} l${R*0.3},${R*0.06} l${R*0.06},${R*0.28} z" fill="${E.c}" stroke="${ink}" stroke-width="${(1.6*k).toFixed(2)}" stroke-linejoin="round"/>`,
+     drop:`<path d="M${cx-R*1.3},${cy-R*0.7} q${R*0.3},${R*0.4} 0,${R*0.55} q${-R*0.3},${-R*0.15} 0,${-R*0.55} z" fill="${E.c}"/>`,
+     ray:[0,1,2,3].map(i=>`<path d="M${cx-R*1.42},${cy-R*0.9+i*R*0.3} l${R*0.34},${R*0.06}" stroke="${E.c}" stroke-width="${(2.2*k).toFixed(2)}" stroke-linecap="round"/>`).join(""),
+     mist:`<ellipse cx="${cx-R*1.28}" cy="${cy-R*0.3}" rx="${R*0.42}" ry="${R*0.2}" fill="${E.c}" opacity=".55"/><ellipse cx="${cx-R*1.05}" cy="${cy+R*0.1}" rx="${R*0.3}" ry="${R*0.14}" fill="${E.c}" opacity=".4"/>`
+    };
+    g+=F[E.fx]||"";
+  }
+  /* --- 称号のしるし（究極体） --- */
+  if(showEpi){
+    const top=cy-R*bh*1.05, acc=EPI_ACC[sp.epi];
+    const AC={
+     crown:`<path d="M${cx-R*0.6},${top} l${R*0.16},${-R*0.5} l${R*0.28},${R*0.26} l${R*0.16},${-R*0.42} l${R*0.16},${R*0.42} l${R*0.28},${-R*0.26} l${R*0.16},${R*0.5} z" fill="#FFC12E" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`,
+     halo2:`<ellipse cx="${cx}" cy="${top-R*0.42}" rx="${R*0.66}" ry="${R*0.19}" fill="none" stroke="#FFE9A8" stroke-width="${(3.4*k).toFixed(2)}"/>`,
+     scarf:`<path d="M${cx-R*0.7},${cy+R*0.6} q${R*0.7},${R*0.26} ${R*1.4},0 l0,${R*0.24} q${-R*0.7},${R*0.26} ${-R*1.4},0 z" fill="#FF4D6D" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`,
+     glasses:`<circle cx="${cx-R*0.35}" cy="${ey}" r="${R*0.3}" fill="none" stroke="${ink}" stroke-width="${w2}"/><circle cx="${cx+R*0.35}" cy="${ey}" r="${R*0.3}" fill="none" stroke="${ink}" stroke-width="${w2}"/><path d="M${cx-R*0.05},${ey} l${R*0.1},0" stroke="${ink}" stroke-width="${w2}"/>`,
+     compass:`<circle cx="${cx+R*0.95}" cy="${cy+R*0.7}" r="${R*0.26}" fill="#FFF" stroke="${ink}" stroke-width="${w2}"/><path d="M${cx+R*0.95},${cy+R*0.52} l${R*0.07},${R*0.18} l${-R*0.14},0 z" fill="#FF4D6D"/>`,
+     medal:`<circle cx="${cx+R*0.6}" cy="${cy+R*0.68}" r="${R*0.22}" fill="#FFC12E" stroke="${ink}" stroke-width="${w2}"/>`,
+     cape:`<path d="M${cx-R*0.85},${cy-R*0.3} q${R*0.85},${R*1.6} ${R*1.7},0 l0,${R*0.4} q${-R*0.85},${R*0.5} ${-R*1.7},0 z" fill="${E.c}" opacity=".75" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`,
+     bell:`<circle cx="${cx}" cy="${cy+R*0.72}" r="${R*0.17}" fill="#FFC12E" stroke="${ink}" stroke-width="${w2}"/>`
+    };
+    g+=AC[acc]||"";
+  }
+  return g+`</g></svg>`;
 }
+/* 既存の呼び出し口。段階と色を渡すと今の相棒の系統で描く */
+function petSVG(stage,md,hue,size,spec){
+  const sp=spec? Object.assign({},spec,{stage,hue:hue||spec.hue})
+                : Object.assign(petSpec(),{stage,hue:hue||petHue()});
+  return creatureSVG(sp,size,md||"ok");
+}
+
+/* ---------- 読み手としての称号（相棒の二つ名とは別物。累計ページで上がる） ---------- */
+const TITLES=[[0,"読みはじめ"],[900,"読み手"],[2600,"旅の読み手"],[6000,"踏破者"],
+  [13000,"万巻の徒"],[26000,"大読破者"],[52000,"書架のぬし"]];
+function title(){
+  const p=pagesRead(); let t=TITLES[0][1];
+  TITLES.forEach(x=>{ if(p>=x[0]) t=x[1]; });
+  if(p>=104000) t=`第${Math.floor(Math.log2(p/52000))+1}階梯の賢者`;
+  return t;
+}
+function nextTitle(){
+  const p=pagesRead(), nx=TITLES.find(x=>p<x[0]);
+  return nx? {need:nx[0]-p, name:nx[1]} : null;
+}
+/* ---------- 旅立ち。姿ごと記録に残す ---------- */
+function depart(){
+  const sp=petSpec();
+  S.ancestors=S.ancestors||[];
+  S.ancestors.push({name:S.name, gen:genNo(), pages:pagesRead(), books:doneCount(),
+    at:Date.now(), spec:{stage:5, arch:sp.arch, elem:sp.elem, epi:sp.epi, hue:sp.hue, dom:sp.dom},
+    species:speciesName(sp)});
+  S.gen=genNo()+1; S.genBase=totalXp(); S.name="たまご";
+  save(); selected=null; renderAll();
+  toast(`${S.ancestors[S.ancestors.length-1].name}は 旅立った。あたらしい たまごが とどいた`);
+  setTimeout(()=>{ document.getElementById("nName").value="";
+    document.getElementById("nameDlg").showModal(); },900);
+}
+/* ---------- 仲間 ----------
+   「地域の霧を全部晴らす」は条件にできない。本は増え続けるし減ることもあるので、
+   割合を条件にすると一生届かないか、達成しても後で崩れる。
+   累計の読了冊数で解放する。増冊はむしろ新しい仲間の機会になる。 */
+const FRIEND_STEPS=[1,3,6,10,15,21,28,36,45,55,66,78];
+function friendList(){
+  const out=[];
+  (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{
+    const done=regionStat(R).done;
+    const gotN=FRIEND_STEPS.filter(n=>done>=n).length;
+    const next=FRIEND_STEPS.find(n=>done<n)||null;
+    out.push({region:R.name, place:R.place, hue:R.hue, hueName:R.hueName,
+      got:gotN, done, next, total:R.books.length});
+  }));
+  return out;
+}
+function friendCount(){ return friendList().reduce((n,f)=>n+f.got,0); }
+
+/* ---------- 相棒カードの描画 ---------- */
 function renderPet(){
-  const si=stageIdx(), md=mood(), hue=petHue();
-  document.getElementById("petArt").innerHTML=petSVG(si,md,hue);
+  const sp=petSpec(), md=mood(), si=sp.stage;
+  document.getElementById("petArt").innerHTML=creatureSVG(sp,undefined,md);
   document.getElementById("petName").textContent=S.name;
-  document.getElementById("petStage").textContent=STAGES[si].n;
+  document.getElementById("petStage").textContent=speciesName(sp);
+  document.getElementById("petTitle").textContent=title();
   const says={
     hungry:["きょうは まだ きりを たべてないよ","おなか すいた…"],
     full:["もぐもぐ… おいしい！","きりが へった！"],
     happy:[`${S.streak}にち つづいてる！`,"きょうも いっしょに よもう"],
-    ok:STAGES[si].say
+    ok:[["ふるふる…","なかから こえが する"],
+        ["ふわ…","きり、おいしい"],
+        [`${AXES[sp.dom].k}の におい が する`,"すこし かたちが できてきた"],
+        ["じぶんが なにに なるのか わかってきた","もっと よんで"],
+        ["とおくまで みえるよ","つぎの しま、いこう"],
+        ["ずいぶん とおくまで きたね","そろそろ 旅に でる ときかも"]][si]
   }[md];
-  document.getElementById("petSay").textContent=
-    says[hash(S.name+doneCount()+md)%says.length];
+  document.getElementById("petSay").textContent=says[hash(S.name+doneCount()+md)%says.length];
   document.getElementById("mFog").textContent=fogEaten().toLocaleString();
   document.getElementById("mPat").textContent=(S.pat||0).toLocaleString();
-  document.getElementById("mFriend").textContent=friendList().filter(f=>f.got).length;
+  document.getElementById("mFriend").textContent=friendCount();
   document.getElementById("mGen").textContent=genNo();
-  document.getElementById("petTitle").textContent=title();
-  const b=bondXp(), nx=STAGES[si+1];
-  const lo=BOND[si], hi=nx? BOND[si+1] : DEPART;
+  /* 5つの軸。何を読むかで伸びる場所が変わる */
+  const p=sp.prof, mx=Math.max(1,...p.v);
+  document.getElementById("petAxes").innerHTML=AXES.map((a,i)=>
+    `<div class="ax${i===p.dom?" dom":""}" title="${a.yomi} — ${a.d}">
+      <span class="axk" style="color:${a.c}">${a.k}</span>
+      <span class="axbar"><i style="width:${(p.v[i]/mx*100).toFixed(1)}%;background:${a.c}"></i></span>
+    </div>`).join("");
+  const nx=si<5? BOND[si+1] : DEPART;
+  const lo=si<5? BOND[si] : BOND[5], b=bondXp();
   document.getElementById("evoNext").textContent =
-    nx? `つぎは「${nx.n}」` : (canDepart()? "旅立てる" : "旅立ちまで");
-  document.getElementById("evoNum").textContent=`${b.toLocaleString()} / ${hi.toLocaleString()} 絆`;
+    si<5? "つぎの すがたまで" : (canDepart()? "旅立てる" : "旅立ちまで");
+  document.getElementById("evoNum").textContent=`${b.toLocaleString()} / ${nx.toLocaleString()} 絆`;
   document.getElementById("evoBar").style.setProperty("--v",
-    Math.min(1,(b-lo)/Math.max(1,hi-lo)).toFixed(3));
+    Math.min(1,(b-lo)/Math.max(1,nx-lo)).toFixed(3));
   const dep=document.getElementById("departWrap");
   dep.innerHTML = canDepart()
     ? `<button class="btn primary sm" id="departBtn">旅立たせる</button>
-       <span class="deph">${esc(S.name)}は じゅうぶんに 育ちました。旅立つと
-       この地の守り神になり、記録は永久に残ります。あたらしい たまごが来て、また一緒に読みはじめます。</span>`
+       <span class="deph">${esc(S.name)}（${esc(speciesName(sp))}）は じゅうぶんに 育ちました。
+       旅立つとこの地の守り神になり、記録は永久に残ります。</span>`
     : "";
   if(canDepart()) document.getElementById("departBtn").onclick=()=>{
     if(confirm(`${S.name}を旅立たせますか？\nこれまでの記録・レベル・累計ページはそのまま残ります。`)) depart();
   };
-}
-function friendList(){
-  const out=[];
-  (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{
-    const s=regionStat(R);
-    out.push({name:R.name, hue:R.hue, hueName:R.hueName, got:s.ratio>=1, ratio:s.ratio});
-  }));
-  return out;
 }
 document.getElementById("petBtn").onclick=e=>{
   S.pat=(S.pat||0)+1; save();
@@ -1295,7 +1524,7 @@ function drawMap(){
       const x=vx+vw*(0.20+i*0.20), y=vy+vh*0.965;
       if(VC.some(C=>C.regions.some(R=>Math.hypot(R.cx-x,R.cy-y)<R.rad*1.1))) return;
       ax+=`<g transform="translate(${x-20},${y-46})">
-        ${petSVG(4,"happy",a.hue,40).replace(/class="pet-body"/,"")}
+        ${(a.spec? creatureSVG(a.spec,40,"happy") : creatureSVG({stage:4,arch:0,elem:0,epi:0,hue:a.hue},40,"happy")).replace(/class="pet-body"/,"")}
         <text x="20" y="52" text-anchor="middle" class="rsub">${esc(a.name)}</text></g>`;
     });
     gA.innerHTML=ax; svg.appendChild(gA);
@@ -1351,10 +1580,11 @@ function drawMap(){
         const sub=E("text",{x:R.cx, y:ly+15, "text-anchor":"middle", class:"rsub"});
         sub.textContent=`${R.name} ・ ${s.done}/${R.books.length}冊 ・ 霧 ${R.puffs.length-gone}`;
         gLab.appendChild(sub);
-        if(s.ratio>=1){ /* 仲間が住みついている */
+        if(s.done>=FRIEND_STEPS[0]){ /* 累計の読了冊数で仲間が住みつく */
           const f=E("g",{class:"pal",
             transform:`translate(${(R.cx+R.rad*0.52).toFixed(1)},${(R.cy-R.rad*0.55).toFixed(1)})`});
-          f.innerHTML=petSVG(1,"happy",R.hue,44).replace(/^<svg[^>]*>|<\/svg>$/g,"")
+          f.innerHTML=creatureSVG({stage:2,arch:hash(R.name)%20,elem:hash(R.name+"e")%8,
+            epi:0,hue:R.hue,dom:hash(R.name)%5},44,"happy").replace(/^<svg[^>]*>|<\/svg>$/g,"")
             .replace('class="pet-body"','');
           f.setAttribute("transform", f.getAttribute("transform")+" translate(-22,-22)");
           gLab.appendChild(f);
@@ -1521,38 +1751,61 @@ function renderShelf(){
    7. 相棒タブ・塔
    ============================================================ */
 function renderBuddyTab(){
-  const si=stageIdx(), hue=petHue(), b=bondXp();
-  document.getElementById("evolist").innerHTML=STAGES.map((s,i)=>{
-    const cls=i===si?"now":(b>=BOND[i]?"":"locked");
-    return `<div class="evorow ${cls}">${petSVG(i,i===si?mood():"ok",hue,44)}
-      <div><b>${s.n}</b><em>${b>=BOND[i]?`絆 ${BOND[i].toLocaleString()} 到達ずみ`
-        :`絆 ${BOND[i].toLocaleString()} で なれる`}</em></div></div>`;
+  const sp=petSpec(), si=sp.stage, b=bondXp();
+  /* 進化の道すじ。まだ先の段階は「？」のまま伏せる */
+  document.getElementById("evolist").innerHTML=STAGE_N.map((n,i)=>{
+    const reached=b>=BOND[i], cls=i===si?"now":(reached?"":"locked");
+    const shown=Object.assign({},sp,{stage:i});
+    const art = reached||i<=si
+      ? creatureSVG(shown,44,i===si?mood():"ok")
+      : `<svg viewBox="0 0 44 44" aria-hidden="true"><text x="22" y="30" text-anchor="middle"
+         font-size="22" font-weight="800" fill="var(--line)">?</text></svg>`;
+    return `<div class="evorow ${cls}">${art}
+      <div><b>${reached||i<=si? esc(speciesName(shown)) : "？？？"}</b>
+      <em>${n} ・ 絆 ${BOND[i].toLocaleString()}${reached?" 到達ずみ":""}</em></div></div>`;
   }).join("")
   + `<div class="evorow ${canDepart()?"now":"locked"}">
       <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M22 6 L27 17 L39 18 L30 26 L33 38
-        L22 31 L11 38 L14 26 L5 18 L17 17 Z" fill="${canDepart()?hue:"none"}"
+        L22 31 L11 38 L14 26 L5 18 L17 17 Z" fill="${canDepart()?sp.hue:"none"}"
         stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/></svg>
-      <div><b>旅立ち</b><em>絆 ${DEPART.toLocaleString()} で 守り神になる（いまの絆 ${b.toLocaleString()}）</em></div></div>`;
-  /* 守り神 = これまでの相棒たち。読書を続けるかぎり増え続ける */
+      <div><b>旅立ち</b><em>絆 ${DEPART.toLocaleString()} で 守り神になる（いま ${b.toLocaleString()}）</em></div></div>`;
+  /* いま何によって育っているか */
+  const p=sp.prof, mx=Math.max(1,...p.v);
+  document.getElementById("axisPanel").innerHTML=AXES.map((ax,i)=>
+    `<div class="axrow${i===p.dom?" dom":""}">
+      <b style="color:${ax.c}">${ax.k}</b>
+      <em>${ax.yomi} — ${ax.d}</em>
+      <span class="axbar"><i style="width:${(p.v[i]/mx*100).toFixed(1)}%;background:${ax.c}"></i></span>
+      <span class="axn">${p.v[i].toFixed(1)}</span></div>`).join("")
+    + `<p class="note" style="margin-top:10px">
+       いちばん伸びている軸が<b>系統</b>、二番目が<b>その中の種</b>を決めます。
+       ${si>=3?`いまは <b>${esc(ARCH[sp.arch].n)}</b> の系統です。`:"もう少し読むと系統が見えてきます。"}
+       ${si>=4?`属性は <b>${esc(ELEM[sp.elem].n)}</b>。`:""}
+       ${si>=5?`二つ名「${esc(EPITHET[sp.epi])}」は ${esc(EPITHET_D[sp.epi])} ことから付きました。`:""}
+       <br>系統20 × 属性8 × 二つ名8 = <b>1,280通り</b>の最終形態があります。</p>`;
+  /* 守り神 */
   const anc=(S.ancestors||[]);
   document.getElementById("ancPanel").innerHTML= anc.length
-    ? anc.slice().reverse().map(a=>`<div class="evorow">${petSVG(4,"happy",a.hue,44)}
-        <div><b>${esc(a.name)}</b><em>第${a.gen}代 ・ ${a.pages.toLocaleString()}ページ地点で旅立ち
-        ・ ${new Date(a.at).toLocaleDateString("ja-JP")}</em></div></div>`).join("")
+    ? anc.slice().reverse().map(a=>`<div class="evorow">
+        ${a.spec? creatureSVG(a.spec,44,"happy") : creatureSVG({stage:4,arch:0,elem:0,epi:0,hue:a.hue},44,"happy")}
+        <div><b>${esc(a.name)}</b><em>${esc(a.species||"")} ・ 第${a.gen}代 ・
+        ${a.pages.toLocaleString()}ページ地点で旅立ち</em></div></div>`).join("")
     : `<div class="empty-box" style="padding:22px 14px">まだ誰も旅立っていません。<br>
-       いまの相棒が育ち切ると、ここに名前が残ります。</div>`;
+       いまの相棒が育ち切ると、ここに名前と姿が残ります。</div>`;
   const nt=nextTitle();
   document.getElementById("titleNow").innerHTML=
     `<b style="font-family:var(--f-disp);font-size:19px">${esc(title())}</b>
      <div class="kv" style="margin-top:4px">累計 ${pagesRead().toLocaleString()} ページ${
        nt? ` ／ あと ${nt.need.toLocaleString()} ページで「${esc(nt.name)}」` : " ／ 最高位を更新中"}</div>`;
+  /* 仲間 */
   document.getElementById("friends").innerHTML=friendList().map(f=>
     `<div class="friend ${f.got?"":"locked"}">
-      ${f.got? petSVG(1,"happy",f.hue,44)
+      ${f.got? creatureSVG({stage:2,arch:hash(f.region)%20,elem:hash(f.region+"e")%8,epi:0,
+                            hue:f.hue,dom:hash(f.region)%5},44,"happy")
              : `<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="24" r="13"
                 fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 4"/></svg>`}
-      <b>${f.got?esc(f.hueName)+"の子":"？？？"}</b>
-      <em>${esc(f.name)}${f.got?"":" "+Math.round(f.ratio*100)+"%"}</em></div>`).join("");
+      <b>${esc(f.place||f.region)}</b>
+      <em>${f.got? "仲間 "+f.got+"匹" : "まだ"}${f.next? ` ／ ${f.next}冊で次` : ""}</em></div>`).join("");
 }
 /* 高さは「読んだページ数」。1万ページを超えたら伸びを緩めて画面に収める */
 function uOf(p){ return p<=10000 ? p*0.078 : 780+(p-10000)*0.034; }
