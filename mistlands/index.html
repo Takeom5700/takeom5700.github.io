@@ -348,8 +348,8 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
 /* ---------- 塔（空へ） ---------- */
 .skybox{height:min(72vh,660px); overflow-y:auto; overflow-x:hidden; border:3px solid var(--ink);
   border-radius:var(--r-lg); box-shadow:5px 5px 0 var(--shadow); background:#C6ECFF;
-  scrollbar-width:thin}
-.skybox svg{display:block}
+  scrollbar-width:thin; line-height:0}
+.skybox svg{display:block; width:100%; height:auto}
 .btick{font-family:var(--f-num); font-size:8px; fill:#3B2A1E; opacity:.55}
 .tnote{font-family:var(--f-disp); font-weight:800; font-size:11px; fill:#3B2A1E;
   paint-order:stroke; stroke:#FFF6E3; stroke-width:4px; stroke-linejoin:round}
@@ -477,9 +477,8 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 .slot-h{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
 .slot-h b{font-family:var(--f-disp); font-size:14.5px; overflow-wrap:anywhere}
 .slot-h em{font-style:normal; font-size:11px; color:var(--ink-sub)}
-.slot-u{display:flex; align-items:flex-start; gap:10px; min-width:0}
-.slot-u svg{flex:none; overflow:visible}
-.slot-u>div{min-width:0; flex:1}
+.slot-u{display:block; min-width:0}
+.slot-t{min-width:0; margin-top:7px}
 .slot-u b{font-family:var(--f-disp); font-size:13px; display:block;
   overflow-wrap:anywhere; line-height:1.5}
 .slot-u em{font-style:normal; font-size:11px; color:var(--ink-sub); display:block;
@@ -488,17 +487,18 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 .expmsg{color:var(--ink)!important; font-family:var(--f-disp); font-weight:700; font-size:12px!important;
   margin-bottom:3px}
 /* 探検している あいだ は、地面が流れて とことこ 歩いて見える */
-.walkscene{flex:none; width:104px; height:60px; overflow:hidden;
-  border-radius:10px; background:linear-gradient(180deg,
-    color-mix(in srgb,var(--sea) 55%,transparent), transparent 70%)}
-.walkscene .wgrd{animation:scroll 3.4s linear infinite}
-@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-104px)}}
-.walkscene .wch{animation:step .46s ease-in-out infinite alternate;
-  transform-origin:21px 34px}
+.walkscene{display:block; width:100%; height:auto; overflow:hidden; border-radius:10px;
+  background:linear-gradient(180deg, color-mix(in srgb,var(--sea) 60%,transparent), transparent 72%)}
+.walkscene .wgrd{animation:scroll 2.6s linear infinite}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-200px)}}
+/* 上下に浮くのではなく、足を踏みかえるように小さく弾む */
+.walkscene .wch{animation:step .34s ease-in-out infinite alternate; transform-origin:24px 44px}
 @keyframes step{
-  from{transform:translateY(1.5px) rotate(-3.5deg)}
-  to{transform:translateY(-1.5px) rotate(3.5deg)}
+  from{transform:translateY(0) rotate(-2deg) scaleY(1)}
+  to{transform:translateY(-2.2px) rotate(2deg) scaleY(1.03)}
 }
+.walkscene .wsh{animation:shadow .34s ease-in-out infinite alternate; transform-origin:center}
+@keyframes shadow{ from{transform:scaleX(1); opacity:.28} to{transform:scaleX(.78); opacity:.18} }
 .walker{animation:mapwalk 7s ease-in-out infinite}
 @keyframes mapwalk{
   0%,100%{transform:translate(0,0)}
@@ -508,12 +508,14 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
   80%{transform:translate(5px,-2px)}
 }
 .slot .btn{align-self:flex-start}
-.loglist{display:flex; flex-direction:column; gap:8px; max-height:min(52vh,420px); overflow-y:auto}
+.loglist{display:flex; flex-direction:column; gap:8px; max-height:min(52vh,420px);
+  overflow-y:auto; overflow-x:hidden}
 .logrow{display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-radius:var(--r);
-  background:var(--paper); border:2px solid var(--line)}
-.logrow svg{flex:none}
+  background:var(--paper); border:2px solid var(--line); min-width:0}
+.logrow svg{flex:none; width:30px; height:30px; display:block}
+.logrow>div{min-width:0; flex:1}
 .logdot{width:30px; height:30px; border-radius:50%; border:2px dashed var(--line); flex:none}
-.logrow span{font-size:12.5px; line-height:1.7; display:block}
+.logrow span{font-size:12.5px; line-height:1.7; display:block; overflow-wrap:anywhere}
 .logrow em{font-style:normal; font-size:10.5px; color:var(--ink-sub); font-family:var(--f-num)}
 .itemgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:9px;
   max-height:min(52vh,420px); overflow-y:auto}
@@ -1765,7 +1767,7 @@ function creatureSVG(sp,size,md){
   const w=(2.6*k).toFixed(2), w2=(2.1*k).toFixed(2);
   const R=[15,20,25,30,35,39][st_]*k;
   const cy=s*0.60;
-  let g=`<svg viewBox="0 0 ${s} ${s}" aria-hidden="true"><g class="pet-body">`;
+  let g=`<svg viewBox="0 0 ${s} ${s}" width="${s}" height="${s}" aria-hidden="true"><g class="pet-body">`;
   g+=`<ellipse cx="${cx}" cy="${cy+R*1.02}" rx="${R*0.9}" ry="${R*0.2}" fill="${ink}" opacity=".16"/>`;
   if(st_===0){
     g+=`<ellipse cx="${cx}" cy="${cy}" rx="${R}" ry="${R*1.25}" fill="${skin}" stroke="${ink}" stroke-width="${w}"/>`
@@ -2678,8 +2680,8 @@ function renderTower(){
   const wipAll=books().filter(b=>{const s=st(b.id); return s.page>0&&s.page<b.p;});
   const donePages=done.reduce((n,b)=>n+b.p,0);
   const W=340, GRD=64, HEAD=150, cx=118;
-  const boxW=Math.max(230,(box.clientWidth||340)-4);
-  const boxH=Math.max(320,(box.clientHeight||620)-4);
+  const boxW=Math.max(230, box.clientWidth||340);
+  const boxH=Math.max(320, box.clientHeight||620);
   /* 塔が低いうちは空で箱を埋める。下に大きな余白ができるのを防ぐ */
   const minH=Math.ceil(boxH*(W/boxW));
   const towerU=uOf(donePages);
@@ -2817,8 +2819,8 @@ function renderTower(){
 
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   svg.innerHTML=g;
-  const sc=boxW/W;
-  svg.style.width=boxW+"px"; svg.style.height=(H*sc)+"px";
+  /* 幅は箱いっぱい、高さは縦横比から。px指定だと枠とずれるので割合で置く */
+  svg.style.width="100%"; svg.style.height="auto";
   svg.querySelectorAll(".tlayer").forEach(el=>{
     el.style.cursor="pointer"; el.onclick=()=>openLog(el.dataset.id); });
   box.scrollTop=0;
@@ -3523,7 +3525,7 @@ function itemSVG(id,size){
   const it=itemOf(id), s=size||64, k=s/64, c=it.axis.c, ink="var(--ink)";
   const w=(2.4*k).toFixed(2), cx=s/2, cy=s/2;
   const glow=it.rank.c;
-  let g=`<svg viewBox="0 0 ${s} ${s}" aria-hidden="true">`;
+  let g=`<svg viewBox="0 0 ${s} ${s}" width="${s}" height="${s}" aria-hidden="true">`;
   if(glow>0.4) g+=`<circle cx="${cx}" cy="${cy}" r="${s*0.44}" fill="${c}" opacity="${(glow*0.22).toFixed(2)}"/>`;
   const F=[
    ()=>`<rect x="${cx-s*0.26}" y="${cy-s*0.2}" width="${s*0.52}" height="${s*0.4}" rx="${s*0.05}" fill="var(--card)" stroke="${ink}" stroke-width="${w}"/>
@@ -3626,21 +3628,24 @@ function itemsTotalCount(){ return Object.values(S.items||{}).reduce((a,b)=>a+b,
 
 /* 探検している場面。地面が流れ、相棒が足を運ぶ */
 function walkScene(spec,md){
-  const W=104,H=60, gy=H-11;
-  const bits=[[8,"g"],[26,"s"],[44,"g"],[62,"g"],[80,"s"],[95,"g"]];
+  const W=200,H=64, gy=H-13;
+  const bits=[[10,"g"],[34,"s"],[58,"g"],[86,"g"],[112,"s"],[140,"g"],[168,"g"],[188,"s"]];
   const one=(ox)=>bits.map(b=>{
     const x=b[0]+ox;
     return b[1]==="g"
-      ? `<path d="M${x},${gy} q1.6,-5 3.2,0 M${x+3},${gy} q1.6,-6.5 3.2,0 M${x+6},${gy} q1.4,-4 2.8,0"
-          fill="none" stroke="#3E9E4E" stroke-width="1.6" stroke-linecap="round"/>`
-      : `<ellipse cx="${x+2}" cy="${gy-1.4}" rx="3.2" ry="2" fill="#B9A98F" stroke="#3B2A1E" stroke-width="1"/>`;
+      ? `<path d="M${x},${gy} q1.7,-5.5 3.4,0 M${x+3},${gy} q1.7,-7 3.4,0 M${x+6},${gy} q1.5,-4.5 3,0"
+          fill="none" stroke="#3E9E4E" stroke-width="1.7" stroke-linecap="round"/>`
+      : `<ellipse cx="${x+2}" cy="${gy-1.6}" rx="3.4" ry="2.1" fill="#B9A98F"/>`;
   }).join("");
-  return `<svg class="walkscene" viewBox="0 0 ${W} ${H}" aria-hidden="true">
-    <rect x="0" y="0" width="${W}" height="${H}" fill="none"/>
+  /* 生き物そのものの ふわふわ浮くアニメは切って、歩きに置き換える */
+  const body=creatureSVG(spec,48,md||"happy")
+    .replace(/^<svg[^>]*>|<\/svg>$/g,"").replace(/class="pet-body"/,"");
+  return `<svg class="walkscene" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"
+      preserveAspectRatio="xMidYMid meet" aria-hidden="true">
     <g class="wgrd">${one(0)}${one(W)}</g>
-    <line x1="0" y1="${gy}" x2="${W*2}" y2="${gy}" stroke="#8A6A4A" stroke-width="2" opacity=".55"/>
-    <g transform="translate(${W/2-21},2)"><g class="wch">${
-      creatureSVG(spec,42,md||"happy").replace(/^<svg[^>]*>|<\/svg>$/g,"")}</g></g>
+    <line x1="0" y1="${gy}" x2="${W*2}" y2="${gy}" stroke="#8A6A4A" stroke-width="2" opacity=".5"/>
+    <ellipse class="wsh" cx="${W/2}" cy="${gy-1}" rx="15" ry="3.4" fill="#2E5A2E" opacity=".26"/>
+    <g transform="translate(${W/2-24},${gy-52})"><g class="wch">${body}</g></g>
   </svg>`;
 }
 /* 探検中のようす。経過・成果・相性で ことばが変わる */
@@ -3687,7 +3692,7 @@ function renderExped(){
       <div class="slot-h"><span class="bdot" style="background:${R.hue}"></span>
         <b>${esc(R.place||R.name)}</b><em>${esc(R.name)}</em></div>
       ${u? `<div class="slot-u">${walkScene(u.spec,"happy")}
-            <div><b>${esc(u.name)}</b>
+            <div class="slot-t"><b>${esc(u.name)}</b>
             <em class="expmsg">${esc(expedLine(R,u,e))}</em>
             <em>探索力 ${u.power}${u.axis===regionAxis(R)?" ・ 得意な土地":""} ／ つぎの便り あと ${Math.ceil(nx/60000)}分</em>
             </div></div>`
@@ -3736,6 +3741,17 @@ function openPick(rn){
   document.getElementById("pickClear").hidden=!((S.exped||{})[rn]);
   document.getElementById("pickDlg").showModal();
 }
+/* そのおみやげを どこで拾ったか／どこで出やすいか */
+function itemWhere(id){
+  const it=itemOf(id);
+  const got=[];
+  (S.expLog||[]).forEach(l=>{ if(l.item===id && got.indexOf(l.r)<0) got.push(l.r); });
+  const likely=[];
+  (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{
+    if(regionAxis(R)===it.a) likely.push(R.place||R.name); }));
+  const gotNames=got.map(rn=>{ const R=regionByName(rn); return R?(R.place||R.name):rn; });
+  return {got:gotNames, likely};
+}
 function showItem(id){
   SFX.find();
   const it=itemOf(id);
@@ -3743,7 +3759,11 @@ function showItem(id){
   document.getElementById("itemName").textContent=it.name;
   document.getElementById("itemMeta").textContent=`${it.axis.d} ／ ${it.rank.n}`;
   document.getElementById("itemDesc").textContent=it.desc;
-  document.getElementById("itemHave").textContent=`手持ち ${S.items[id]} 個`;
+  const w=itemWhere(id);
+  document.getElementById("itemHave").innerHTML=
+    `手持ち ${S.items[id]} 個`
+    + (w.got.length? `<br>見つけた場所：${w.got.map(esc).join("、")}` : "")
+    + (w.likely.length? `<br>出やすい土地：${w.likely.map(esc).join("、")}` : "");
   document.getElementById("itemDlg").showModal();
 }
 
