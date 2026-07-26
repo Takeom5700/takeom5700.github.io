@@ -373,6 +373,28 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
   margin-top:14px; min-height:1.5em}
 .dact{display:flex; gap:9px; justify-content:flex-end; margin-top:20px}
 
+/* ---------- バーコードで本を足す ---------- */
+.scanbar{display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin:4px 0 2px}
+.scanhint{font-size:11.5px; color:var(--ink-sub); line-height:1.6; flex:1; min-width:140px}
+.cam{position:relative; margin:12px 0 4px; border:3px solid var(--ink); border-radius:var(--r);
+  overflow:hidden; background:#000}
+.cam video{display:block; width:100%; max-height:44vh; object-fit:cover}
+.camguide{position:absolute; left:8%; right:8%; top:50%; height:76px; transform:translateY(-50%);
+  border:3px solid var(--sun); border-radius:8px; pointer-events:none;
+  box-shadow:0 0 0 2000px rgba(0,0,0,.34)}
+.camfoot{display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--card);
+  border-top:3px solid var(--ink); font-size:12px}
+.camfoot span{flex:1; line-height:1.5}
+.isbnrow{display:flex; gap:8px; align-items:center}
+.isbnrow input{flex:1}
+.found{display:flex; gap:14px; align-items:flex-start; margin-top:6px}
+.found img{width:76px; height:auto; border:2.5px solid var(--ink); border-radius:6px; flex:none;
+  background:var(--card2)}
+.found > div{flex:1; min-width:0}
+.hit{margin-top:11px; padding:12px 14px; border:2.5px solid var(--sun); border-radius:var(--r);
+  background:color-mix(in srgb,var(--sun) 14%,transparent); font-size:12.5px; line-height:1.7}
+.hit b{font-family:var(--f-disp)}
+
 /* ---------- 記録の持ち出し ---------- */
 .xsep{height:2px; background:var(--hair); margin:20px 0 4px; border-radius:2px}
 input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
@@ -601,9 +623,35 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
 <dialog id="addDlg"><form method="dialog" class="din">
   <h2>自分の本を足す</h2>
   <div class="sub">会社の推薦図書とは別枠。補助の対象にはなりません</div>
-  <label for="aTitle">書名</label><input type="text" id="aTitle">
-  <label for="aAuthor">著者</label><input type="text" id="aAuthor">
-  <label for="aPages">ぜんぶで何ページ？</label><input type="number" id="aPages" min="1" value="200">
+
+  <div class="scanbar">
+    <button type="button" class="btn primary sm" id="aScan">裏表紙のバーコードを撮る</button>
+    <span class="scanhint" id="aScanHint"></span>
+  </div>
+  <div class="cam" id="aCam" hidden>
+    <video id="aVideo" playsinline muted></video>
+    <div class="camguide" aria-hidden="true"></div>
+    <div class="camfoot">
+      <span id="aCamMsg">バーコードにかざしてください</span>
+      <button type="button" class="btn quiet sm" id="aCamStop">やめる</button>
+    </div>
+  </div>
+  <label for="aIsbn">ISBN（バーコードの数字）</label>
+  <div class="isbnrow">
+    <input type="text" id="aIsbn" inputmode="numeric" placeholder="9784862763563">
+    <button type="button" class="btn quiet sm" id="aLookup">調べる</button>
+  </div>
+  <p class="hint" id="aLookMsg"></p>
+
+  <div class="found" id="aFound" hidden>
+    <img id="aCover" alt="" hidden>
+    <div>
+      <label for="aTitle" style="margin-top:0">書名</label><input type="text" id="aTitle">
+      <label for="aAuthor">著者</label><input type="text" id="aAuthor">
+      <label for="aPages">ぜんぶで何ページ？</label>
+      <input type="number" id="aPages" min="1" value="200">
+    </div>
+  </div>
   <div class="dact">
     <button type="button" class="btn quiet" id="aCancel">やめる</button>
     <button type="button" class="btn primary" id="aSave">植える</button>
@@ -648,6 +696,25 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
 /* ============================================================
    1. データ
    ============================================================ */
+/* バーコードを撮ったとき「これは会社の推薦図書です」と気づけるようにISBNを持たせる */
+const SEED_ISBN={
+ "コンサルが「最初の3年間」で学ぶコト":"9784802613989",
+ "イシューからはじめよ":"9784862763563",
+ "「具体⇔抽象」トレーニング":"9784569845999",
+ "HIGH OUTPUT MANAGEMENT":"9784822255015",
+ "あなたの年収は1分で決まる":"9784532318574",
+ "マンガでわかるプロジェクトマネジメント":"9784274068546",
+ "外資系コンサルのスライド作成術":"9784492557204",
+ "コンサルが「マネージャー時代」に学ぶコト":"9784802614399",
+ "業務設計の教科書":"9784297153724",
+ "論点を研ぐ":"9784296203963",
+ "ビジネスパーソンのための人工知能入門":"9784839965518",
+ "統計学が最強の学問である":"9784478022214",
+ "教養としてのデータサイエンス":"9784065379394",
+ "生成AIで世界はこう変わる":"9784815622978",
+ "生成AIの安全性入門":"9784297157029",
+ "ChatGPTはどのように動いているのか":"9784798193403"
+};
 const SEED_BOOKS=[
  ["コンサルティング",1,"基本動作","コンサルが「最初の3年間」で学ぶコト","知らないと一生後悔する99のスキルと5の挑戦","高松 智史",339],
  ["コンサルティング",2,"基本動作","ロジカル・プレゼンテーション","自分の考えを効果的に伝える「提案の技術」","高田 貴久",298],
@@ -672,7 +739,7 @@ const SEED_BOOKS=[
 ].map(r=>({
   /* identity_key は書名+著者。優先順位は識別子に使わない(順位が変わると記録が孤児になる) */
   id:"c:"+r[3]+"|"+r[5], div:r[0], rank:r[1], cat:r[2], t:r[3], sub:r[4], a:r[5], p:r[6],
-  origin:"company"
+  origin:"company", isbn:SEED_ISBN[r[3]]||null
 }));
 
 /* ビビッドな地域色。カテゴリ名から決定的に選ぶので、新カテゴリでも色が付く */
@@ -1779,17 +1846,156 @@ function eat(){
    9. 追加・お知らせ・その他
    ============================================================ */
 const addDlg=document.getElementById("addDlg"), nameDlg=document.getElementById("nameDlg");
-document.getElementById("addBtn").onclick=()=>addDlg.showModal();
-document.getElementById("aCancel").onclick=()=>addDlg.close();
+const $=id=>document.getElementById(id);
+
+/* ---- バーコード(ISBN)から本を引く。openBDとNDLはどちらもCORS許可済みなので
+       サーバーを立てずにブラウザから直接叩ける ---- */
+function normIsbn(s){
+  const d=String(s||"").replace(/[^0-9Xx]/g,"");
+  return (d.length===13 && /^97[89]/.test(d)) ? d : null;
+}
+async function lookupIsbn(isbn){
+  const out={isbn, title:"", author:"", pages:0, publisher:"", cover:""};
+  try{
+    const r=await fetch("https://api.openbd.jp/v1/get?isbn="+isbn);
+    const j=await r.json();
+    const s=j&&j[0]&&j[0].summary;
+    if(s){
+      out.title=s.title||""; out.publisher=s.publisher||"";
+      out.author=(s.author||"").replace(/,/g,"　").replace(/\s*著\s*$/,"").trim();
+      out.cover=s.cover||"";
+    }
+  }catch(e){}
+  try{
+    const q=encodeURIComponent('isbn="'+isbn+'"');
+    const r=await fetch("https://ndlsearch.ndl.go.jp/api/sru?operation=searchRetrieve"+
+      "&recordSchema=dcndl&maximumRecords=3&query="+q);
+    const xml=new DOMParser().parseFromString(await r.text(),"application/xml");
+    const pick=(node,tag)=>{
+      const els=node.getElementsByTagNameNS("*",tag);
+      return els.length? (els[0].textContent||"").trim() : "";
+    };
+    const recs=xml.getElementsByTagNameNS("*","recordData");
+    for(let i=0;i<recs.length;i++){
+      const inner=new DOMParser().parseFromString(recs[i].textContent,"application/xml");
+      const node=inner.documentElement&&!inner.querySelector("parsererror")? inner : recs[i];
+      const ext=pick(node,"extent");
+      const m=ext.match(/(\d+)\s*p/);
+      if(m && !out.pages) out.pages=parseInt(m[1],10);
+      if(!out.title) out.title=pick(node,"title");
+      if(!out.author) out.author=pick(node,"creator").replace(/\s*著\s*$/,"").trim();
+      if(out.pages) break;
+    }
+  }catch(e){}
+  if(!out.cover) out.cover="https://ndlsearch.ndl.go.jp/thumbnail/"+isbn+".jpg";
+  return out;
+}
+function fillFound(b){
+  $("aFound").hidden=false;
+  $("aTitle").value=b.title||"";
+  $("aAuthor").value=b.author||"著者不明";
+  $("aPages").value=b.pages||200;
+  const img=$("aCover");
+  if(b.cover){ img.hidden=false; img.src=b.cover; img.onerror=()=>{img.hidden=true;}; }
+  else img.hidden=true;
+}
+async function handleIsbn(raw){
+  const isbn=normIsbn(raw);
+  const msg=$("aLookMsg");
+  if(!isbn){ msg.className="hint warn";
+    msg.textContent="ISBNは 978 か 979 で始まる13桁です。裏表紙の上側のバーコードを読んでください"; return; }
+  /* 会社の推薦図書だったら、二重登録せずその本へ案内する */
+  const co=SEED_BOOKS.find(b=>b.isbn===isbn);
+  if(co){
+    stopCam();
+    $("aFound").hidden=true;
+    msg.className="hint"; msg.innerHTML="";
+    $("aLookMsg").insertAdjacentHTML("afterend",
+      `<div class="hit" id="aHit">これは<b>会社の推薦図書</b>です（${esc(co.div)} 優先順位 ${co.rank}）。<br>
+       <b>${esc(co.t)}</b><br>自分の本として足さず、そのまま記録できます。
+       <div style="margin-top:9px"><button type="button" class="btn primary sm" id="aGo">この本を記録する</button></div></div>`);
+    $("aGo").onclick=()=>{ addDlg.close(); openLog(co.id); };
+    return;
+  }
+  const dup=S.extra.find(b=>b.isbn===isbn);
+  if(dup){ msg.className="hint warn";
+    msg.textContent=`「${dup.t}」はもう本だなにあります`; return; }
+  msg.className="hint"; msg.textContent="調べています…";
+  const b=await lookupIsbn(isbn);
+  if(!b.title){ msg.className="hint warn";
+    msg.textContent="見つかりませんでした。書名とページ数を手で入れてください";
+    $("aFound").hidden=false; return; }
+  msg.className="hint";
+  msg.textContent=`${b.publisher||"出版社不明"}${b.pages?" ／ "+b.pages+"ページ":" ／ ページ数は手で入れてください"}`;
+  fillFound(b);
+  $("aIsbn").value=isbn;
+}
+
+/* ---- カメラ ---- */
+let camStream=null, camTimer=null, detector=null;
+const canScan = ("BarcodeDetector" in window);
+function stopCam(){
+  if(camTimer){ clearInterval(camTimer); camTimer=null; }
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+  $("aCam").hidden=true;
+}
+async function startCam(){
+  if(!canScan){ toast("この端末はバーコード読み取りに対応していません"); return; }
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia(
+      {video:{facingMode:{ideal:"environment"}, width:{ideal:1280}}, audio:false});
+  }catch(e){
+    $("aCamMsg").textContent="";
+    $("aLookMsg").className="hint warn";
+    $("aLookMsg").textContent="カメラを使えませんでした。ブラウザの設定でカメラを許可するか、ISBNを手で入れてください";
+    return;
+  }
+  const v=$("aVideo");
+  v.srcObject=camStream; v.setAttribute("playsinline",""); await v.play().catch(()=>{});
+  $("aCam").hidden=false; $("aCamMsg").textContent="バーコードにかざしてください";
+  detector=detector||new window.BarcodeDetector({formats:["ean_13"]});
+  camTimer=setInterval(async()=>{
+    try{
+      const codes=await detector.detect(v);
+      for(const c of codes){
+        const isbn=normIsbn(c.rawValue);          /* 下段の価格バーコード(192…)は弾かれる */
+        if(isbn){
+          $("aCamMsg").textContent="読み取りました: "+isbn;
+          stopCam(); if(navigator.vibrate) navigator.vibrate(40);
+          handleIsbn(isbn); return;
+        }
+      }
+    }catch(e){}
+  },220);
+}
+$("aScan").onclick=startCam;
+$("aCamStop").onclick=stopCam;
+$("aLookup").onclick=()=>handleIsbn($("aIsbn").value);
+$("aIsbn").addEventListener("keydown",e=>{ if(e.key==="Enter"){e.preventDefault(); handleIsbn($("aIsbn").value);} });
+
+document.getElementById("addBtn").onclick=()=>{
+  ["aIsbn","aTitle","aAuthor"].forEach(k=>$(k).value="");
+  $("aPages").value=200; $("aFound").hidden=true; $("aCover").hidden=true;
+  $("aLookMsg").className="hint"; $("aLookMsg").textContent="";
+  const hit=$("aHit"); if(hit) hit.remove();
+  $("aScan").hidden=!canScan;
+  $("aScanHint").textContent = canScan
+    ? "裏表紙の上のバーコード（978で始まるほう）を写すと、書名とページ数が入ります"
+    : "この端末はカメラ読み取りに未対応です。ISBNの13桁を入れると自動で調べます";
+  addDlg.showModal();
+};
+document.getElementById("aCancel").onclick=()=>{ stopCam(); addDlg.close(); };
+addDlg.addEventListener("close",stopCam);
 document.getElementById("aSave").onclick=()=>{
-  const t=document.getElementById("aTitle").value.trim();
-  const a=document.getElementById("aAuthor").value.trim()||"著者不明";
-  const p=Math.max(1,+document.getElementById("aPages").value||200);
-  if(!t){ toast("書名を入れてください"); return; }
-  S.extra.push({id:"p:"+t+"|"+a, div:"自分の本", rank:null, cat:"未踏の海",
-    t, sub:"", a, p, origin:"personal"});
+  const t=$("aTitle").value.trim();
+  const a=$("aAuthor").value.trim()||"著者不明";
+  const p=Math.max(1,+$("aPages").value||200);
+  const isbn=normIsbn($("aIsbn").value);
+  if(!t){ toast("書名を入れてください（バーコードを撮るか、ISBNを調べると自動で入ります）"); return; }
+  stopCam();
+  S.extra.push({id: isbn? "p:isbn:"+isbn : "p:"+t+"|"+a, div:"自分の本", rank:null,
+    cat:"未踏の海", t, sub:"", a, p, origin:"personal", isbn:isbn||null});
   save(); addDlg.close();
-  document.getElementById("aTitle").value=""; document.getElementById("aAuthor").value="";
   renderAll(); toast(`「${t}」を 未踏の海に 植えた`);
 };
 addDlg.querySelector("form").addEventListener("submit",e=>{
