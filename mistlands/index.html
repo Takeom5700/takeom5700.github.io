@@ -357,6 +357,9 @@ dialog::backdrop{background:color-mix(in srgb,#2A1C10 62%,transparent)}
 .din .sub{font-family:var(--f-num); font-size:11px; color:var(--ink-sub); margin:3px 0 16px}
 label{display:block; font-family:var(--f-disp); font-weight:700; font-size:12.5px;
   color:var(--ink-sub); margin:14px 0 5px}
+select{width:100%; font:inherit; font-size:15px; padding:9px 12px; background:var(--paper);
+  color:var(--ink); border:2.5px solid var(--line); border-radius:var(--r)}
+select:focus{outline:none; border-color:var(--sun)}
 input,textarea{width:100%; font:inherit; font-size:15px; padding:9px 12px; background:var(--paper);
   color:var(--ink); border:2.5px solid var(--line); border-radius:var(--r); caret-color:var(--sun)}
 input[type=number]{font-family:var(--f-num)}
@@ -383,16 +386,16 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 .axbar{flex:1; height:7px; border:2px solid var(--ink); border-radius:var(--r-pill);
   background:var(--paper); overflow:hidden; min-width:14px}
 .axbar i{display:block; height:100%; transition:width .8s cubic-bezier(.22,1,.36,1)}
-.axrow{display:grid; grid-template-columns:26px 1fr 90px 40px; gap:9px; align-items:center;
-  padding:5px 0; font-size:12px}
+.axrow{display:grid; grid-template-columns:30px minmax(0,1fr) 84px 42px; gap:10px;
+  align-items:center; padding:5px 0; font-size:12.5px}
 .axrow b{font-family:var(--f-disp); font-size:16px}
-.axrow em{font-style:normal; color:var(--ink-sub); font-size:11.5px;
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.axrow em{font-style:normal; color:var(--ink-sub); font-size:12px; white-space:normal;
+  line-height:1.45; word-break:keep-all; overflow-wrap:anywhere}
 .axrow .axn{font-family:var(--f-num); font-size:11px; color:var(--ink-sub); text-align:right}
 .axrow.dom{background:color-mix(in srgb,var(--sun) 12%,transparent); border-radius:8px;
   padding:5px 8px; margin:0 -8px}
 .panel .note{font-size:12px; color:var(--ink-sub); line-height:1.8; margin:0}
-@media (max-width:720px){ .axrow{grid-template-columns:24px 1fr 56px 34px} }
+@media (max-width:720px){ .axrow{grid-template-columns:26px minmax(0,1fr) 54px 36px; gap:7px} }
 
 /* ---------- バーコードで本を足す ---------- */
 .scanbar{display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin:4px 0 2px}
@@ -415,6 +418,43 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 .hit{margin-top:11px; padding:12px 14px; border:2.5px solid var(--sun); border-radius:var(--r);
   background:color-mix(in srgb,var(--sun) 14%,transparent); font-size:12.5px; line-height:1.7}
 .hit b{font-family:var(--f-disp)}
+
+/* ---------- 遠征 ---------- */
+.slots{display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:11px}
+.slot{border:2.5px solid var(--line); border-radius:var(--r); padding:12px 13px; background:var(--paper);
+  display:flex; flex-direction:column; gap:9px}
+.slot.on{border-color:var(--ink); background:var(--card)}
+.slot-h{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.slot-h b{font-family:var(--f-disp); font-size:14.5px}
+.slot-h em{font-style:normal; font-size:11px; color:var(--ink-sub)}
+.slot-u{display:flex; align-items:center; gap:10px}
+.slot-u svg{flex:none}
+.slot-u b{font-family:var(--f-disp); font-size:13px; display:block}
+.slot-u em{font-style:normal; font-size:11px; color:var(--ink-sub); display:block; line-height:1.6}
+.slot-empty{font-size:12px; color:var(--ink-sub); padding:10px 0}
+.slot .btn{align-self:flex-start}
+.loglist{display:flex; flex-direction:column; gap:8px; max-height:min(52vh,420px); overflow-y:auto}
+.logrow{display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-radius:var(--r);
+  background:var(--paper); border:2px solid var(--line)}
+.logrow svg{flex:none}
+.logdot{width:30px; height:30px; border-radius:50%; border:2px dashed var(--line); flex:none}
+.logrow span{font-size:12.5px; line-height:1.7; display:block}
+.logrow em{font-style:normal; font-size:10.5px; color:var(--ink-sub); font-family:var(--f-num)}
+.itemgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:9px;
+  max-height:min(52vh,420px); overflow-y:auto}
+.itm{background:var(--paper); border:2.5px solid var(--line); border-radius:var(--r); padding:9px 5px 7px;
+  display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer;
+  transition:transform .14s cubic-bezier(.34,1.6,.5,1)}
+.itm:hover{transform:translateY(-3px); border-color:var(--ink)}
+.itm b{font-family:var(--f-disp); font-size:10.5px; line-height:1.4; text-align:center}
+.itm em{font-style:normal; font-size:10px; color:var(--ink-sub); font-family:var(--f-num)}
+.picklist{display:flex; flex-direction:column; gap:8px; max-height:46vh; overflow-y:auto; margin-top:8px}
+.pickrow{display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:var(--r);
+  border:2.5px solid var(--line); background:var(--paper); cursor:pointer; text-align:left; width:100%}
+.pickrow:hover{border-color:var(--ink)}
+.pickrow.busy{opacity:.6}
+.pickrow b{font-family:var(--f-disp); font-size:13.5px; display:block}
+.pickrow em{font-style:normal; font-size:11px; color:var(--ink-sub); display:block; line-height:1.6}
 
 /* ---------- 記録の持ち出し ---------- */
 .xsep{height:2px; background:var(--hair); margin:20px 0 4px; border-radius:2px}
@@ -528,6 +568,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
     <button role="tab" aria-selected="true" data-v="map">地図</button>
     <button role="tab" aria-selected="false" data-v="shelf">本だな</button>
     <button role="tab" aria-selected="false" data-v="buddy">相棒</button>
+    <button role="tab" aria-selected="false" data-v="exped">遠征</button>
     <button role="tab" aria-selected="false" data-v="tower">知の塔</button>
   </nav>
 
@@ -568,15 +609,14 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <p>ページを記録すると霧が晴れます。その霧が相棒のごはんです。たくさん読むほど大きくなります。</p>
         <div class="evolist" id="evolist"></div>
       </div>
-      <div class="panel">
+      <div class="panel" style="grid-column:1/-1">
         <h3>何によって育つか</h3>
-        <p>読んだ本の分野と、書名の言葉から5つの軸が伸びます。伸び方で進化先が変わります。</p>
+        <p>読んだ本によって伸びる場所が変わります。</p>
         <div id="axisPanel"></div>
       </div>
       <div class="panel">
         <h3>仲間</h3>
-        <p>地域で本を読み終えるほど、その土地の子が増えます（1・3・6・10・15冊…と三角数で、上限なし）。
-           いちど仲間になった子は、本が増えても減っても、いなくなりません。</p>
+        <p>その土地の本を読み終えるほど、住みつく子が増えていきます。</p>
         <div class="friends" id="friends"></div>
       </div>
       <div class="panel">
@@ -586,8 +626,26 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       </div>
       <div class="panel">
         <h3>読み手としての称号</h3>
-        <p>累計ページ数で決まります。世代が替わってもリセットされません。読み続けるかぎり上がり続けます。</p>
         <div id="titleNow"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="v-exped">
+    <div class="panel">
+      <h3>土地に送り出す</h3>
+      <p>置いておくと、1時間に1度なにかを見つけてきます。いつでも入れ替えられます。</p>
+      <div class="slots" id="expSlots"></div>
+    </div>
+    <div class="two" style="margin-top:16px">
+      <div class="panel">
+        <h3>便り</h3>
+        <div class="loglist" id="expLog"></div>
+      </div>
+      <div class="panel">
+        <h3>おみやげ</h3>
+        <div class="kv" id="expCount" style="margin-bottom:10px"></div>
+        <div class="itemgrid" id="expItems"></div>
       </div>
     </div>
   </section>
@@ -599,8 +657,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       <div>
         <div class="panel">
           <h3>空へ積む</h3>
-          <p>読み終えた本が下から一層ずつ積み上がります。層の厚みはページ数、色は分野。
-             高くなるほど空の景色が変わり、そこに住むものが見えてきます。</p>
+          <p>読み終えた本が下から一層ずつ積み上がります。高くなるほど空の景色が変わります。</p>
           <div class="kv" id="towerStat"></div>
         </div>
         <div class="panel" style="margin-top:14px">
@@ -681,6 +738,8 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       <label for="aAuthor">著者</label><input type="text" id="aAuthor">
       <label for="aPages">ぜんぶで何ページ？</label>
       <input type="number" id="aPages" min="1" value="200">
+      <label for="aCat">分野</label>
+      <select id="aCat"></select>
     </div>
   </div>
   <div class="dact">
@@ -717,6 +776,27 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   <div id="xPrev"></div>
   <div class="dact">
     <button type="button" class="btn quiet" id="xClose">とじる</button>
+  </div>
+</form></dialog>
+
+<dialog id="pickDlg"><form method="dialog" class="din">
+  <h2>どの子を送りますか</h2>
+  <div class="sub" id="pickTitle">—</div>
+  <div class="picklist" id="pickList"></div>
+  <div class="dact">
+    <button type="button" class="btn quiet" id="pickClear">引きあげる</button>
+    <button type="button" class="btn quiet" id="pickCancel">とじる</button>
+  </div>
+</form></dialog>
+
+<dialog id="itemDlg"><form method="dialog" class="din" style="text-align:center">
+  <div id="itemArt" style="display:flex;justify-content:center"></div>
+  <h2 id="itemName" style="margin-top:8px">—</h2>
+  <div class="sub" id="itemMeta">—</div>
+  <p id="itemDesc" style="font-size:13.5px;line-height:1.9;color:var(--ink-sub);margin:0 0 10px"></p>
+  <div class="kv" id="itemHave"></div>
+  <div class="dact" style="justify-content:center">
+    <button type="button" class="btn primary" id="itemClose">とじる</button>
   </div>
 </form></dialog>
 
@@ -917,10 +997,13 @@ let S=load();
 function load(){
   try{ const r=JSON.parse(localStorage.getItem(KEY));
     if(r&&r.rec){ r.extra=r.extra||[]; r.synth=r.synth||[]; r.dayXp=r.dayXp||{}; r.ord=r.ord||{};
+      r.extra.forEach(b=>{ if(!b.div||b.div==="自分の本") b.div="その他";
+                           if(!b.cat) b.cat="未踏の海"; });
       r.gen=r.gen||1; r.genBase=r.genBase||0; r.ancestors=r.ancestors||[];
+      r.exped=r.exped||{}; r.items=r.items||{}; r.expLog=r.expLog||[];
       r.pat=r.pat||0; r.name=r.name||"モヤ"; r.streak=r.streak||0; return r; } }catch(e){}
   return {rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ",
-          lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[]};
+          lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[]};
 }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 function books(){ return SEED_BOOKS.concat(S.synth, S.extra); }
@@ -964,8 +1047,9 @@ function buildWorld(){
   const bs=books(); S._ordDirty=false;
   const cmap={};
   bs.forEach(b=>{
-    const dv=b.origin==="company"?b.div:"自分の本";
-    const ct=b.origin==="company"?b.cat:"未踏の海";
+    /* 自分で足した本も会社の本と同じ地域に置く。
+       あとで会社の指定本になっても、同じ場所のまま引き継がれる */
+    const dv=b.div||"その他", ct=b.cat||"未踏の海";
     const C=cmap[dv]=cmap[dv]||{name:dv, i:ordIdx("cont",dv), regions:[], rmap:{}};
     let R=C.rmap[ct];
     if(!R){ R=C.rmap[ct]={name:ct, i:ordIdx("rgn:"+dv,ct), cont:C, books:[]}; C.regions.push(R); }
@@ -1083,7 +1167,7 @@ const CAT_HINT=[
  [/課題|問題解決|論点|仮説|統計|データ|分析|機械学習|数理|数学|思考|ロジ|アルゴリズム/,0],
  [/マネジ|経営|戦略|組織|リーダー|人材|統率|人事|基本動作|コンサル|企画/,1],
  [/アウトプット|設計|実務|技術|開発|基盤|エンジニア|工学|建築|製造|品質|資料|業務|情報設計|UX|UI|デザイン実務/,2],
- [/コミュ|伝達|対人|心理|交渉|営業|接客|顧客|要約|日本語|プレゼン|人間関係|коуч|コーチ/,3],
+ [/コミュ|伝達|対人|心理|交渉|営業|接客|顧客|要約|日本語|プレゼン|人間関係|コーチ/,3],
  [/産業|商業|金融|会計|財務|投資|ファイナンス|経済|マーケ|流通|物流|不動産|起業|副業/,4],
  [/自然科学|物理|化学|生物|医学|薬|健康|宇宙|地学|環境|脳|栄養/,5],
  [/哲学|宗教|思想|倫理|道徳|仏教|禅|神|スピリチュ|生き方|自己啓発/,6],
@@ -1335,10 +1419,12 @@ function creatureSVG(sp,size,md){
      +`<circle cx="${cx-R*0.34}" cy="${cy+R*0.55}" r="${R*0.15}" fill="${hue}" opacity=".5"/>`;
     return g+`</g></svg>`;
   }
-  const showArch=st_>=3, showElem=st_>=4, showEpi=st_>=5;
+  /* 幼体の時点でもう顔つき・体つきが分かれる。手足や翼は育つにつれて出る */
+  const lvBody=st_>=2, lvLimb=st_>=3, showElem=st_>=4, showEpi=st_>=5;
+  const showArch=lvBody;
   const ec=showElem? E.c : hue;
   /* --- うしろの部位 --- */
-  const back=showElem? A.back : (showArch&&A.back==="mane"?"mane":"none");
+  const back = showElem? A.back : "none";
   const B={
    wingFeather:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.7},${cy-R*0.35} q${d*R*1.25},${-R*0.75} ${d*R*1.35},${R*0.35} q${-d*R*0.45},${R*0.45} ${-d*R*1.35},${R*0.05} z" fill="${ec}" opacity=".85" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
    wingBig:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.4},${cy-R*0.4} q${d*R*1.7},${-R*1.1} ${d*R*1.55},${R*0.25} q${d*R*0.35},${R*0.95} ${-d*R*1.55},${R*0.35} z" fill="${ec}" opacity=".82" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
@@ -1352,7 +1438,7 @@ function creatureSVG(sp,size,md){
   };
   g+=(B[back]||B.none)();
   /* --- しっぽ --- */
-  const tail=showArch? A.tail : "none";
+  const tail = lvLimb? A.tail : "none";
   const T={
    long:()=>`<path d="M${cx+R*0.85},${cy+R*0.35} q${R*0.9},${R*0.3} ${R*0.7},${-R*0.7}" fill="none" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}" stroke-linecap="round"/><circle cx="${cx+R*1.6}" cy="${cy-R*0.3}" r="${R*0.2}" fill="${ec}" stroke="${ink}" stroke-width="${w2}"/>`,
    curl:()=>`<path d="M${cx+R*0.8},${cy+R*0.3} q${R*0.85},${-R*0.1} ${R*0.55},${-R*0.75} q${-R*0.3},${-R*0.35} ${-R*0.6},${R*0.05}" fill="none" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}" stroke-linecap="round"/>`,
@@ -1368,7 +1454,8 @@ function creatureSVG(sp,size,md){
   };
   g+=(T[tail]||T.none)();
   /* --- からだ --- */
-  const bd=showArch? A.body : "round";
+  const bd = lvBody ? A.body
+    : (st_===1 ? ["round","bell","long","tall","wide","boxy"][(sp.dom||0)%6] : "round");
   const bw={round:1,long:1.18,tall:0.86,wide:1.24,boxy:1.06,bell:1.0}[bd]||1;
   const bh={round:1,long:0.86,tall:1.2,wide:0.9,boxy:0.98,bell:1.05}[bd]||1;
   if(bd==="boxy")
@@ -1377,11 +1464,17 @@ function creatureSVG(sp,size,md){
     g+=`<path d="M${cx-R},${cy+R*0.4} a${R},${R*1.15} 0 1,1 ${R*2},0 q${-R*0.5},${R*0.3} ${-R},0 q${-R*0.5},${R*0.3} ${-R},0 z" fill="${skin}" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}"/>`;
   else
     g+=`<ellipse cx="${cx}" cy="${cy}" rx="${R*bw}" ry="${R*bh}" fill="${skin}" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}"/>`;
+  /* もやの段階でも、伸びている軸の色のしるしが出る */
+  if(st_===1 && AXES[sp.dom||0]){
+    const ac=AXES[sp.dom||0].c;
+    g+=`<path d="M${cx-R*0.2},${cy-R*1.05} q${R*0.3},${-R*0.5} ${R*0.4},${-R*0.05}
+      q${-R*0.2},${R*0.3} ${-R*0.4},${R*0.05} z" fill="${ac}" opacity=".85"/>`;
+  }
   /* ほっぺ */
   g+=`<circle cx="${cx-R*0.58}" cy="${cy+R*0.22}" r="${R*0.18}" fill="${hue}" opacity=".6"/>`
    + `<circle cx="${cx+R*0.58}" cy="${cy+R*0.22}" r="${R*0.18}" fill="${hue}" opacity=".6"/>`;
   /* --- あし --- */
-  const legs=showArch? A.legs : "paw";
+  const legs = lvLimb? A.legs : (st_>=2? "paw" : "none");
   const L={
    paw:()=>[-1,1].map(d=>`<ellipse cx="${cx+d*R*0.42}" cy="${cy+R*(bh*0.96)}" rx="${R*0.24}" ry="${R*0.14}" fill="${skin}" stroke="${ink}" stroke-width="${w2}"/>`).join(""),
    claw:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.55},${cy+R*bh*0.86} l0,${R*0.24} m${-R*0.16},0 l${R*0.32},0" stroke="${ink}" stroke-width="${w2}" stroke-linecap="round" fill="none"/>`).join(""),
@@ -1391,7 +1484,7 @@ function creatureSVG(sp,size,md){
   };
   g+=(L[legs]||L.paw)();
   /* --- 耳・角 --- */
-  const ear=showArch? A.ear : (st_>=2? "round":"none");
+  const ear = lvBody? A.ear : "none";
   const EAR={
    round:()=>[-1,1].map(d=>`<circle cx="${cx+d*R*0.66}" cy="${cy-R*bh*0.78}" r="${R*0.26}" fill="${skin}" stroke="${ink}" stroke-width="${w2}"/>`).join(""),
    point:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.3},${cy-R*bh*0.8} L${cx+d*R*0.72},${cy-R*bh*1.5} L${cx+d*R*0.86},${cy-R*bh*0.62} z" fill="${skin}" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
@@ -1406,7 +1499,7 @@ function creatureSVG(sp,size,md){
   };
   g+=(EAR[ear]||EAR.none)();
   /* --- 目 --- */
-  const ey=cy-R*0.16, ex=R*0.35, eye=showArch? A.eye : "dot";
+  const ey=cy-R*0.16, ex=R*0.35, eye=lvBody? A.eye : "dot";
   if(md==="happy"||md==="full"){
     g+=[-1,1].map(d=>`<path d="M${cx+d*ex-R*0.17},${ey+R*0.05} q${R*0.17},${-R*0.26} ${R*0.34},0" fill="none" stroke="${ink}" stroke-width="${(3*k).toFixed(2)}" stroke-linecap="round"/>`).join("");
   }else{
@@ -1424,7 +1517,7 @@ function creatureSVG(sp,size,md){
     if(md==="hungry") g+=[-1,1].map(d=>`<path d="M${cx+d*ex-R*0.2},${ey-R*0.38} q${R*0.2},${-R*0.1} ${R*0.4},${R*0.03}" fill="none" stroke="${ink}" stroke-width="${(2*k).toFixed(2)}" stroke-linecap="round"/>`).join("");
   }
   /* --- くち --- */
-  const my=cy+R*0.4, mouth=showArch? A.mouth : "smile";
+  const my=cy+R*0.4, mouth=lvBody? A.mouth : "smile";
   const M={
    smile:()=>`<path d="M${cx-R*0.17},${my-R*0.05} q${R*0.17},${R*0.2} ${R*0.34},0" fill="none" stroke="${ink}" stroke-width="${(2.5*k).toFixed(2)}" stroke-linecap="round"/>`,
    fang:()=>`<path d="M${cx-R*0.2},${my-R*0.05} q${R*0.2},${R*0.22} ${R*0.4},0" fill="none" stroke="${ink}" stroke-width="${(2.5*k).toFixed(2)}" stroke-linecap="round"/><path d="M${cx-R*0.1},${my+R*0.03} l${R*0.07},${R*0.14} l${R*0.07},${-R*0.14}" fill="#fff" stroke="${ink}" stroke-width="${(1.4*k).toFixed(2)}"/>`,
@@ -1472,19 +1565,26 @@ function petSVG(stage,md,hue,size,spec){
   return creatureSVG(sp,size,md||"ok");
 }
 
-/* ---------- 読み手としての称号（相棒の二つ名とは別物。累計ページで上がる） ---------- */
-const TITLES=[[0,"読みはじめ"],[900,"読み手"],[2600,"旅の読み手"],[6000,"踏破者"],
-  [13000,"万巻の徒"],[26000,"大読破者"],[52000,"書架のぬし"]];
+/* ---------- 読み手としての称号 ----------
+   位9 × 読み方8 × 分野12 = 864通り。次に何になるかは見えない */
+const T_MOD=["","疾き","深き","絶えざる","遍き","仕えし","おのれの","慈しむ"];
+const T_AXIS=["論の","衆の","技の","心の","財の","理の","玄の","史の","雅の","言の","詩の","博の"];
+const T_RANK=["読み手","徒","士","者","匠","師","賢","聖","極"];
+const T_STEP=[0,300,900,2000,4000,8000,16000,32000,64000];
+const T_NUM=["","","弐","参","肆","伍","陸","漆","捌","玖","拾"];
+function titleTier(p){ let t=0; T_STEP.forEach((v,i)=>{ if(p>=v) t=i; }); return t; }
 function title(){
-  const p=pagesRead(); let t=TITLES[0][1];
-  TITLES.forEach(x=>{ if(p>=x[0]) t=x[1]; });
-  if(p>=104000) t=`第${Math.floor(Math.log2(p/52000))+1}階梯の賢者`;
-  return t;
+  const p=pagesRead(), tier=titleTier(p);
+  const e=(S.evo&&S.evo["g"+genNo()])||{};
+  const dom=(e.dom!==undefined)? e.dom : profile().dom;
+  let rank=T_RANK[tier];
+  if(p>=T_STEP[8]){
+    const over=Math.floor(Math.log2(p/T_STEP[8]))+1;
+    if(over>1) rank+=" "+T_NUM[Math.min(10,over)];
+  }
+  return T_MOD[epithetIndex()%T_MOD.length]+T_AXIS[dom%T_AXIS.length]+rank;
 }
-function nextTitle(){
-  const p=pagesRead(), nx=TITLES.find(x=>p<x[0]);
-  return nx? {need:nx[0]-p, name:nx[1]} : null;
-}
+function nextTitleNeed(){ const p=pagesRead(), nx=T_STEP.find(v=>p<v); return nx? nx-p : null; }
 /* ---------- 旅立ち。姿ごと記録に残す ---------- */
 function depart(){
   const sp=petSpec();
@@ -1832,14 +1932,12 @@ function renderShelf(){
   if(filter==="todo") list=list.filter(b=>st(b.id).page===0);
   const W=WORLD;
   const groups={};
-  list.forEach(b=>{ const k=b.origin==="company"?b.div:"自分で足した本";
-    (groups[k]=groups[k]||[]).push(b); });
+  list.forEach(b=>{ const k=b.div||"その他"; (groups[k]=groups[k]||[]).push(b); });
   Object.keys(groups).forEach(k=>{
     const h=document.createElement("div"); h.className="grp";
     const any=groups[k][0], R=regionOf(any);
     h.innerHTML=`<span class="dot" style="background:${R?R.hue:"var(--leaf)"}"></span>
-      ${esc(k)}${k==="自分で足した本"?"":"（補助が出る）"}
-      <span class="n">${groups[k].length}冊</span>`;
+      ${esc(k)}<span class="n">${groups[k].length}冊</span>`;
     box.appendChild(h);
     groups[k].sort((a,b)=>(a.rank||999)-(b.rank||999)).forEach(b=>{
       const s=st(b.id), prog=Math.min(1,s.page/b.p), done=prog>=1, Rg=regionOf(b);
@@ -1898,8 +1996,7 @@ function renderBuddyTab(){
        ${si>=3?`いまは <b>${esc(ARCH[sp.arch].n)}</b> の系統です。`:"もう少し読むと系統が見えてきます。"}
        ${si>=4?`属性は <b>${esc(ELEM[sp.elem].n)}</b>。`:""}
        ${si>=5?`二つ名「${esc(EPITHET[sp.epi])}」は ${esc(EPITHET_D[sp.epi])} ことから付きました。`:""}
-       <br>系統${ARCH.length} × 属性${ELEM.length} × 二つ名${EPITHET.length} = <b>${(ARCH.length*ELEM.length*EPITHET.length).toLocaleString()}通り</b>の最終形態があります。
-       軸は日本十進分類法の全10類を覆う${NAX}本です。</p>`;
+       <br>行き着く姿は <b>${(ARCH.length*ELEM.length*EPITHET.length).toLocaleString()}通り</b>あります。</p>`;
   /* 守り神 */
   const anc=(S.ancestors||[]);
   document.getElementById("ancPanel").innerHTML= anc.length
@@ -1909,11 +2006,11 @@ function renderBuddyTab(){
         ${a.pages.toLocaleString()}ページ地点で旅立ち</em></div></div>`).join("")
     : `<div class="empty-box" style="padding:22px 14px">まだ誰も旅立っていません。<br>
        いまの相棒が育ち切ると、ここに名前と姿が残ります。</div>`;
-  const nt=nextTitle();
+  const need=nextTitleNeed();
   document.getElementById("titleNow").innerHTML=
-    `<b style="font-family:var(--f-disp);font-size:19px">${esc(title())}</b>
-     <div class="kv" style="margin-top:4px">累計 ${pagesRead().toLocaleString()} ページ${
-       nt? ` ／ あと ${nt.need.toLocaleString()} ページで「${esc(nt.name)}」` : " ／ 最高位を更新中"}</div>`;
+    `<b style="font-family:var(--f-disp);font-size:23px;letter-spacing:.04em">${esc(title())}</b>
+     <div class="kv" style="margin-top:5px">${pagesRead().toLocaleString()} ページ${
+       need? ` ／ つぎは あと ${need.toLocaleString()} ページ` : ""}</div>`;
   /* 仲間 */
   document.getElementById("friends").innerHTML=friendList().map(f=>
     `<div class="friend ${f.got?"":"locked"}">
@@ -2122,7 +2219,7 @@ function renderTower(){
   /* つぎの景色 */
   const nb=BANDS.find(b=>b.p>donePages);
   if(nb) g+=`<text x="${cx}" y="${Math.max(20,baseY-towerU-84)}" text-anchor="middle"
-    class="tnote">あと ${(nb.p-donePages).toLocaleString()} ページで「${nb.n}」</text>`;
+    class="tnote">あと ${(nb.p-donePages).toLocaleString()} ページで つぎの空へ</text>`;
 
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   svg.innerHTML=g;
@@ -2139,11 +2236,11 @@ function renderTower(){
   document.getElementById("bands").innerHTML=BANDS.map(b=>{
     const got=donePages>=b.p;
     return `<div class="bandrow ${got?"got":""}">
-      <span class="bdot" style="background:${b.c}"></span>
-      <b>${b.n}</b><em>${b.d}</em>
+      <span class="bdot" style="background:${got?b.c:"var(--line)"}"></span>
+      <b>${got?esc(b.n):"？ ？ ？"}</b><em>${got?esc(b.d):""}</em>
       <span class="bp">${b.p.toLocaleString()}p</span></div>`;
-  }).join("")+`<div class="bandrow"><span class="bdot" style="background:#0A1038"></span>
-    <b>その先</b><em>星がふえていく。終わりはありません</em><span class="bp">∞</span></div>`;
+  }).join("")+`<div class="bandrow"><span class="bdot" style="background:var(--line)"></span>
+    <b>？ ？ ？</b><em></em><span class="bp">∞</span></div>`;
 }
 
 /* ============================================================
@@ -2220,6 +2317,35 @@ function eat(){
 /* ============================================================
    9. 追加・お知らせ・その他
    ============================================================ */
+/* 自分の本も会社の本と同じ地域に入れるため、分野を選ぶ。
+   会社のリストにある分野＋一般的な分野から選べる */
+const GENERIC_CATS=[["その他","哲学・思想"],["その他","歴史・地理"],["その他","芸術・音楽"],
+  ["その他","語学"],["その他","小説・文学"],["その他","自然科学"],["その他","産業・経済"],
+  ["その他","教養・総記"],["その他","未踏の海"]];
+function catOptions(){
+  const seen={}, out=[];
+  books().forEach(b=>{ if(b.origin!=="company") return;
+    const k=(b.div||"")+"|"+(b.cat||""); if(!seen[k]){ seen[k]=1; out.push([b.div,b.cat]); } });
+  (S.extra||[]).forEach(b=>{ const k=(b.div||"")+"|"+(b.cat||"");
+    if(!seen[k]){ seen[k]=1; out.push([b.div||"その他",b.cat||"未踏の海"]); } });
+  GENERIC_CATS.forEach(c=>{ const k=c[0]+"|"+c[1]; if(!seen[k]){ seen[k]=1; out.push(c); } });
+  return out;
+}
+function guessCat(txt,opts){
+  let ai=-1;
+  for(const h of WORD_HINT) if(h[0].test(txt)){ ai=h[1]; break; }
+  if(ai<0) return opts.length-1;
+  for(let i=0;i<opts.length;i++){
+    for(const h of CAT_HINT) if(h[1]===ai && h[0].test(opts[i][1])) return i;
+  }
+  return opts.length-1;
+}
+function fillCatSelect(txt){
+  const sel=document.getElementById("aCat"), opts=catOptions();
+  sel.innerHTML=opts.map((c,i)=>`<option value="${i}">${esc(c[0]==="その他"?c[1]:c[0]+" ／ "+c[1])}</option>`).join("");
+  sel._opts=opts;
+  if(txt) sel.value=String(guessCat(txt,opts));
+}
 const addDlg=document.getElementById("addDlg"), nameDlg=document.getElementById("nameDlg");
 const $=id=>document.getElementById(id);
 
@@ -2273,6 +2399,7 @@ function fillFound(b){
   const img=$("aCover");
   if(b.cover){ img.hidden=false; img.src=b.cover; img.onerror=()=>{img.hidden=true;}; }
   else img.hidden=true;
+  fillCatSelect((b.title||"")+(b.publisher||""));
 }
 async function handleIsbn(raw){
   const isbn=normIsbn(raw);
@@ -2493,6 +2620,7 @@ document.getElementById("addBtn").onclick=()=>{
   $("aPages").value=200; $("aFound").hidden=true; $("aCover").hidden=true;
   $("aLookMsg").className="hint"; $("aLookMsg").textContent="";
   const hit=$("aHit"); if(hit) hit.remove();
+  fillCatSelect("");
   $("aScan").hidden=!canScan;
   $("aScanHint").textContent =
     "裏表紙の上のバーコード（978で始まるほう）を読みます。うまくいかないときは「写真を撮る」で1枚撮るか、ISBNの13桁を手で入れてください";
@@ -2507,8 +2635,9 @@ document.getElementById("aSave").onclick=()=>{
   const isbn=normIsbn($("aIsbn").value);
   if(!t){ toast("書名を入れてください（バーコードを撮るか、ISBNを調べると自動で入ります）"); return; }
   stopCam();
-  S.extra.push({id: isbn? "p:isbn:"+isbn : "p:"+t+"|"+a, div:"自分の本", rank:null,
-    cat:"未踏の海", t, sub:"", a, p, origin:"personal", isbn:isbn||null});
+  const sel=$("aCat"), oc=(sel._opts&&sel._opts[+sel.value])||["その他","未踏の海"];
+  S.extra.push({id: isbn? "p:isbn:"+isbn : "p:"+t+"|"+a, div:oc[0], rank:null,
+    cat:oc[1], t, sub:"", a, p, origin:"personal", isbn:isbn||null});
   save(); addDlg.close();
   renderAll(); toast(`「${t}」を 未踏の海に 植えた`);
 };
@@ -2524,6 +2653,12 @@ document.getElementById("nSave").onclick=()=>{
 };
 nameDlg.querySelector("form").addEventListener("submit",e=>{
   e.preventDefault(); document.getElementById("nSave").click(); });
+document.getElementById("pickCancel").onclick=()=>document.getElementById("pickDlg").close();
+document.getElementById("pickClear").onclick=()=>{
+  if(expPick&&S.exped){ delete S.exped[expPick]; save(); }
+  document.getElementById("pickDlg").close(); renderExped(); toast("引きあげました");
+};
+document.getElementById("itemClose").onclick=()=>document.getElementById("itemDlg").close();
 document.getElementById("dlgForm").addEventListener("submit",e=>{
   e.preventDefault(); document.getElementById("dSave").click(); });
 
@@ -2649,8 +2784,235 @@ document.getElementById("xCheck").onclick=()=>{
 };
 function applyImport(next,msg){
   S=Object.assign({rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ",
-    lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[]}, next);
+    lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[]}, next);
   save(); selected=null; mapFocus=null; xferDlg.close(); renderAll(); toast(msg);
+}
+
+/* ============================================================
+   9.7 遠征とおみやげ
+   仲間や守り神を土地に置いておくと、1時間に1度なにかを見つけてくる。
+   分野12 × 種別10 × 位階9 = 1,080種のおみやげを集められる。
+   ============================================================ */
+const ROLL_MS=3600000;
+const IKIND=[
+ {n:"巻物", d:"読み解かれるのを待っている"},
+ {n:"原石", d:"磨けば光りそうだ"},
+ {n:"羽根", d:"どこか遠くから流れてきた"},
+ {n:"種",   d:"まだ芽を出していない"},
+ {n:"鍵",   d:"どの扉のものかは分からない"},
+ {n:"貝",   d:"耳を当てると音がする"},
+ {n:"欠片", d:"もとの形は思い出せない"},
+ {n:"実",   d:"甘いのか苦いのかは食べてみないと"},
+ {n:"灯",   d:"消えそうで消えない"},
+ {n:"紋章", d:"誰かがここにいた証だ"}
+];
+const IRANK=[
+ {n:"ありふれた",w:34,c:0.0},{n:"くすんだ",w:24,c:0.1},{n:"ふつうの",w:16,c:0.2},
+ {n:"よく研がれた",w:10,c:0.35},{n:"珍しい",w:7,c:0.5},{n:"古びた",w:4.5,c:0.62},
+ {n:"秘された",w:2.6,c:0.76},{n:"幻の",w:1.3,c:0.88},{n:"伝説の",w:0.6,c:1.0}
+];
+/* 分野ごとの言葉。おみやげの名前と、遠征の出来事に使う */
+const LORE=[
+ {w:"論",  sp:["数式の刻まれた壁","ひずんだ砂時計の庭","証明の途中で止まった黒板"], th:["解けかけた証明","矛盾の欠片","整いすぎた数列"]},
+ {w:"衆",  sp:["誰もいない円卓","旗の立てられた丘","風の吹く関所"], th:["署名のない盟約","古い指令書","欠けた印章"]},
+ {w:"技",  sp:["油の匂いのする工房","組みかけの機械","図面だらけの机"], th:["合わない歯車","職人の覚書","焼き入れの跡"]},
+ {w:"心",  sp:["言葉の残る酒場","手紙の束が置かれた窓辺","二人分の椅子"], th:["返事の来ない手紙","誰かの口ぐせ","名前の消えた名札"]},
+ {w:"財",  sp:["帳簿の積まれた蔵","閉じた市場","秤の壊れた店先"], th:["合わない帳尻","古い為替","値のつかない品"]},
+ {w:"理",  sp:["標本の並ぶ棚","星を映す水面","凍った温室"], th:["名のない標本","観測の記録","眠ったままの胞子"]},
+ {w:"玄",  sp:["問いだけが書かれた石碑","答えのない祭壇","霧の濃い辻"], th:["削られた戒律","伏せられた問い","誰かの覚悟"]},
+ {w:"史",  sp:["崩れかけた城壁","年表の刻まれた柱","誰かの墓標"], th:["読めない年号","旅人の日誌","戦の後の火打石"]},
+ {w:"雅",  sp:["音の残る舞台","絵具の乾いた床","誰かの練習場"], th:["途中で終わった旋律","塗り残しの絵","割れた撥"]},
+ {w:"言",  sp:["辞書の埋まった砂丘","二つの言葉が交わる橋","訳された石板"], th:["訳せない一語","忘れられた文字","誰かの発音記号"]},
+ {w:"詩",  sp:["物語の途切れた図書室","主人公のいない舞台","栞の挟まれた岩"], th:["結末のない物語","詩の断片","登場人物の名"]},
+ {w:"博",  sp:["索引だけの書庫","地図の並ぶ天幕","目録の残る受付"], th:["行方不明の索引","古い地図","出典のない引用"]}
+];
+const IVERB=["を拾った","を見つけた","が置かれていた","を掘り出した","が残っていた","をそっと持ち帰った"];
+
+function itemId(a,k,r){ return a+"-"+k+"-"+r; }
+function itemOf(id){
+  const [a,k,r]=id.split("-").map(Number);
+  return {a,k,r, name:IRANK[r].n+LORE[a].w+"の"+IKIND[k].n,
+    axis:AXES[a], kind:IKIND[k], rank:IRANK[r],
+    desc:`${LORE[a].sp[(a+k)%3]}で見つかった${IKIND[k].n}。${IKIND[k].d}。`
+       + (r>=6? `${LORE[a].th[(k+r)%3]}の気配がする。`:"")};
+}
+const ITEM_TOTAL=AXES.length*IKIND.length*IRANK.length;
+/* おみやげの絵。種別で形、分野で色、位階で飾りが変わる */
+function itemSVG(id,size){
+  const it=itemOf(id), s=size||64, k=s/64, c=it.axis.c, ink="var(--ink)";
+  const w=(2.4*k).toFixed(2), cx=s/2, cy=s/2;
+  const glow=it.rank.c;
+  let g=`<svg viewBox="0 0 ${s} ${s}" aria-hidden="true">`;
+  if(glow>0.4) g+=`<circle cx="${cx}" cy="${cy}" r="${s*0.44}" fill="${c}" opacity="${(glow*0.22).toFixed(2)}"/>`;
+  const F=[
+   ()=>`<rect x="${cx-s*0.26}" y="${cy-s*0.2}" width="${s*0.52}" height="${s*0.4}" rx="${s*0.05}" fill="var(--card)" stroke="${ink}" stroke-width="${w}"/>
+        <path d="M${cx-s*0.26},${cy-s*0.2} v${s*0.4} M${cx+s*0.26},${cy-s*0.2} v${s*0.4}" stroke="${c}" stroke-width="${(4*k).toFixed(2)}"/>`,
+   ()=>`<path d="M${cx},${cy-s*0.28} L${cx+s*0.24},${cy-s*0.04} L${cx+s*0.14},${cy+s*0.26} L${cx-s*0.14},${cy+s*0.26} L${cx-s*0.24},${cy-s*0.04} Z" fill="${c}" stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>`,
+   ()=>`<path d="M${cx},${cy-s*0.3} q${s*0.2},${s*0.3} 0,${s*0.6} q${-s*0.2},${-s*0.3} 0,${-s*0.6} z" fill="${c}" stroke="${ink}" stroke-width="${w}"/><path d="M${cx},${cy-s*0.26} v${s*0.52}" stroke="${ink}" stroke-width="${(1.4*k).toFixed(2)}"/>`,
+   ()=>`<ellipse cx="${cx}" cy="${cy+s*0.06}" rx="${s*0.16}" ry="${s*0.22}" fill="${c}" stroke="${ink}" stroke-width="${w}"/><path d="M${cx},${cy-s*0.16} q${s*0.14},${-s*0.16} ${s*0.02},${-s*0.12}" fill="none" stroke="${ink}" stroke-width="${w}"/>`,
+   ()=>`<circle cx="${cx-s*0.1}" cy="${cy-s*0.12}" r="${s*0.13}" fill="none" stroke="${ink}" stroke-width="${w}"/><path d="M${cx-s*0.02},${cy-s*0.02} L${cx+s*0.22},${cy+s*0.22} M${cx+s*0.1},${cy+s*0.1} l${s*0.08},${-s*0.06} M${cx+s*0.18},${cy+s*0.18} l${s*0.08},${-s*0.06}" stroke="${c}" stroke-width="${(3.4*k).toFixed(2)}" stroke-linecap="round"/>`,
+   ()=>`<path d="M${cx},${cy+s*0.24} q${-s*0.3},${-s*0.16} ${-s*0.26},${-s*0.34} q${s*0.26},${-s*0.12} ${s*0.26},${s*0.34} q${s*0.26},${-s*0.46} ${s*0.26},${-s*0.34} q${s*0.04},${s*0.18} ${-s*0.26},${s*0.34} z" fill="${c}" stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>`,
+   ()=>`<path d="M${cx-s*0.22},${cy+s*0.18} L${cx-s*0.06},${cy-s*0.24} L${cx+s*0.2},${cy-s*0.06} L${cx+s*0.08},${cy+s*0.22} Z" fill="${c}" stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>`,
+   ()=>`<circle cx="${cx}" cy="${cy+s*0.04}" r="${s*0.2}" fill="${c}" stroke="${ink}" stroke-width="${w}"/><path d="M${cx},${cy-s*0.16} q${s*0.1},${-s*0.14} ${s*0.16},${-s*0.08}" fill="none" stroke="${ink}" stroke-width="${w}" stroke-linecap="round"/>`,
+   ()=>`<path d="M${cx-s*0.14},${cy+s*0.22} h${s*0.28} l${-s*0.04},${-s*0.1} h${-s*0.2} z" fill="${ink}"/><ellipse cx="${cx}" cy="${cy-s*0.02}" rx="${s*0.15}" ry="${s*0.2}" fill="${c}" stroke="${ink}" stroke-width="${w}"/>`,
+   ()=>`<path d="M${cx},${cy-s*0.26} L${cx+s*0.24},${cy-s*0.1} v${s*0.2} L${cx},${cy+s*0.28} L${cx-s*0.24},${cy+s*0.1} v${-s*0.2} Z" fill="${c}" stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/><circle cx="${cx}" cy="${cy+s*0.01}" r="${s*0.07}" fill="var(--card)"/>`
+  ];
+  g+=F[it.k]();
+  if(glow>=0.6){
+    g+=`<path d="M${s*0.12},${s*0.14} l${s*0.03},${s*0.07} l${s*0.07},${s*0.03} l${-s*0.07},${s*0.03}
+      l${-s*0.03},${s*0.07} l${-s*0.03},${-s*0.07} l${-s*0.07},${-s*0.03} l${s*0.07},${-s*0.03} z" fill="${c}"/>`;
+  }
+  if(glow>=0.85) g+=`<circle cx="${cx}" cy="${cy}" r="${s*0.46}" fill="none" stroke="${c}" stroke-width="${(2*k).toFixed(2)}" stroke-dasharray="${s*0.06} ${s*0.05}"/>`;
+  return g+`</svg>`;
+}
+/* 手持ちの仲間。地域ごとに住みついた子と、旅立った守り神 */
+function unitList(){
+  const out=[];
+  (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{
+    const g=friendsFor(regionStat(R).done), ax=regionAxis(R);
+    for(let i=1;i<=g;i++){
+      const h=hash(R.name+"#"+i);
+      out.push({uid:"f:"+R.name+":"+i, kind:"friend", home:R.name,
+        name:(R.place||R.name)+"の "+ARCH[h%ARCH.length].n,
+        spec:{stage:3, arch:h%ARCH.length, elem:hash(R.name+"e"+i)%ELEM.length,
+              epi:0, hue:R.hue, dom:ax},
+        axis:ax, power:1+(h%5)});
+    }
+  }));
+  (S.ancestors||[]).forEach((a,i)=>{
+    out.push({uid:"a:"+i, kind:"anc", home:"—", name:a.name,
+      spec:a.spec||{stage:5,arch:0,elem:0,epi:0,hue:a.hue,dom:0},
+      axis:(a.spec&&a.spec.dom)||0, power:5+Math.min(4,Math.floor((a.pages||0)/8000))});
+  });
+  return out;
+}
+function unitById(uid){ return unitList().find(u=>u.uid===uid)||null; }
+function regionByName(n){
+  let f=null;
+  (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{ if(R.name===n) f=R; }));
+  return f;
+}
+function regionAxis(R){
+  for(const c of CAT_HINT) if(c[0].test(R.name)) return c[1];
+  return hash(R.name)%NAX;
+}
+/* 経過時間ぶんの抽選をまとめて行う。アプリを開いていなくても進む */
+function processExped(){
+  S.exped=S.exped||{}; S.items=S.items||{}; S.expLog=S.expLog||[];
+  const now=Date.now(); let found=0, ev=0;
+  Object.keys(S.exped).forEach(rn=>{
+    const e=S.exped[rn], R=regionByName(rn), u=unitById(e.uid);
+    if(!R||!u){ return; }
+    e.last=e.last||e.since||now;
+    let rolls=Math.floor((now-e.last)/ROLL_MS);
+    if(rolls<=0) return;
+    if(rolls>24) rolls=24;                       /* ためこみは1日ぶんまで */
+    e.last=now;
+    const ax=regionAxis(R), fit=(u.axis===ax)?1:0;
+    for(let i=0;i<rolls;i++){
+      ev++;
+      const seed=hash(rn+"|"+e.uid+"|"+e.last+"|"+i);
+      const lore=LORE[ax];
+      let line=`${u.name}は ${R.place||R.name}の ${lore.sp[seed%3]}を たずねた。`;
+      const chance=Math.min(0.9, 0.4+u.power*0.06+fit*0.18);
+      if(((seed>>>5)%1000)/1000 < chance){
+        /* 位階は重みつき。得意分野なら良いものが出やすい */
+        const boost=1+u.power*0.14+fit*0.5;
+        const ws=IRANK.map((r,ri)=>r.w*Math.pow(boost,ri*0.5));
+        const tot=ws.reduce((a,b)=>a+b,0);
+        let x=((seed>>>11)%100000)/100000*tot, ri=0;
+        for(let j=0;j<ws.length;j++){ x-=ws[j]; if(x<=0){ ri=j; break; } }
+        const aa=((seed>>>17)%10<8)? ax : (seed>>>19)%NAX;
+        const kk=(seed>>>21)%IKIND.length;
+        const id=itemId(aa,kk,ri);
+        S.items[id]=(S.items[id]||0)+1;
+        found++;
+        line+=`${itemOf(id).name}${IVERB[(seed>>>3)%IVERB.length]}。`;
+        S.expLog.unshift({at:e.last-i*ROLL_MS, r:rn, u:u.name, t:line, item:id});
+      }else{
+        line+=`${lore.th[(seed>>>7)%3]}の話を 聞いた。`;
+        S.expLog.unshift({at:e.last-i*ROLL_MS, r:rn, u:u.name, t:line});
+      }
+    }
+  });
+  if(S.expLog.length>120) S.expLog.length=120;
+  if(ev) save();
+  return found;
+}
+function itemsOwned(){ return Object.keys(S.items||{}).length; }
+function itemsTotalCount(){ return Object.values(S.items||{}).reduce((a,b)=>a+b,0); }
+
+/* ---------- 遠征タブの描画 ---------- */
+let expPick=null;
+function renderExped(){
+  processExped();
+  const regs=[];
+  (WORLD?WORLD.conts:[]).forEach(C=>{ if(contOpen(C)) C.regions.forEach(R=>{
+    if(rgnOpen(R)) regs.push(R); }); });
+  const units=unitList(), used={};
+  Object.keys(S.exped||{}).forEach(k=>{ if(S.exped[k]) used[S.exped[k].uid]=k; });
+  document.getElementById("expSlots").innerHTML = regs.length? regs.map(R=>{
+    const e=(S.exped||{})[R.name], u=e? unitById(e.uid):null;
+    const nx=e&&u? Math.max(0,ROLL_MS-((Date.now()-(e.last||e.since))%ROLL_MS)) : 0;
+    return `<div class="slot${u?" on":""}">
+      <div class="slot-h"><span class="bdot" style="background:${R.hue}"></span>
+        <b>${esc(R.place||R.name)}</b><em>${esc(R.name)}</em></div>
+      ${u? `<div class="slot-u">${creatureSVG(u.spec,52,"happy")}
+            <div><b>${esc(u.name)}</b><em>探索力 ${u.power}${u.axis===regionAxis(R)?" ・ 得意な土地":""}</em>
+            <em>つぎの便り あと ${Math.ceil(nx/60000)}分</em></div></div>`
+          : `<div class="slot-empty">まだ誰も いない</div>`}
+      <button class="btn quiet sm" data-r="${esc(R.name)}">${u?"入れ替える":"送り出す"}</button>
+    </div>`;
+  }).join("") : `<div class="empty-box">まだ行ける土地がありません。</div>`;
+  document.querySelectorAll("#expSlots button[data-r]").forEach(b=>b.onclick=()=>openPick(b.dataset.r));
+  /* 便り */
+  const log=(S.expLog||[]).slice(0,40);
+  document.getElementById("expLog").innerHTML = log.length? log.map(l=>
+    `<div class="logrow">${l.item? itemSVG(l.item,30) : `<span class="logdot"></span>`}
+      <div><span>${esc(l.t)}</span><em>${new Date(l.at).toLocaleString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})}</em></div></div>`
+    ).join("") : `<div class="empty-box" style="padding:20px">まだ 便りは ありません。</div>`;
+  /* おみやげ */
+  const owned=Object.keys(S.items||{}).sort((a,b)=>{
+    const A=itemOf(a),B=itemOf(b); return B.r-A.r||A.a-B.a||A.k-B.k; });
+  document.getElementById("expCount").textContent=
+    `${itemsOwned()} / ${ITEM_TOTAL} 種類（のべ ${itemsTotalCount()}）`;
+  document.getElementById("expItems").innerHTML = owned.length? owned.map(id=>
+    `<button class="itm" data-i="${id}">${itemSVG(id,44)}
+      <b>${esc(itemOf(id).name)}</b><em>×${S.items[id]}</em></button>`).join("")
+    : `<div class="empty-box" style="padding:20px">まだ 何も 見つかっていません。</div>`;
+  document.querySelectorAll(".itm").forEach(b=>b.onclick=()=>showItem(b.dataset.i));
+}
+function openPick(rn){
+  expPick=rn;
+  const R=regionByName(rn), ax=R?regionAxis(R):0;
+  const units=unitList();
+  const placed={}; Object.keys(S.exped||{}).forEach(k=>{ if(S.exped[k]) placed[S.exped[k].uid]=k; });
+  document.getElementById("pickTitle").textContent=(R&&(R.place||R.name))||rn;
+  document.getElementById("pickList").innerHTML = units.length? units.map(u=>
+    `<button class="pickrow${placed[u.uid]&&placed[u.uid]!==rn?" busy":""}" data-u="${esc(u.uid)}">
+      ${creatureSVG(u.spec,44,"happy")}
+      <div><b>${esc(u.name)}</b><em>探索力 ${u.power}${u.axis===ax?" ・ この土地が得意":""}
+      ${placed[u.uid]&&placed[u.uid]!==rn? " ・ "+esc(placed[u.uid])+"に滞在中":""}</em></div></button>`
+    ).join("") : `<div class="empty-box" style="padding:18px">送り出せる子が まだ いません。<br>
+      本を読み終えると 土地に子が住みつきます。</div>`;
+  document.querySelectorAll(".pickrow").forEach(b=>b.onclick=()=>{
+    S.exped=S.exped||{};
+    Object.keys(S.exped).forEach(k=>{ if(S.exped[k]&&S.exped[k].uid===b.dataset.u) delete S.exped[k]; });
+    S.exped[expPick]={uid:b.dataset.u, since:Date.now(), last:Date.now()};
+    save(); document.getElementById("pickDlg").close(); renderExped();
+    toast("送り出しました");
+  });
+  document.getElementById("pickClear").hidden=!((S.exped||{})[rn]);
+  document.getElementById("pickDlg").showModal();
+}
+function showItem(id){
+  const it=itemOf(id);
+  document.getElementById("itemArt").innerHTML=itemSVG(id,120);
+  document.getElementById("itemName").textContent=it.name;
+  document.getElementById("itemMeta").textContent=`${it.axis.d} ／ ${it.rank.n}`;
+  document.getElementById("itemDesc").textContent=it.desc;
+  document.getElementById("itemHave").textContent=`手持ち ${S.items[id]} 個`;
+  document.getElementById("itemDlg").showModal();
 }
 
 function showNews(msg){
@@ -2672,7 +3034,7 @@ function renderKpi(){
     books().filter(b=>b.origin==="company"&&isDone(b)).length+"<small>冊</small>";
 }
 function renderAll(){ drawMap(); renderKpi(); renderPet(); renderSpot();
-  renderShelf(); renderBuddyTab(); renderTower(); }
+  renderShelf(); renderBuddyTab(); renderTower(); renderExped(); }
 
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tabs button").forEach(x=>
@@ -2760,7 +3122,7 @@ document.getElementById("growBtn").onclick=()=>{
 document.getElementById("resetBtn").onclick=()=>{
   const nm=S.name;
   S={rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:nm, lastDate:null, streak:0,
-     ord:{}, gen:1, genBase:0, ancestors:[]}; mapFocus=null;
+     ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[]}; mapFocus=null;
   save(); selected=null; document.getElementById("newsSlot").innerHTML="";
   renderAll(); toast("きろくを 消しました");
 };
