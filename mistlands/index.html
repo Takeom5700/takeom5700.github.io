@@ -152,7 +152,7 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
   border:2px solid var(--ink); border-radius:var(--r-pill); padding:2px 10px; background:var(--paper)}
 .depart{margin-top:11px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
 .depart .deph{font-size:11.5px; color:var(--ink-sub); line-height:1.65; flex:1; min-width:200px}
-.pet-say{font-family:var(--f-disp); font-weight:700; font-size:14.5px; margin:9px 0 0;
+.pet-say{font-family:var(--f-disp); font-weight:700; font-size:14px; line-height:1.85; margin:9px 0 0;
   background:var(--paper); border:2px dashed var(--line); border-radius:var(--r);
   padding:9px 14px; position:relative}
 .pet-meta{display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:11px; font-size:12px;
@@ -265,6 +265,8 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
 .tag.co{background:var(--sun); color:#fff}
 .tag.pe{background:var(--leaf); color:#fff}
 .tag.must{background:var(--berry); color:#fff}
+.starbtn{cursor:pointer; background:var(--paper)}
+.starbtn:hover{border-color:var(--berry); color:var(--berry)}
 
 /* ---------- ボタン ---------- */
 .btn{background:var(--card); border:2.5px solid var(--ink); border-radius:var(--r-pill);
@@ -456,16 +458,38 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 /* ---------- 遠征 ---------- */
 .slots{display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:11px}
 .slot{border:2.5px solid var(--line); border-radius:var(--r); padding:12px 13px; background:var(--paper);
-  display:flex; flex-direction:column; gap:9px}
+  display:flex; flex-direction:column; gap:9px; overflow:hidden; min-width:0}
 .slot.on{border-color:var(--ink); background:var(--card)}
 .slot-h{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
-.slot-h b{font-family:var(--f-disp); font-size:14.5px}
+.slot-h b{font-family:var(--f-disp); font-size:14.5px; overflow-wrap:anywhere}
 .slot-h em{font-style:normal; font-size:11px; color:var(--ink-sub)}
-.slot-u{display:flex; align-items:center; gap:10px}
-.slot-u svg{flex:none}
-.slot-u b{font-family:var(--f-disp); font-size:13px; display:block}
-.slot-u em{font-style:normal; font-size:11px; color:var(--ink-sub); display:block; line-height:1.6}
+.slot-u{display:flex; align-items:flex-start; gap:10px; min-width:0}
+.slot-u svg{flex:none; overflow:visible}
+.slot-u>div{min-width:0; flex:1}
+.slot-u b{font-family:var(--f-disp); font-size:13px; display:block;
+  overflow-wrap:anywhere; line-height:1.5}
+.slot-u em{font-style:normal; font-size:11px; color:var(--ink-sub); display:block;
+  line-height:1.6; overflow-wrap:anywhere}
 .slot-empty{font-size:12px; color:var(--ink-sub); padding:10px 0}
+.expmsg{color:var(--ink)!important; font-family:var(--f-disp); font-weight:700; font-size:12px!important;
+  margin-bottom:3px}
+/* 探検している あいだ は とことこ 歩く */
+.walkwrap{flex:none; display:inline-block; animation:walk 2.6s ease-in-out infinite}
+.walkwrap svg{display:block; overflow:visible}
+@keyframes walk{
+  0%,100%{transform:translate(0,0) rotate(0deg)}
+  20%{transform:translate(2.5px,-2px) rotate(3deg)}
+  50%{transform:translate(0,0) rotate(0deg)}
+  70%{transform:translate(-2.5px,-2px) rotate(-3deg)}
+}
+.walker{animation:mapwalk 7s ease-in-out infinite}
+@keyframes mapwalk{
+  0%,100%{transform:translate(0,0)}
+  20%{transform:translate(7px,-2px)}
+  45%{transform:translate(13px,0)}
+  55%{transform:translate(13px,0)}
+  80%{transform:translate(5px,-2px)}
+}
 .slot .btn{align-self:flex-start}
 .loglist{display:flex; flex-direction:column; gap:8px; max-height:min(52vh,420px); overflow-y:auto}
 .logrow{display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-radius:var(--r);
@@ -616,6 +640,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <button class="cbtn" data-k="all" aria-pressed="true">すべて</button>
         <button class="cbtn" data-k="company" aria-pressed="false">会社の本</button>
         <button class="cbtn" data-k="personal" aria-pressed="false">自分の本</button>
+        <button class="cbtn" data-k="star" aria-pressed="false">最重要</button>
       </div>
     </div>
     <div class="mapbox" id="mapbox">
@@ -630,8 +655,8 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
     <div class="spot empty" id="spot">地図の建物や木をタップすると、その本のことが出ます。</div>
 
     <div class="panel" style="margin-top:16px">
-      <h3>土地に送り出す</h3>
-      <p>置いておくと、1時間に1度なにかを見つけてきます。いつでも入れ替えられます。</p>
+      <h3>探検する</h3>
+      <p>相棒を土地へ送ると、1時間に1度なにかを見つけてきます。いつでも入れ替えられます。</p>
       <div class="slots" id="expSlots"></div>
     </div>
     <div class="panel" style="margin-top:14px">
@@ -836,11 +861,11 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
 </form></dialog>
 
 <dialog id="pickDlg"><form method="dialog" class="din">
-  <h2>どの子を送りますか</h2>
+  <h2>だれが探検に行く？</h2>
   <div class="sub" id="pickTitle">—</div>
   <div class="picklist" id="pickList"></div>
   <div class="dact">
-    <button type="button" class="btn quiet" id="pickClear">引きあげる</button>
+    <button type="button" class="btn quiet" id="pickClear">よびもどす</button>
     <button type="button" class="btn quiet" id="pickCancel">とじる</button>
   </div>
 </form></dialog>
@@ -1056,15 +1081,25 @@ function load(){
       r.extra.forEach(b=>{ if(!b.div||b.div==="自分の本") b.div="その他";
                            if(!b.cat) b.cat="未踏の海"; });
       r.gen=r.gen||1; r.genBase=r.genBase||0; r.ancestors=r.ancestors||[];
-      r.exped=r.exped||{}; r.items=r.items||{}; r.expLog=r.expLog||[];
+      r.exped=r.exped||{}; r.items=r.items||{}; r.expLog=r.expLog||[]; r.star=r.star||{};
       r.pat=r.pat||0; r.name=r.name||"モヤ"; r.streak=r.streak||0; return r; } }catch(e){}
-  return {rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ",
+  return {rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ", star:{},
           lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[]};
 }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 function books(){ return SEED_BOOKS.concat(S.synth, S.extra); }
 function st(id){ return S.rec[id]||{page:0,comp:0,sum:""}; }
 function isDone(b){ return st(b.id).page>=b.p; }
+/* 最重要の印。会社が上位に置いた本は最初から付き、あとから自分でも付け外しできる */
+function isStar(b){
+  if(S.star && S.star[b.id]!==undefined) return !!S.star[b.id];
+  return b.origin==="company" && b.rank<=3;
+}
+function toggleStar(id){
+  const b=books().find(x=>x.id===id); if(!b) return;
+  S.star=S.star||{}; S.star[id]=!isStar(b); save(); renderAll();
+  toast(S.star[id]? "最重要にしました" : "最重要をはずしました");
+}
 
 /* XP倍率は読みはじめた時点で凍結する(順位の繰り下がりで過去のXPが減らないように) */
 function baseMult(b){ if(b.origin!=="company") return 1.0;
@@ -1459,22 +1494,114 @@ function petHue(){
 /* 直前に読んだ本の分野に応じた「霧の味」。継続日数ではなく、
    おいしいものを食べさせたくなる方向のことばにする */
 const TASTE=[
- ["すじみち の あじ が した","かちっと した たべごたえ","あたま の なか が すっきり した","つじつま が あって おいしい","かんがえ が ほどけて いく あじ"],
- ["だれか を うごかす あじ","おおきな けはい の する ごはん","せなか を おされる ような あじ","まとめる ちから の あじ","たよられる あじ が した"],
- ["こうばしい てざわり の あじ","つくりかけ の においが する","かちっと はまる おと が した","どうぐ ばこ の あじ","みがかれた あじ が する"],
- ["ふんわり あまい","だれか の こえ の あじ","こころ が ほどける あじ","やさしい ぬくもり の あじ","はなしかけられて いる みたい"],
- ["ちょっと しょっぱい","まちの にぎわい の あじ","かぞえる たのしさ の あじ","いちば の においが する","やりとり の あじ が した"],
- ["ひんやり すきとおって いた","ふしぎな あじ が する","せかい の しくみ の あじ","はじめて の あじ だった","からだ に しみる あじ"],
- ["しずかで ふかい あじ","こたえ の ない あじ","ながく のこる あじ","おくが ふかい","かみしめる ほど あじ が でる"],
- ["とおい むかし の においが した","つもった じかん の あじ","だれか の あしあと の あじ","ふるびて いて おいしい","ものがたり の はじまり の あじ"],
- ["いろどり ゆたかな あじ","たのしい おと が した","はなやか で うれしい","うたって いる みたいな あじ","きらきら した あじ"],
- ["しゃりしゃり した ことば の あじ","ちがう くに の においが する","はつおん が おいしい","つたわる よろこび の あじ","ことば の つぶ の あじ"],
- ["ゆめ を みて いる ような あじ","つづき が きに なる あじ","むねが きゅっと なる あじ","だれか の じんせい の あじ","よいん が のこる"],
- ["いろんな あじ が まざって いた","ひろい せかい の あじ","ちずを ひろげた みたいな あじ","なんでも すこしずつ の あじ","めあたらしい あじ"]
+ ["すじみち の とおった あじ が した。かんがえ が すこし ほどけた きがする",
+  "かたい けど かみしめる ほど あまい。あたま の おくが すっきり する",
+  "ばらばら だった もの が、たべた あと で ひとつ に つながった",
+  "つじつま が あって いる あじ。こういうの、ぼく すきだ",
+  "こたえ より さきに、といが おいしい きり だった",
+  "きりの なかに ちいさな しくみ が あって、ほどく のが たのしかった",
+  "つめたく すきとおった あじ。あたま が しずかに なる",
+  "かぞえたく なる あじ。ひとつ ずつ ならべたら きれいだった"],
+ ["おおきな もの を うごかす けはい の する きり だった",
+  "せなか を そっと おされる ような あじ。まえ に すすみたく なる",
+  "ひとり ぶん じゃない あじ。だれか と わけあう みたいな あじ",
+  "きめる って こういう あじ なんだね。すこし にがくて、つよい",
+  "たよられる あじ が した。ぼくも おおきく なりたい",
+  "たくさん の こえ が まざって いて、それでも ひとつ に きこえた",
+  "うえ から みおろす ような ひろい あじ だった",
+  "せきにん って いう あじ を はじめて しった きがする"],
+ ["こうばしくて、てざわり の ある きり だった",
+  "つくりかけ の においが した。まだ かんせい して いない あじ",
+  "かちっと はまる おと が した。きもち いい たべごたえ",
+  "どうぐばこ を あけた みたいな あじ。いろんな かたち が はいってた",
+  "みがかれた あじ。ていねいに つくられた もの の あじ が する",
+  "しっかり した ほねぐみ の あじ。くずれない やつだ",
+  "てを うごかしたく なる あじ だった",
+  "こまかい ところ まで つくりこまれて いて、たべ ごたえ が あった"],
+ ["ふんわり あまい きり だった。ずっと たべて いたい",
+  "だれか の こえ が まざって いる あじ。あたたかい",
+  "こころ が ほどける あじ。ちからが ぬけて、らくに なった",
+  "はなしかけられて いる みたいな あじ だった",
+  "やさしい ぬくもり の あじ。てを つないだ みたいな",
+  "きいて もらえた ような あじ が した",
+  "だれか を おもいだす あじ。すこし せつない けど おいしい",
+  "ことば が とどく って こんな あじ なんだね"],
+ ["ちょっと しょっぱくて、はたらく ひと の あじ が した",
+  "まちの にぎわい が きこえて くる ような きり だった",
+  "かぞえる たのしさ の あじ。ふえたり へったり する",
+  "いちば の においが した。やりとり の あじ",
+  "ねだん の ついた あじ。だれか が えらんだ もの の あじ",
+  "めぐって いく あじ。ぐるぐる まわって、また かえって くる",
+  "しごと の あと の ような、すこし つかれた あまさ",
+  "たがい に わたしあう あじ が した"],
+ ["ひんやり すきとおって いた。しらない せかい の あじ",
+  "ふしぎ な あじ。なんで こう なって いるのか きになる",
+  "せかい の しくみ の あじ が した。ぼくも その なかに いる のかな",
+  "はじめて の あじ だった。まだ なまえ を しらない",
+  "からだ に しみて いく あじ。いきもの の あじ が する",
+  "とおい ほし の あじ が すこし まざって いた",
+  "ちいさい もの の なかに、おおきい もの が はいって いた",
+  "たしかめたく なる あじ。もう いちど たべたら わかるかも"],
+ ["しずかで ふかい きり だった。のみこむ のに じかん が かかった",
+  "こたえ の ない あじ。でも まずくは ない、ふしぎ",
+  "ながく のこる あじ。まだ くちの なかに いる",
+  "おくが ふかい。そこ が みえない あじ だった",
+  "かみしめる ほど あじ が でる。いそいで たべる もの じゃない",
+  "じぶん が だれ なのか きに なる あじ だった",
+  "とても ふるい あじ。むかし の ひと も たべた のかな",
+  "しずけさ を たべて いる みたいだった"],
+ ["とおい むかし の においが した きり だった",
+  "つもった じかん の あじ。そう を なして いる",
+  "だれか の あしあと の あじ。ここ を あるいた ひと が いる",
+  "ふるびて いて、それが おいしい。ねかせた あじ",
+  "ものがたり の はじまり の あじ が した",
+  "おわった こと の あじ。でも おわって いない きもする",
+  "なまえ の のこった ひと の あじ だった",
+  "とおくで だれか が わらって いた ような あじ"],
+ ["いろどり ゆたかで、みて いる だけで たのしい きり だった",
+  "たのしい おと が した。たべながら はねたく なる",
+  "はなやか で うれしい あじ。むね が いっぱい に なる",
+  "うたって いる みたいな あじ だった",
+  "きらきら した あじ。ひかり を たべて いる みたい",
+  "かたち に ならない もの の あじ。でも たしかに あった",
+  "からだ が うごきたく なる あじ だった",
+  "うつくしい って こんな あじ なんだ、と おもった"],
+ ["しゃりしゃり した ことば の あじ が した",
+  "ちがう くに の においが する きり だった",
+  "はつおん が おいしい。くちの なかで ころがした",
+  "つたわる よろこび の あじ。とどいた とき の あじ",
+  "ことば の つぶ が たくさん はいって いた",
+  "おなじ もの を べつの なまえ で よぶ あじ が した",
+  "はじめて の おと が まざって いて、こそばゆかった",
+  "だれか と はなしたく なる あじ だった"],
+ ["ゆめ を みて いる ような きり だった。まだ さめない",
+  "つづき が きに なる あじ。とちゅう で やめられない",
+  "むね が きゅっと なる あじ。すこし いたい けど おいしい",
+  "だれか の じんせい の あじ が した。おもたくて、あまい",
+  "よいん が のこる。たべおわって から が ながい",
+  "ここ ではない どこか の あじ だった",
+  "なきたく なる あじ。でも わるい きもち じゃない",
+  "だれか の こころ の なか を あるいた ような あじ"],
+ ["いろんな あじ が まざって いた。よくばりな きり",
+  "ひろい せかい の あじ。はしっこ が みえない",
+  "ちず を ひろげた みたいな あじ だった",
+  "なんでも すこしずつ の あじ。どれも すこし おいしい",
+  "めあたらしい あじ。しらない こと が たくさん あった",
+  "つながって いく あじ。あっち と こっち が くっついた",
+  "まとめられた あじ。せいり されて いて たべやすい",
+  "せかい って ひろいね、と おもった あじ だった"]
 ];
-const HUNGRY=["きょうは まだ なにも たべて ないよ","ちょっと おなか すいた かも",
- "つぎの きり、どんな あじ かな","ひとくち で いいんだ","まって いるよ、いつでも いいよ"];
-const HAPPY_ADD=["また たべたいな","もっと しりたい","つぎ が たのしみ","しあわせ"];
+const HUNGRY=["きょうは まだ なにも たべて ないよ。きみ が よんだら たべられる のに",
+ "ちょっと おなか すいた かも。ひとくち で いいんだ",
+ "つぎの きり、どんな あじ かな。たのしみに まって いるよ",
+ "きみ が いそがしい の は しって いる。むりは しないで ね",
+ "きのう の あじ、まだ おぼえて いるよ。あれ おいしかった",
+ "ぼく は ここ で まって いる。いつでも いいからね",
+ "おなか が なった。でも きょう じゃ なくても いいよ",
+ "なんでも いいんだ。すこし で いい から、また よんで"];
+const FULL_PRE=["もぐもぐ… ","おいしい！ ","ごちそうさま。 ","ぱくり。 ","うまい！ ","しあわせ。 "];
+const HAPPY_ADD=["また たべたい な","もっと しりたく なった","つぎ が たのしみ",
+ "きょうは いい ひ だ","きみ と いると たのしい","おなか も こころ も いっぱい"];
 /* 直前に読んだ本の軸 */
 function lastAxis(){
   let best=null,bt=-1;
@@ -1486,14 +1613,17 @@ function lastAxis(){
   return hash(best.cat||"x")%NAX;
 }
 function petLine(md,si){
-  const seed=hash(S.name+"|"+pagesRead()+"|"+doneCount()+"|"+(S.pat||0));
+  const seed=hash(S.name+"|"+pagesRead()+"|"+doneCount()+"|"+(S.pat||0)+"|"+(S.lastRead&&S.lastRead.at||0));
   if(md==="hungry") return HUNGRY[seed%HUNGRY.length];
-  if(si<=1) return ["ふるふる…","なかから こえが する","もぞもぞ している"][seed%3];
+  if(si<=0) return ["ふるふる… なかで なにか が うごいて いる",
+    "こつん、と おと が した。もう すこし だ","あたたかい。まだ ねむって いる みたい"][seed%3];
+  if(si===1) return ["ふわ… まだ かたち が さだまらない",
+    "きみ の こえ が きこえる。もっと きかせて","うすい けど、ちゃんと ここに いるよ"][seed%3];
   const ax=lastAxis();
-  if(ax<0) return "はじめの ひとくち、まってるよ";
+  if(ax<0) return "はじめて の ひとくち、まって いるよ。どんな あじ かな";
   const t=TASTE[ax%TASTE.length];
   let line=t[seed%t.length];
-  if(md==="full") line="もぐもぐ… "+line;
+  if(md==="full") line=FULL_PRE[(seed>>>6)%FULL_PRE.length]+line;
   else if(md==="happy") line=line+"。"+HAPPY_ADD[(seed>>>4)%HAPPY_ADD.length];
   return line;
 }
@@ -1946,14 +2076,12 @@ function drawMap(){
         const sub=E("text",{x:R.cx, y:ly+15, "text-anchor":"middle", class:"rsub"});
         sub.textContent=`${R.name} ・ ${s.done}/${R.books.length}冊 ・ 霧 ${R.puffs.length-gone}`;
         gLab.appendChild(sub);
-        if(landLv(R)>0){ /* 土地が育つと、その土地の主が現れる */
+        const ex=(S.exped||{})[R.name], exu=ex? unitById(ex.uid):null;
+        if(exu){ /* 探検している土地にだけ、その子が歩いている */
           const f=E("g",{class:"pal",
             transform:`translate(${(R.cx+R.rad*0.52).toFixed(1)},${(R.cy-R.rad*0.55).toFixed(1)})`});
-          const fk=landLv(R);
-          f.innerHTML=creatureSVG({stage:Math.min(5,2+Math.floor(fk/3)),
-            arch:hash(R.name)%ARCH.length, elem:hash(R.name+"e")%8, epi:0,
-            hue:R.hue, dom:regionAxis(R)},44,"happy")
-            .replace(/^<svg[^>]*>|<\/svg>$/g,"")
+          f.innerHTML='<g class="walker">'+creatureSVG(exu.spec,44,"happy")
+            .replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>' 
             .replace('class="pet-body"','');
           f.setAttribute("transform", f.getAttribute("transform")+" translate(-22,-22)");
           gLab.appendChild(f);
@@ -1980,7 +2108,8 @@ function drawMap(){
     R.books.forEach(b=>{
       if(mapKind==="company" && b.origin!=="company") return;
       if(mapKind==="personal" && b.origin==="company") return;
-      if(!ro && !(b.origin==="company"&&b.rank<=3)) return;
+      if(mapKind==="star" && !isStar(b)) return;
+      if(!ro && !isStar(b)) return;
       const s=st(b.id), prog=Math.min(1,s.page/b.p), done=prog>=1;
       const g=E("g",{class:`lm ${b.origin} ${done?"done":""} ${ro?"":"veiled"}`,
         transform:`translate(${b._x.toFixed(1)},${b._y.toFixed(1)})`,
@@ -1999,7 +2128,7 @@ function drawMap(){
       let d;
       if(b.origin==="company"){
         d=`M-10,0 L-10,${-H} L-6,${-H-5} L0,${-H-9} L6,${-H-5} L10,${-H} L10,0 Z`;
-        if(b.rank<=3){ /* 最重要3冊は旗が立つ */
+        if(isStar(b)){ /* 最重要には旗が立つ */
           inner.appendChild(E("path",{d:`M0,${-H-9} L0,${-H-24}`,
             stroke:"var(--ink)","stroke-width":2.4,fill:"none","stroke-linecap":"round"}));
           inner.appendChild(E("path",{d:`M0,${-H-24} L14,${-H-19} L0,${-H-14} Z`,
@@ -2063,8 +2192,9 @@ function renderSpot(){
     <div class="tags">
       ${b.origin==="company"?`<span class="tag co">会社の本・補助あり</span>`
         :`<span class="tag pe">自分の本</span>`}
-      ${b.origin==="company"&&b.rank<=3?`<span class="tag must">最重要</span>`:""}
+      ${isStar(b)?`<span class="tag must">最重要</span>`:""}
       <span class="tag">XP ×${mult(b).toFixed(1)}</span>
+      <button class="tag starbtn" id="spotStar">${isStar(b)?"最重要をはずす":"最重要にする"}</button>
     </div>
     ${b.origin!=="company"? `<div class="kv" style="margin-top:8px">分野: ${esc(R.place||R.name)}
       <button class="btn quiet sm" id="spotCat" style="margin-left:8px">変える</button></div>`:""}
@@ -2074,6 +2204,8 @@ function renderSpot(){
   </div>
   <div><button class="btn primary" id="spotLog">${s.page?"きろくする":"よみはじめる"}</button></div>`;
   document.getElementById("spotLog").onclick=()=>openLog(b.id);
+  const sb=document.getElementById("spotStar");
+  if(sb) sb.onclick=()=>toggleStar(b.id);
   const cb=document.getElementById("spotCat");
   if(cb) cb.onclick=()=>openCatEdit(b.id);
 }
@@ -2314,10 +2446,21 @@ function rainbowSVG(x,y,s){
     `<path d="M${x-s},${y} a${s},${s} 0 0 1 ${s*2},0" fill="none" stroke="${c}"
       stroke-width="3" transform="translate(0,${i*3.2}) scale(1,${1-i*0.03})"/>`).join("")+`</g>`;
 }
-function kiteSVG(x,y,s){
-  return `<g><path d="M${x},${y-s} L${x+s*0.6},${y} L${x},${y+s} L${x-s*0.6},${y} z"
-    fill="#FF8A3D" stroke="#3B2A1E" stroke-width="1.8" stroke-linejoin="round"/>
-    <path d="M${x},${y+s} q${s*0.4},${s*0.5} 0,${s*1.1}" fill="none" stroke="#3B2A1E" stroke-width="1.4"/></g>`;
+function kiteSVG(x,y,s,rot){
+  let bows="";
+  for(let i=1;i<=3;i++){
+    const by=y+s+i*s*0.45, bx=x+(i%2?1:-1)*s*0.2;
+    bows+=`<path d="M${bx-s*0.22},${by-s*0.1} l${s*0.22},${s*0.1} l${-s*0.22},${s*0.1} z
+      M${bx+s*0.22},${by-s*0.1} l${-s*0.22},${s*0.1} l${s*0.22},${s*0.1} z"
+      fill="#FFC12E" stroke="#3B2A1E" stroke-width="1"/>`;
+  }
+  return `<g transform="rotate(${(rot||0).toFixed(1)} ${x} ${y})">
+    <path d="M${x},${y-s} L${x+s*0.62},${y} L${x},${y+s} L${x-s*0.62},${y} z"
+      fill="#FF8A3D" stroke="#3B2A1E" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M${x},${y-s} L${x},${y+s} M${x-s*0.62},${y} L${x+s*0.62},${y}"
+      stroke="#3B2A1E" stroke-width="1" opacity=".55"/>
+    <path d="M${x},${y+s} q${s*0.5},${s*0.6} ${-s*0.1},${s*1.5}" fill="none"
+      stroke="#3B2A1E" stroke-width="1.3"/>${bows}</g>`;
 }
 function islandSVG(x,y,s){
   return `<g><path d="M${x-s},${y} h${s*2} l${-s*0.5},${s*0.8} h${-s} z" fill="#8A6A4A"
@@ -2330,23 +2473,73 @@ function dropSVG(x,y,s,col){
   return `<path d="M${x},${y-s*0.8} q${s*0.6},${s*0.9} 0,${s*1.3} q${-s*0.6},${-s*0.4} 0,${-s*1.3} z"
     fill="${col||"#5BB8F0"}" opacity=".8"/>`;
 }
-function drawFx(fx,x,y){
+/* 同じ形を機械的に並べると作り物に見えるので、
+   一羽ずつ・ひとつずつ 大きさと角度と位置をずらす */
+function drawFx(fx,x,y,sd){
+  const r=(i)=>((hash("fx"+sd+"-"+i)%1000)/1000);
   switch(fx){
-    case "bird":   return birdSVG(x+70,y,9,"#4A3A2C");
-    case "cloud":  return cloudSVG(x+80,y,22,.95);
-    case "flock":  return flockSVG(x+86,y,11,"#1C1610");
-    case "airship":return airshipSVG(x+82,y,24);
-    case "dragon": return dragonSVG(x+80,y,52,"#2A1533");
-    case "meteor": return meteorSVG(x+96,y,10,"#FFF0BC");
-    case "moon":   return moonSVG(x+90,y,22);
-    case "star":   return starSVG(x+92,y,8,"#FFF6D8");
-    case "aurora": return auroraSVG(x+78,y,30,"#8FE3C8");
-    case "rainbow":return rainbowSVG(x+80,y,34);
-    case "kite":   return kiteSVG(x+92,y,12);
-    case "island": return islandSVG(x+82,y,20);
-    case "drop":   return dropSVG(x+92,y,10);
+    case "bird":{
+      let g=""; const n=2+Math.floor(r(0)*3);
+      for(let i=0;i<n;i++){
+        const s=6+r(i+1)*7, px=x+34+r(i+7)*112, py=y-14+r(i+11)*26;
+        g+=`<g transform="rotate(${(r(i+3)*22-11).toFixed(1)} ${px} ${py})">`
+          +gullSVG(px,py,s,"#4A3A2C")+`</g>`;
+      }
+      return g;
+    }
+    case "cloud":{
+      let g=""; const n=1+Math.floor(r(0)*3);
+      for(let i=0;i<n;i++)
+        g+=puffCloud(x+30+r(i+2)*110, y-10+r(i+5)*22, 13+r(i+9)*15, 0.7+r(i+4)*0.28, hash("c"+sd+i));
+      return g;
+    }
+    case "flock":  return flockSVG(x+40+r(1)*80,y,9+r(2)*5,"#1C1610");
+    case "airship":return airshipSVG(x+50+r(1)*70,y,20+r(2)*10);
+    case "dragon": return dragonSVG(x+45+r(1)*70,y,44+r(2)*20,"#2A1533");
+    case "meteor":{
+      let g=""; const n=1+Math.floor(r(0)*3);
+      for(let i=0;i<n;i++) g+=meteorSVG(x+30+r(i+2)*110, y-12+r(i+6)*24, 7+r(i+3)*7,"#FFF0BC");
+      return g;
+    }
+    case "moon":   return moonSVG(x+60+r(1)*60,y,18+r(2)*10);
+    case "star":{
+      let g=""; const n=3+Math.floor(r(0)*5);
+      for(let i=0;i<n;i++) g+=starSVG(x+20+r(i+2)*130, y-16+r(i+8)*32, 3.5+r(i+4)*6,"#FFF6D8");
+      return g;
+    }
+    case "aurora": return auroraSVG(x+40+r(1)*60,y,24+r(2)*18,"#8FE3C8");
+    case "rainbow":return rainbowSVG(x+50+r(1)*70,y,26+r(2)*18);
+    case "kite":   return kiteSVG(x+50+r(1)*90, y-6+r(2)*14, 9+r(3)*7, r(4)*30-15);
+    case "island": return islandSVG(x+45+r(1)*80,y,15+r(2)*12);
+    case "drop":{
+      let g=""; for(let i=0;i<3;i++) g+=dropSVG(x+40+r(i+2)*100, y-10+r(i+6)*20, 6+r(i+3)*6);
+      return g;
+    }
     default: return "";
   }
+}
+/* かもめ。棒2本ではなく、胴と翼のある影にする */
+function gullSVG(x,y,s,col){
+  return `<path d="M${x-s*1.5},${y-s*0.35} q${s*0.75},${-s*0.55} ${s*1.15},${s*0.2}
+    q${s*0.2},${-s*0.12} ${s*0.4},0 q${s*0.4},${-s*0.75} ${s*1.15},${-s*0.2}
+    q${-s*0.55},${s*0.35} ${-s*1.05},${s*0.5} l${-s*0.5},0 z"
+    fill="${col}" opacity=".9"/>`;
+}
+/* 雲。輪郭の粒の数と大きさを毎回変える */
+function puffCloud(x,y,s,op,sd){
+  const q=(i)=>((hash("p"+sd+"-"+i)%1000)/1000);
+  const n=3+Math.floor(q(0)*3);
+  let lobes="";
+  for(let i=0;i<n;i++){
+    const t=(i/(n-1))-0.5;
+    lobes+=`<circle cx="${(x+t*s*1.9).toFixed(1)}" cy="${(y-Math.cos(t*3)*s*0.32+q(i+1)*s*0.16).toFixed(1)}"
+      r="${(s*(0.42+q(i+5)*0.34)).toFixed(1)}" fill="#fff"/>`;
+  }
+  return `<g opacity="${op.toFixed(2)}">${lobes}
+    <rect x="${(x-s*1.05).toFixed(1)}" y="${(y+s*0.02).toFixed(1)}" width="${(s*2.1).toFixed(1)}"
+      height="${(s*0.5).toFixed(1)}" rx="${(s*0.25).toFixed(1)}" fill="#fff"/>
+    <ellipse cx="${x.toFixed(1)}" cy="${(y+s*0.46).toFixed(1)}" rx="${(s*0.95).toFixed(1)}"
+      ry="${(s*0.16).toFixed(1)}" fill="#BFD8E6" opacity=".5"/></g>`;
 }
 
 function renderTower(){
@@ -2382,10 +2575,11 @@ function renderTower(){
   const seenBands=bandsUpTo(topPages);
   seenBands.forEach(b=>{
     const y=yOf(b.p);
-    g+=drawFx(b.fx,0,y);
+    g+=drawFx(b.fx,0,y,b.i);
     g+=`<line x1="${W-104}" y1="${y}" x2="${W-8}" y2="${y}" stroke="#3B2A1E"
       stroke-width="1" opacity=".22" stroke-dasharray="3 4"/>
-      <text x="${W-8}" y="${y-5}" text-anchor="end" class="btick">${esc(b.n)} ${b.p.toLocaleString()}p</text>`;
+      <text x="${W-8}" y="${y-5}" text-anchor="end" class="btick">${
+        b.p<=donePages? esc(b.n) : "？ ？ ？"} ${b.p.toLocaleString()}p</text>`;
   });
 
   /* 地面 */
@@ -2971,7 +3165,7 @@ document.getElementById("catSave").onclick=()=>{
 document.getElementById("pickCancel").onclick=()=>document.getElementById("pickDlg").close();
 document.getElementById("pickClear").onclick=()=>{
   if(expPick&&S.exped){ delete S.exped[expPick]; save(); }
-  document.getElementById("pickDlg").close(); renderExped(); toast("引きあげました");
+  document.getElementById("pickDlg").close(); renderExped(); toast("よびもどしました");
 };
 document.getElementById("itemClose").onclick=()=>document.getElementById("itemDlg").close();
 document.getElementById("dlgForm").addEventListener("submit",e=>{
@@ -3258,6 +3452,33 @@ function processExped(){
 function itemsOwned(){ return Object.keys(S.items||{}).length; }
 function itemsTotalCount(){ return Object.values(S.items||{}).reduce((a,b)=>a+b,0); }
 
+/* 探検中のようす。経過・成果・相性で ことばが変わる */
+const EXP_START=["いきおいよく かけだして いった","ふりかえって 手を ふって いる",
+ "はりきって 出発した","じめんの においを かいで いる","ちずを ひろげて いる"];
+const EXP_MID=["ゆっくり あるいて いる","なにか を みつけた みたいだ",
+ "きょろきょろ して いる","ひとやすみ して いる","たのしそうに はねて いる",
+ "しんちょうに すすんで いる"];
+const EXP_NEAR=["そろそろ もどって きそう","なにか を かかえて いる みたい",
+ "こちらに 手を ふって いる","いそいで かけて くる"];
+const EXP_GOOD=["すっかり この土地に なれた みたいだ","ごきげん で あるいて いる",
+ "ここが 気に入った らしい","足どりが かるい"];
+const EXP_BAD=["きょうは なかなか みつからない みたい","すこし つかれて いる みたい",
+ "くさむらを ねばりづよく さがして いる","こまった かおを して いる。がんばれ"];
+const EXP_FIT=["みずを えた さかな の よう","この土地の ことばが わかる らしい",
+ "だれより くわしい みたいだ"];
+function expedLine(R,u,e){
+  const iv=hasBoon(R,"風の便り")? ROLL_MS*0.83 : ROLL_MS;
+  const el=(Date.now()-(e.last||e.since))%iv, r=el/iv;
+  const recent=(S.expLog||[]).filter(l=>l.r===R.name).slice(0,4);
+  const hits=recent.filter(l=>l.item).length;
+  const sd=hash(R.name+"|"+e.uid+"|"+Math.floor((e.last||0)/iv));
+  if(recent.length>=3 && hits===0) return EXP_BAD[sd%EXP_BAD.length];
+  if(recent.length>=3 && hits>=3) return EXP_GOOD[sd%EXP_GOOD.length];
+  if(u.axis===regionAxis(R) && sd%3===0) return EXP_FIT[sd%EXP_FIT.length];
+  if(r<0.18) return EXP_START[sd%EXP_START.length];
+  if(r>0.82) return EXP_NEAR[sd%EXP_NEAR.length];
+  return EXP_MID[sd%EXP_MID.length];
+}
 /* ---------- 遠征タブの描画 ---------- */
 let expPick=null;
 function renderExped(){
@@ -3274,11 +3495,13 @@ function renderExped(){
     return `<div class="slot${u?" on":""}">
       <div class="slot-h"><span class="bdot" style="background:${R.hue}"></span>
         <b>${esc(R.place||R.name)}</b><em>${esc(R.name)}</em></div>
-      ${u? `<div class="slot-u">${creatureSVG(u.spec,52,"happy")}
-            <div><b>${esc(u.name)}</b><em>探索力 ${u.power}${u.axis===regionAxis(R)?" ・ 得意な土地":""}</em>
-            <em>つぎの便り あと ${Math.ceil(nx/60000)}分</em></div></div>`
+      ${u? `<div class="slot-u"><span class="walkwrap">${creatureSVG(u.spec,52,"happy")}</span>
+            <div><b>${esc(u.name)}</b>
+            <em class="expmsg">${esc(expedLine(R,u,e))}</em>
+            <em>探索力 ${u.power}${u.axis===regionAxis(R)?" ・ 得意な土地":""} ／ つぎの便り あと ${Math.ceil(nx/60000)}分</em>
+            </div></div>`
           : `<div class="slot-empty">まだ誰も いない</div>`}
-      <button class="btn quiet sm" data-r="${esc(R.name)}">${u?"入れ替える":"送り出す"}</button>
+      <button class="btn quiet sm" data-r="${esc(R.name)}">${u?"交代させる":"探検に出す"}</button>
     </div>`;
   }).join("") : `<div class="empty-box">まだ行ける土地がありません。</div>`;
   document.querySelectorAll("#expSlots button[data-r]").forEach(b=>b.onclick=()=>openPick(b.dataset.r));
@@ -3317,7 +3540,7 @@ function openPick(rn){
     Object.keys(S.exped).forEach(k=>{ if(S.exped[k]&&S.exped[k].uid===b.dataset.u) delete S.exped[k]; });
     S.exped[expPick]={uid:b.dataset.u, since:Date.now(), last:Date.now()};
     save(); document.getElementById("pickDlg").close(); renderExped();
-    toast("送り出しました");
+    toast("探検に出発しました");
   });
   document.getElementById("pickClear").hidden=!((S.exped||{})[rn]);
   document.getElementById("pickDlg").showModal();
