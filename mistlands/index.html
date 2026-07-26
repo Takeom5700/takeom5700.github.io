@@ -150,6 +150,20 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
   border:2px solid var(--ink); box-shadow:2px 2px 0 var(--shadow)}
 .pet-title{font-family:var(--f-disp); font-weight:800; font-size:11.5px; letter-spacing:.06em;
   border:2px solid var(--ink); border-radius:var(--r-pill); padding:2px 10px; background:var(--paper)}
+.evoline{display:flex; align-items:flex-end; gap:2px; margin-top:12px; flex-wrap:nowrap;
+  overflow-x:auto; padding-bottom:2px}
+.evostep{flex:none; width:52px; text-align:center; opacity:.4; position:relative}
+.evostep.reached{opacity:1}
+.evostep.now{opacity:1}
+.evostep.now::after{content:""; position:absolute; left:12px; right:12px; bottom:-2px;
+  height:3px; background:var(--sun); border-radius:2px}
+.evostep svg{width:40px; height:40px; overflow:visible}
+.evostep span{display:block; font-family:var(--f-disp); font-weight:700; font-size:9.5px;
+  line-height:1.3; color:var(--ink-sub); margin-top:1px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.evostep.now span{color:var(--ink)}
+.evoarrow{flex:none; align-self:center; color:var(--line); font-size:10px; padding-bottom:14px}
+@media (max-width:720px){ .evoline{justify-content:flex-start} }
 .depart{margin-top:11px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
 .depart .deph{font-size:11.5px; color:var(--ink-sub); line-height:1.65; flex:1; min-width:200px}
 .pet-say{font-family:var(--f-disp); font-weight:700; font-size:14px; line-height:1.85; margin:9px 0 0;
@@ -432,9 +446,9 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 
 /* ---------- 相棒ページの配置 ---------- */
 .buddy-grid{display:grid; gap:16px; grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  grid-template-areas:"axis anc" "axis land" "evo evo" "title title"}
+  grid-template-areas:"axis anc" "axis land" "title title"}
 @media (max-width:820px){
-  .buddy-grid{grid-template-columns:1fr; grid-template-areas:"axis" "anc" "land" "evo" "title"}
+  .buddy-grid{grid-template-columns:1fr; grid-template-areas:"axis" "anc" "land" "title"}
 }
 .titlebig{font-family:var(--f-disp); font-weight:800; font-size:clamp(26px,5vw,38px);
   letter-spacing:.05em; line-height:1.3; text-wrap:balance}
@@ -473,14 +487,17 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 .slot-empty{font-size:12px; color:var(--ink-sub); padding:10px 0}
 .expmsg{color:var(--ink)!important; font-family:var(--f-disp); font-weight:700; font-size:12px!important;
   margin-bottom:3px}
-/* 探検している あいだ は とことこ 歩く */
-.walkwrap{flex:none; display:inline-block; animation:walk 2.6s ease-in-out infinite}
-.walkwrap svg{display:block; overflow:visible}
-@keyframes walk{
-  0%,100%{transform:translate(0,0) rotate(0deg)}
-  20%{transform:translate(2.5px,-2px) rotate(3deg)}
-  50%{transform:translate(0,0) rotate(0deg)}
-  70%{transform:translate(-2.5px,-2px) rotate(-3deg)}
+/* 探検している あいだ は、地面が流れて とことこ 歩いて見える */
+.walkscene{flex:none; width:104px; height:60px; overflow:hidden;
+  border-radius:10px; background:linear-gradient(180deg,
+    color-mix(in srgb,var(--sea) 55%,transparent), transparent 70%)}
+.walkscene .wgrd{animation:scroll 3.4s linear infinite}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-104px)}}
+.walkscene .wch{animation:step .46s ease-in-out infinite alternate;
+  transform-origin:21px 34px}
+@keyframes step{
+  from{transform:translateY(1.5px) rotate(-3.5deg)}
+  to{transform:translateY(-1.5px) rotate(3.5deg)}
 }
 .walker{animation:mapwalk 7s ease-in-out infinite}
 @keyframes mapwalk{
@@ -608,6 +625,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <div class="evo-lbl"><span id="evoNext">つぎの姿まで</span><span id="evoNum"></span></div>
         <div class="evo-bar"><i id="evoBar"></i></div>
       </div>
+      <div class="evoline" id="evoline"></div>
       <div id="departWrap" class="depart"></div>
     </div>
   </section>
@@ -683,14 +701,9 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
 
   <section class="view" id="v-buddy">
     <div class="buddy-grid">
-      <div class="panel" style="grid-area:evo">
-        <h3>そだち方</h3>
-        <p>ページを記録すると霧が晴れます。その霧が相棒のごはんです。</p>
-        <div class="evolist" id="evolist"></div>
-      </div>
       <div class="panel" style="grid-area:anc">
         <h3>これまでの相棒</h3>
-        <p>育ち切った相棒は旅立ち、守り神になります。土地に送り出せるのはこの子たちです。</p>
+        <p>育ち切った相棒は旅立ち、守り神になります。この子たちも土地に探検に行けます。</p>
         <div class="evolist" id="ancPanel"></div>
       </div>
       <div class="panel" style="grid-area:land">
@@ -2035,6 +2048,17 @@ function renderPet(){
   document.getElementById("evoNum").textContent=`${b.toLocaleString()} / ${nx.toLocaleString()} 絆`;
   document.getElementById("evoBar").style.setProperty("--v",
     Math.min(1,(b-lo)/Math.max(1,nx-lo)).toFixed(3));
+  /* 進化の道すじ。先はまだ伏せる */
+  const b2=bondXp();
+  document.getElementById("evoline").innerHTML=STAGE_N.map((nm,i)=>{
+    const reached=b2>=BOND[i], shown=Object.assign({},sp,{stage:i});
+    const art=(reached||i<=si)? creatureSVG(shown,40,i===si?md:"ok")
+      : `<svg viewBox="0 0 40 40" aria-hidden="true"><text x="20" y="28" text-anchor="middle"
+         font-size="18" font-weight="800" fill="var(--line)">?</text></svg>`;
+    return `<div class="evostep ${i===si?"now":(reached?"reached":"")}"
+      title="${esc(nm)} ／ 絆 ${BOND[i].toLocaleString()}">${art}
+      <span>${(reached||i<=si)? esc(speciesName(shown)) : "？"}</span></div>`;
+  }).join('<span class="evoarrow">▶</span>');
   const dep=document.getElementById("departWrap");
   dep.innerHTML = canDepart()
     ? `<button class="btn primary sm" id="departBtn">旅立たせる</button>
@@ -2365,23 +2389,6 @@ function renderShelf(){
    ============================================================ */
 function renderBuddyTab(){
   const sp=petSpec(), si=sp.stage, b=bondXp();
-  /* 進化の道すじ。まだ先の段階は「？」のまま伏せる */
-  document.getElementById("evolist").innerHTML=STAGE_N.map((n,i)=>{
-    const reached=b>=BOND[i], cls=i===si?"now":(reached?"":"locked");
-    const shown=Object.assign({},sp,{stage:i});
-    const art = reached||i<=si
-      ? creatureSVG(shown,44,i===si?mood():"ok")
-      : `<svg viewBox="0 0 44 44" aria-hidden="true"><text x="22" y="30" text-anchor="middle"
-         font-size="22" font-weight="800" fill="var(--line)">?</text></svg>`;
-    return `<div class="evorow ${cls}">${art}
-      <div><b>${reached||i<=si? esc(speciesName(shown)) : "？？？"}</b>
-      <em>${n} ・ 絆 ${BOND[i].toLocaleString()}${reached?" 到達ずみ":""}</em></div></div>`;
-  }).join("")
-  + `<div class="evorow ${canDepart()?"now":"locked"}">
-      <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M22 6 L27 17 L39 18 L30 26 L33 38
-        L22 31 L11 38 L14 26 L5 18 L17 17 Z" fill="${canDepart()?sp.hue:"none"}"
-        stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/></svg>
-      <div><b>旅立ち</b><em>絆 ${DEPART.toLocaleString()} で 守り神になる（いま ${b.toLocaleString()}）</em></div></div>`;
   /* いま何によって育っているか */
   const p=sp.prof, mx=Math.max(1,...p.v);
   document.getElementById("axisPanel").innerHTML=AXES.map((ax,i)=>
@@ -2427,8 +2434,9 @@ function renderBuddyTab(){
     }).join("")
     + `<p class="note" style="margin-top:10px">恵み：${BOONS.map(b=>"Lv"+b.lv+" "+b.n).join(" ／ ")}</p>`;
 }
-/* 高さは「読んだページ数」。1万ページを超えたら伸びを緩めて画面に収める */
-function uOf(p){ return p<=10000 ? p*0.078 : 780+(p-10000)*0.034; }
+/* 高さは「読んだページ数」。序盤は大きく伸び、後半はゆるやかになる曲線。
+   1冊読んだだけでも「積み上がった」と分かる高さにするための形 */
+function uOf(p){ return p<=0? 0 : 132*Math.pow(p/1000, 0.62); }
 /* 段階は細かく、そして無限に続く。i段目は 120*i^1.8 ページ。
    120p（本の半分ほど）で最初の景色が変わるので、少し読むたびに何かが起きる */
 function bandP(i){ return i<=0? 0 : Math.round(110*Math.pow(i,1.45)); }
@@ -2497,156 +2505,171 @@ function bandOf(p){
 }
 function nextBand(p){ let i=1; while(bandP(i)<=p && i<400) i++; return bandAt(i); }
 
-/* --- 空に住むものたち --- */
-function birdSVG(x,y,s,col){
-  return `<path d="M${x-s},${y} q${s*0.5},${-s*0.75} ${s},0 q${s*0.5},${-s*0.75} ${s},0"
-    fill="none" stroke="${col}" stroke-width="${Math.max(1.4,s*0.28)}" stroke-linecap="round"/>`;
+/* --- 空に住むものたち（陰影のある絵柄） --- */
+/* かもめ。輪郭線を使わず、影として置く。遠いものほど薄い */
+function gullSVG(x,y,s,op){
+  return `<path d="M${x-s},${y} q${s*0.44},${-s*0.52} ${s*0.74},${-s*0.06}
+    q${s*0.08},${-s*0.07} ${s*0.16},0 q${s*0.3},${-s*0.46} ${s*0.74},${s*0.06}
+    q${-s*0.4},${s*0.13} ${-s*0.74},${s*0.22} l${-s*0.16},0 z"
+    fill="#37454F" opacity="${(op||0.75).toFixed(2)}"/>`;
 }
-function cloudSVG(x,y,s,op){
-  return `<g opacity="${op}"><circle cx="${x-s*0.75}" cy="${y+s*0.14}" r="${s*0.56}" fill="#fff"/>
-    <circle cx="${x}" cy="${y-s*0.2}" r="${s*0.78}" fill="#fff"/>
-    <circle cx="${x+s*0.82}" cy="${y+s*0.1}" r="${s*0.6}" fill="#fff"/>
-    <rect x="${x-s*1.3}" y="${y+s*0.06}" width="${s*2.6}" height="${s*0.55}" rx="${s*0.27}" fill="#fff"/></g>`;
+/* 雲。下面に影の層、上面に白の層を重ねて厚みを出す */
+function puffCloud(x,y,s,op,sd){
+  const q=i=>((hash("rc"+sd+"-"+i)%1000)/1000);
+  const n=4+Math.floor(q(0)*3);
+  let base="",top="";
+  for(let i=0;i<n;i++){
+    const t=(i/(n-1))-0.5;
+    const r=s*(0.46+q(i+1)*0.46);
+    const px=x+t*s*2.3, py=y+Math.abs(t)*s*0.26-q(i+7)*s*0.2;
+    base+=`<ellipse cx="${px.toFixed(1)}" cy="${(py+s*0.26).toFixed(1)}"
+      rx="${(r*1.04).toFixed(1)}" ry="${(r*0.7).toFixed(1)}" fill="#B9CCDB"/>`;
+    top +=`<ellipse cx="${px.toFixed(1)}" cy="${py.toFixed(1)}"
+      rx="${r.toFixed(1)}" ry="${(r*0.8).toFixed(1)}" fill="#FDFEFF"/>`;
+  }
+  return `<g opacity="${op.toFixed(2)}">${base}${top}</g>`;
 }
 function airshipSVG(x,y,s){
-  return `<g><ellipse cx="${x}" cy="${y}" rx="${s}" ry="${s*0.42}" fill="#F6E7C8" stroke="#3B2A1E" stroke-width="2"/>
-    <path d="M${x+s},${y} l${s*0.34},${-s*0.28} l0,${s*0.56} z" fill="#FF8A3D" stroke="#3B2A1E" stroke-width="1.6"/>
-    <rect x="${x-s*0.24}" y="${y+s*0.42}" width="${s*0.48}" height="${s*0.28}" rx="3" fill="#3B2A1E"/>
-    <path d="M${x-s*0.5},${y-s*0.36} h${s}" stroke="#D9631C" stroke-width="2.4"/></g>`;
+  return `<g><ellipse cx="${x}" cy="${y}" rx="${s}" ry="${s*0.4}" fill="#D9C9A8"/>
+    <ellipse cx="${x}" cy="${y+s*0.12}" rx="${s*0.96}" ry="${s*0.3}" fill="#B9A585"/>
+    <ellipse cx="${x-s*0.3}" cy="${y-s*0.14}" rx="${s*0.5}" ry="${s*0.14}" fill="#F2E7D0" opacity=".7"/>
+    <path d="M${x+s*0.95},${y} l${s*0.32},${-s*0.26} l0,${s*0.52} z" fill="#C0663A"/>
+    <rect x="${x-s*0.2}" y="${y+s*0.38}" width="${s*0.4}" height="${s*0.24}" rx="2" fill="#5C4530"/>
+    <path d="M${x-s*0.16},${y+s*0.34} l${-s*0.04},${-s*0.1} M${x+s*0.16},${y+s*0.34} l${s*0.04},${-s*0.1}"
+      stroke="#5C4530" stroke-width="1"/></g>`;
 }
 function flockSVG(x,y,s,col){
   let g="";
-  [[0,0],[-s*1.5,s*0.8],[s*1.5,s*0.8],[-s*3,s*1.7],[s*3,s*1.7]].forEach(d=>g+=birdSVG(x+d[0],y+d[1],s*0.6,col));
+  [[0,0,1],[-s*1.7,s*0.9,.85],[s*1.7,s*0.9,.85],[-s*3.3,s*1.8,.6],[s*3.3,s*1.8,.6],
+   [-s*0.9,s*2.4,.5],[s*0.9,s*2.4,.5]].forEach(d=>g+=gullSVG(x+d[0],y+d[1],s*0.62,d[2]));
   return `<g>${g}</g>`;
 }
 function dragonSVG(x,y,s,col){
-  return `<g transform="translate(${x},${y}) scale(${s/40})">
-    <path d="M-52,6 q18,-16 36,-4 q16,10 32,-2 q14,-10 30,2" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round"/>
-    <path d="M-6,-2 q-14,-26 -40,-30 q22,-2 34,8 q6,-14 20,-16 q-6,16 2,26 z" fill="${col}" opacity=".92"/>
-    <path d="M14,4 q10,-22 34,-26 q-14,14 -12,26 z" fill="${col}" opacity=".72"/>
-    <circle cx="46" cy="2" r="9" fill="${col}"/><path d="M42,-5 l-8,-11 l13,5 z" fill="${col}"/>
-    <circle cx="50" cy="0" r="2.1" fill="#FFF3D0"/><path d="M-52,6 l-13,-8 l4,9 l-6,7 z" fill="${col}"/></g>`;
+  return `<g transform="translate(${x},${y}) scale(${s/40})" opacity=".92">
+    <path d="M-54,8 q20,-18 38,-5 q17,11 33,-2 q15,-11 32,3" fill="none" stroke="#1E1026"
+      stroke-width="10" stroke-linecap="round"/>
+    <path d="M-54,8 q20,-18 38,-5 q17,11 33,-2 q15,-11 32,3" fill="none" stroke="#3A1E48"
+      stroke-width="5" stroke-linecap="round"/>
+    <path d="M-6,-2 q-15,-28 -42,-32 q23,-2 36,9 q6,-15 21,-17 q-6,17 2,28 z" fill="#2A1533"/>
+    <path d="M-6,-2 q-11,-19 -30,-24 q16,0 26,8 z" fill="#4A2A57" opacity=".7"/>
+    <path d="M15,4 q11,-23 36,-27 q-15,15 -13,27 z" fill="#2A1533" opacity=".8"/>
+    <circle cx="47" cy="3" r="9.5" fill="#2A1533"/>
+    <path d="M43,-4 l-9,-12 l14,6 z" fill="#2A1533"/>
+    <circle cx="51" cy="1" r="2.2" fill="#FFD9A0"/></g>`;
 }
 function moonSVG(x,y,s){
-  return `<g><circle cx="${x}" cy="${y}" r="${s}" fill="#FFF0BC"/>
-    <circle cx="${x+s*0.42}" cy="${y-s*0.2}" r="${s*0.86}" fill="#1A2A66"/></g>`;
+  return `<g><circle cx="${x}" cy="${y}" r="${s*1.25}" fill="#FFF3C8" opacity=".18"/>
+    <circle cx="${x}" cy="${y}" r="${s}" fill="#F6EFCF"/>
+    <circle cx="${x-s*0.28}" cy="${y-s*0.2}" r="${s*0.17}" fill="#E4DBB6" opacity=".8"/>
+    <circle cx="${x+s*0.22}" cy="${y+s*0.26}" r="${s*0.12}" fill="#E4DBB6" opacity=".7"/>
+    <circle cx="${x+s*0.34}" cy="${y-s*0.3}" r="${s*0.08}" fill="#E4DBB6" opacity=".6"/></g>`;
 }
 function meteorSVG(x,y,s,col){
-  return `<g><path d="M${x},${y} l${-s*2.4},${s*1.3}" stroke="${col}" stroke-width="2.6" stroke-linecap="round" opacity=".8"/>
-    <circle cx="${x}" cy="${y}" r="${s*0.28}" fill="${col}"/></g>`;
+  return `<g><path d="M${x},${y} l${-s*3.2},${s*1.7}" stroke="#FFF3C8" stroke-width="${s*0.3}"
+    stroke-linecap="round" opacity=".45"/>
+    <path d="M${x},${y} l${-s*1.6},${s*0.85}" stroke="#FFF9E6" stroke-width="${s*0.22}"
+    stroke-linecap="round" opacity=".9"/>
+    <circle cx="${x}" cy="${y}" r="${s*0.26}" fill="#FFFDF2"/></g>`;
 }
 function starSVG(x,y,s,col){
-  return `<path d="M${x},${y-s} l${s*0.28},${s*0.66} l${s*0.72},${s*0.06} l${-s*0.55},${s*0.5}
-    l${s*0.2},${s*0.7} l${-s*0.65},${-s*0.38} l${-s*0.65},${s*0.38} l${s*0.2},${-s*0.7}
-    l${-s*0.55},${-s*0.5} l${s*0.72},${-s*0.06} z" fill="${col}"/>`;
+  return `<g><circle cx="${x}" cy="${y}" r="${s*0.9}" fill="#FFF6D8" opacity=".25"/>
+    <path d="M${x},${y-s} Q${x+s*0.16},${y-s*0.16} ${x+s},${y}
+      Q${x+s*0.16},${y+s*0.16} ${x},${y+s}
+      Q${x-s*0.16},${y+s*0.16} ${x-s},${y}
+      Q${x-s*0.16},${y-s*0.16} ${x},${y-s} z" fill="#FFFBEC"/></g>`;
 }
 function auroraSVG(x,y,s,col){
   let g="";
-  for(let i=0;i<3;i++) g+=`<path d="M${x-s},${y+i*4} q${s*0.6},${-s*0.8} ${s},${-s*0.2}
-    q${s*0.5},${s*0.5} ${s},${-s*0.3}" fill="none" stroke="${col}" stroke-width="${3-i*0.6}"
-    opacity="${0.5-i*0.12}" stroke-linecap="round"/>`;
+  for(let i=0;i<4;i++){
+    const o=(0.34-i*0.07).toFixed(2);
+    g+=`<path d="M${x-s},${y+i*5} q${s*0.55},${-s*0.9} ${s*1.0},${-s*0.25}
+      q${s*0.45},${s*0.55} ${s*1.0},${-s*0.35}" fill="none"
+      stroke="${i%2?"#9FE8D0":"#8FD3F0"}" stroke-width="${(s*0.22-i*1.2).toFixed(1)}"
+      opacity="${o}" stroke-linecap="round"/>`;
+  }
   return `<g>${g}</g>`;
 }
 function rainbowSVG(x,y,s){
-  const cs=["#FF6B6B","#FFB65C","#FFE066","#6FD98A","#5BB8F0","#9B7BE8"];
-  return `<g opacity=".7">`+cs.map((c,i)=>
-    `<path d="M${x-s},${y} a${s},${s} 0 0 1 ${s*2},0" fill="none" stroke="${c}"
-      stroke-width="3" transform="translate(0,${i*3.2}) scale(1,${1-i*0.03})"/>`).join("")+`</g>`;
+  const cs=["#E86A6A","#E8A45C","#E8D066","#6FC98A","#5BAEE0","#8F7BD8"];
+  return `<g opacity=".45">`+cs.map((c,i)=>
+    `<path d="M${x-s+i*2},${y} a${s-i*2},${s-i*2} 0 0 1 ${(s-i*2)*2},0" fill="none"
+      stroke="${c}" stroke-width="2.6"/>`).join("")+`</g>`;
 }
 function kiteSVG(x,y,s,rot){
   let bows="";
   for(let i=1;i<=3;i++){
-    const by=y+s+i*s*0.45, bx=x+(i%2?1:-1)*s*0.2;
-    bows+=`<path d="M${bx-s*0.22},${by-s*0.1} l${s*0.22},${s*0.1} l${-s*0.22},${s*0.1} z
-      M${bx+s*0.22},${by-s*0.1} l${-s*0.22},${s*0.1} l${s*0.22},${s*0.1} z"
-      fill="#FFC12E" stroke="#3B2A1E" stroke-width="1"/>`;
+    const by=y+s+i*s*0.5, bx=x+(i%2?1:-1)*s*0.16;
+    bows+=`<path d="M${bx-s*0.2},${by-s*0.09} l${s*0.2},${s*0.09} l${-s*0.2},${s*0.09} z
+      M${bx+s*0.2},${by-s*0.09} l${-s*0.2},${s*0.09} l${s*0.2},${s*0.09} z"
+      fill="#E8B84B" opacity=".9"/>`;
   }
-  return `<g transform="rotate(${(rot||0).toFixed(1)} ${x} ${y})">
-    <path d="M${x},${y-s} L${x+s*0.62},${y} L${x},${y+s} L${x-s*0.62},${y} z"
-      fill="#FF8A3D" stroke="#3B2A1E" stroke-width="1.8" stroke-linejoin="round"/>
-    <path d="M${x},${y-s} L${x},${y+s} M${x-s*0.62},${y} L${x+s*0.62},${y}"
-      stroke="#3B2A1E" stroke-width="1" opacity=".55"/>
-    <path d="M${x},${y+s} q${s*0.5},${s*0.6} ${-s*0.1},${s*1.5}" fill="none"
-      stroke="#3B2A1E" stroke-width="1.3"/>${bows}</g>`;
+  return `<g transform="rotate(${(rot||0).toFixed(1)} ${x} ${y})" opacity=".95">
+    <path d="M${x},${y-s} L${x+s*0.6},${y} L${x},${y+s} L${x-s*0.6},${y} z" fill="#E0743A"/>
+    <path d="M${x},${y-s} L${x+s*0.6},${y} L${x},${y} z" fill="#C85F2C"/>
+    <path d="M${x},${y-s} L${x},${y+s} M${x-s*0.6},${y} L${x+s*0.6},${y}"
+      stroke="#8C4620" stroke-width=".8" opacity=".6"/>
+    <path d="M${x},${y+s} q${s*0.5},${s*0.65} ${-s*0.1},${s*1.6}" fill="none"
+      stroke="#7A5B44" stroke-width="1"/>${bows}</g>`;
 }
 function islandSVG(x,y,s){
-  return `<g><path d="M${x-s},${y} h${s*2} l${-s*0.5},${s*0.8} h${-s} z" fill="#8A6A4A"
-    stroke="#3B2A1E" stroke-width="1.8" stroke-linejoin="round"/>
-    <ellipse cx="${x}" cy="${y}" rx="${s}" ry="${s*0.3}" fill="#3E9E4E" stroke="#3B2A1E" stroke-width="1.8"/>
-    <path d="M${x+s*0.2},${y-s*0.2} v${-s*0.5}" stroke="#5C4530" stroke-width="2"/>
-    <circle cx="${x+s*0.2}" cy="${y-s*0.75}" r="${s*0.28}" fill="#3E9E4E" stroke="#3B2A1E" stroke-width="1.6"/></g>`;
+  return `<g><path d="M${x-s},${y} h${s*2} l${-s*0.55},${s*0.9} h${-s*0.9} z" fill="#7A5C3E"/>
+    <path d="M${x-s},${y} h${s*0.8} l${-s*0.2},${s*0.85} z" fill="#96754F" opacity=".8"/>
+    <ellipse cx="${x}" cy="${y}" rx="${s}" ry="${s*0.28}" fill="#4F9E56"/>
+    <ellipse cx="${x-s*0.25}" cy="${y-s*0.05}" rx="${s*0.55}" ry="${s*0.16}" fill="#67B96C" opacity=".8"/>
+    <path d="M${x+s*0.22},${y-s*0.18} v${-s*0.5}" stroke="#6B4A2E" stroke-width="1.6"/>
+    <ellipse cx="${x+s*0.22}" cy="${y-s*0.78}" rx="${s*0.3}" ry="${s*0.24}" fill="#3E8E4A"/>
+    <ellipse cx="${x+s*0.1}" cy="${y-s*0.86}" rx="${s*0.2}" ry="${s*0.17}" fill="#54A55C"/></g>`;
 }
 function dropSVG(x,y,s,col){
-  return `<path d="M${x},${y-s*0.8} q${s*0.6},${s*0.9} 0,${s*1.3} q${-s*0.6},${-s*0.4} 0,${-s*1.3} z"
-    fill="${col||"#5BB8F0"}" opacity=".8"/>`;
+  return `<g><path d="M${x},${y-s*0.85} q${s*0.55},${s*0.95} 0,${s*1.35}
+    q${-s*0.55},${-s*0.4} 0,${-s*1.35} z" fill="#7FC4E8" opacity=".75"/>
+    <ellipse cx="${x-s*0.14}" cy="${y+s*0.18}" rx="${s*0.12}" ry="${s*0.2}" fill="#DFF2FB" opacity=".8"/></g>`;
 }
-/* 同じ形を機械的に並べると作り物に見えるので、
-   一羽ずつ・ひとつずつ 大きさと角度と位置をずらす */
+/* 段ごとの景色。ラベルにかからない範囲に置く */
 function drawFx(fx,x,y,sd){
-  const r=(i)=>((hash("fx"+sd+"-"+i)%1000)/1000);
+  const r=i=>((hash("fx"+sd+"-"+i)%1000)/1000);
+  const L=12, Rg=196;              /* 置ける横はば（右の目盛りを避ける） */
+  const px=i=>L+r(i)*(Rg-L);
   switch(fx){
     case "bird":{
       let g=""; const n=2+Math.floor(r(0)*3);
       for(let i=0;i<n;i++){
-        const s=6+r(i+1)*7, px=x+34+r(i+7)*112, py=y-14+r(i+11)*26;
-        g+=`<g transform="rotate(${(r(i+3)*22-11).toFixed(1)} ${px} ${py})">`
-          +gullSVG(px,py,s,"#4A3A2C")+`</g>`;
+        const s=5+r(i+1)*6, bx=px(i+7), by=y-13+r(i+11)*26;
+        g+=`<g transform="rotate(${(r(i+3)*20-10).toFixed(1)} ${bx} ${by})">`
+          +gullSVG(bx,by,s,0.45+r(i+5)*0.45)+`</g>`;
       }
       return g;
     }
     case "cloud":{
       let g=""; const n=1+Math.floor(r(0)*3);
       for(let i=0;i<n;i++)
-        g+=puffCloud(x+30+r(i+2)*110, y-10+r(i+5)*22, 13+r(i+9)*15, 0.7+r(i+4)*0.28, hash("c"+sd+i));
+        g+=puffCloud(px(i+2), y-9+r(i+5)*20, 12+r(i+9)*16, 0.72+r(i+4)*0.26, hash("c"+sd+i));
       return g;
     }
-    case "flock":  return flockSVG(x+40+r(1)*80,y,9+r(2)*5,"#1C1610");
-    case "airship":return airshipSVG(x+50+r(1)*70,y,20+r(2)*10);
-    case "dragon": return dragonSVG(x+45+r(1)*70,y,44+r(2)*20,"#2A1533");
+    case "flock":  return flockSVG(px(1),y,8+r(2)*4,"#37454F");
+    case "airship":return airshipSVG(px(1),y,18+r(2)*9);
+    case "dragon": return dragonSVG(px(1)*0.85+20,y,42+r(2)*18,"#2A1533");
     case "meteor":{
       let g=""; const n=1+Math.floor(r(0)*3);
-      for(let i=0;i<n;i++) g+=meteorSVG(x+30+r(i+2)*110, y-12+r(i+6)*24, 7+r(i+3)*7,"#FFF0BC");
+      for(let i=0;i<n;i++) g+=meteorSVG(px(i+2), y-11+r(i+6)*22, 5+r(i+3)*6,"#FFF0BC");
       return g;
     }
-    case "moon":   return moonSVG(x+60+r(1)*60,y,18+r(2)*10);
+    case "moon":   return moonSVG(px(1),y,16+r(2)*9);
     case "star":{
-      let g=""; const n=3+Math.floor(r(0)*5);
-      for(let i=0;i<n;i++) g+=starSVG(x+20+r(i+2)*130, y-16+r(i+8)*32, 3.5+r(i+4)*6,"#FFF6D8");
+      let g=""; const n=4+Math.floor(r(0)*6);
+      for(let i=0;i<n;i++) g+=starSVG(px(i+2), y-15+r(i+8)*30, 2.6+r(i+4)*4.5,"#FFF6D8");
       return g;
     }
-    case "aurora": return auroraSVG(x+40+r(1)*60,y,24+r(2)*18,"#8FE3C8");
-    case "rainbow":return rainbowSVG(x+50+r(1)*70,y,26+r(2)*18);
-    case "kite":   return kiteSVG(x+50+r(1)*90, y-6+r(2)*14, 9+r(3)*7, r(4)*30-15);
-    case "island": return islandSVG(x+45+r(1)*80,y,15+r(2)*12);
+    case "aurora": return auroraSVG(px(1)*0.8+20,y,22+r(2)*16,"#8FE3C8");
+    case "rainbow":return rainbowSVG(px(1)*0.75+24,y,24+r(2)*16);
+    case "kite":   return kiteSVG(px(1), y-5+r(2)*12, 8+r(3)*6, r(4)*26-13);
+    case "island": return islandSVG(px(1),y,14+r(2)*10);
     case "drop":{
-      let g=""; for(let i=0;i<3;i++) g+=dropSVG(x+40+r(i+2)*100, y-10+r(i+6)*20, 6+r(i+3)*6);
+      let g=""; for(let i=0;i<3;i++) g+=dropSVG(px(i+2), y-9+r(i+6)*18, 5+r(i+3)*5);
       return g;
     }
     default: return "";
   }
-}
-/* かもめ。棒2本ではなく、胴と翼のある影にする */
-function gullSVG(x,y,s,col){
-  return `<path d="M${x-s*1.5},${y-s*0.35} q${s*0.75},${-s*0.55} ${s*1.15},${s*0.2}
-    q${s*0.2},${-s*0.12} ${s*0.4},0 q${s*0.4},${-s*0.75} ${s*1.15},${-s*0.2}
-    q${-s*0.55},${s*0.35} ${-s*1.05},${s*0.5} l${-s*0.5},0 z"
-    fill="${col}" opacity=".9"/>`;
-}
-/* 雲。輪郭の粒の数と大きさを毎回変える */
-function puffCloud(x,y,s,op,sd){
-  const q=(i)=>((hash("p"+sd+"-"+i)%1000)/1000);
-  const n=3+Math.floor(q(0)*3);
-  let lobes="";
-  for(let i=0;i<n;i++){
-    const t=(i/(n-1))-0.5;
-    lobes+=`<circle cx="${(x+t*s*1.9).toFixed(1)}" cy="${(y-Math.cos(t*3)*s*0.32+q(i+1)*s*0.16).toFixed(1)}"
-      r="${(s*(0.42+q(i+5)*0.34)).toFixed(1)}" fill="#fff"/>`;
-  }
-  return `<g opacity="${op.toFixed(2)}">${lobes}
-    <rect x="${(x-s*1.05).toFixed(1)}" y="${(y+s*0.02).toFixed(1)}" width="${(s*2.1).toFixed(1)}"
-      height="${(s*0.5).toFixed(1)}" rx="${(s*0.25).toFixed(1)}" fill="#fff"/>
-    <ellipse cx="${x.toFixed(1)}" cy="${(y+s*0.46).toFixed(1)}" rx="${(s*0.95).toFixed(1)}"
-      ry="${(s*0.16).toFixed(1)}" fill="#BFD8E6" opacity=".5"/></g>`;
 }
 
 function renderTower(){
@@ -2654,12 +2677,19 @@ function renderTower(){
   const done=books().filter(isDone).sort((a,b)=>(st(a.id).at||0)-(st(b.id).at||0));
   const wipAll=books().filter(b=>{const s=st(b.id); return s.page>0&&s.page<b.p;});
   const donePages=done.reduce((n,b)=>n+b.p,0);
-  const W=340, GRD=54, HEAD=210, cx=118;
-  const towerU=uOf(donePages), H=Math.round(towerU+HEAD+GRD);
+  const W=340, GRD=64, HEAD=150, cx=118;
+  const boxW=Math.max(230,(box.clientWidth||340)-4);
+  const boxH=Math.max(320,(box.clientHeight||620)-4);
+  /* 塔が低いうちは空で箱を埋める。下に大きな余白ができるのを防ぐ */
+  const minH=Math.ceil(boxH*(W/boxW));
+  const towerU=uOf(donePages);
+  const H=Math.max(minH, Math.round(towerU+HEAD+GRD));
   const baseY=H-GRD;
   const yOf=p=>baseY-uOf(p);
-  const topPages=donePages + (HEAD/0.078);
-  const wOf=u=>60*(1-0.26*Math.min(1,u/1500))+18;
+  /* 頭上に見える空は、いまの高さ＋HEAD ぶんの高さに相当するページ数まで */
+  const topU=uOf(donePages)+HEAD;
+  const topPages=Math.round(1000*Math.pow(topU/132, 1/0.62));
+  const wOf=u=>82*(1-0.30*Math.min(1,u/1400))+16;
 
   let g="";
   /* 空のグラデーション。SVGは offset が昇順でないと効かないので、高い帯から順に置く */
@@ -2675,8 +2705,15 @@ function renderTower(){
     if(seen.has(key)) return; seen.add(key);
     stops+=`<stop offset="${key}%" stop-color="${z.c}"/>`;
   });
-  g+=`<defs><linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">${stops}</linearGradient></defs>`;
+  g+=`<defs><linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">${stops}</linearGradient>
+    <linearGradient id="hazeG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#FFF4DC" stop-opacity=".75"/></linearGradient>
+    <linearGradient id="grassG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7CBF63"/><stop offset="100%" stop-color="#4E8C46"/></linearGradient>
+  </defs>`;
   g+=`<rect x="0" y="0" width="${W}" height="${H}" fill="url(#skyG)"/>`;
+  g+=`<rect x="0" y="${(baseY-150).toFixed(1)}" width="${W}" height="150" fill="url(#hazeG)"/>`;
 
   /* その人だけの空。段ごとに景色と住人が変わる */
   const seenBands=bandsUpTo(topPages);
@@ -2689,19 +2726,34 @@ function renderTower(){
         b.p<=donePages? esc(b.n) : "？ ？ ？"} ${b.p.toLocaleString()}p</text>`;
   });
 
-  /* 地面 */
-  g+=`<rect x="0" y="${baseY}" width="${W}" height="${GRD}" fill="#6FBF5C"/>
-      <path d="M0,${baseY} q26,-9 52,0 q26,-9 52,0 q26,-9 52,0 q26,-9 52,0 q26,-9 52,0
-        q26,-9 52,0 q26,-9 52,0" fill="#8AD473" opacity=".85"/>`;
-  /* はじまりの家 */
-  g+=`<g><rect x="${W-72}" y="${baseY+14}" width="30" height="22" fill="#FFF1DA"
-      stroke="#3B2A1E" stroke-width="2.2"/>
-      <path d="M${W-76},${baseY+14} l19,-14 l19,14 z" fill="#FF8A3D" stroke="#3B2A1E" stroke-width="2.2"
-      stroke-linejoin="round"/>
-      <rect x="${W-61}" y="${baseY+24}" width="9" height="12" fill="#3B2A1E"/></g>`;
-  [26,60].forEach((x,i)=>{
-    g+=`<g><rect x="${x-2.5}" y="${baseY+22}" width="5" height="14" fill="#6B4A2E"/>
-      <circle cx="${x}" cy="${baseY+17}" r="11" fill="#3E9E4E" stroke="#3B2A1E" stroke-width="2"/></g>`;
+  /* 遠くの丘 → 草地 の順に重ねて奥行きを出す */
+  g+=`<path d="M0,${(baseY+2).toFixed(1)} q58,-13 118,-3 q66,-11 132,3 q50,-8 90,-1
+        L${W},${H} L0,${H} z" fill="#8CBE7A" opacity=".65"/>`;
+  g+=`<rect x="0" y="${(baseY+8).toFixed(1)}" width="${W}" height="${(H-baseY-8).toFixed(1)}" fill="url(#grassG)"/>`;
+  g+=`<path d="M0,${(baseY+8).toFixed(1)} q30,-7 60,0 q30,-7 60,0 q30,-7 60,0 q30,-7 60,0
+        q30,-7 60,0 q30,-7 60,0" fill="#8FCE74" opacity=".7"/>`;
+  for(let i=0;i<16;i++){
+    const gx=8+((i*37)%(W-16)), gy=baseY+16+((i*13)%26);
+    g+=`<path d="M${gx},${gy} q1.8,-6 3.6,0 M${gx+3},${gy} q1.8,-7.5 3.6,0"
+      fill="none" stroke="#3F7F3C" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>`;
+  }
+  /* はじまりの家。屋根と壁に陰をつける */
+  const hx=W-78, hy=baseY+20;
+  g+=`<g><ellipse cx="${hx+16}" cy="${hy+26}" rx="23" ry="4" fill="#2E5A2E" opacity=".22"/>
+    <rect x="${hx}" y="${hy}" width="32" height="24" fill="#F4E6CE"/>
+    <rect x="${hx+21}" y="${hy}" width="11" height="24" fill="#DCCAAB"/>
+    <path d="M${hx-5},${hy} l21,-15 l21,15 z" fill="#C4623A"/>
+    <path d="M${hx+16},${hy-15} l21,15 l-21,0 z" fill="#A54F2D"/>
+    <rect x="${hx+13}" y="${hy+11}" width="9" height="13" fill="#6B4A2E"/>
+    <rect x="${hx+4}" y="${hy+5}" width="6" height="6" fill="#FFE8A8"/></g>`;
+  /* 木。三段のかたまりで丸みを出す */
+  [[24,0],[52,-4],[78,3]].forEach((t,i)=>{
+    const tx=t[0], ty=baseY+22+t[1], r=9+((i*5)%4);
+    g+=`<g><ellipse cx="${tx}" cy="${ty+8}" rx="${r*1.1}" ry="3" fill="#2E5A2E" opacity=".2"/>
+      <rect x="${tx-2}" y="${ty-2}" width="4" height="11" fill="#6B4A2E"/>
+      <ellipse cx="${tx}" cy="${ty-6}" rx="${r}" ry="${r*0.85}" fill="#3B7F3E"/>
+      <ellipse cx="${tx-r*0.3}" cy="${ty-r*0.55}" rx="${r*0.62}" ry="${r*0.52}" fill="#4E9B4E"/>
+      <ellipse cx="${tx+r*0.28}" cy="${ty-r*0.3}" rx="${r*0.42}" ry="${r*0.36}" fill="#59A857" opacity=".8"/></g>`;
   });
 
   if(!done.length){
@@ -2715,16 +2767,26 @@ function renderTower(){
     done.forEach((b,i)=>{
       const R=regionOf(b), u0=uOf(acc), u1=uOf(acc+b.p);
       const y1=baseY-u1, hgt=Math.max(3,u1-u0), w=wOf((u0+u1)/2);
+      const bs=R?R.hue:"#2FA85C";
+      const lit=tint(bs,0.34), mid=tint(bs,0.02), drk=tint(bs,-0.30), edg=tint(bs,-0.5);
+      const lx=cx-w/2;
       g+=`<g class="tlayer" data-id="${esc(b.id)}">
-        <rect x="${(cx-w/2).toFixed(1)}" y="${y1.toFixed(1)}" width="${w.toFixed(1)}"
-          height="${hgt.toFixed(1)}" fill="${R?R.hue:"#2FA85C"}" stroke="#3B2A1E"
-          stroke-width="2"/>`;
-      if(hgt>11){
-        const nw=Math.max(1,Math.floor(w/26));
+        <rect x="${lx.toFixed(1)}" y="${y1.toFixed(1)}" width="${w.toFixed(1)}" height="${hgt.toFixed(1)}" fill="${mid}"/>
+        <rect x="${lx.toFixed(1)}" y="${y1.toFixed(1)}" width="${(w*0.34).toFixed(1)}" height="${hgt.toFixed(1)}" fill="${lit}"/>
+        <rect x="${(lx+w*0.76).toFixed(1)}" y="${y1.toFixed(1)}" width="${(w*0.24).toFixed(1)}" height="${hgt.toFixed(1)}" fill="${drk}"/>`;
+      for(let cy2=y1+5; cy2<y1+hgt-2; cy2+=6)
+        g+=`<line x1="${lx.toFixed(1)}" y1="${cy2.toFixed(1)}" x2="${(lx+w).toFixed(1)}" y2="${cy2.toFixed(1)}"
+          stroke="${edg}" stroke-width=".7" opacity=".3"/>`;
+      g+=`<rect x="${(lx-2.5).toFixed(1)}" y="${y1.toFixed(1)}" width="${(w+5).toFixed(1)}" height="3" fill="${drk}"/>
+        <rect x="${(lx-2.5).toFixed(1)}" y="${y1.toFixed(1)}" width="${(w+5).toFixed(1)}" height="1.2" fill="${lit}"/>`;
+      if(hgt>13){
+        const nw=Math.max(1,Math.floor(w/24));
         for(let k=0;k<nw;k++){
-          const wx=cx-w/2+ (w/(nw+1))*(k+1);
-          g+=`<rect x="${(wx-3.2).toFixed(1)}" y="${(y1+hgt/2-3.6).toFixed(1)}"
-            width="6.4" height="7.2" rx="1.4" fill="#FFF0BC" stroke="#3B2A1E" stroke-width="1.2"/>`;
+          const wx=lx+(w/(nw+1))*(k+1), wy=y1+hgt/2;
+          g+=`<circle cx="${wx.toFixed(1)}" cy="${wy.toFixed(1)}" r="7" fill="#FFD98A" opacity=".22"/>
+            <path d="M${(wx-3.2).toFixed(1)},${(wy+4).toFixed(1)} v-3.4 a3.2,3.6 0 0 1 6.4,0 v3.4 z" fill="#FFE9B0"/>
+            <path d="M${(wx-3.2).toFixed(1)},${(wy+4).toFixed(1)} v-3.4 a3.2,3.6 0 0 1 3.2,-3.6 v7 z" fill="#FFF6D8"/>
+            <rect x="${(wx-4.4).toFixed(1)}" y="${(wy+4).toFixed(1)}" width="8.8" height="1.6" fill="${edg}"/>`;
         }
       }
       g+=`<title>${esc(b.t)}（${b.p}ページ）</title></g>`;
@@ -2732,12 +2794,13 @@ function renderTower(){
     });
     /* 屋根と旗 */
     const tw=wOf(towerU), ty=baseY-towerU;
-    g+=`<path d="M${cx-tw/2-6},${ty} L${cx},${ty-30} L${cx+tw/2+6},${ty} z"
-        fill="#FF8A3D" stroke="#3B2A1E" stroke-width="2.4" stroke-linejoin="round"/>
-        <path d="M${cx},${ty-30} L${cx},${ty-56}" stroke="#3B2A1E" stroke-width="2.6"
-        stroke-linecap="round"/>
-        <path d="M${cx},${ty-56} L${cx+26},${ty-49} L${cx},${ty-42} z"
-        fill="${petHue()}" stroke="#3B2A1E" stroke-width="2.2" stroke-linejoin="round"/>`;
+    g+=`<rect x="${(cx-tw/2-4).toFixed(1)}" y="${(ty-4).toFixed(1)}" width="${(tw+8).toFixed(1)}"
+        height="4" fill="#8C7B62"/>
+      <path d="M${cx-tw/2-6},${ty-4} L${cx},${ty-38} L${cx+tw/2+6},${ty-4} z" fill="#B2542E"/>
+      <path d="M${cx},${ty-38} L${cx+tw/2+6},${ty-4} L${cx},${ty-4} z" fill="#8E3E20"/>
+      <path d="M${cx},${ty-38} L${cx},${ty-64}" stroke="#6B5A45" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M${cx+1},${ty-63} q14,3 26,-1 q-9,7 0,13 q-14,-3 -26,1 z" fill="${petHue()}"/>
+      <circle cx="${cx}" cy="${ty-65}" r="2.4" fill="#E8C46A"/>`;
     /* 積みあげ中の本は半透明で次の層として見せる */
     if(wipAll.length){
       const b=wipAll[0], s=st(b.id), R=regionOf(b);
@@ -2754,8 +2817,8 @@ function renderTower(){
 
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   svg.innerHTML=g;
-  const cw=Math.max(230,(box.clientWidth||340)-4), sc=cw/W;
-  svg.style.width=cw+"px"; svg.style.height=(H*sc)+"px";
+  const sc=boxW/W;
+  svg.style.width=boxW+"px"; svg.style.height=(H*sc)+"px";
   svg.querySelectorAll(".tlayer").forEach(el=>{
     el.style.cursor="pointer"; el.onclick=()=>openLog(el.dataset.id); });
   box.scrollTop=0;
@@ -3409,7 +3472,9 @@ function applyImport(next,msg){
    仲間や守り神を土地に置いておくと、1時間に1度なにかを見つけてくる。
    分野12 × 種別10 × 位階9 = 1,080種のおみやげを集められる。
    ============================================================ */
-const ROLL_MS=3600000;
+/* 20分に1度 ようすの便りが届く。おみやげはそのうち たまに見つかる。
+   1時間に1度だと「なにも起きない時間」が長すぎたため */
+const ROLL_MS=1200000;
 const IKIND=[
  {n:"巻物", d:"読み解かれるのを待っている"},
  {n:"原石", d:"磨けば光りそうだ"},
@@ -3516,7 +3581,7 @@ function processExped(){
     const iv=hasBoon(R,"風の便り")? ROLL_MS*0.83 : ROLL_MS;   /* 恵みで間隔が縮む */
     let rolls=Math.floor((now-e.last)/iv);
     if(rolls<=0) return;
-    if(rolls>24) rolls=24;                       /* ためこみは1日ぶんまで */
+    if(rolls>36) rolls=36;                       /* ためこみは半日ぶんまで */
     e.last=now;
     const ax=regionAxis(R), fit=(u.axis===ax)?1:0;
     const lv=landLv(R);
@@ -3525,8 +3590,8 @@ function processExped(){
       const seed=hash(rn+"|"+e.uid+"|"+e.last+"|"+i);
       const lore=LORE[ax];
       let line=`${u.name}は ${R.place||R.name}の ${lore.sp[seed%3]}を たずねた。`;
-      const chance=Math.min(0.94, 0.34+u.power*0.05+fit*0.16
-        +lv*0.015+(hasBoon(R,"道しるべ")?0.08:0));
+      const chance=Math.min(0.62, 0.16+u.power*0.035+fit*0.10
+        +lv*0.012+(hasBoon(R,"道しるべ")?0.06:0));
       if(((seed>>>5)%1000)/1000 < chance){
         /* 位階は重みつき。得意分野なら良いものが出やすい */
         const boost=1+u.power*0.12+fit*0.4+lv*0.05+(hasBoon(R,"実り")?0.6:0);
@@ -3552,13 +3617,32 @@ function processExped(){
       }
     }
   });
-  if(S.expLog.length>120) S.expLog.length=120;
+  if(S.expLog.length>200) S.expLog.length=200;
   if(ev) save();
   return found;
 }
 function itemsOwned(){ return Object.keys(S.items||{}).length; }
 function itemsTotalCount(){ return Object.values(S.items||{}).reduce((a,b)=>a+b,0); }
 
+/* 探検している場面。地面が流れ、相棒が足を運ぶ */
+function walkScene(spec,md){
+  const W=104,H=60, gy=H-11;
+  const bits=[[8,"g"],[26,"s"],[44,"g"],[62,"g"],[80,"s"],[95,"g"]];
+  const one=(ox)=>bits.map(b=>{
+    const x=b[0]+ox;
+    return b[1]==="g"
+      ? `<path d="M${x},${gy} q1.6,-5 3.2,0 M${x+3},${gy} q1.6,-6.5 3.2,0 M${x+6},${gy} q1.4,-4 2.8,0"
+          fill="none" stroke="#3E9E4E" stroke-width="1.6" stroke-linecap="round"/>`
+      : `<ellipse cx="${x+2}" cy="${gy-1.4}" rx="3.2" ry="2" fill="#B9A98F" stroke="#3B2A1E" stroke-width="1"/>`;
+  }).join("");
+  return `<svg class="walkscene" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+    <rect x="0" y="0" width="${W}" height="${H}" fill="none"/>
+    <g class="wgrd">${one(0)}${one(W)}</g>
+    <line x1="0" y1="${gy}" x2="${W*2}" y2="${gy}" stroke="#8A6A4A" stroke-width="2" opacity=".55"/>
+    <g transform="translate(${W/2-21},2)"><g class="wch">${
+      creatureSVG(spec,42,md||"happy").replace(/^<svg[^>]*>|<\/svg>$/g,"")}</g></g>
+  </svg>`;
+}
 /* 探検中のようす。経過・成果・相性で ことばが変わる */
 const EXP_START=["いきおいよく かけだして いった","ふりかえって 手を ふって いる",
  "はりきって 出発した","じめんの においを かいで いる","ちずを ひろげて いる"];
@@ -3602,7 +3686,7 @@ function renderExped(){
     return `<div class="slot${u?" on":""}">
       <div class="slot-h"><span class="bdot" style="background:${R.hue}"></span>
         <b>${esc(R.place||R.name)}</b><em>${esc(R.name)}</em></div>
-      ${u? `<div class="slot-u"><span class="walkwrap">${creatureSVG(u.spec,52,"happy")}</span>
+      ${u? `<div class="slot-u">${walkScene(u.spec,"happy")}
             <div><b>${esc(u.name)}</b>
             <em class="expmsg">${esc(expedLine(R,u,e))}</em>
             <em>探索力 ${u.power}${u.axis===regionAxis(R)?" ・ 得意な土地":""} ／ つぎの便り あと ${Math.ceil(nx/60000)}分</em>
