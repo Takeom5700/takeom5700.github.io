@@ -178,14 +178,18 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
 @keyframes hit{0%{transform:none}30%{transform:translateY(-7px) scale(1.05)}100%{transform:none}}
 
 /* ---------- タブ ---------- */
-.tabs{display:flex; gap:8px; margin:22px 0 0; flex-wrap:wrap}
+/* 大きな行き先（タブ）は「下の面につながった板」、
+   画面内の絞り込み（チップ）は「小さな丸い札」。形を変えて役割を分ける */
+.tabs{display:flex; gap:4px; margin:22px 0 -3px; flex-wrap:wrap; align-items:flex-end;
+  border-bottom:3px solid var(--ink); padding:0 4px}
 .tabs button{
-  background:var(--card); border:2.5px solid var(--ink); border-radius:var(--r-pill);
-  padding:8px 20px; font-family:var(--f-disp); font-weight:800; font-size:14px;
-  box-shadow:3px 3px 0 var(--shadow); transition:transform .15s cubic-bezier(.34,1.6,.5,1), background .15s}
-.tabs button:hover{transform:translate(-1px,-2px); box-shadow:4px 5px 0 var(--shadow)}
-.tabs button[aria-selected="true"]{background:var(--sun); color:#fff; transform:none;
-  box-shadow:3px 3px 0 var(--shadow)}
+  background:var(--card2); border:3px solid var(--ink); border-bottom:none;
+  border-radius:12px 12px 0 0; padding:9px 18px 8px;
+  font-family:var(--f-disp); font-weight:800; font-size:14px; position:relative; top:3px;
+  transition:top .12s ease-out, background .15s}
+.tabs button:hover{top:0; background:var(--card)}
+.tabs button[aria-selected="true"]{background:var(--sun); color:#fff; top:0; padding-bottom:11px}
+.view{border-top:none}
 .view{display:none; padding-top:20px}
 .view.on{display:block}
 
@@ -194,12 +198,17 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
   box-shadow:6px 6px 0 var(--shadow); position:relative; overflow:hidden}
 /* 冊数が増えて世界が広がっても画面に収める */
 .mapbox svg{display:block; width:100%; height:auto; max-height:76vh}
-.contnav{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:11px}
-.cbtn{background:var(--card); border:2.5px solid var(--ink); border-radius:var(--r-pill);
-  padding:5px 16px; font-family:var(--f-disp); font-weight:800; font-size:12.5px;
-  box-shadow:2px 2px 0 var(--shadow); transition:transform .14s cubic-bezier(.34,1.6,.5,1)}
-.cbtn:hover{transform:translate(-1px,-1px)}
-.cbtn[aria-pressed="true"]{background:var(--ink); color:var(--paper); transform:none}
+.filterbar{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px;
+  background:color-mix(in srgb,var(--ink) 6%,transparent); border-radius:var(--r);
+  padding:8px 12px; margin-bottom:11px}
+.filterbar .flabel{font-size:11px; letter-spacing:.14em; color:var(--ink-sub);
+  font-family:var(--f-disp); font-weight:700; flex:none}
+.contnav{display:flex; flex-wrap:wrap; gap:5px}
+.cbtn{background:transparent; border:1.5px solid var(--line); border-radius:var(--r-pill);
+  padding:3px 13px; font-size:12px; font-weight:600; color:var(--ink-sub);
+  transition:background .14s, color .14s, border-color .14s}
+.cbtn:hover{border-color:var(--ink); color:var(--ink)}
+.cbtn[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:var(--paper)}
 .wave{stroke:var(--sea2); stroke-width:2.4; fill:none; stroke-linecap:round; opacity:.75}
 .rgn-body{stroke:var(--ink); stroke-width:3; stroke-linejoin:round;
   transition:fill .8s ease-out, opacity .8s ease-out}
@@ -419,6 +428,31 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
   background:color-mix(in srgb,var(--sun) 14%,transparent); font-size:12.5px; line-height:1.7}
 .hit b{font-family:var(--f-disp)}
 
+/* ---------- 相棒ページの配置 ---------- */
+.buddy-grid{display:grid; gap:16px; grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  grid-template-areas:"axis anc" "axis land" "evo evo" "title title"}
+@media (max-width:820px){
+  .buddy-grid{grid-template-columns:1fr; grid-template-areas:"axis" "anc" "land" "evo" "title"}
+}
+.titlebig{font-family:var(--f-disp); font-weight:800; font-size:clamp(26px,5vw,38px);
+  letter-spacing:.05em; line-height:1.3; text-wrap:balance}
+.titledesc{margin-top:10px; max-width:54ch}
+.titledesc p{margin:0 0 .45em; font-size:13.5px; line-height:1.95; color:var(--ink-sub)}
+.titledesc p:last-child{margin-bottom:0; color:var(--ink); font-family:var(--f-num); font-size:12px}
+.lands{display:flex; flex-direction:column; gap:8px; max-height:min(46vh,380px); overflow-y:auto}
+.land{display:grid; grid-template-columns:32px minmax(0,1fr) auto; gap:10px; align-items:center;
+  padding:9px 11px; border:2px solid var(--line); border-radius:var(--r); background:var(--paper)}
+.land.up{border-color:var(--ink); background:var(--card)}
+.land .lvl{font-family:var(--f-num); font-size:18px; font-weight:600; text-align:center}
+.land b{font-family:var(--f-disp); font-size:13.5px; display:block}
+.land em{font-style:normal; font-size:11px; color:var(--ink-sub); display:block; line-height:1.6}
+.land .boons{display:flex; flex-wrap:wrap; gap:4px; margin-top:3px}
+.land .boon{font-size:10px; font-family:var(--f-disp); font-weight:700; padding:1px 7px;
+  border-radius:var(--r-pill); border:1.5px solid var(--sun); color:var(--sun-dp)}
+.land .lbar{height:5px; border:1.5px solid var(--ink); border-radius:var(--r-pill);
+  background:var(--paper); overflow:hidden; margin-top:5px}
+.land .lbar i{display:block; height:100%}
+
 /* ---------- 遠征 ---------- */
 .slots{display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:11px}
 .slot{border:2.5px solid var(--line); border-radius:var(--r); padding:12px 13px; background:var(--paper);
@@ -523,6 +557,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
     <div class="logo">Mist<i>lands</i><small>ミストランズ — 読書探検記</small></div>
     <div class="sp">
       <button class="btn sm quiet" id="themeBtn">いろを変える</button>
+      <button class="btn sm quiet" id="muteBtn">音を消す</button>
       <button class="btn sm quiet" id="renameBtn">相棒の名前</button>
     </div>
   </header>
@@ -542,7 +577,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <span>世代 <b id="mGen">1</b></span>
         <span>食べた霧 <b id="mFog">0</b></span>
         <span>なでた回数 <b id="mPat">0</b></span>
-        <span>仲間 <b id="mFriend">0</b></span>
+        <span>土地Lv <b id="mFriend">0</b></span>
       </div>
       <div class="axes" id="petAxes"></div>
       <div class="evo">
@@ -573,11 +608,15 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   </nav>
 
   <section class="view on" id="v-map">
-    <div class="contnav" id="contNav"></div>
-    <div class="contnav" id="kindNav">
-      <button class="cbtn" data-k="all" aria-pressed="true">すべて</button>
-      <button class="cbtn" data-k="company" aria-pressed="false">会社の本</button>
-      <button class="cbtn" data-k="personal" aria-pressed="false">自分の本</button>
+    <div class="filterbar">
+      <span class="flabel">大陸</span>
+      <div class="contnav" id="contNav"></div>
+      <span class="flabel" style="margin-left:6px">表示</span>
+      <div class="contnav" id="kindNav">
+        <button class="cbtn" data-k="all" aria-pressed="true">すべて</button>
+        <button class="cbtn" data-k="company" aria-pressed="false">会社の本</button>
+        <button class="cbtn" data-k="personal" aria-pressed="false">自分の本</button>
+      </div>
     </div>
     <div class="mapbox" id="mapbox">
       <svg id="map" role="img" aria-label="霧の大陸。読み進めるほど霧が減り、地面の色が戻る"></svg>
@@ -618,28 +657,28 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   </section>
 
   <section class="view" id="v-buddy">
-    <div class="two">
-      <div class="panel">
+    <div class="buddy-grid">
+      <div class="panel" style="grid-area:evo">
         <h3>そだち方</h3>
-        <p>ページを記録すると霧が晴れます。その霧が相棒のごはんです。たくさん読むほど大きくなります。</p>
+        <p>ページを記録すると霧が晴れます。その霧が相棒のごはんです。</p>
         <div class="evolist" id="evolist"></div>
       </div>
-      <div class="panel" style="grid-column:1/-1">
+      <div class="panel" style="grid-area:anc">
+        <h3>これまでの相棒</h3>
+        <p>育ち切った相棒は旅立ち、守り神になります。土地に送り出せるのはこの子たちです。</p>
+        <div class="evolist" id="ancPanel"></div>
+      </div>
+      <div class="panel" style="grid-area:land">
+        <h3>土地の育ち</h3>
+        <p>その土地の本を読むほど土地が深まり、恵みが開きます。</p>
+        <div class="lands" id="friends"></div>
+      </div>
+      <div class="panel" style="grid-area:axis">
         <h3>何によって育つか</h3>
         <p>読んだ本によって伸びる場所が変わります。</p>
         <div id="axisPanel"></div>
       </div>
-      <div class="panel">
-        <h3>仲間</h3>
-        <p>その土地の本を読み終えるほど、住みつく子が増えていきます。</p>
-        <div class="friends" id="friends"></div>
-      </div>
-      <div class="panel">
-        <h3>これまでの相棒</h3>
-        <p>育ち切った相棒は旅立って、この地の守り神になります。名前と、どこまで読んだかが永久に残ります。</p>
-        <div class="evolist" id="ancPanel"></div>
-      </div>
-      <div class="panel">
+      <div class="panel" style="grid-area:title">
         <h3>読み手としての称号</h3>
         <div id="titleNow"></div>
       </div>
@@ -1417,6 +1456,47 @@ function petHue(){
     const v=regionStat(R).red; if(v>bv){bv=v; best=R;} }));
   return (bv>0&&best)?best.hue:"#FF8A3D";
 }
+/* 直前に読んだ本の分野に応じた「霧の味」。継続日数ではなく、
+   おいしいものを食べさせたくなる方向のことばにする */
+const TASTE=[
+ ["すじみち の あじ が した","かちっと した たべごたえ","あたま の なか が すっきり した","つじつま が あって おいしい","かんがえ が ほどけて いく あじ"],
+ ["だれか を うごかす あじ","おおきな けはい の する ごはん","せなか を おされる ような あじ","まとめる ちから の あじ","たよられる あじ が した"],
+ ["こうばしい てざわり の あじ","つくりかけ の においが する","かちっと はまる おと が した","どうぐ ばこ の あじ","みがかれた あじ が する"],
+ ["ふんわり あまい","だれか の こえ の あじ","こころ が ほどける あじ","やさしい ぬくもり の あじ","はなしかけられて いる みたい"],
+ ["ちょっと しょっぱい","まちの にぎわい の あじ","かぞえる たのしさ の あじ","いちば の においが する","やりとり の あじ が した"],
+ ["ひんやり すきとおって いた","ふしぎな あじ が する","せかい の しくみ の あじ","はじめて の あじ だった","からだ に しみる あじ"],
+ ["しずかで ふかい あじ","こたえ の ない あじ","ながく のこる あじ","おくが ふかい","かみしめる ほど あじ が でる"],
+ ["とおい むかし の においが した","つもった じかん の あじ","だれか の あしあと の あじ","ふるびて いて おいしい","ものがたり の はじまり の あじ"],
+ ["いろどり ゆたかな あじ","たのしい おと が した","はなやか で うれしい","うたって いる みたいな あじ","きらきら した あじ"],
+ ["しゃりしゃり した ことば の あじ","ちがう くに の においが する","はつおん が おいしい","つたわる よろこび の あじ","ことば の つぶ の あじ"],
+ ["ゆめ を みて いる ような あじ","つづき が きに なる あじ","むねが きゅっと なる あじ","だれか の じんせい の あじ","よいん が のこる"],
+ ["いろんな あじ が まざって いた","ひろい せかい の あじ","ちずを ひろげた みたいな あじ","なんでも すこしずつ の あじ","めあたらしい あじ"]
+];
+const HUNGRY=["きょうは まだ なにも たべて ないよ","ちょっと おなか すいた かも",
+ "つぎの きり、どんな あじ かな","ひとくち で いいんだ","まって いるよ、いつでも いいよ"];
+const HAPPY_ADD=["また たべたいな","もっと しりたい","つぎ が たのしみ","しあわせ"];
+/* 直前に読んだ本の軸 */
+function lastAxis(){
+  let best=null,bt=-1;
+  books().forEach(b=>{ const r=st(b.id); if(r.at&&r.at>bt){ bt=r.at; best=b; } });
+  if(!best) return -1;
+  for(const h of CAT_HINT) if(h[0].test(best.cat||"")) return h[1];
+  const txt=(best.t||"")+(best.sub||"");
+  for(const h of WORD_HINT) if(h[0].test(txt)) return h[1];
+  return hash(best.cat||"x")%NAX;
+}
+function petLine(md,si){
+  const seed=hash(S.name+"|"+pagesRead()+"|"+doneCount()+"|"+(S.pat||0));
+  if(md==="hungry") return HUNGRY[seed%HUNGRY.length];
+  if(si<=1) return ["ふるふる…","なかから こえが する","もぞもぞ している"][seed%3];
+  const ax=lastAxis();
+  if(ax<0) return "はじめの ひとくち、まってるよ";
+  const t=TASTE[ax%TASTE.length];
+  let line=t[seed%t.length];
+  if(md==="full") line="もぐもぐ… "+line;
+  else if(md==="happy") line=line+"。"+HAPPY_ADD[(seed>>>4)%HAPPY_ADD.length];
+  return line;
+}
 function mood(){
   const today=new Date().toISOString().slice(0,10);
   if(S._just) return "full";
@@ -1597,6 +1677,45 @@ const T_AXIS=["論の","衆の","技の","心の","財の","理の","玄の","�
 const T_RANK=["読み手","徒","士","者","匠","師","賢","聖","極"];
 const T_STEP=[0,300,900,2000,4000,8000,16000,32000,64000];
 const T_NUM=["","","弐","参","肆","伍","陸","漆","捌","玖","拾"];
+const T_RANK_D=["まだ道の入口に立ったところ。ここから何にでもなれる。",
+ "歩きはじめた者。読むことが習慣になりかけている。",
+ "自分の足で進む者。どの本を選ぶかを自分で決めはじめた。",
+ "積んだものが形になってきた者。読んだ本が互いに繋がりはじめている。",
+ "手を動かして確かめる者。読んだことを自分の仕事に落とせるようになった。",
+ "人に渡せる者。読んだものを、他の誰かに伝えられる深さに達している。",
+ "問いを立てられる者。答えを探すのではなく、問いのほうを疑いはじめた。",
+ "積み上げた高さが景色を変えた者。ここまで来る人はそう多くない。",
+ "極みにある者。もはや読むことは目的ではなく、生き方の一部になっている。"];
+const T_AXIS_D=["筋道を追い、崩れない土台をつくることに時間を使ってきた。",
+ "人と組織を動かすこと、決めることの重さに向き合ってきた。",
+ "手ざわりのある技と、動くものをつくることに惹かれてきた。",
+ "人の心と、言葉が届く仕組みに関心を寄せてきた。",
+ "世の中の値づけと、ものが巡る仕組みを追ってきた。",
+ "この世界がどうできているのかを、根っこから知ろうとしてきた。",
+ "答えの出ない問いのそばに、あえて留まりつづけてきた。",
+ "過ぎた時間のなかに、いまを読み解く手がかりを探してきた。",
+ "美しさや技芸のような、数えられないものを大切にしてきた。",
+ "言葉そのものの成り立ちと、伝わることの不思議を追ってきた。",
+ "物語の力を信じ、人の生を別の角度から見ようとしてきた。",
+ "分野を選ばず、世界の見取り図そのものを広げようとしてきた。"];
+const T_MOD_D=["","ページを繰る速さが、この人の読み方をよく表している。",
+ "一冊を深く噛み砕くことを、量より大切にしている。",
+ "途切れさせないこと。それがこの人のいちばんの強さだ。",
+ "ひとつの分野に閉じず、遠い棚まで手を伸ばしてきた。",
+ "託された本にきちんと向き合う、実直な読み手である。",
+ "誰に言われたからでもなく、自分で選んだ本を積んできた。",
+ "とにかく冊数を積む。その厚みが、いつのまにか力になっている。",
+ "相棒への手のかけ方に、この人の読書への愛着がにじんでいる。"];
+function titleDesc(){
+  const p=pagesRead(), tier=titleTier(p);
+  const e=(S.evo&&S.evo["g"+genNo()])||{};
+  const dom=(e.dom!==undefined)? e.dom : profile().dom;
+  const mi=epithetIndex()%T_MOD.length;
+  const lines=[T_RANK_D[tier], T_AXIS_D[dom%T_AXIS_D.length]];
+  if(T_MOD_D[mi]) lines.push(T_MOD_D[mi]);
+  lines.push(`これまでに ${p.toLocaleString()} ページ。`);
+  return lines;
+}
 function titleTier(p){ let t=0; T_STEP.forEach((v,i)=>{ if(p>=v) t=i; }); return t; }
 function title(){
   const p=pagesRead(), tier=titleTier(p);
@@ -1627,23 +1746,31 @@ function depart(){
    「地域の霧を全部晴らす」は条件にできない。本は増え続けるし減ることもあるので、
    割合を条件にすると一生届かないか、達成しても後で崩れる。
    累計の読了冊数で解放する。増冊はむしろ新しい仲間の機会になる。 */
-/* 仲間は三角数（1,3,6,10,15…）で増える。上限なし。
-   k匹目に必要なのは k(k+1)/2 冊。伸びは緩やかだが決して打ち止めにならない。
-   割合を条件にしないので、会社が本を足しても既に得た仲間は消えず、
-   むしろ増冊が次の仲間の機会になる */
-const FRIEND_STEPS=null;
-function friendsFor(done){ return done<1?0:Math.floor((Math.sqrt(8*done+1)-1)/2); }
-function friendNeed(k){ return k*(k+1)/2; }
+/* 土地の育ち。その土地の本を読むほど土地そのものが深まり、常時はたらく恵みが開く。
+   遠征に送り出す対象ではない（送り出すのは相棒だけ）。
+   前の「仲間」は土地1つに1匹で全土地を埋められてしまい、選ぶ意味がなかったので作り替えた */
+function landPages(R){ return R.books.reduce((n,b)=>n+Math.min(st(b.id).page,b.p),0); }
+function landLv(R){ return Math.floor(Math.sqrt(landPages(R)/120)); }
+function landNeed(R){ const l=landLv(R)+1; return Math.max(0, l*l*120-landPages(R)); }
+const BOONS=[
+ {lv:2, n:"道しるべ",   d:"この土地での発見が起きやすくなる"},
+ {lv:4, n:"実り",       d:"見つかるおみやげが良くなりやすい"},
+ {lv:6, n:"風の便り",   d:"便りが届く間隔が短くなる"},
+ {lv:8, n:"土地の記憶", d:"ほかの土地のおみやげも まれに見つかる"},
+ {lv:11,n:"守りの灯",   d:"つまらないものが出にくくなる"}
+];
+function landBoons(R){ const l=landLv(R); return BOONS.filter(b=>l>=b.lv); }
+function hasBoon(R,name){ return landBoons(R).some(b=>b.n===name); }
 function friendList(){
   const out=[];
   (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{
-    const done=regionStat(R).done, got=friendsFor(done);
-    out.push({region:R.name, place:R.place, hue:R.hue, hueName:R.hueName,
-      got, done, next:friendNeed(got+1), total:R.books.length});
+    out.push({region:R.name, place:R.place, hue:R.hue, lv:landLv(R),
+      pages:landPages(R), need:landNeed(R), boons:landBoons(R),
+      next:BOONS.find(b=>b.lv>landLv(R))||null, done:regionStat(R).done, total:R.books.length});
   }));
   return out;
 }
-function friendCount(){ return friendList().reduce((n,f)=>n+f.got,0); }
+function landTotalLv(){ return friendList().reduce((n,f)=>n+f.lv,0); }
 
 /* ---------- 相棒カードの描画 ---------- */
 function renderPet(){
@@ -1652,21 +1779,10 @@ function renderPet(){
   document.getElementById("petName").textContent=S.name;
   document.getElementById("petStage").textContent=speciesName(sp);
   document.getElementById("petTitle").textContent=title();
-  const says={
-    hungry:["きょうは まだ きりを たべてないよ","おなか すいた…"],
-    full:["もぐもぐ… おいしい！","きりが へった！"],
-    happy:[`${S.streak}にち つづいてる！`,"きょうも いっしょに よもう"],
-    ok:[["ふるふる…","なかから こえが する"],
-        ["ふわ…","きり、おいしい"],
-        [`${AXES[sp.dom].k}の におい が する`,"すこし かたちが できてきた"],
-        ["じぶんが なにに なるのか わかってきた","もっと よんで"],
-        ["とおくまで みえるよ","つぎの しま、いこう"],
-        ["ずいぶん とおくまで きたね","そろそろ 旅に でる ときかも"]][si]
-  }[md];
-  document.getElementById("petSay").textContent=says[hash(S.name+doneCount()+md)%says.length];
+  document.getElementById("petSay").textContent=petLine(md,si);
   document.getElementById("mFog").textContent=fogEaten().toLocaleString();
   document.getElementById("mPat").textContent=(S.pat||0).toLocaleString();
-  document.getElementById("mFriend").textContent=friendCount();
+  document.getElementById("mFriend").textContent=landTotalLv();
   document.getElementById("mGen").textContent=genNo();
   /* 5つの軸。何を読むかで伸びる場所が変わる */
   const p=sp.prof, mx=Math.max(1,...p.v);
@@ -1698,7 +1814,7 @@ document.getElementById("petBtn").onclick=e=>{
   const h=document.createElement("div"); h.className="heart"; h.textContent="♥";
   h.style.color=petHue(); h.style.left=(30+Math.random()*54)+"%"; h.style.top="34%";
   h.style.setProperty("--dx",(Math.random()*44-22)+"px");
-  b.parentElement.appendChild(h); setTimeout(()=>h.remove(),1100);
+  b.parentElement.appendChild(h); setTimeout(()=>h.remove(),1100); SFX.pat();
   document.getElementById("mPat").textContent=S.pat.toLocaleString();
   if(S.pat%25===0) toast(`${S.name}は とても うれしそうだ（${S.pat}回）`);
 };
@@ -1830,12 +1946,13 @@ function drawMap(){
         const sub=E("text",{x:R.cx, y:ly+15, "text-anchor":"middle", class:"rsub"});
         sub.textContent=`${R.name} ・ ${s.done}/${R.books.length}冊 ・ 霧 ${R.puffs.length-gone}`;
         gLab.appendChild(sub);
-        if(friendsFor(s.done)>0){ /* 累計の読了冊数で仲間が住みつく */
+        if(landLv(R)>0){ /* 土地が育つと、その土地の主が現れる */
           const f=E("g",{class:"pal",
             transform:`translate(${(R.cx+R.rad*0.52).toFixed(1)},${(R.cy-R.rad*0.55).toFixed(1)})`});
-          const fk=friendsFor(s.done);
-          f.innerHTML=creatureSVG({stage:3,arch:hash(R.name+"#"+fk)%ARCH.length,
-            elem:hash(R.name+"e"+fk)%8,epi:0,hue:R.hue,dom:hash(R.name)%NAX},44,"happy")
+          const fk=landLv(R);
+          f.innerHTML=creatureSVG({stage:Math.min(5,2+Math.floor(fk/3)),
+            arch:hash(R.name)%ARCH.length, elem:hash(R.name+"e")%8, epi:0,
+            hue:R.hue, dom:regionAxis(R)},44,"happy")
             .replace(/^<svg[^>]*>|<\/svg>$/g,"")
             .replace('class="pet-body"','');
           f.setAttribute("transform", f.getAttribute("transform")+" translate(-22,-22)");
@@ -2051,38 +2168,100 @@ function renderBuddyTab(){
        いまの相棒が育ち切ると、ここに名前と姿が残ります。</div>`;
   const need=nextTitleNeed();
   document.getElementById("titleNow").innerHTML=
-    `<b style="font-family:var(--f-disp);font-size:23px;letter-spacing:.04em">${esc(title())}</b>
-     <div class="kv" style="margin-top:5px">${pagesRead().toLocaleString()} ページ${
-       need? ` ／ つぎは あと ${need.toLocaleString()} ページ` : ""}</div>`;
-  /* 仲間 */
-  document.getElementById("friends").innerHTML=friendList().map(f=>
-    `<div class="friend ${f.got?"":"locked"}">
-      ${f.got? creatureSVG({stage:3,arch:hash(f.region+"#"+f.got)%ARCH.length,
-                            elem:hash(f.region+"e"+f.got)%8,epi:0,
-                            hue:f.hue,dom:hash(f.region)%NAX},44,"happy")
-             : `<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="24" r="13"
-                fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 4"/></svg>`}
-      <b>${esc(f.place||f.region)}</b>
-      <em>${f.got? "仲間 "+f.got+"匹" : "まだ"} ／ ${f.next}冊で次</em></div>`).join("");
+    `<div class="titlebig">${esc(title())}</div>
+     <div class="titledesc">${titleDesc().map(l=>`<p>${esc(l)}</p>`).join("")}</div>
+     <div class="kv" style="margin-top:8px">${need? `つぎの位まで あと ${need.toLocaleString()} ページ`:""}</div>`;
+  /* 土地の育ち */
+  document.getElementById("friends").innerHTML=friendList()
+    .sort((a,b)=>b.lv-a.lv||b.pages-a.pages).map(f=>{
+      const l=f.lv, cur=l*l*120, nxt=(l+1)*(l+1)*120;
+      const prog=Math.max(0,Math.min(1,(f.pages-cur)/Math.max(1,nxt-cur)));
+      return `<div class="land${l>0?" up":""}">
+        <div class="lvl" style="color:${l>0?f.hue:"var(--ink-sub)"}">${l}</div>
+        <div><b>${esc(f.place||f.region)}</b>
+          <em>${f.done}/${f.total}冊 ・ ${f.pages.toLocaleString()}ページ</em>
+          <div class="boons">${f.boons.map(b=>`<span class="boon">${esc(b.n)}</span>`).join("")}</div>
+          <div class="lbar"><i style="width:${(prog*100).toFixed(1)}%;background:${f.hue}"></i></div>
+        </div>
+        <em style="text-align:right;white-space:nowrap">あと<br>${f.need.toLocaleString()}p</em>
+      </div>`;
+    }).join("")
+    + `<p class="note" style="margin-top:10px">恵み：${BOONS.map(b=>"Lv"+b.lv+" "+b.n).join(" ／ ")}</p>`;
 }
 /* 高さは「読んだページ数」。1万ページを超えたら伸びを緩めて画面に収める */
 function uOf(p){ return p<=10000 ? p*0.078 : 780+(p-10000)*0.034; }
-const BANDS=[
-  {p:0,     c:"#C6ECFF", n:"地上",      d:"草原と、はじまりの家"},
-  {p:900,   c:"#A6DCF6", n:"雲の下",    d:"すずめ、ちぎれ雲"},
-  {p:2600,  c:"#7CC3EE", n:"雲海",      d:"かもめ、雲の海を抜ける"},
-  {p:6000,  c:"#4A96DA", n:"高空",      d:"わし、飛行船"},
-  {p:13000, c:"#2A57AC", n:"竜の領域",  d:"渡り鳥の群れ、そして竜"},
-  {p:26000, c:"#1A2A66", n:"星の海",    d:"流星、月"},
-  {p:52000, c:"#0A1038", n:"夜のむこう",d:"星座、彗星"}
+/* 段階は細かく、そして無限に続く。i段目は 120*i^1.8 ページ。
+   120p（本の半分ほど）で最初の景色が変わるので、少し読むたびに何かが起きる */
+function bandP(i){ return i<=0? 0 : Math.round(110*Math.pow(i,1.45)); }
+/* 空の帯。何が見えるかは高さだけでなく「その人が何を読んできたか」で変わる */
+const SKY_ZONES=[
+ {upto:900, c:"#C6ECFF", th:[
+   ["草の海","風がひとすじ通っていく","bird"],
+   ["雑木林のうえ","葉のにおいがまだ届く","bird"],
+   ["小川のほとり","水の音がすぐ下にある","drop"],
+   ["石畳の道","だれかの足音が遠ざかる","bird"],
+   ["麦の畑","穂がいっせいに傾く","bird"],
+   ["屋根のうえ","町の煙突が並んでいる","kite"]]},
+ {upto:5000, c:"#8FD0F0", th:[
+   ["ちぎれ雲の高さ","手が届きそうな白がある","cloud"],
+   ["鳥の道","毎日おなじ道を通る影","bird"],
+   ["風見の丘のうえ","風の向きが読める","kite"],
+   ["塔の影が届く先","自分の影が地に伸びている","cloud"],
+   ["霧のたまり場","足もとが白く沈む","cloud"],
+   ["凧のあたり","糸が細く光っている","kite"]]},
+ {upto:20000, c:"#3F7FC8", th:[
+   ["雲海","下はもう見えない","cloud"],
+   ["渡り鳥の列","長い旅の途中らしい","flock"],
+   ["飛行船の航路","ゆっくり横切っていく","airship"],
+   ["雷雲のふち","遠くで低く鳴っている","meteor"],
+   ["虹の根もと","色が空気に溶けている","rainbow"],
+   ["氷の粒の帯","小さく光って流れる","star"]]},
+ {upto:60000, c:"#1E2C6B", th:[
+   ["竜のねぐら","大きな影がゆっくり回る","dragon"],
+   ["浮島のあいだ","島がひとりでに浮いている","island"],
+   ["星の砂の層","こまかい光が漂う","star"],
+   ["極光のカーテン","色が音もなく揺れる","aurora"],
+   ["天の川のほとり","川のように光が流れる","star"],
+   ["月の見える高さ","思っていたより大きい","moon"]]},
+ {upto:Infinity, c:"#0A1038", th:[
+   ["星座のあいだ","線を引いた人がいたらしい","star"],
+   ["彗星の通り道","長い尾が残っている","meteor"],
+   ["名もなき星","まだ誰も呼んでいない","star"],
+   ["静かな闇","音がひとつもない","aurora"],
+   ["世界の縁","ここから先は地図がない","moon"],
+   ["光の届かない場所","それでも何かがいる","star"]]}
 ];
-function bandOf(p){ let b=BANDS[0]; BANDS.forEach(x=>{ if(p>=x.p) b=x; }); return b; }
+function zoneOf(p){ for(const z of SKY_ZONES) if(p<z.upto) return z; return SKY_ZONES[SKY_ZONES.length-1]; }
+/* i段目の景色。個人の種を混ぜるので、同じ高さでも人によって違うものが見える */
+function bandAt(i){
+  const p=bandP(i), z=zoneOf(p), L=z.th.length, sd=skySeed();
+  let k=hash(sd+"|sky|"+i)%L;
+  const prev=hash(sd+"|sky|"+(i-1))%L;      /* 隣どうしで同じ景色にならないようにする */
+  if(i>1 && k===prev) k=(k+1)%L;
+  const t=z.th[k];
+  return {i, p, n:t[0], d:t[1], fx:t[2], c:z.c};
+}
+function skySeed(){
+  const e=(S.evo&&S.evo["g"+genNo()])||{};
+  const dom=(e.dom!==undefined)? e.dom : profile().dom;
+  return (S.name||"")+"|"+dom+"|"+((S.ancestors||[]).length);
+}
+function bandsUpTo(pages,extra){
+  const out=[]; let i=1;
+  while(bandP(i)<=pages+(extra||0) && i<400){ out.push(bandAt(i)); i++; }
+  return out;
+}
+function bandOf(p){
+  let b={i:0,p:0,n:"地上",d:"ここから始まる",fx:"bird",c:SKY_ZONES[0].c};
+  let i=1; while(bandP(i)<=p && i<400){ b=bandAt(i); i++; }
+  return b;
+}
+function nextBand(p){ let i=1; while(bandP(i)<=p && i<400) i++; return bandAt(i); }
 
 /* --- 空に住むものたち --- */
 function birdSVG(x,y,s,col){
   return `<path d="M${x-s},${y} q${s*0.5},${-s*0.75} ${s},0 q${s*0.5},${-s*0.75} ${s},0"
-    fill="none" stroke="${col}" stroke-width="${Math.max(1.4,s*0.28)}"
-    stroke-linecap="round"/>`;
+    fill="none" stroke="${col}" stroke-width="${Math.max(1.4,s*0.28)}" stroke-linecap="round"/>`;
 }
 function cloudSVG(x,y,s,op){
   return `<g opacity="${op}"><circle cx="${x-s*0.75}" cy="${y+s*0.14}" r="${s*0.56}" fill="#fff"/>
@@ -2091,76 +2270,83 @@ function cloudSVG(x,y,s,op){
     <rect x="${x-s*1.3}" y="${y+s*0.06}" width="${s*2.6}" height="${s*0.55}" rx="${s*0.27}" fill="#fff"/></g>`;
 }
 function airshipSVG(x,y,s){
-  return `<g><ellipse cx="${x}" cy="${y}" rx="${s}" ry="${s*0.42}" fill="#F6E7C8"
-    stroke="#3B2A1E" stroke-width="2"/>
+  return `<g><ellipse cx="${x}" cy="${y}" rx="${s}" ry="${s*0.42}" fill="#F6E7C8" stroke="#3B2A1E" stroke-width="2"/>
     <path d="M${x+s},${y} l${s*0.34},${-s*0.28} l0,${s*0.56} z" fill="#FF8A3D" stroke="#3B2A1E" stroke-width="1.6"/>
-    <rect x="${x-s*0.24}" y="${y+s*0.42}" width="${s*0.48}" height="${s*0.28}" rx="3"
-      fill="#3B2A1E"/>
+    <rect x="${x-s*0.24}" y="${y+s*0.42}" width="${s*0.48}" height="${s*0.28}" rx="3" fill="#3B2A1E"/>
     <path d="M${x-s*0.5},${y-s*0.36} h${s}" stroke="#D9631C" stroke-width="2.4"/></g>`;
 }
 function flockSVG(x,y,s,col){
   let g="";
-  [[0,0],[-s*1.5,s*0.8],[s*1.5,s*0.8],[-s*3,s*1.7],[s*3,s*1.7]].forEach(([dx,dy])=>
-    g+=birdSVG(x+dx,y+dy,s*0.6,col));
+  [[0,0],[-s*1.5,s*0.8],[s*1.5,s*0.8],[-s*3,s*1.7],[s*3,s*1.7]].forEach(d=>g+=birdSVG(x+d[0],y+d[1],s*0.6,col));
   return `<g>${g}</g>`;
 }
 function dragonSVG(x,y,s,col){
   return `<g transform="translate(${x},${y}) scale(${s/40})">
-    <path d="M-52,6 q18,-16 36,-4 q16,10 32,-2 q14,-10 30,2"
-      fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round"/>
-    <path d="M-6,-2 q-14,-26 -40,-30 q22,-2 34,8 q6,-14 20,-16 q-6,16 2,26 z"
-      fill="${col}" opacity=".92"/>
+    <path d="M-52,6 q18,-16 36,-4 q16,10 32,-2 q14,-10 30,2" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round"/>
+    <path d="M-6,-2 q-14,-26 -40,-30 q22,-2 34,8 q6,-14 20,-16 q-6,16 2,26 z" fill="${col}" opacity=".92"/>
     <path d="M14,4 q10,-22 34,-26 q-14,14 -12,26 z" fill="${col}" opacity=".72"/>
-    <circle cx="46" cy="2" r="9" fill="${col}"/>
-    <path d="M42,-5 l-8,-11 l13,5 z" fill="${col}"/>
-    <circle cx="50" cy="0" r="2.1" fill="#FFF3D0"/>
-    <path d="M-52,6 l-13,-8 l4,9 l-6,7 z" fill="${col}"/></g>`;
+    <circle cx="46" cy="2" r="9" fill="${col}"/><path d="M42,-5 l-8,-11 l13,5 z" fill="${col}"/>
+    <circle cx="50" cy="0" r="2.1" fill="#FFF3D0"/><path d="M-52,6 l-13,-8 l4,9 l-6,7 z" fill="${col}"/></g>`;
 }
 function moonSVG(x,y,s){
   return `<g><circle cx="${x}" cy="${y}" r="${s}" fill="#FFF0BC"/>
     <circle cx="${x+s*0.42}" cy="${y-s*0.2}" r="${s*0.86}" fill="#1A2A66"/></g>`;
 }
 function meteorSVG(x,y,s,col){
-  return `<g><path d="M${x},${y} l${-s*2.4},${s*1.3}" stroke="${col}" stroke-width="2.6"
-    stroke-linecap="round" opacity=".8"/><circle cx="${x}" cy="${y}" r="${s*0.28}" fill="${col}"/></g>`;
+  return `<g><path d="M${x},${y} l${-s*2.4},${s*1.3}" stroke="${col}" stroke-width="2.6" stroke-linecap="round" opacity=".8"/>
+    <circle cx="${x}" cy="${y}" r="${s*0.28}" fill="${col}"/></g>`;
 }
 function starSVG(x,y,s,col){
   return `<path d="M${x},${y-s} l${s*0.28},${s*0.66} l${s*0.72},${s*0.06} l${-s*0.55},${s*0.5}
     l${s*0.2},${s*0.7} l${-s*0.65},${-s*0.38} l${-s*0.65},${s*0.38} l${s*0.2},${-s*0.7}
     l${-s*0.55},${-s*0.5} l${s*0.72},${-s*0.06} z" fill="${col}"/>`;
 }
-/* 高度(ページ)ごとの住人。上に行くほど非日常になる */
-function skyLife(){
-  const L=[
-    [140,(x,y)=>birdSVG(x+52,y,7,"#5B4635")],
-    [330,(x,y)=>birdSVG(x+88,y,6,"#5B4635")],
-    [560,(x,y)=>birdSVG(x+44,y,8,"#5B4635")],
-    [880,(x,y)=>cloudSVG(x+96,y,16,.9)],
-    [1150,(x,y)=>birdSVG(x+62,y,10,"#4A3A2C")],
-    [1500,(x,y)=>cloudSVG(x+42,y,22,.95)],
-    [1950,(x,y)=>birdSVG(x+104,y,11,"#4A3A2C")],
-    [2400,(x,y)=>cloudSVG(x+88,y,26,.97)],
-    [2900,(x,y)=>cloudSVG(x+40,y,30,.98)],
-    [3400,(x,y)=>birdSVG(x+96,y,15,"#2E2419")],
-    [4200,(x,y)=>cloudSVG(x+104,y,20,.7)],
-    [5000,(x,y)=>airshipSVG(x+86,y,26)],
-    [6400,(x,y)=>birdSVG(x+44,y,17,"#241C12")],
-    [8000,(x,y)=>flockSVG(x+92,y,12,"#1C1610")],
-    [10000,(x,y)=>cloudSVG(x+46,y,24,.5)],
-    [11500,(x,y)=>starSVG(x+104,y,7,"#FFF0BC")],
-    [14000,(x,y)=>dragonSVG(x+82,y,54,"#2A1533")],
-    [17500,(x,y)=>starSVG(x+40,y,6,"#FFF0BC")],
-    [20500,(x,y)=>dragonSVG(x+56,y,64,"#3A1030")],
-    [24000,(x,y)=>meteorSVG(x+100,y,10,"#FFF0BC")],
-    [27500,(x,y)=>moonSVG(x+92,y,24)],
-    [32000,(x,y)=>starSVG(x+44,y,9,"#FFF6D8")],
-    [38000,(x,y)=>meteorSVG(x+72,y,13,"#FFE9A8")],
-    [45000,(x,y)=>starSVG(x+108,y,8,"#FFF6D8")]
-  ];
-  /* それより上は永久に星が増えていく */
-  for(let p=54000;p<400000;p+=9000)
-    L.push([p,(x,y)=>starSVG(x+((p/9000)%5)*24+30, y, 5+((p/9000)%3)*2, "#FFF6D8")]);
-  return L;
+function auroraSVG(x,y,s,col){
+  let g="";
+  for(let i=0;i<3;i++) g+=`<path d="M${x-s},${y+i*4} q${s*0.6},${-s*0.8} ${s},${-s*0.2}
+    q${s*0.5},${s*0.5} ${s},${-s*0.3}" fill="none" stroke="${col}" stroke-width="${3-i*0.6}"
+    opacity="${0.5-i*0.12}" stroke-linecap="round"/>`;
+  return `<g>${g}</g>`;
+}
+function rainbowSVG(x,y,s){
+  const cs=["#FF6B6B","#FFB65C","#FFE066","#6FD98A","#5BB8F0","#9B7BE8"];
+  return `<g opacity=".7">`+cs.map((c,i)=>
+    `<path d="M${x-s},${y} a${s},${s} 0 0 1 ${s*2},0" fill="none" stroke="${c}"
+      stroke-width="3" transform="translate(0,${i*3.2}) scale(1,${1-i*0.03})"/>`).join("")+`</g>`;
+}
+function kiteSVG(x,y,s){
+  return `<g><path d="M${x},${y-s} L${x+s*0.6},${y} L${x},${y+s} L${x-s*0.6},${y} z"
+    fill="#FF8A3D" stroke="#3B2A1E" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M${x},${y+s} q${s*0.4},${s*0.5} 0,${s*1.1}" fill="none" stroke="#3B2A1E" stroke-width="1.4"/></g>`;
+}
+function islandSVG(x,y,s){
+  return `<g><path d="M${x-s},${y} h${s*2} l${-s*0.5},${s*0.8} h${-s} z" fill="#8A6A4A"
+    stroke="#3B2A1E" stroke-width="1.8" stroke-linejoin="round"/>
+    <ellipse cx="${x}" cy="${y}" rx="${s}" ry="${s*0.3}" fill="#3E9E4E" stroke="#3B2A1E" stroke-width="1.8"/>
+    <path d="M${x+s*0.2},${y-s*0.2} v${-s*0.5}" stroke="#5C4530" stroke-width="2"/>
+    <circle cx="${x+s*0.2}" cy="${y-s*0.75}" r="${s*0.28}" fill="#3E9E4E" stroke="#3B2A1E" stroke-width="1.6"/></g>`;
+}
+function dropSVG(x,y,s,col){
+  return `<path d="M${x},${y-s*0.8} q${s*0.6},${s*0.9} 0,${s*1.3} q${-s*0.6},${-s*0.4} 0,${-s*1.3} z"
+    fill="${col||"#5BB8F0"}" opacity=".8"/>`;
+}
+function drawFx(fx,x,y){
+  switch(fx){
+    case "bird":   return birdSVG(x+70,y,9,"#4A3A2C");
+    case "cloud":  return cloudSVG(x+80,y,22,.95);
+    case "flock":  return flockSVG(x+86,y,11,"#1C1610");
+    case "airship":return airshipSVG(x+82,y,24);
+    case "dragon": return dragonSVG(x+80,y,52,"#2A1533");
+    case "meteor": return meteorSVG(x+96,y,10,"#FFF0BC");
+    case "moon":   return moonSVG(x+90,y,22);
+    case "star":   return starSVG(x+92,y,8,"#FFF6D8");
+    case "aurora": return auroraSVG(x+78,y,30,"#8FE3C8");
+    case "rainbow":return rainbowSVG(x+80,y,34);
+    case "kite":   return kiteSVG(x+92,y,12);
+    case "island": return islandSVG(x+82,y,20);
+    case "drop":   return dropSVG(x+92,y,10);
+    default: return "";
+  }
 }
 
 function renderTower(){
@@ -2177,28 +2363,29 @@ function renderTower(){
 
   let g="";
   /* 空のグラデーション。SVGは offset が昇順でないと効かないので、高い帯から順に置く */
-  let stops=`<stop offset="0%" stop-color="${bandOf(topPages).c}"/>`;
+  const zoneMarks=[];
+  SKY_ZONES.forEach(z=>{ if(z.upto!==Infinity && z.upto<=topPages+2000) zoneMarks.push(z); });
+  let stops=`<stop offset="0%" stop-color="${zoneOf(topPages).c}"/>`;
   const seen=new Set(["0.00"]);
-  [...BANDS].reverse().forEach(b=>{
-    if(b.p>topPages+400) return;
-    const y=Math.max(0,Math.min(H,yOf(b.p)));
-    const key=(y/H*100).toFixed(2);       /* 上端=0% 下端=100% */
+  [...SKY_ZONES].reverse().forEach(z=>{
+    const p=(z===SKY_ZONES[0])?0:(SKY_ZONES[SKY_ZONES.indexOf(z)-1].upto);
+    if(p>topPages+2000) return;
+    const y=Math.max(0,Math.min(H,yOf(p)));
+    const key=(y/H*100).toFixed(2);
     if(seen.has(key)) return; seen.add(key);
-    stops+=`<stop offset="${key}%" stop-color="${b.c}"/>`;
+    stops+=`<stop offset="${key}%" stop-color="${z.c}"/>`;
   });
   g+=`<defs><linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">${stops}</linearGradient></defs>`;
   g+=`<rect x="0" y="0" width="${W}" height="${H}" fill="url(#skyG)"/>`;
 
-  /* 空の住人（届いた高さまで＋少し先が見える） */
-  skyLife().forEach(([p,fn])=>{ if(p<=topPages) g+=fn(0,yOf(p)); });
-
-  /* 高度の目盛り */
-  BANDS.forEach(b=>{
-    if(b.p>topPages) return;
+  /* その人だけの空。段ごとに景色と住人が変わる */
+  const seenBands=bandsUpTo(topPages);
+  seenBands.forEach(b=>{
     const y=yOf(b.p);
-    g+=`<line x1="${W-96}" y1="${y}" x2="${W-8}" y2="${y}" stroke="#3B2A1E"
-      stroke-width="1" opacity=".28" stroke-dasharray="3 4"/>
-      <text x="${W-8}" y="${y-5}" text-anchor="end" class="btick">${b.n} ${b.p.toLocaleString()}p</text>`;
+    g+=drawFx(b.fx,0,y);
+    g+=`<line x1="${W-104}" y1="${y}" x2="${W-8}" y2="${y}" stroke="#3B2A1E"
+      stroke-width="1" opacity=".22" stroke-dasharray="3 4"/>
+      <text x="${W-8}" y="${y-5}" text-anchor="end" class="btick">${esc(b.n)} ${b.p.toLocaleString()}p</text>`;
   });
 
   /* 地面 */
@@ -2260,7 +2447,7 @@ function renderTower(){
     }
   }
   /* つぎの景色 */
-  const nb=BANDS.find(b=>b.p>donePages);
+  const nb=nextBand(donePages);
   if(nb) g+=`<text x="${cx}" y="${Math.max(20,baseY-towerU-84)}" text-anchor="middle"
     class="tnote">あと ${(nb.p-donePages).toLocaleString()} ページで つぎの空へ</text>`;
 
@@ -2275,15 +2462,20 @@ function renderTower(){
   const cur=bandOf(donePages);
   document.getElementById("towerStat").innerHTML=
     `${done.length} 層 ／ 累計 ${donePages.toLocaleString()} ページ<br>
-     いまは <b>${cur.n}</b> — ${cur.d}`;
-  document.getElementById("bands").innerHTML=BANDS.map(b=>{
-    const got=donePages>=b.p;
-    return `<div class="bandrow ${got?"got":""}">
-      <span class="bdot" style="background:${got?b.c:"var(--line)"}"></span>
-      <b>${got?esc(b.n):"？ ？ ？"}</b><em>${got?esc(b.d):""}</em>
-      <span class="bp">${b.p.toLocaleString()}p</span></div>`;
-  }).join("")+`<div class="bandrow"><span class="bdot" style="background:var(--line)"></span>
-    <b>？ ？ ？</b><em></em><span class="bp">∞</span></div>`;
+     いまは <b>${esc(cur.n)}</b> — ${esc(cur.d)}`;
+  /* 到達ずみは新しい順に、この先は伏せる */
+  const passed=bandsUpTo(donePages).slice(-8).reverse();
+  const future=[nextBand(donePages)];
+  let ni=nextBand(donePages).i;
+  for(let k=1;k<3;k++) future.push(bandAt(ni+k));
+  document.getElementById("bands").innerHTML=
+    future.reverse().map(b=>`<div class="bandrow">
+      <span class="bdot" style="background:var(--line)"></span>
+      <b>？ ？ ？</b><em></em><span class="bp">${b.p.toLocaleString()}p</span></div>`).join("")
+    + passed.map(b=>`<div class="bandrow got">
+      <span class="bdot" style="background:${b.c}"></span>
+      <b>${esc(b.n)}</b><em>${esc(b.d)}</em>
+      <span class="bp">${b.p.toLocaleString()}p</span></div>`).join("");
 }
 
 /* ============================================================
@@ -2344,7 +2536,8 @@ document.getElementById("dSave").onclick=()=>{
     const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
     S.streak=S.lastDate===y?(S.streak||0)+1:1; S.lastDate=today;
   }
-  save(); dlg.close(); eat(); selected=curId; renderAll();
+  S.lastRead={id:curId, at:Date.now()};
+  save(); dlg.close(); eat(); SFX.save(); selected=curId; renderAll();
   toast(fin? `「${b.t}」よみおわった！ ${S.name}が よろこんでいる` : `${v}ページまで きろくした`);
 };
 /* 記録した瞬間、地図が明るくなり相棒が食べる */
@@ -2987,24 +3180,17 @@ function itemSVG(id,size){
   if(glow>=0.85) g+=`<circle cx="${cx}" cy="${cy}" r="${s*0.46}" fill="none" stroke="${c}" stroke-width="${(2*k).toFixed(2)}" stroke-dasharray="${s*0.06} ${s*0.05}"/>`;
   return g+`</svg>`;
 }
-/* 手持ちの仲間。地域ごとに住みついた子と、旅立った守り神 */
+/* 送り出せるのは相棒だけ。いま育てている子と、旅立った守り神たち。
+   数が世代の分しかないので、どの土地に置くかが本当の選択になる */
 function unitList(){
-  const out=[];
-  (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{
-    const g=friendsFor(regionStat(R).done), ax=regionAxis(R);
-    for(let i=1;i<=g;i++){
-      const h=hash(R.name+"#"+i);
-      out.push({uid:"f:"+R.name+":"+i, kind:"friend", home:R.name,
-        name:(R.place||R.name)+"の "+ARCH[h%ARCH.length].n,
-        spec:{stage:3, arch:h%ARCH.length, elem:hash(R.name+"e"+i)%ELEM.length,
-              epi:0, hue:R.hue, dom:ax},
-        axis:ax, power:1+(h%5)});
-    }
-  }));
+  const out=[], sp=petSpec();
+  out.push({uid:"me", kind:"pet", name:S.name+"（いまの相棒）",
+    spec:sp, axis:sp.dom, power:2+sp.stage});
   (S.ancestors||[]).forEach((a,i)=>{
-    out.push({uid:"a:"+i, kind:"anc", home:"—", name:a.name,
+    out.push({uid:"a:"+i, kind:"anc", name:a.name+"（第"+a.gen+"代）",
       spec:a.spec||{stage:5,arch:0,elem:0,epi:0,hue:a.hue,dom:0},
-      axis:(a.spec&&a.spec.dom)||0, power:5+Math.min(4,Math.floor((a.pages||0)/8000))});
+      axis:(a.spec&&a.spec.dom)||0,
+      power:5+Math.min(4,Math.floor((a.pages||0)/8000))});
   });
   return out;
 }
@@ -3026,25 +3212,33 @@ function processExped(){
     const e=S.exped[rn], R=regionByName(rn), u=unitById(e.uid);
     if(!R||!u){ return; }
     e.last=e.last||e.since||now;
-    let rolls=Math.floor((now-e.last)/ROLL_MS);
+    const iv=hasBoon(R,"風の便り")? ROLL_MS*0.83 : ROLL_MS;   /* 恵みで間隔が縮む */
+    let rolls=Math.floor((now-e.last)/iv);
     if(rolls<=0) return;
     if(rolls>24) rolls=24;                       /* ためこみは1日ぶんまで */
     e.last=now;
     const ax=regionAxis(R), fit=(u.axis===ax)?1:0;
+    const lv=landLv(R);
     for(let i=0;i<rolls;i++){
       ev++;
       const seed=hash(rn+"|"+e.uid+"|"+e.last+"|"+i);
       const lore=LORE[ax];
       let line=`${u.name}は ${R.place||R.name}の ${lore.sp[seed%3]}を たずねた。`;
-      const chance=Math.min(0.9, 0.4+u.power*0.06+fit*0.18);
+      const chance=Math.min(0.94, 0.34+u.power*0.05+fit*0.16
+        +lv*0.015+(hasBoon(R,"道しるべ")?0.08:0));
       if(((seed>>>5)%1000)/1000 < chance){
         /* 位階は重みつき。得意分野なら良いものが出やすい */
-        const boost=1+u.power*0.14+fit*0.5;
-        const ws=IRANK.map((r,ri)=>r.w*Math.pow(boost,ri*0.5));
+        const boost=1+u.power*0.12+fit*0.4+lv*0.05+(hasBoon(R,"実り")?0.6:0);
+        const ws=IRANK.map((r,ri)=>{
+          let w=r.w*Math.pow(boost,ri*0.5);
+          if(hasBoon(R,"守りの灯")&&ri<2) w*=0.35;     /* つまらないものが減る */
+          return w;
+        });
         const tot=ws.reduce((a,b)=>a+b,0);
         let x=((seed>>>11)%100000)/100000*tot, ri=0;
         for(let j=0;j<ws.length;j++){ x-=ws[j]; if(x<=0){ ri=j; break; } }
-        const aa=((seed>>>17)%10<8)? ax : (seed>>>19)%NAX;
+        const other=hasBoon(R,"土地の記憶")? 3 : 1;   /* ほかの土地のものも出る */
+        const aa=((seed>>>17)%10<(10-other))? ax : (seed>>>19)%NAX;
         const kk=(seed>>>21)%IKIND.length;
         const id=itemId(aa,kk,ri);
         S.items[id]=(S.items[id]||0)+1;
@@ -3075,7 +3269,8 @@ function renderExped(){
   Object.keys(S.exped||{}).forEach(k=>{ if(S.exped[k]) used[S.exped[k].uid]=k; });
   document.getElementById("expSlots").innerHTML = regs.length? regs.map(R=>{
     const e=(S.exped||{})[R.name], u=e? unitById(e.uid):null;
-    const nx=e&&u? Math.max(0,ROLL_MS-((Date.now()-(e.last||e.since))%ROLL_MS)) : 0;
+    const iv=hasBoon(R,"風の便り")? ROLL_MS*0.83 : ROLL_MS;
+    const nx=e&&u? Math.max(0,iv-((Date.now()-(e.last||e.since))%iv)) : 0;
     return `<div class="slot${u?" on":""}">
       <div class="slot-h"><span class="bdot" style="background:${R.hue}"></span>
         <b>${esc(R.place||R.name)}</b><em>${esc(R.name)}</em></div>
@@ -3128,6 +3323,7 @@ function openPick(rn){
   document.getElementById("pickDlg").showModal();
 }
 function showItem(id){
+  SFX.find();
   const it=itemOf(id);
   document.getElementById("itemArt").innerHTML=itemSVG(id,120);
   document.getElementById("itemName").textContent=it.name;
@@ -3218,10 +3414,51 @@ document.querySelectorAll(".fbtn").forEach(b=>b.onclick=()=>{
   renderShelf();
 });
 
+/* ---------- 音 ----------
+   外部ファイルを持たず、その場で波形をつくる。やわらかい音色にする */
+let AC=null;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return AC; }
+function beep(seq,vol){
+  if(S.mute) return;
+  const c=ac(); if(!c) return;
+  if(c.state==="suspended"){ try{ c.resume(); }catch(e){} }
+  const t0=c.currentTime;
+  seq.forEach(q=>{
+    const o=c.createOscillator(), g=c.createGain();
+    o.type=q[3]||"sine"; o.frequency.value=q[0];
+    g.gain.setValueAtTime(0.0001,t0+q[1]);
+    g.gain.linearRampToValueAtTime(vol||0.10,t0+q[1]+0.014);
+    g.gain.exponentialRampToValueAtTime(0.0008,t0+q[1]+q[2]);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0+q[1]); o.stop(t0+q[1]+q[2]+0.03);
+  });
+}
+const SFX={
+  tap:  ()=>beep([[880,0,0.09]],0.055),
+  tab:  ()=>beep([[659,0,0.07],[988,0.05,0.09]],0.05),
+  pat:  ()=>beep([[1175,0,0.06],[1568,0.05,0.11]],0.055),
+  save: ()=>beep([[784,0,0.10],[988,0.08,0.10],[1319,0.17,0.22]],0.075),
+  find: ()=>beep([[1319,0,0.07],[1760,0.06,0.07],[2093,0.13,0.16]],0.05),
+  grow: ()=>beep([[523,0,0.13],[659,0.11,0.13],[784,0.22,0.13],[1047,0.33,0.34]],0.085),
+  no:   ()=>beep([[330,0,0.13,"triangle"]],0.055)
+};
+/* 押せるものを押したら鳴る。個別に書かずまとめて拾う */
+document.addEventListener("pointerdown",e=>{
+  const t=e.target.closest&&e.target.closest("button,.pickrow,.itm,.row,.layer,.lm");
+  if(!t) return;
+  if(t.closest("#petBtn")) return;                 /* なでる音は別 */
+  if(t.closest(".tabs")) SFX.tab(); else SFX.tap();
+},{passive:true});
+
 let tT; function toast(m){ const t=document.getElementById("toast");
   t.textContent=m; t.classList.add("on"); clearTimeout(tT);
   tT=setTimeout(()=>t.classList.remove("on"),2800); }
 
+document.getElementById("muteBtn").onclick=()=>{
+  S.mute=!S.mute; save();
+  document.getElementById("muteBtn").textContent=S.mute?"音を出す":"音を消す";
+  if(!S.mute) SFX.tap();
+};
 document.getElementById("themeBtn").onclick=()=>{
   const c=document.documentElement.getAttribute("data-theme");
   const dark=c? c==="dark" : matchMedia("(prefers-color-scheme:dark)").matches;
