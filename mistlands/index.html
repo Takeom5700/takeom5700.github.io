@@ -375,8 +375,9 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 .dact{display:flex; gap:9px; justify-content:flex-end; margin-top:20px}
 
 /* ---------- 5つの軸 ---------- */
-.axes{display:flex; gap:6px; margin-top:11px}
-.ax{flex:1; display:flex; align-items:center; gap:4px; min-width:0}
+.axes{display:grid; grid-template-columns:repeat(6,1fr); gap:5px 8px; margin-top:11px}
+.ax{display:flex; align-items:center; gap:4px; min-width:0}
+@media (max-width:520px){ .axes{grid-template-columns:repeat(4,1fr)} }
 .ax .axk{font-family:var(--f-disp); font-weight:800; font-size:13px; flex:none}
 .ax.dom .axk{text-shadow:0 0 0 currentColor}
 .axbar{flex:1; height:7px; border:2px solid var(--ink); border-radius:var(--r-pill);
@@ -574,8 +575,8 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       </div>
       <div class="panel">
         <h3>仲間</h3>
-        <p>地域で本を読み終えるほど、その土地の子が増えていきます（1・3・6・10冊…）。
-           本が増えても、いちど仲間になった子はいなくなりません。</p>
+        <p>地域で本を読み終えるほど、その土地の子が増えます（1・3・6・10・15冊…と三角数で、上限なし）。
+           いちど仲間になった子は、本が増えても減っても、いなくなりません。</p>
         <div class="friends" id="friends"></div>
       </div>
       <div class="panel">
@@ -1061,102 +1062,193 @@ function rgnOpen(R){
    系統20 × 属性8 × 称号8 = 1,280 種類の最終形態。
    さらに体色12色がかかるので見た目は 15,360 通り。
    ============================================================ */
-/* 読書で育つ5つの軸 */
+/* 読書で育つ12の軸。日本十進分類法(NDC)の0〜9類をすべて覆いつつ、
+   ビジネス書が集まる3類(社会科学)は 統・情・産 に割って見分けがつくようにした */
 const AXES=[
- {k:"理", yomi:"ことわり", d:"論理と分析", c:"#3AA5EE"},
- {k:"情", yomi:"こころ",   d:"人と言葉",   c:"#FF4D6D"},
- {k:"匠", yomi:"わざ",     d:"実務と技術", c:"#FBB711"},
- {k:"統", yomi:"おさ",     d:"統率と経営", c:"#9163EC"},
- {k:"玄", yomi:"くろ",     d:"未知の探求", c:"#0FA9B8"}
+ {k:"理",yomi:"ことわり",d:"論理・思考・数理",   ndc:"4/思考法", c:"#3AA5EE"},
+ {k:"統",yomi:"おさ",    d:"経営・組織・戦略",   ndc:"3社会科学", c:"#9163EC"},
+ {k:"匠",yomi:"わざ",    d:"技術・工学・実務",   ndc:"5技術",     c:"#FBB711"},
+ {k:"情",yomi:"こころ",  d:"心理・対人・伝達",   ndc:"1心理/3社会",c:"#FF4D6D"},
+ {k:"産",yomi:"なりわい",d:"産業・商業・金融",   ndc:"6産業/3経済",c:"#2FB863"},
+ {k:"究",yomi:"きわみ",  d:"自然科学・医学",     ndc:"4自然科学", c:"#0FA9B8"},
+ {k:"玄",yomi:"くろ",    d:"哲学・宗教・思想",   ndc:"1哲学",     c:"#7C6BD8"},
+ {k:"史",yomi:"ふみ",    d:"歴史・地理・伝記",   ndc:"2歴史",     c:"#C98A4B"},
+ {k:"芸",yomi:"あそび",  d:"芸術・音楽・スポーツ",ndc:"7芸術",    c:"#EE3D58"},
+ {k:"語",yomi:"ことば",  d:"言語・語学",         ndc:"8言語",     c:"#3FBE97"},
+ {k:"詩",yomi:"うた",    d:"文学・小説・詩歌",   ndc:"9文学",     c:"#C173F0"},
+ {k:"総",yomi:"あまね",  d:"総記・情報・メディア",ndc:"0総記",    c:"#5183E8"}
 ];
-/* 分類名から軸へ */
+/* 分類名から軸へ。会社が独自の分類名を使っても拾えるよう語を厚めに並べる */
 const CAT_HINT=[
- [/課題|問題|論点|仮説|統計|データ|分析|機械学習|数理|科学|思考/,0],
- [/コミュ|伝達|日本語|要約|顧客|UX|営業|交渉|提案|接客|対人/,1],
- [/アウトプット|設計|実務|技術|開発|基盤|資料|業務|基本動作|情報/,2],
- [/マネジ|経営|戦略|組織|リーダー|人材|投資|会計|ファイナンス|統率/,3],
- [/生成AI|AI|未来|哲学|教養|宇宙|探索|研究|創発/,4]
+ [/課題|問題解決|論点|仮説|統計|データ|分析|機械学習|数理|数学|思考|ロジ|アルゴリズム/,0],
+ [/マネジ|経営|戦略|組織|リーダー|人材|統率|人事|基本動作|コンサル|企画/,1],
+ [/アウトプット|設計|実務|技術|開発|基盤|エンジニア|工学|建築|製造|品質|資料|業務|情報設計|UX|UI|デザイン実務/,2],
+ [/コミュ|伝達|対人|心理|交渉|営業|接客|顧客|要約|日本語|プレゼン|人間関係|коуч|コーチ/,3],
+ [/産業|商業|金融|会計|財務|投資|ファイナンス|経済|マーケ|流通|物流|不動産|起業|副業/,4],
+ [/自然科学|物理|化学|生物|医学|薬|健康|宇宙|地学|環境|脳|栄養/,5],
+ [/哲学|宗教|思想|倫理|道徳|仏教|禅|神|スピリチュ|生き方|自己啓発/,6],
+ [/歴史|地理|伝記|評伝|紀行|文明|戦史|考古|民俗/,7],
+ [/芸術|美術|音楽|映画|演劇|写真|工芸|スポーツ|料理|趣味|ゲーム|漫画/,8],
+ [/言語|語学|英語|中国語|外国語|文法|翻訳|辞典/,9],
+ [/文学|小説|詩|随筆|エッセイ|物語|戯曲|ミステリ|SF|ノンフィクション/,10],
+ [/総記|情報|図書|事典|百科|メディア|ジャーナリズム|報道|教養|入門書|生成AI|AI|人工知能/,11]
 ];
 /* 書名の言葉からも軸が育つ。同じ分類でも本によって寄り方が変わる */
 const WORD_HINT=[
- [/思考|論理|問い|イシュー|仮説|分析|統計|数字|データ|科学|理科|論点|本質/,0],
- [/伝え|話|聞|書|文|言葉|相手|心|コミュ|要約|プレゼン|作文|年収|人/,1],
- [/技術|設計|教科書|入門|実務|スキル|術|マンガ|わかる|作成|運用|安全/,2],
- [/経営|マネ|戦略|組織|リーダー|成果|管理|マネージャー|最強|論/,3],
- [/AI|未来|世界|なぜ|教養|哲学|宇宙|生成|人工知能|変わる|動いて/,4]
+ [/思考|論理|問い|イシュー|仮説|分析|統計|数字|データ|科学的|理科|論点|本質|アルゴ/,0],
+ [/経営|マネ|戦略|組織|リーダー|成果|管理|マネージャー|最強|チーム|部下|上司/,1],
+ [/技術|設計|教科書|入門|実務|スキル|術|作成|運用|安全|つくり|作り方|実装/,2],
+ [/伝え|話|聞く|言葉|相手|心|コミュ|要約|プレゼン|作文|年収|人を|説明|交渉/,3],
+ [/商売|売る|営業|価格|値段|market|マーケ|会計|決算|投資|お金|資産|稼/,4],
+ [/宇宙|生命|脳|身体|健康|医|睡眠|食|進化|物理|化学|自然/,5],
+ [/哲学|なぜ|生き方|人生|幸福|倫理|禅|仏|神|意味|死|徳/,6],
+ [/歴史|history|世紀|時代|文明|戦争|王|帝国|昭和|明治|江戸/,7],
+ [/音楽|絵|美|映画|写真|舞台|スポーツ|走|料理|味|遊び|ゲーム/,8],
+ [/英語|言語|文法|単語|翻訳|話せ|辞典|ことば/,9],
+ [/物語|小説|詩|短編|長編|文学|随筆|エッセイ|日記/,10],
+ [/教養|世界|未来|変わる|動いて|事典|まとめ|すべて|大全|地図/,11]
 ];
+const NAX=AXES.length;
 function axisScores(){
-  const v=[0,0,0,0,0];
+  const v=new Array(NAX).fill(0);
   books().forEach(b=>{
     const read=Math.min(st(b.id).page,b.p);
     if(read<=0) return;
     const w=read/100;
     let ai=-1;
     for(const h of CAT_HINT) if(h[0].test(b.cat||"")){ ai=h[1]; break; }
-    if(ai<0) ai=hash(b.cat||"x")%5;      /* 知らない分類でも必ずどこかへ寄る */
+    if(ai<0) ai=hash(b.cat||"x")%NAX;    /* 知らない分類でも必ずどこかへ寄る */
     v[ai]+=w;
     const txt=(b.t||"")+(b.sub||"");
     for(const h of WORD_HINT) if(h[0].test(txt)) v[h[1]]+=w*0.45;
+    /* 理解度も少しだけ効く。同じ本でも人によって伸び方が変わる要因 */
+    const c=st(b.id).comp||0;
+    if(c>=4 && ai>=0) v[ai]+=w*0.12*(c-3);
   });
   return v;
 }
 function profile(){
   const v=axisScores(), tot=v.reduce((a,b)=>a+b,0);
   const ord=v.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]||a[1]-b[1]).map(x=>x[1]);
-  const spread=v[ord[0]]>0 ? (v[ord[0]]-v[ord[4]])/v[ord[0]] : 0;
+  const spread=v[ord[0]]>0 ? (v[ord[0]]-v[ord[NAX-1]])/v[ord[0]] : 0;
   return {v,tot,ord,dom:ord[0],sec:ord[1],third:ord[2],spread};
 }
 
-/* 系統20 = 主軸5 × 副軸4。読む分野の「一番」と「二番目」で決まる */
+/* 系統48 = 12の軸 × 4。読む分野の「一番」と「二番目」で決まる */
 const ARCH=[
  /* 理 */
- {n:"フクロウ",body:"round",ear:"tuft",back:"wingFeather",tail:"short",legs:"claw",eye:"big",mouth:"beak"},
- {n:"クラゲ",  body:"bell", ear:"none",back:"none",       tail:"tenta",legs:"none",eye:"dot",mouth:"none"},
- {n:"トカゲ",  body:"long", ear:"frill",back:"spike",     tail:"long", legs:"paw",  eye:"sharp",mouth:"smile"},
- {n:"カラクリ",body:"boxy", ear:"antenna",back:"none",    tail:"none", legs:"paw",  eye:"visor",mouth:"none"},
- /* 情 */
- {n:"ネコ",    body:"round",ear:"point",back:"none",      tail:"curl", legs:"paw",  eye:"big",  mouth:"smile"},
- {n:"ウサギ",  body:"round",ear:"long", back:"none",      tail:"puff", legs:"paw",  eye:"big",  mouth:"smile"},
- {n:"イヌ",    body:"wide", ear:"flop", back:"none",      tail:"fluff",legs:"paw",  eye:"big",  mouth:"tongue"},
- {n:"コトリ",  body:"round",ear:"none", back:"wingFeather",tail:"fan", legs:"claw", eye:"dot",  mouth:"beak"},
- /* 匠 */
- {n:"クマ",    body:"wide", ear:"round",back:"none",      tail:"short",legs:"paw",  eye:"dot",  mouth:"smile"},
- {n:"カニ",    body:"boxy", ear:"none", back:"none",      tail:"none", legs:"claw", eye:"stalk",mouth:"none"},
- {n:"モグラ",  body:"round",ear:"none", back:"none",      tail:"short",legs:"dig",  eye:"line", mouth:"smile"},
- {n:"カブト",  body:"boxy", ear:"horn1",back:"shell",     tail:"none", legs:"claw", eye:"dot",  mouth:"none"},
+ {n:"フクロウ",body:"round",ear:"tuft",  back:"wingFeather",tail:"short",legs:"claw",eye:"big",  mouth:"beak"},
+ {n:"クラゲ",  body:"bell", ear:"none",  back:"none",       tail:"tenta",legs:"none",eye:"dot",  mouth:"none"},
+ {n:"トカゲ",  body:"long", ear:"frill", back:"spike",      tail:"long", legs:"paw", eye:"sharp",mouth:"smile"},
+ {n:"カラクリ",body:"boxy", ear:"antenna",back:"none",      tail:"none", legs:"paw", eye:"visor",mouth:"none"},
  /* 統 */
- {n:"リュウ",  body:"long", ear:"horn2",back:"wingBat",   tail:"long", legs:"claw", eye:"sharp",mouth:"fang"},
- {n:"シシ",    body:"wide", ear:"round",back:"mane",      tail:"tuft", legs:"paw",  eye:"sharp",mouth:"fang"},
- {n:"オオカミ",body:"long", ear:"point",back:"none",      tail:"fluff",legs:"paw",  eye:"sharp",mouth:"fang"},
- {n:"ウマ",    body:"tall", ear:"point",back:"mane",      tail:"fluff",legs:"hoof", eye:"big",  mouth:"smile"},
+ {n:"リュウ",  body:"long", ear:"horn2", back:"wingBat",    tail:"long", legs:"claw",eye:"sharp",mouth:"fang"},
+ {n:"シシ",    body:"wide", ear:"round", back:"mane",       tail:"tuft", legs:"paw", eye:"sharp",mouth:"fang"},
+ {n:"オオカミ",body:"long", ear:"point", back:"none",       tail:"fluff",legs:"paw", eye:"sharp",mouth:"fang"},
+ {n:"ウマ",    body:"tall", ear:"point", back:"mane",       tail:"fluff",legs:"hoof",eye:"big",  mouth:"smile"},
+ /* 匠 */
+ {n:"クマ",    body:"wide", ear:"round", back:"none",       tail:"short",legs:"paw", eye:"dot",  mouth:"smile"},
+ {n:"カニ",    body:"boxy", ear:"none",  back:"none",       tail:"none", legs:"claw",eye:"stalk",mouth:"none"},
+ {n:"モグラ",  body:"round",ear:"none",  back:"none",       tail:"short",legs:"dig", eye:"line", mouth:"smile"},
+ {n:"カブト",  body:"boxy", ear:"horn1", back:"shell",      tail:"none", legs:"claw",eye:"dot",  mouth:"none"},
+ /* 情 */
+ {n:"ネコ",    body:"round",ear:"point", back:"none",       tail:"curl", legs:"paw", eye:"big",  mouth:"smile"},
+ {n:"ウサギ",  body:"round",ear:"long",  back:"none",       tail:"puff", legs:"paw", eye:"big",  mouth:"smile"},
+ {n:"イヌ",    body:"wide", ear:"flop",  back:"none",       tail:"fluff",legs:"paw", eye:"big",  mouth:"tongue"},
+ {n:"コトリ",  body:"round",ear:"none",  back:"wingFeather",tail:"fan",  legs:"claw",eye:"dot",  mouth:"beak"},
+ /* 産 */
+ {n:"タヌキ",  body:"wide", ear:"round", back:"none",       tail:"fluff",legs:"paw", eye:"line", mouth:"smile"},
+ {n:"ハチ",    body:"round",ear:"antenna",back:"wingBig",   tail:"short",legs:"claw",eye:"big",  mouth:"none"},
+ {n:"ウシ",    body:"wide", ear:"horn2", back:"none",       tail:"tuft", legs:"hoof",eye:"dot",  mouth:"smile"},
+ {n:"アリ",    body:"boxy", ear:"antenna",back:"none",      tail:"none", legs:"claw",eye:"dot",  mouth:"none"},
+ /* 究 */
+ {n:"クジラ",  body:"long", ear:"none",  back:"fin",        tail:"fan",  legs:"none",eye:"line", mouth:"smile"},
+ {n:"カメ",    body:"wide", ear:"none",  back:"shell",      tail:"short",legs:"paw", eye:"dot",  mouth:"smile"},
+ {n:"ワニ",    body:"long", ear:"none",  back:"spike",      tail:"long", legs:"paw", eye:"sharp",mouth:"fang"},
+ {n:"ヒトデ",  body:"bell", ear:"none",  back:"none",       tail:"tenta",legs:"none",eye:"tri",  mouth:"none"},
  /* 玄 */
- {n:"ホシビト",body:"tall", ear:"antenna",back:"halo",    tail:"none", legs:"none", eye:"tri",  mouth:"none"},
- {n:"セイレイ",body:"bell", ear:"none", back:"halo",      tail:"wisp", legs:"none", eye:"dot",  mouth:"none"},
- {n:"キツネ",  body:"long", ear:"point",back:"none",      tail:"nine", legs:"paw",  eye:"sharp",mouth:"smile"},
- {n:"チョウ",  body:"round",ear:"antenna",back:"wingBig", tail:"none", legs:"none", eye:"big",  mouth:"none"}
+ {n:"キツネ",  body:"long", ear:"point", back:"none",       tail:"nine", legs:"paw", eye:"sharp",mouth:"smile"},
+ {n:"ヘビ",    body:"long", ear:"none",  back:"none",       tail:"long", legs:"none",eye:"sharp",mouth:"fang"},
+ {n:"カラス",  body:"round",ear:"none",  back:"wingBat",    tail:"fan",  legs:"claw",eye:"sharp",mouth:"beak"},
+ {n:"セイレイ",body:"bell", ear:"none",  back:"halo",       tail:"wisp", legs:"none",eye:"dot",  mouth:"none"},
+ /* 史 */
+ {n:"ゾウ",    body:"wide", ear:"flop",  back:"none",       tail:"short",legs:"hoof",eye:"line", mouth:"smile"},
+ {n:"ゴーレム",body:"boxy", ear:"none",  back:"spike",      tail:"none", legs:"paw", eye:"visor",mouth:"none"},
+ {n:"サイ",    body:"wide", ear:"horn1", back:"none",       tail:"tuft", legs:"hoof",eye:"dot",  mouth:"smile"},
+ {n:"ドードー",body:"tall", ear:"tuft",  back:"wingFeather",tail:"puff", legs:"claw",eye:"big",  mouth:"beak"},
+ /* 芸 */
+ {n:"チョウ",  body:"round",ear:"antenna",back:"wingBig",   tail:"none", legs:"none",eye:"big",  mouth:"none"},
+ {n:"クジャク",body:"tall", ear:"tuft",  back:"none",       tail:"fan",  legs:"claw",eye:"big",  mouth:"beak"},
+ {n:"イルカ",  body:"long", ear:"none",  back:"fin",        tail:"fan",  legs:"none",eye:"big",  mouth:"smile"},
+ {n:"リス",    body:"round",ear:"tuft",  back:"none",       tail:"fluff",legs:"paw", eye:"big",  mouth:"smile"},
+ /* 語 */
+ {n:"オウム",  body:"round",ear:"tuft",  back:"wingFeather",tail:"fan",  legs:"claw",eye:"big",  mouth:"beak"},
+ {n:"カエル",  body:"wide", ear:"none",  back:"none",       tail:"none", legs:"paw", eye:"stalk",mouth:"smile"},
+ {n:"ヤモリ",  body:"long", ear:"none",  back:"none",       tail:"long", legs:"dig", eye:"stalk",mouth:"smile"},
+ {n:"ムササビ",body:"wide", ear:"round", back:"wingBig",    tail:"fluff",legs:"paw", eye:"big",  mouth:"smile"},
+ /* 詩 */
+ {n:"ツル",    body:"tall", ear:"none",  back:"wingFeather",tail:"fan",  legs:"claw",eye:"line", mouth:"beak"},
+ {n:"ホタル",  body:"round",ear:"antenna",back:"wingBig",   tail:"wisp", legs:"none",eye:"dot",  mouth:"none"},
+ {n:"シカ",    body:"tall", ear:"point", back:"none",       tail:"puff", legs:"hoof",eye:"big",  mouth:"smile"},
+ {n:"ユニコーン",body:"tall",ear:"horn1",back:"mane",       tail:"fluff",legs:"hoof",eye:"big",  mouth:"smile"},
+ /* 総 */
+ {n:"ホシビト",body:"tall", ear:"antenna",back:"halo",      tail:"none", legs:"none",eye:"tri",  mouth:"none"},
+ {n:"スライム",body:"bell", ear:"none",  back:"none",       tail:"none", legs:"none",eye:"dot",  mouth:"smile"},
+ {n:"キノコ",  body:"bell", ear:"none",  back:"none",       tail:"none", legs:"paw", eye:"dot",  mouth:"smile"},
+ {n:"ハクチョウ",body:"tall",ear:"none", back:"wingFeather",tail:"puff", legs:"claw",eye:"line", mouth:"beak"}
 ];
-/* 属性8 = 読み方の偏りぐあいから決まる */
+/* 属性8 */
 const ELEM=[
  {n:"ホムラ",c:"#FF6B35",fx:"flame"},{n:"コオリ",c:"#7FD4F5",fx:"shard"},
  {n:"イカヅチ",c:"#FFD23F",fx:"bolt"},{n:"カゼ",c:"#8FE3A8",fx:"swirl"},
  {n:"ツチ",c:"#C98A4B",fx:"rock"},   {n:"ミズ",c:"#4FA8E8",fx:"drop"},
  {n:"ヒカリ",c:"#FFE9A8",fx:"ray"},  {n:"ヤミ",c:"#8A6BC1",fx:"mist"}
 ];
-/* 称号8 = 「どう読んだか」。速さ・深さ・継続・広さ・会社/個人・冊数・愛着 */
+/* 二つ名8 = 「どう読んだか」 */
 const EPITHET=["疾き","深き","絶えざる","遍き","仕えし","おのれの","積みし","慈しむ"];
 const EPITHET_D=["ページを速く進める","理解度を高くつける","毎日つづける","分野を広く読む",
                  "会社の推薦図書を読む","自分で選んだ本を読む","冊数を積む","相棒をなでる"];
 const EPI_ACC=["scarf","glasses","halo2","compass","medal","cape","bell","crown"];
 
-function archIndex(p){
-  const others=[0,1,2,3,4].filter(i=>i!==p.dom);
-  const r=others.indexOf(p.sec);
-  return p.dom*4 + (r<0?0:r);
+/* 個人の種。同じ本を読む同僚でも、名前・世代・読みはじめた時刻・冊数が違えば別の値になる */
+function seedOf(){
+  let first=0, cnt=0, sum=0;
+  books().forEach(b=>{ const r=st(b.id); if(r.at){ first=first?Math.min(first,r.at):r.at; cnt++;
+    sum+=(r.at%100000)+(r.comp||0)*7; } });
+  return hash((S.name||"")+"|"+genNo()+"|"+first+"|"+cnt+"|"+sum);
 }
-function elemIndex(p){
+/* 候補の中から重みつきで1つ選ぶ。重みは読書量、引きは個人の種。
+   「強い傾向のうちどれが表に出るかは人による」という考え方 */
+function pickW(cands,weights,salt){
+  const w=weights.map(x=>Math.max(0.14,x));
+  const tot=w.reduce((a,b)=>a+b,0);
+  let x=((hash(seedOf()+"|"+salt)>>>2)%100000)/100000*tot;
+  for(let i=0;i<cands.length;i++){ x-=w[i]; if(x<=0) return cands[i]; }
+  return cands[cands.length-1];
+}
+/* 主軸。会社の推薦図書が同じだと点数の並びもほぼ同じになるので、
+   上位4つの中から重みつきで選ぶ。読んでいない分野は絶対に出ない */
+function domAxis(p){
+  const top=p.ord.slice(0,5).filter(i=>p.v[i]>0);
+  if(!top.length) return p.ord[0];
+  const base=p.v[top[0]]||1;
+  /* 平方根で均す。一番読んだ分野が有利なのは変えないが、
+     二番手・三番手にも十分な目を出して、同僚どうしで系統が割れるようにする */
+  return pickW(top, top.map(i=>Math.sqrt(p.v[i]/base)), "dom");
+}
+function archIndex(p,e){
+  const dom=(e&&e.dom!==undefined)? e.dom : domAxis(p);
+  const others=AXES.map((_,i)=>i).filter(i=>i!==dom);
+  const cand=p.ord.filter(i=>i!==dom).slice(0,5);
+  const sec=pickW(cand, cand.map(i=>Math.sqrt(p.v[i]/(p.v[cand[0]]||1))), "sec");
+  const r=others.indexOf(sec);
+  return dom*4 + ((r<0?0:r)%4);
+}
+function elemIndex(p,e){
   const b=Math.min(3,Math.floor(p.spread*4));
-  return ((p.third*3)+(p.ord[3]*2)+b)%8;
+  return ((p.ord[2]*3)+(p.ord[3]*2)+b+(seedOf()>>>7))%8;
 }
+/* 二つ名は「どう読んだか」。8つの指標を0〜1に揃えたうえで、上位3つから引く */
 function epithetIndex(){
   const done=books().filter(isDone);
   const days=Math.max(1,Object.keys(S.dayXp||{}).length);
@@ -1164,10 +1256,11 @@ function epithetIndex(){
   const avgC=comps.length? comps.reduce((a,b)=>a+b,0)/comps.length : 0;
   const cats=new Set(done.map(b=>b.cat)).size;
   const co=done.filter(b=>b.origin==="company").length, n=Math.max(1,done.length);
-  const s=[ pagesRead()/days/45, avgC/5, (S.streak||0)/14, cats/6,
-            co/n, (done.length-co)/n, done.length/22, (S.pat||0)/70 ];
-  let bi=0; s.forEach((x,i)=>{ if(x>s[bi]) bi=i; });
-  return bi;
+  const cl=x=>Math.max(0,Math.min(1,x));
+  const s=[ cl(pagesRead()/days/90), cl((avgC-3)/2), cl((S.streak||0)/21), cl(cats/8),
+            cl((co/n-0.45)/0.55), cl(((n-co)/n-0.45)/0.55), cl(done.length/30), cl((S.pat||0)/100) ];
+  const idx=s.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]||a[1]-b[1]).map(x=>x[1]).slice(0,3);
+  return pickW(idx, idx.map(i=>s[i]), "epi");
 }
 /* 進化の段階。読むほど「何になるか」が少しずつ明かされていく */
 const BOND=[0,500,1500,3600,7200,13000];
@@ -1178,11 +1271,28 @@ function stageIdx(){ let s=0; BOND.forEach((v,i)=>{ if(bondXp()>=v) s=i; }); ret
 function canDepart(){ return stageIdx()===5 && bondXp()>=DEPART; }
 function genNo(){ return S.gen||1; }
 
-/* いまの相棒の姿。段階に応じて決まっている情報だけを使う */
+/* 進化は「その段階に達した瞬間」に確定し、以後は変わらない。
+   同じ本を読んでも、読む順番・速さ・理解度・名前が違えば別の姿になる。
+   後から本を足しても既に決まった姿が作り替わらない、という意味でもある */
+function evoLock(){
+  const p=profile(), si=stageIdx(), key="g"+genNo();
+  S.evo=S.evo||{};
+  const e=S.evo[key]=S.evo[key]||{};
+  let dirty=false;
+  if(si>=2 && e.dom===undefined){ e.dom=domAxis(p); dirty=true; }
+  if(si>=3 && e.arch===undefined){ e.arch=archIndex(p,e); dirty=true; }
+  if(si>=4 && e.elem===undefined){ e.elem=elemIndex(p,e); dirty=true; }
+  if(si>=5 && e.epi===undefined){  e.epi=epithetIndex();  dirty=true; }
+  if(dirty) save();
+  return {e,p,si};
+}
 function petSpec(){
-  const p=profile(), si=stageIdx();
-  return {stage:si, arch:archIndex(p), elem:elemIndex(p), epi:epithetIndex(),
-          hue:petHue(), dom:p.dom, prof:p};
+  const {e,p,si}=evoLock();
+  return {stage:si,
+          arch: e.arch!==undefined? e.arch : archIndex(p,e),
+          elem: e.elem!==undefined? e.elem : elemIndex(p,e),
+          epi:  e.epi !==undefined? e.epi  : epithetIndex(),
+          hue:petHue(), dom: e.dom!==undefined? e.dom : p.dom, prof:p, locked:e};
 }
 function speciesName(sp){
   if(sp.stage<=0) return "たまご";
@@ -1392,15 +1502,19 @@ function depart(){
    「地域の霧を全部晴らす」は条件にできない。本は増え続けるし減ることもあるので、
    割合を条件にすると一生届かないか、達成しても後で崩れる。
    累計の読了冊数で解放する。増冊はむしろ新しい仲間の機会になる。 */
-const FRIEND_STEPS=[1,3,6,10,15,21,28,36,45,55,66,78];
+/* 仲間は三角数（1,3,6,10,15…）で増える。上限なし。
+   k匹目に必要なのは k(k+1)/2 冊。伸びは緩やかだが決して打ち止めにならない。
+   割合を条件にしないので、会社が本を足しても既に得た仲間は消えず、
+   むしろ増冊が次の仲間の機会になる */
+const FRIEND_STEPS=null;
+function friendsFor(done){ return done<1?0:Math.floor((Math.sqrt(8*done+1)-1)/2); }
+function friendNeed(k){ return k*(k+1)/2; }
 function friendList(){
   const out=[];
   (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{
-    const done=regionStat(R).done;
-    const gotN=FRIEND_STEPS.filter(n=>done>=n).length;
-    const next=FRIEND_STEPS.find(n=>done<n)||null;
+    const done=regionStat(R).done, got=friendsFor(done);
     out.push({region:R.name, place:R.place, hue:R.hue, hueName:R.hueName,
-      got:gotN, done, next, total:R.books.length});
+      got, done, next:friendNeed(got+1), total:R.books.length});
   }));
   return out;
 }
@@ -1580,11 +1694,13 @@ function drawMap(){
         const sub=E("text",{x:R.cx, y:ly+15, "text-anchor":"middle", class:"rsub"});
         sub.textContent=`${R.name} ・ ${s.done}/${R.books.length}冊 ・ 霧 ${R.puffs.length-gone}`;
         gLab.appendChild(sub);
-        if(s.done>=FRIEND_STEPS[0]){ /* 累計の読了冊数で仲間が住みつく */
+        if(friendsFor(s.done)>0){ /* 累計の読了冊数で仲間が住みつく */
           const f=E("g",{class:"pal",
             transform:`translate(${(R.cx+R.rad*0.52).toFixed(1)},${(R.cy-R.rad*0.55).toFixed(1)})`});
-          f.innerHTML=creatureSVG({stage:2,arch:hash(R.name)%20,elem:hash(R.name+"e")%8,
-            epi:0,hue:R.hue,dom:hash(R.name)%5},44,"happy").replace(/^<svg[^>]*>|<\/svg>$/g,"")
+          const fk=friendsFor(s.done);
+          f.innerHTML=creatureSVG({stage:3,arch:hash(R.name+"#"+fk)%ARCH.length,
+            elem:hash(R.name+"e"+fk)%8,epi:0,hue:R.hue,dom:hash(R.name)%NAX},44,"happy")
+            .replace(/^<svg[^>]*>|<\/svg>$/g,"")
             .replace('class="pet-body"','');
           f.setAttribute("transform", f.getAttribute("transform")+" translate(-22,-22)");
           gLab.appendChild(f);
@@ -1782,7 +1898,8 @@ function renderBuddyTab(){
        ${si>=3?`いまは <b>${esc(ARCH[sp.arch].n)}</b> の系統です。`:"もう少し読むと系統が見えてきます。"}
        ${si>=4?`属性は <b>${esc(ELEM[sp.elem].n)}</b>。`:""}
        ${si>=5?`二つ名「${esc(EPITHET[sp.epi])}」は ${esc(EPITHET_D[sp.epi])} ことから付きました。`:""}
-       <br>系統20 × 属性8 × 二つ名8 = <b>1,280通り</b>の最終形態があります。</p>`;
+       <br>系統${ARCH.length} × 属性${ELEM.length} × 二つ名${EPITHET.length} = <b>${(ARCH.length*ELEM.length*EPITHET.length).toLocaleString()}通り</b>の最終形態があります。
+       軸は日本十進分類法の全10類を覆う${NAX}本です。</p>`;
   /* 守り神 */
   const anc=(S.ancestors||[]);
   document.getElementById("ancPanel").innerHTML= anc.length
@@ -1800,12 +1917,13 @@ function renderBuddyTab(){
   /* 仲間 */
   document.getElementById("friends").innerHTML=friendList().map(f=>
     `<div class="friend ${f.got?"":"locked"}">
-      ${f.got? creatureSVG({stage:2,arch:hash(f.region)%20,elem:hash(f.region+"e")%8,epi:0,
-                            hue:f.hue,dom:hash(f.region)%5},44,"happy")
+      ${f.got? creatureSVG({stage:3,arch:hash(f.region+"#"+f.got)%ARCH.length,
+                            elem:hash(f.region+"e"+f.got)%8,epi:0,
+                            hue:f.hue,dom:hash(f.region)%NAX},44,"happy")
              : `<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="24" r="13"
                 fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 4"/></svg>`}
       <b>${esc(f.place||f.region)}</b>
-      <em>${f.got? "仲間 "+f.got+"匹" : "まだ"}${f.next? ` ／ ${f.next}冊で次` : ""}</em></div>`).join("");
+      <em>${f.got? "仲間 "+f.got+"匹" : "まだ"} ／ ${f.next}冊で次</em></div>`).join("");
 }
 /* 高さは「読んだページ数」。1万ページを超えたら伸びを緩めて画面に収める */
 function uOf(p){ return p<=10000 ? p*0.078 : 780+(p-10000)*0.034; }
