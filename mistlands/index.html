@@ -373,6 +373,20 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
   margin-top:14px; min-height:1.5em}
 .dact{display:flex; gap:9px; justify-content:flex-end; margin-top:20px}
 
+/* ---------- 記録の持ち出し ---------- */
+.xsep{height:2px; background:var(--hair); margin:20px 0 4px; border-radius:2px}
+input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
+  background:var(--paper); border:2.5px dashed var(--line); border-radius:var(--r)}
+.xbox{margin-top:12px; padding:13px 15px; border:2.5px solid var(--ink); border-radius:var(--r);
+  background:var(--card2)}
+.xbox.bad{border-color:var(--berry); background:color-mix(in srgb,var(--berry) 12%,transparent)}
+.xrow{display:flex; justify-content:space-between; gap:12px; font-family:var(--f-num);
+  font-size:12.5px; font-variant-numeric:tabular-nums; padding:2px 0}
+.xrow b{font-weight:600}
+.xrow .up{color:var(--sun-dp); font-weight:700}
+.xbox h4{font-family:var(--f-disp); font-size:13.5px; margin:0 0 7px}
+.xbox .note{font-size:11.5px; color:var(--ink-sub); line-height:1.7; margin:9px 0 0}
+
 /* ---------- トースト・ハート ---------- */
 .toast{position:fixed; left:50%; bottom:26px; transform:translate(-50%,16px);
   background:var(--ink); color:var(--paper); padding:12px 24px; border-radius:var(--r-pill);
@@ -550,6 +564,7 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
   <div class="foot">
     <span>記録はこの端末にだけ保存されます（試作版）</span>
     <span class="sp">
+      <button class="btn sm quiet" id="xferBtn">記録の持ち出し</button>
       <button class="btn sm quiet" id="demoBtn">サンプル進捗</button>
       <button class="btn sm quiet" id="growBtn">推薦図書が増えた場合を見る</button>
       <button class="btn sm quiet" id="resetBtn">記録を消す</button>
@@ -602,6 +617,27 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
   <div class="dact">
     <button type="button" class="btn quiet" id="nCancel">やめる</button>
     <button type="button" class="btn primary" id="nSave">つける</button>
+  </div>
+</form></dialog>
+
+<dialog id="xferDlg"><form method="dialog" class="din">
+  <h2>記録の持ち出し</h2>
+  <div class="sub">記録は端末ごとに別々に保存されます。PC ⇄ スマホはここで移します</div>
+  <label>いまのこの端末の記録</label>
+  <div class="kv" id="xNow">—</div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:9px">
+    <button type="button" class="btn primary sm" id="xFile">ファイルに保存</button>
+    <button type="button" class="btn quiet sm" id="xCopy">文字でコピー</button>
+  </div>
+  <div class="xsep"></div>
+  <label for="xFileIn">別の端末の記録を読み込む</label>
+  <input type="file" id="xFileIn" accept="application/json,.json,text/plain">
+  <label for="xPaste">または、コピーした文字を貼り付け</label>
+  <textarea id="xPaste" placeholder="書き出した文字をここに貼り付けて「中身を見る」"></textarea>
+  <div style="margin-top:9px"><button type="button" class="btn quiet sm" id="xCheck">中身を見る</button></div>
+  <div id="xPrev"></div>
+  <div class="dact">
+    <button type="button" class="btn quiet" id="xClose">とじる</button>
   </div>
 </form></dialog>
 
@@ -1770,6 +1806,132 @@ nameDlg.querySelector("form").addEventListener("submit",e=>{
   e.preventDefault(); document.getElementById("nSave").click(); });
 document.getElementById("dlgForm").addEventListener("submit",e=>{
   e.preventDefault(); document.getElementById("dSave").click(); });
+
+/* ============================================================
+   9.5 記録の持ち出し（端末をまたぐ）
+   進捗は戻らない値なので、ぶつかったら「ページ数が多いほう」を採る。
+   これならPCとスマホの両方で読んでもどちらも消えない。
+   ============================================================ */
+function cleanState(){ const o={}; for(const k in S) if(k[0]!=="_") o[k]=S[k]; return o; }
+function exportText(){
+  return JSON.stringify({app:"mistlands", version:2,
+    exportedAt:new Date().toISOString(),
+    summary:{name:S.name, gen:genNo(), books:doneCount(), pages:pagesRead(), xp:totalXp()},
+    data:cleanState()}, null, 1);
+}
+function statsOf(state){
+  const keep=S; S=state;
+  try{ return {books:doneCount(), pages:pagesRead(), xp:totalXp(), gen:genNo(),
+    extra:(state.extra||[]).length, name:state.name||"—"}; }
+  finally{ S=keep; }
+}
+function parseImport(text){
+  let j;
+  try{ j=JSON.parse(text); }
+  catch(e){ throw new Error("読み取れませんでした。書き出した内容が全部貼れているか確かめてください"); }
+  if(!j || j.app!=="mistlands" || !j.data || typeof j.data.rec!=="object")
+    throw new Error("Mistlandsの書き出しデータではないようです");
+  return j.data;
+}
+function mergeState(inc){
+  const out=cleanState();
+  out.rec=Object.assign({}, out.rec);
+  for(const id in inc.rec){
+    const a=out.rec[id], b=inc.rec[id];
+    if(!a || (b.page||0)>(a.page||0)) out.rec[id]=b;   /* 進んでいるほうを採る */
+  }
+  out.extra=(out.extra||[]).slice();
+  const have=new Set(out.extra.map(x=>x.id));
+  (inc.extra||[]).forEach(x=>{ if(!have.has(x.id)) out.extra.push(x); });
+  if(!(out.synth||[]).length && (inc.synth||[]).length) out.synth=inc.synth;
+  /* 地図の位置を決める並び順。既存を必ず優先し、無いキーだけ後ろに足す */
+  out.ord=JSON.parse(JSON.stringify(out.ord||{}));
+  for(const ns in (inc.ord||{})){
+    out.ord[ns]=out.ord[ns]||{};
+    for(const k in inc.ord[ns])
+      if(out.ord[ns][k]===undefined) out.ord[ns][k]=Object.keys(out.ord[ns]).length;
+  }
+  const ig=inc.gen||1, og=out.gen||1;
+  if(ig>og || (ig===og && (inc.genBase||0)>(out.genBase||0))){
+    out.gen=ig; out.genBase=inc.genBase||0; out.name=inc.name||out.name;
+  }
+  if((inc.ancestors||[]).length>(out.ancestors||[]).length) out.ancestors=inc.ancestors;
+  out.pat=Math.max(out.pat||0, inc.pat||0);
+  out.streak=Math.max(out.streak||0, inc.streak||0);
+  if(!out.lastDate || (inc.lastDate||"")>out.lastDate) out.lastDate=inc.lastDate||out.lastDate;
+  /* 1日のXP上限は端末ごとに合算せず多いほうを採る（合算すると上限を回避できてしまう） */
+  out.dayXp=Object.assign({}, out.dayXp);
+  for(const d in (inc.dayXp||{})) out.dayXp[d]=Math.max(out.dayXp[d]||0, inc.dayXp[d]);
+  return out;
+}
+const xferDlg=document.getElementById("xferDlg");
+document.getElementById("xferBtn").onclick=()=>{
+  const s=statsOf(cleanState());
+  document.getElementById("xNow").textContent=
+    `${s.name}（第${s.gen}代）／ 読了 ${s.books}冊 ／ ${s.pages.toLocaleString()}ページ ／ ${s.xp.toLocaleString()} XP`;
+  document.getElementById("xPrev").innerHTML="";
+  document.getElementById("xPaste").value="";
+  xferDlg.showModal();
+};
+document.getElementById("xClose").onclick=()=>xferDlg.close();
+document.getElementById("xFile").onclick=()=>{
+  const a=document.createElement("a");
+  const url=URL.createObjectURL(new Blob([exportText()],{type:"application/json"}));
+  a.href=url; a.download=`mistlands-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast("ファイルに保存しました");
+};
+document.getElementById("xCopy").onclick=async()=>{
+  const t=exportText();
+  try{ await navigator.clipboard.writeText(t); toast("コピーしました。別の端末で貼り付けてください"); }
+  catch(e){
+    const ta=document.getElementById("xPaste");
+    ta.value=t; ta.focus(); ta.select();
+    toast("下の欄に出しました。長押しでコピーしてください");
+  }
+};
+document.getElementById("xFileIn").onchange=e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ document.getElementById("xPaste").value=String(r.result);
+    document.getElementById("xCheck").click(); };
+  r.readAsText(f);
+};
+document.getElementById("xCheck").onclick=()=>{
+  const box=document.getElementById("xPrev");
+  let inc;
+  try{ inc=parseImport(document.getElementById("xPaste").value.trim()); }
+  catch(err){ box.innerHTML=`<div class="xbox bad"><h4>読み込めません</h4>
+    <div style="font-size:12.5px">${esc(err.message)}</div></div>`; return; }
+  const now=statsOf(cleanState()), other=statsOf(inc), after=statsOf(mergeState(inc));
+  const row=(k,a,b)=>`<div class="xrow"><span>${k}</span>
+    <b>${a}${b!==undefined&&b!==a?` <span class="up">→ ${b}</span>`:""}</b></div>`;
+  box.innerHTML=`<div class="xbox">
+    <h4>読み込むデータ：${esc(other.name)}（第${other.gen}代）</h4>
+    ${row("読了した本", `${now.books}冊`, `${after.books}冊`)}
+    ${row("読んだページ", now.pages.toLocaleString(), after.pages.toLocaleString())}
+    ${row("累計 XP", now.xp.toLocaleString(), after.xp.toLocaleString())}
+    ${row("自分で足した本", `${now.extra}冊`, `${after.extra}冊`)}
+    <p class="note">「合流させる」は、本ごとに<b>ページ数が多いほうを残します</b>。
+      両方の端末で読んでいても、どちらの進捗も消えません。ふだんはこちらで大丈夫です。<br>
+      会社の推薦図書の地図上の位置は変わりません。両方の端末で別々に「自分の本」を足したときだけ、
+      木の位置がずれることがあります。</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:11px">
+      <button type="button" class="btn primary sm" id="xMerge">合流させる</button>
+      <button type="button" class="btn quiet sm" id="xReplace">まるごと置きかえる</button>
+    </div></div>`;
+  document.getElementById("xMerge").onclick=()=>applyImport(mergeState(inc),"合流しました");
+  document.getElementById("xReplace").onclick=()=>{
+    if(confirm("この端末の記録を消して、読み込んだ内容で置きかえます。よろしいですか？"))
+      applyImport(inc,"置きかえました");
+  };
+};
+function applyImport(next,msg){
+  S=Object.assign({rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ",
+    lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[]}, next);
+  save(); selected=null; mapFocus=null; xferDlg.close(); renderAll(); toast(msg);
+}
 
 function showNews(msg){
   const slot=document.getElementById("newsSlot");
