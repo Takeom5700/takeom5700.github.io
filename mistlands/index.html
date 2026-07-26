@@ -91,8 +91,9 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right)
   --shadow:color-mix(in srgb, var(--ink) 82%, transparent);
 }
 
-*{box-sizing:border-box}
-body{
+*{box-sizing:border-box; min-width:0}
+html{overflow-x:hidden}
+body{max-width:100%; overflow-x:hidden;
   margin:0; background:var(--paper); color:var(--ink);
   font-family:var(--f-body); font-size:15px; line-height:1.8;
   font-feature-settings:"palt" 1; -webkit-font-smoothing:antialiased;
@@ -106,7 +107,8 @@ body::before{
 button{font:inherit; color:inherit; cursor:pointer}
 h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0}
 
-.wrap{max-width:1120px; margin:0 auto; padding:0 clamp(14px,3vw,28px) 90px}
+.wrap{max-width:1120px; margin:0 auto; padding:0 clamp(14px,3vw,28px) 90px;
+  min-width:0; overflow-x:clip}
 
 /* ---------- ヘッダー ---------- */
 .top{display:flex; align-items:center; gap:14px; padding:22px 2px 16px; flex-wrap:wrap}
@@ -122,8 +124,10 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
   display:grid; grid-template-columns:auto 1fr; gap:clamp(14px,3vw,28px); align-items:center;
   background:linear-gradient(168deg, var(--card) 0%, var(--card2) 100%);
   border:3px solid var(--ink); border-radius:var(--r-lg);
-  box-shadow:6px 6px 0 var(--shadow); padding:clamp(16px,3vw,24px); position:relative; overflow:hidden;
+  box-shadow:6px 6px 0 var(--shadow); padding:clamp(14px,3vw,24px);
+  position:relative; overflow:hidden; min-width:0; max-width:100%;
 }
+.buddy-card>*{min-width:0}
 .buddy-card::before{ /* 背景の光玉 */
   content:""; position:absolute; width:280px; height:280px; right:-70px; top:-110px;
   background:radial-gradient(circle, color-mix(in srgb,var(--sun) 34%,transparent), transparent 66%);
@@ -142,7 +146,7 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
   70%{transform:scale(.94,1.09) translateY(-9px)}100%{transform:scale(1)}}
 .pet-eye{animation:blink 5.2s infinite}
 @keyframes blink{0%,95%,100%{transform:scaleY(1)}97%{transform:scaleY(.08)}}
-.pet-info{min-width:0; position:relative}
+.pet-info{min-width:0; max-width:100%; position:relative; overflow:hidden}
 .pet-name{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap}
 .pet-name h2{font-size:clamp(21px,3.6vw,27px); letter-spacing:.02em}
 .pet-stage-tag{font-family:var(--f-disp); font-weight:800; font-size:11.5px; letter-spacing:.1em;
@@ -151,7 +155,8 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
 .pet-title{font-family:var(--f-disp); font-weight:800; font-size:11.5px; letter-spacing:.06em;
   border:2px solid var(--ink); border-radius:var(--r-pill); padding:2px 10px; background:var(--paper)}
 .evoline{display:flex; align-items:flex-end; gap:2px; margin-top:12px; flex-wrap:nowrap;
-  overflow-x:auto; padding-bottom:2px}
+  overflow-x:auto; padding-bottom:2px; max-width:100%;
+  -webkit-overflow-scrolling:touch; scrollbar-width:thin}
 .evostep{flex:none; width:52px; text-align:center; opacity:.4; position:relative}
 .evostep.reached{opacity:1}
 .evostep.now{opacity:1}
@@ -169,11 +174,13 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
 .pet-say{font-family:var(--f-disp); font-weight:700; font-size:14px; line-height:1.85; margin:9px 0 0;
   background:var(--paper); border:2px dashed var(--line); border-radius:var(--r);
   padding:9px 14px; position:relative}
-.pet-meta{display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:11px; font-size:12px;
-  color:var(--ink-sub); font-family:var(--f-num)}
+.pet-meta{display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:11px; font-size:12px;
+  color:var(--ink-sub); font-family:var(--f-num); min-width:0}
 .pet-meta b{color:var(--ink); font-weight:700}
 .evo{margin-top:12px}
-.evo-lbl{font-size:11.5px; color:var(--ink-sub); display:flex; justify-content:space-between}
+.evo-lbl{font-size:11.5px; color:var(--ink-sub); display:flex; justify-content:space-between;
+  gap:8px; flex-wrap:wrap; min-width:0}
+.evo-lbl span{min-width:0; overflow-wrap:anywhere}
 .evo-bar{height:12px; border:2px solid var(--ink); border-radius:var(--r-pill);
   background:var(--paper); overflow:hidden; margin-top:4px}
 .evo-bar i{display:block; height:100%; width:calc(var(--v,0)*100%);
@@ -181,7 +188,10 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
   transition:width 1s cubic-bezier(.22,1,.36,1)}
 
 /* ---------- KPI ---------- */
-.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:10px; margin-top:14px}
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(104px,1fr)); gap:10px;
+  margin-top:14px; min-width:0}
+.kpi{min-width:0}
+.kpi dd{overflow-wrap:anywhere}
 .kpi{background:var(--card); border:2.5px solid var(--ink); border-radius:var(--r);
   box-shadow:3px 3px 0 var(--shadow); padding:10px 12px 11px}
 .kpi dt{font-size:10.5px; letter-spacing:.09em; color:var(--ink-sub); margin:0}
@@ -403,9 +413,9 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 .dact{display:flex; gap:9px; justify-content:flex-end; margin-top:20px}
 
 /* ---------- 5つの軸 ---------- */
-.axes{display:grid; grid-template-columns:repeat(6,1fr); gap:5px 8px; margin-top:11px}
+.axes{display:grid; grid-template-columns:repeat(auto-fit,minmax(74px,1fr));
+  gap:5px 8px; margin-top:11px; min-width:0}
 .ax{display:flex; align-items:center; gap:4px; min-width:0}
-@media (max-width:520px){ .axes{grid-template-columns:repeat(4,1fr)} }
 .ax .axk{font-family:var(--f-disp); font-weight:800; font-size:13px; flex:none}
 .ax.dom .axk{text-shadow:0 0 0 currentColor}
 .axbar{flex:1; height:7px; border:2px solid var(--ink); border-radius:var(--r-pill);
@@ -491,11 +501,23 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
   background:linear-gradient(180deg, color-mix(in srgb,var(--sea) 60%,transparent), transparent 72%)}
 .walkscene .wgrd{animation:scroll 2.6s linear infinite}
 @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-200px)}}
-/* 上下に浮くのではなく、足を踏みかえるように小さく弾む */
-.walkscene .wch{animation:step .34s ease-in-out infinite alternate; transform-origin:24px 44px}
+/* 上下に浮くのではなく、足を踏みかえて歩く */
+.walkscene .wch{animation:step .32s ease-in-out infinite alternate; transform-origin:24px 44px}
 @keyframes step{
-  from{transform:translateY(0) rotate(-2deg) scaleY(1)}
-  to{transform:translateY(-2.2px) rotate(2deg) scaleY(1.03)}
+  from{transform:translateY(0) rotate(-1.6deg)}
+  to{transform:translateY(-1.6px) rotate(1.6deg)}
+}
+/* 左右の足を交互に前へ出す */
+.walkscene .leg{transform-box:fill-box; transform-origin:50% 20%}
+.walkscene .lg-l{animation:legA .32s ease-in-out infinite alternate}
+.walkscene .lg-r{animation:legB .32s ease-in-out infinite alternate}
+@keyframes legA{
+  from{transform:translate(-2.4px,.6px) rotate(-9deg)}
+  to{transform:translate(2.6px,-1.1px) rotate(9deg)}
+}
+@keyframes legB{
+  from{transform:translate(2.6px,-1.1px) rotate(9deg)}
+  to{transform:translate(-2.4px,.6px) rotate(-9deg)}
 }
 .walkscene .wsh{animation:shadow .34s ease-in-out infinite alternate; transform-origin:center}
 @keyframes shadow{ from{transform:scaleX(1); opacity:.28} to{transform:scaleX(.78); opacity:.18} }
@@ -676,7 +698,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
 
     <div class="panel" style="margin-top:16px">
       <h3>探検する</h3>
-      <p>相棒を土地へ送ると、1時間に1度なにかを見つけてきます。いつでも入れ替えられます。</p>
+      <p>相棒を土地へ送ると、20分に1度たよりが届きます。ときどき おみやげも見つけてきます。</p>
       <div class="slots" id="expSlots"></div>
     </div>
     <div class="panel" style="margin-top:14px">
@@ -1669,7 +1691,7 @@ const WORD_TASTE=[
  [/生命|生物|進化|自然/, "いきもの の あじ。ぼくと おなじ においが した"],
  [/物理|化学|数学|科学/, "せかい の しくみ の あじ。かたい けど すきとおって いる"],
  [/医|病|薬/, "なおる あじ。だれか を たすける ための あじ"],
- [/音楽|うた|楽器/, "おと の する あじ。たべながら からだ が ゆれた"],
+ [/音楽|うた|楽器|ヒップホップ|ジャズ|ロック|クラシック|ラップ|アイドル/, "おと の する あじ。たべながら からだ が ゆれた"],
  [/絵|美術|画|デザイン/, "いろ の あじ。みて いる だけで おなかが いっぱい"],
  [/映画|物語|ドラマ/, "つづき の ある あじ。まだ おわって いない"],
  [/写真|カメラ/, "とまった じかん の あじ。そこ だけ うごかない"],
@@ -1688,13 +1710,29 @@ const WORD_TASTE=[
  [/地図|世界|グローバル/, "ひろい あじ。はしっこ が みえない"]
 ];
 
-/* いま食べたばかりの本 */
-function lastBook(){
+/* いま読んでいる本たち。ずっと放置しているものは外す */
+const FRESH_MS=30*864e5;
+function activeBooks(){
+  const now=Date.now(), all=books();
+  const reading=all.filter(b=>{ const r=st(b.id);
+    return r.page>0 && r.page<b.p && r.at && (now-r.at)<FRESH_MS; });
+  const justDone=all.filter(b=>{ const r=st(b.id);
+    return r.page>=b.p && r.at && (now-r.at)<5*864e5; });
+  const pool=reading.concat(justDone);
+  if(pool.length) return pool;
+  /* 読書中がなければ、いちばん最近さわった本 */
   let best=null,bt=-1;
-  books().forEach(b=>{ const r=st(b.id); if(r.page>0&&r.at&&r.at>bt){ bt=r.at; best=b; } });
-  return best;
+  all.forEach(b=>{ const r=st(b.id); if(r.page>0&&r.at&&r.at>bt){ bt=r.at; best=b; } });
+  return best? [best] : [];
 }
-/* その本の書名から出る、その本だけの味 */
+/* 話題にする本。同じ本ばかりにならないよう ゆるやかに回す */
+function talkBook(seed){
+  const pool=activeBooks();
+  if(!pool.length) return null;
+  return pool[seed%pool.length];
+}
+/* その本の主題をあらわす短い言葉。書名をそのまま読み上げない */
+const SKIP_KATA=/^(ページ|シリーズ|ビジネス|パーソン|エディション|ブック)$/;
 function bookTaste(b){
   const title=(b.t||"");
   const rest=" "+(b.sub||"")+" "+(b.cat||"");
@@ -1706,9 +1744,32 @@ function bookTaste(b){
   const seed=hash(b.id+"|"+(st(b.id).page||0)+"|"+(S.pat||0));
   return pool[seed%pool.length][1];
 }
-function shortTitle(t){ return t.length<=15? t : t.slice(0,14)+"…"; }
+function shortTitle(t){ return (t||"").length<=15? (t||"") : (t||"").slice(0,14)+"…"; }
+function themeWord(b){
+  const t=(b.t||"")+" "+(b.sub||"");
+  /* 長いカタカナ語は たいてい その本の主題 */
+  const kata=(t.match(/[ァ-ヴー]{3,}/g)||[])
+    .filter(w=>!SKIP_KATA.test(w)).sort((a,b2)=>b2.length-a.length)[0];
+  if(kata) return kata;
+  /* なければ 手がかりに一致した語 */
+  for(const w of WORD_TASTE){ const m=w[0].exec(b.t||""); if(m) return m[0]; }
+  for(const w of WORD_TASTE){ const m=w[0].exec(t); if(m) return m[0]; }
+  return (b.cat||"").replace(/[・･]/g,"") || null;
+}
+const THEME_LINES=[
+ w=>`${w} の あじ、さいきん すきかも`,
+ w=>`${w} も おいしいんだね`,
+ w=>`${w} の きり、くせに なりそう`,
+ w=>`${w} って わくわく する`,
+ w=>`きょうの きり は ${w} の におい が した`,
+ w=>`${w} の ちしき も おいしい`,
+ w=>`${w} は かんで いる あいだ が たのしい`,
+ w=>`${w} の あじ、もう ひとくち ほしい`,
+ w=>`${w} って こんな あじ なんだ`,
+ w=>`${w} の きり、あとに のこる ね`
+];
 
-/* 直前に読んだ本の軸 */
+/* 直前に読んだ本の軸 *//* 直前に読んだ本の軸 */
 function lastAxis(){
   let best=null,bt=-1;
   books().forEach(b=>{ const r=st(b.id); if(r.at&&r.at>bt){ bt=r.at; best=b; } });
@@ -1719,35 +1780,38 @@ function lastAxis(){
   return hash(best.cat||"x")%NAX;
 }
 function petLine(md,si){
-  const seed=hash(S.name+"|"+pagesRead()+"|"+doneCount()+"|"+(S.pat||0)+"|"+(S.lastRead&&S.lastRead.at||0));
-  if(md==="hungry"){
-    const b0=lastBook();
-    if(b0 && seed%3===0) return `この まえ の 『${shortTitle(b0.t)}』、おいしかったな。つづき が たべたい`;
-    return HUNGRY[seed%HUNGRY.length];
-  }
+  const seed=hash(S.name+"|"+pagesRead()+"|"+doneCount()+"|"+(S.pat||0)
+    +"|"+Math.floor(Date.now()/900000));      /* 15分ごとに ことばが入れかわる */
   if(si<=0) return ["ふるふる… なかで なにか が うごいて いる",
     "こつん、と おと が した。もう すこし だ","あたたかい。まだ ねむって いる みたい"][seed%3];
   if(si===1) return ["ふわ… まだ かたち が さだまらない",
     "きみ の こえ が きこえる。もっと きかせて","うすい けど、ちゃんと ここに いるよ"][seed%3];
-  const b=lastBook();
-  if(!b) return "はじめて の ひとくち、まって いるよ。どんな あじ かな";
-  const r=st(b.id), fin=r.page>=b.p, ttl=shortTitle(b.t);
-  /* その本ならではの味を優先し、なければ分野の味 */
+  const b=talkBook(seed);
+  if(!b) return md==="hungry"
+    ? HUNGRY[seed%HUNGRY.length]
+    : "はじめて の ひとくち、まって いるよ。どんな あじ かな";
+  const r=st(b.id), fin=r.page>=b.p;
+  const w=themeWord(b), ttl=shortTitle(b.t);
+  if(md==="hungry"){
+    if(w && seed%2===0) return `${w} の きり、まだ のこって いる はず。つづき が たべたい`;
+    return HUNGRY[seed%HUNGRY.length];
+  }
+  /* その本ならではの味 / 主題の言葉 / 分野の味 を混ぜる */
   const bt=bookTaste(b);
   const ax=lastAxis();
   const t=TASTE[(ax<0?0:ax)%TASTE.length];
-  let core=(bt && seed%10<7)? bt : t[seed%t.length];
-  /* 読み切った直後は とくべつ */
+  let core;
+  const pick=seed%10;
+  if(w && pick<5)      core=THEME_LINES[(seed>>>3)%THEME_LINES.length](w);
+  else if(bt && pick<8) core=bt;
+  else                  core=t[seed%t.length];
   if(fin && md==="full")
-    return `『${ttl}』、さいご まで たべた！ ${core}`;
-  if(fin && seed%4===0)
-    return `『${ttl}』は ぜんぶ たべた。${core}`;
-  /* 理解度が高いと こい あじ */
-  if((r.comp||0)>=5 && seed%5===0)
-    return `『${ttl}』、ずいぶん こい あじ が した。きみ よく かんで たね`;
-  if(md==="full") return FULL_PRE[(seed>>>6)%FULL_PRE.length]+`『${ttl}』の きり。${core}`;
+    return (seed%3===0? `『${ttl}』、さいご まで たべた！ ` : `ぜんぶ たべた！ `)+core;
+  if(md==="full") return FULL_PRE[(seed>>>6)%FULL_PRE.length]+core;
   if(md==="happy") return `${core}。${HAPPY_ADD[(seed>>>4)%HAPPY_ADD.length]}`;
-  return (seed%3===0)? `『${ttl}』の きり、${core}` : core;
+  if((r.comp||0)>=5 && seed%7===0) return `${core}。よく かんで たね`;
+  /* 名前を出すのは ときどき だけ */
+  return (seed%9===0)? `『${ttl}』の きり、${core}` : core;
 }
 function mood(){
   const today=new Date().toISOString().slice(0,10);
@@ -1833,10 +1897,10 @@ function creatureSVG(sp,size,md){
   /* --- あし --- */
   const legs = lvLimb? A.legs : (st_>=2? "paw" : "none");
   const L={
-   paw:()=>[-1,1].map(d=>`<ellipse cx="${cx+d*R*0.42}" cy="${cy+R*(bh*0.96)}" rx="${R*0.24}" ry="${R*0.14}" fill="${skin}" stroke="${ink}" stroke-width="${w2}"/>`).join(""),
-   claw:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.55},${cy+R*bh*0.86} l0,${R*0.24} m${-R*0.16},0 l${R*0.32},0" stroke="${ink}" stroke-width="${w2}" stroke-linecap="round" fill="none"/>`).join(""),
-   hoof:()=>[-1,1].map(d=>`<rect x="${cx+d*R*0.42-R*0.13}" y="${cy+R*bh*0.84}" width="${R*0.26}" height="${R*0.3}" rx="${R*0.06}" fill="${ink}"/>`).join(""),
-   dig:()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.5},${cy+R*bh*0.8} l${d*R*0.34},${R*0.3} l${-d*R*0.5},${R*0.02} z" fill="${skin}" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
+   paw:()=>[-1,1].map(d=>`<ellipse class="leg ${d<0?"lg-l":"lg-r"}" cx="${cx+d*R*0.42}" cy="${cy+R*(bh*0.96)}" rx="${R*0.24}" ry="${R*0.14}" fill="${skin}" stroke="${ink}" stroke-width="${w2}"/>`).join(""),
+   claw:()=>[-1,1].map(d=>`<path class="leg ${d<0?"lg-l":"lg-r"}" d="M${cx+d*R*0.55},${cy+R*bh*0.86} l0,${R*0.24} m${-R*0.16},0 l${R*0.32},0" stroke="${ink}" stroke-width="${w2}" stroke-linecap="round" fill="none"/>`).join(""),
+   hoof:()=>[-1,1].map(d=>`<rect class="leg ${d<0?"lg-l":"lg-r"}" x="${cx+d*R*0.42-R*0.13}" y="${cy+R*bh*0.84}" width="${R*0.26}" height="${R*0.3}" rx="${R*0.06}" fill="${ink}"/>`).join(""),
+   dig:()=>[-1,1].map(d=>`<path class="leg ${d<0?"lg-l":"lg-r"}" d="M${cx+d*R*0.5},${cy+R*bh*0.8} l${d*R*0.34},${R*0.3} l${-d*R*0.5},${R*0.02} z" fill="${skin}" stroke="${ink}" stroke-width="${w2}" stroke-linejoin="round"/>`).join(""),
    none:()=>""
   };
   g+=(L[legs]||L.paw)();
@@ -2445,49 +2509,74 @@ function bandP(i){ return i<=0? 0 : Math.round(110*Math.pow(i,1.45)); }
 /* 空の帯。何が見えるかは高さだけでなく「その人が何を読んできたか」で変わる */
 const SKY_ZONES=[
  {upto:900, c:"#C6ECFF", th:[
-   ["草の海","風がひとすじ通っていく","bird"],
-   ["雑木林のうえ","葉のにおいがまだ届く","bird"],
-   ["小川のほとり","水の音がすぐ下にある","drop"],
-   ["石畳の道","だれかの足音が遠ざかる","bird"],
-   ["麦の畑","穂がいっせいに傾く","bird"],
-   ["屋根のうえ","町の煙突が並んでいる","kite"]]},
+   ["はじまりの高さ","まだ 地面の においが 届く","bird"],
+   ["屋根のたかさ","町の音が すぐ下にある","bird"],
+   ["梢のうえ","葉ずれが かすかに 聞こえる","bird"],
+   ["鳥の目線","はじめて 町を 見おろした","bird"],
+   ["風の生まれる場所","ここから 風が 動きはじめる","kite"],
+   ["ひかりの届く縁","朝いちばんに 陽が あたる","drop"],
+   ["こだまの高さ","呼べば まだ 返ってくる","kite"],
+   ["旗のはためく高さ","布が ぴんと 張る","kite"]]},
  {upto:5000, c:"#8FD0F0", th:[
-   ["ちぎれ雲の高さ","手が届きそうな白がある","cloud"],
-   ["鳥の道","毎日おなじ道を通る影","bird"],
-   ["風見の丘のうえ","風の向きが読める","kite"],
-   ["塔の影が届く先","自分の影が地に伸びている","cloud"],
-   ["霧のたまり場","足もとが白く沈む","cloud"],
-   ["凧のあたり","糸が細く光っている","kite"]]},
+   ["雲のすそ","白が 手の届く ところに ある","cloud"],
+   ["霞のあわい","輪郭が やわらかく ほどける","cloud"],
+   ["鐘の音がとどく高さ","一日の 区切りが 聞こえる","cloud"],
+   ["渡りの道","毎年おなじ みちすじ","flock"],
+   ["風の通り道","背を おされて すすむ","kite"],
+   ["雨の生まれる層","しずくが かたちに なる","drop"],
+   ["虹のかかる高さ","色が 空気に とけている","rainbow"],
+   ["ふりむけば町の高さ","もう 顔は 見わけられない","cloud"]]},
  {upto:20000, c:"#3F7FC8", th:[
-   ["雲海","下はもう見えない","cloud"],
-   ["渡り鳥の列","長い旅の途中らしい","flock"],
-   ["飛行船の航路","ゆっくり横切っていく","airship"],
-   ["雷雲のふち","遠くで低く鳴っている","meteor"],
-   ["虹の根もと","色が空気に溶けている","rainbow"],
-   ["氷の粒の帯","小さく光って流れる","star"]]},
+   ["雲海のうえ","下は もう 見えない","cloud"],
+   ["碧のふかみ","青が 濃くなって きた","cloud"],
+   ["息のうすい高さ","ひと呼吸が 深くなる","flock"],
+   ["静けさの層","音が とどかなく なった","airship"],
+   ["陽のあたる高み","雲より さきに 朝が くる","airship"],
+   ["風のとぎれる場所","はじめて 空気が 止まった","meteor"],
+   ["氷のただよう帯","小さく 光って ながれる","star"],
+   ["地平のまるい高さ","ふちが 弧を えがいている","rainbow"]]},
  {upto:60000, c:"#1E2C6B", th:[
-   ["竜のねぐら","大きな影がゆっくり回る","dragon"],
-   ["浮島のあいだ","島がひとりでに浮いている","island"],
-   ["星の砂の層","こまかい光が漂う","star"],
-   ["極光のカーテン","色が音もなく揺れる","aurora"],
-   ["天の川のほとり","川のように光が流れる","star"],
-   ["月の見える高さ","思っていたより大きい","moon"]]},
+   ["夜のはじまる高さ","昼と夜の さかいめ","star"],
+   ["竜のねぐら","おおきな影が ゆっくり 回る","dragon"],
+   ["月と同じ高さ","思っていたより 大きい","moon"],
+   ["星のすなの層","こまかい光が ただよう","star"],
+   ["極光のかかる高さ","色が 音もなく ゆれる","aurora"],
+   ["天の川のほとり","ひかりが 川のように ながれる","star"],
+   ["浮かぶものの高さ","支えなしで とどまっている","island"],
+   ["まばたきの届かぬ高さ","見た光は 昔のもの","meteor"]]},
  {upto:Infinity, c:"#0A1038", th:[
-   ["星座のあいだ","線を引いた人がいたらしい","star"],
-   ["彗星の通り道","長い尾が残っている","meteor"],
-   ["名もなき星","まだ誰も呼んでいない","star"],
-   ["静かな闇","音がひとつもない","aurora"],
-   ["世界の縁","ここから先は地図がない","moon"],
-   ["光の届かない場所","それでも何かがいる","star"]]}
+   ["ひかりの際","ここから さきは 届かない","star"],
+   ["名もなき高み","呼ぶ ことばが まだ ない","star"],
+   ["時のとどかぬ高さ","いつの ことか わからない","meteor"],
+   ["星座のあいだ","線を 引いた人が いたらしい","star"],
+   ["彗星の通り道","ながい尾が 残っている","meteor"],
+   ["世界のふち","ここから さきは 地図が ない","moon"],
+   ["しずけさの果て","音が うまれる まえの ばしょ","aurora"],
+   ["はじまりに近い高さ","ずっと 昔の ひかりが ある","star"]]}
 ];
 function zoneOf(p){ for(const z of SKY_ZONES) if(p<z.upto) return z; return SKY_ZONES[SKY_ZONES.length-1]; }
 /* i段目の景色。個人の種を混ぜるので、同じ高さでも人によって違うものが見える */
+/* その人だけの並び。帯ごとに景色を並べ替えて順に使うので、
+   ひとまわりするまで同じ景色は絶対に出てこない */
+const _skyOrder={};
+function zoneOrder(zi){
+  const key=skySeed()+"|"+zi;
+  if(_skyOrder[key]) return _skyOrder[key];
+  const L=SKY_ZONES[zi].th.length, a=[];
+  for(let i=0;i<L;i++) a.push(i);
+  for(let i=L-1;i>0;i--){                       /* 種から決まる並べ替え */
+    const j=hash(key+"|"+i)%(i+1);
+    const t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  _skyOrder[key]=a; return a;
+}
 function bandAt(i){
-  const p=bandP(i), z=zoneOf(p), L=z.th.length, sd=skySeed();
-  let k=hash(sd+"|sky|"+i)%L;
-  const prev=hash(sd+"|sky|"+(i-1))%L;      /* 隣どうしで同じ景色にならないようにする */
-  if(i>1 && k===prev) k=(k+1)%L;
-  const t=z.th[k];
+  const p=bandP(i), zi=SKY_ZONES.indexOf(zoneOf(p)), z=SKY_ZONES[zi];
+  /* その帯のなかで何番目か */
+  let base=0;
+  for(let k=1;k<i;k++) if(SKY_ZONES.indexOf(zoneOf(bandP(k)))===zi) base++;
+  const ord=zoneOrder(zi);
+  const t=z.th[ord[base%ord.length]];
   return {i, p, n:t[0], d:t[1], fx:t[2], c:z.c};
 }
 function skySeed(){
