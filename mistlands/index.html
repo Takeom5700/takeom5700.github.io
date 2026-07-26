@@ -625,7 +625,10 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   <div class="sub">会社の推薦図書とは別枠。補助の対象にはなりません</div>
 
   <div class="scanbar">
-    <button type="button" class="btn primary sm" id="aScan">裏表紙のバーコードを撮る</button>
+    <button type="button" class="btn primary sm" id="aScan">カメラでかざす</button>
+    <label class="btn quiet sm" for="aPhoto" style="cursor:pointer">写真を撮る</label>
+    <input type="file" id="aPhoto" accept="image/*" capture="environment"
+           style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
     <span class="scanhint" id="aScanHint"></span>
   </div>
   <div class="cam" id="aCam" hidden>
@@ -1931,9 +1934,127 @@ async function handleIsbn(raw){
   $("aIsbn").value=isbn;
 }
 
+/* ============================================================
+   EAN-13 デコーダ（自前）
+   iOS Safari と Windows Chrome は BarcodeDetector に未対応なので、
+   走査線のラン長からISBNを解く。ライブラリを積むと数百KBになるうえ
+   CSPの制約もあるため、EAN-13だけに絞って自分で解く。
+   ============================================================ */
+/* 数字ごとの「白黒の並びの幅」。Lパターンの逆順がGパターン、
+   Rパターンは白黒が反転しているだけなので幅はLと同じ */
+const EAN_L=[[3,2,1,1],[2,2,2,1],[2,1,2,2],[1,4,1,1],[1,1,3,2],
+             [1,2,3,1],[1,1,1,4],[1,3,1,2],[1,2,1,3],[3,1,1,2]];
+const EAN_G=EAN_L.map(a=>a.slice().reverse());
+const EAN_PARITY=["OOOOOO","OOEOEE","OOEEOE","OOEEEO","OEOOEE",
+                  "OEEOOE","OEEEOO","OEOEOE","OEOEEO","OEEOEO"];
+function eanCheck(d){
+  let s=0; for(let i=0;i<12;i++) s+=d[i]*(i%2?3:1);
+  return (10-(s%10))%10===d[12];
+}
+function matchDigit(w,table){
+  let best=-1,err=1e9;
+  for(let d=0;d<10;d++){
+    let e=0; for(let k=0;k<4;k++){ const t=w[k]-table[d][k]; e+=t*t; }
+    if(e<err){ err=e; best=d; }
+  }
+  return err<0.85 ? best : -1;
+}
+function decodeFrom(seq,i){
+  if(seq[i].v!==1) return null;
+  const u=(seq[i].n+seq[i+1].n+seq[i+2].n)/3;
+  if(u<0.9) return null;
+  if(Math.abs(seq[i].n-u)>u*0.6||Math.abs(seq[i+1].n-u)>u*0.6||Math.abs(seq[i+2].n-u)>u*0.6) return null;
+  let p=i+3; const digits=[]; let par="";
+  const readDigit=(expectVal,tables)=>{
+    if(p+3>=seq.length) return -1;
+    if(seq[p].v!==expectVal) return -1;
+    const n=[seq[p].n,seq[p+1].n,seq[p+2].n,seq[p+3].n];
+    const sum=n[0]+n[1]+n[2]+n[3];
+    if(sum<u*4.5||sum>u*10.5) return -1;
+    const uu=sum/7, w=n.map(x=>x/uu);
+    for(const [tag,tbl] of tables){
+      const d=matchDigit(w,tbl);
+      if(d>=0){ p+=4; return {d,tag}; }
+    }
+    return -1;
+  };
+  for(let k=0;k<6;k++){
+    const r=readDigit(0,[["O",EAN_L],["E",EAN_G]]);
+    if(r===-1) return null;
+    digits.push(r.d); par+=r.tag;
+  }
+  /* 中央のガード 01010 */
+  if(p+4>=seq.length||seq[p].v!==0) return null;
+  for(let k=0;k<5;k++){ if(Math.abs(seq[p+k].n-u)>u*0.75) return null; }
+  p+=5;
+  for(let k=0;k<6;k++){
+    const r=readDigit(1,[["R",EAN_L]]);
+    if(r===-1) return null;
+    digits.push(r.d);
+  }
+  const first=EAN_PARITY.indexOf(par);
+  if(first<0) return null;
+  const all=[first].concat(digits);
+  if(all.length!==13||!eanCheck(all)) return null;
+  return all.join("");
+}
+function ean13FromRow(bin){
+  const runs=[]; let cur=bin[0],len=1;
+  for(let i=1;i<bin.length;i++){
+    if(bin[i]===cur) len++; else { runs.push({v:cur,n:len}); cur=bin[i]; len=1; }
+  }
+  runs.push({v:cur,n:len});
+  if(runs.length<59) return null;
+  for(let dir=0;dir<2;dir++){
+    const seq = dir? runs.slice().reverse() : runs;
+    for(let i=0;i+58<seq.length;i++){
+      const r=decodeFrom(seq,i);
+      if(r) return r;
+    }
+  }
+  return null;
+}
+/* 画像から横一列ずつ取り出して読む。何本か試し、同じ値が2回出たら確定 */
+function ean13FromImageData(img,rows){
+  const {width:W,height:H,data}=img;
+  const votes={};
+  const lines=rows||24;
+  for(let r=0;r<lines;r++){
+    const y=Math.floor(H*(0.14+0.72*(r+0.5)/lines));
+    let mn=255,mx=0;
+    const g=new Uint8Array(W);
+    for(let x=0;x<W;x++){
+      const o=(y*W+x)*4;
+      const v=(data[o]*299+data[o+1]*587+data[o+2]*114)/1000;
+      g[x]=v; if(v<mn)mn=v; if(v>mx)mx=v;
+    }
+    if(mx-mn<38) continue;               /* コントラスト不足の行は捨てる */
+    const th=(mn+mx)/2, bin=new Uint8Array(W);
+    for(let x=0;x<W;x++) bin[x]= g[x]<th ? 1 : 0;
+    const v=ean13FromRow(bin);
+    /* 日本の本は裏表紙に2本ある（上=ISBN 978…、下=価格 192…）。
+       どちらも正しいEAN-13なので、ISBNのほうを優先して返す */
+    if(v){ votes[v]=(votes[v]||0)+1; if(/^97[89]/.test(v)&&votes[v]>=2) return v; }
+  }
+  const keys=Object.keys(votes);
+  if(!keys.length) return null;
+  const isbnLike=keys.filter(k=>/^97[89]/.test(k));
+  const pool=isbnLike.length? isbnLike : keys;
+  return pool.sort((a,b)=>votes[b]-votes[a])[0];
+}
+function decodeCanvas(src,w,h){
+  const c=document.createElement("canvas");
+  const scale=Math.min(1, 900/Math.max(w,h));
+  c.width=Math.round(w*scale); c.height=Math.round(h*scale);
+  const ctx=c.getContext("2d",{willReadFrequently:true});
+  ctx.drawImage(src,0,0,c.width,c.height);
+  return ean13FromImageData(ctx.getImageData(0,0,c.width,c.height));
+}
+
 /* ---- カメラ ---- */
 let camStream=null, camTimer=null, detector=null;
-const canScan = ("BarcodeDetector" in window);
+const hasNativeScan = ("BarcodeDetector" in window);
+const canScan = hasNativeScan || !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
 function stopCam(){
   if(camTimer){ clearInterval(camTimer); camTimer=null; }
   if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
@@ -1953,21 +2074,43 @@ async function startCam(){
   const v=$("aVideo");
   v.srcObject=camStream; v.setAttribute("playsinline",""); await v.play().catch(()=>{});
   $("aCam").hidden=false; $("aCamMsg").textContent="バーコードにかざしてください";
-  detector=detector||new window.BarcodeDetector({formats:["ean_13"]});
+  if(hasNativeScan) detector=detector||new window.BarcodeDetector({formats:["ean_13"]});
+  const got=isbn=>{
+    $("aCamMsg").textContent="読み取りました: "+isbn;
+    stopCam(); if(navigator.vibrate) navigator.vibrate(40); handleIsbn(isbn);
+  };
   camTimer=setInterval(async()=>{
     try{
-      const codes=await detector.detect(v);
-      for(const c of codes){
-        const isbn=normIsbn(c.rawValue);          /* 下段の価格バーコード(192…)は弾かれる */
-        if(isbn){
-          $("aCamMsg").textContent="読み取りました: "+isbn;
-          stopCam(); if(navigator.vibrate) navigator.vibrate(40);
-          handleIsbn(isbn); return;
+      if(hasNativeScan){
+        const codes=await detector.detect(v);
+        for(const c of codes){
+          const isbn=normIsbn(c.rawValue);      /* 下段の価格バーコード(192…)は弾かれる */
+          if(isbn){ got(isbn); return; }
         }
+      }else if(v.videoWidth){                    /* iOS など。自前デコーダで解く */
+        const isbn=normIsbn(decodeCanvas(v, v.videoWidth, v.videoHeight));
+        if(isbn){ got(isbn); return; }
       }
     }catch(e){}
-  },220);
+  }, hasNativeScan?220:340);
 }
+/* 写真を1枚撮って読む。iOSでは純正カメラが開くので、動画より確実 */
+$("aPhoto").onchange=e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const msg=$("aLookMsg");
+  msg.className="hint"; msg.textContent="写真を読んでいます…";
+  const img=new Image();
+  img.onload=()=>{
+    const isbn=normIsbn(decodeCanvas(img,img.naturalWidth,img.naturalHeight));
+    URL.revokeObjectURL(img.src);
+    if(isbn) handleIsbn(isbn);
+    else{ msg.className="hint warn";
+      msg.textContent="バーコードを読み取れませんでした。明るいところで、バーコードが写真の幅いっぱいになるよう近づけて撮ってください。ISBNを手で入れても構いません"; }
+    e.target.value="";
+  };
+  img.onerror=()=>{ msg.className="hint warn"; msg.textContent="写真を開けませんでした"; e.target.value=""; };
+  img.src=URL.createObjectURL(f);
+};
 $("aScan").onclick=startCam;
 $("aCamStop").onclick=stopCam;
 $("aLookup").onclick=()=>handleIsbn($("aIsbn").value);
@@ -1979,9 +2122,8 @@ document.getElementById("addBtn").onclick=()=>{
   $("aLookMsg").className="hint"; $("aLookMsg").textContent="";
   const hit=$("aHit"); if(hit) hit.remove();
   $("aScan").hidden=!canScan;
-  $("aScanHint").textContent = canScan
-    ? "裏表紙の上のバーコード（978で始まるほう）を写すと、書名とページ数が入ります"
-    : "この端末はカメラ読み取りに未対応です。ISBNの13桁を入れると自動で調べます";
+  $("aScanHint").textContent =
+    "裏表紙の上のバーコード（978で始まるほう）を読みます。うまくいかないときは「写真を撮る」で1枚撮るか、ISBNの13桁を手で入れてください";
   addDlg.showModal();
 };
 document.getElementById("aCancel").onclick=()=>{ stopCam(); addDlg.close(); };
