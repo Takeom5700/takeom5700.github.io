@@ -785,6 +785,17 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   </div>
 </form></dialog>
 
+<dialog id="catDlg"><form method="dialog" class="din">
+  <h2>分野を変える</h2>
+  <div class="sub" id="catBook">—</div>
+  <label for="catSel">分野</label>
+  <select id="catSel"></select>
+  <div class="dact">
+    <button type="button" class="btn quiet" id="catCancel">やめる</button>
+    <button type="button" class="btn primary" id="catSave">これにする</button>
+  </div>
+</form></dialog>
+
 <dialog id="pickDlg"><form method="dialog" class="din">
   <h2>どの子を送りますか</h2>
   <div class="sub" id="pickTitle">—</div>
@@ -1140,10 +1151,18 @@ function regionStat(R){
   const red=R.books.reduce((n,b)=>n+Math.min(st(b.id).page,b.p),0);
   return {tot, red, ratio: tot?red/tot:0, done:R.books.filter(isDone).length};
 }
-function contOpen(C){ return C.name==="自分の本" ? true : levelOf(totalXp()).lv >= 1+2*C.i; }
+/* 自分で足した本がある土地は、レベルに関係なく必ず見える。
+   自分で入れた本が霧の向こうに隠れているのはおかしいため */
+function hasOwn(o){ return (o.regions||[o]).some(R=>(R.books||[]).some(b=>b.origin!=="company")); }
+function contOpen(C){
+  if(C.name==="その他"||C.name==="自分の本") return true;
+  if(hasOwn(C)) return true;
+  return levelOf(totalXp()).lv >= 1+2*C.i;
+}
 function rgnOpen(R){
   if(!contOpen(R.cont)) return false;
   if(R.i===0) return true;
+  if(R.books.some(b=>b.origin!=="company")) return true;
   return R.adj.some(o=>regionStat(o).done>0);
 }
 
@@ -1720,6 +1739,17 @@ function drawMap(){
   }
   if(mapFocus!=="all" && !W.conts.some(C=>C.name===mapFocus))
     mapFocus=(W.conts[0]||{}).name;
+  /* 「自分の本」で絞ったのに、いま見ている大陸に1冊も無いと空になってしまう。
+     その種別の本がある大陸へ自動で移す */
+  if(mapKind!=="all" && mapFocus!=="all"){
+    const has=C=>C.regions.some(R=>R.books.some(b=>
+      mapKind==="company" ? b.origin==="company" : b.origin!=="company"));
+    const cur=W.conts.find(C=>C.name===mapFocus);
+    if(!cur||!has(cur)){
+      const alt=W.conts.find(C=>has(C)&&contOpen(C));
+      if(alt) mapFocus=alt.name;
+    }
+  }
   drawContNav(W);
   const VC=visibleConts(W), VB=boundsOf(VC);
   svg.innerHTML=""; svg.setAttribute("viewBox", VB.map(v=>v.toFixed(1)).join(" "));
@@ -1919,12 +1949,16 @@ function renderSpot(){
       ${b.origin==="company"&&b.rank<=3?`<span class="tag must">最重要</span>`:""}
       <span class="tag">XP ×${mult(b).toFixed(1)}</span>
     </div>
+    ${b.origin!=="company"? `<div class="kv" style="margin-top:8px">分野: ${esc(R.place||R.name)}
+      <button class="btn quiet sm" id="spotCat" style="margin-left:8px">変える</button></div>`:""}
     <div class="mini" style="--v:${Math.min(1,s.page/b.p).toFixed(3)};margin-top:12px"><i></i></div>
     <div class="kv" style="margin-top:6px">${s.page} / ${b.p} ページ
       ${done?" ・ 読了！":` ・ のこり ${b.p-s.page}`} ・ ${xpOf(b)} XP</div>
   </div>
   <div><button class="btn primary" id="spotLog">${s.page?"きろくする":"よみはじめる"}</button></div>`;
   document.getElementById("spotLog").onclick=()=>openLog(b.id);
+  const cb=document.getElementById("spotCat");
+  if(cb) cb.onclick=()=>openCatEdit(b.id);
 }
 
 /* ============================================================
@@ -2376,8 +2410,18 @@ const AXIS_CAT=[["その他","論理・思考"],["その他","経営・組織"],
  ["その他","心理・対人"],["その他","産業・経済"],["その他","自然科学"],["その他","哲学・思想"],
  ["その他","歴史・地理"],["その他","芸術・音楽"],["その他","語学"],["その他","小説・文学"],
  ["その他","教養・総記"]];
+/* 同じ軸に複数の分野があるときに、代表的なほうを選ぶための語 */
+const AXIS_PREFER=[
+ /思考|論理|課題|問題|統計|数理|分析|数学/, /マネジ|経営|組織|戦略|リーダー|統率/,
+ /技術|設計|実務|工学|開発|アウトプット/,   /コミュ|心理|対人|伝達|顧客|交渉/,
+ /産業|経済|金融|会計|商業|マーケ|投資/,     /自然科学|医学|物理|化学|生物|科学/,
+ /哲学|思想|宗教|倫理/,                     /歴史|地理|伝記/,
+ /芸術|音楽|美術|スポーツ/,                 /語学|言語|英語/,
+ /文学|小説|詩/,                            /総記|教養|情報|メディア/
+];
 function catIndexForAxis(ai,opts){
   if(ai<0) return -1;
+  for(let i=0;i<opts.length;i++) if(AXIS_PREFER[ai]&&AXIS_PREFER[ai].test(opts[i][1])) return i;
   for(let i=0;i<opts.length;i++)
     for(const h of CAT_HINT) if(h[1]===ai && h[0].test(opts[i][1])) return i;
   const g=AXIS_CAT[ai];
@@ -2722,6 +2766,15 @@ document.getElementById("nSave").onclick=()=>{
 };
 nameDlg.querySelector("form").addEventListener("submit",e=>{
   e.preventDefault(); document.getElementById("nSave").click(); });
+document.getElementById("catCancel").onclick=()=>document.getElementById("catDlg").close();
+document.getElementById("catSave").onclick=()=>{
+  const sel=document.getElementById("catSel"), o=(sel._opts||[])[+sel.value];
+  const tgt=(S.extra||[]).find(x=>x.id===catEditId);
+  document.getElementById("catDlg").close();
+  if(!o||!tgt) return;
+  tgt.div=o[0]; tgt.cat=o[1]; tgt.autoCat=true; save(); renderAll();
+  toast(`「${tgt.t}」を ${o[1]} に移しました`);
+};
 document.getElementById("pickCancel").onclick=()=>document.getElementById("pickDlg").close();
 document.getElementById("pickClear").onclick=()=>{
   if(expPick&&S.exped){ delete S.exped[expPick]; save(); }
@@ -3084,6 +3137,48 @@ function showItem(id){
   document.getElementById("itemDlg").showModal();
 }
 
+/* 以前に追加した自分の本を、いまの分類規則で振り分け直す。
+   NDCが分かる本はそれを使い、分からなければ書名から推定する */
+async function reclassifyExtras(){
+  const t=(S.extra||[]).filter(b=>!b.autoCat &&
+    (!b.cat || b.cat==="未踏の海" || b.div==="自分の本" || !b.div));
+  if(!t.length) return 0;
+  const opts=catOptions();
+  let changed=0;
+  for(const b of t){
+    let ai=-1;
+    if(b.ndc) ai=axisFromNDC(b.ndc);
+    if(ai<0 && b.isbn){
+      try{ const r=await lookupIsbn(b.isbn);
+        if(r&&r.ndc){ b.ndc=r.ndc; ai=axisFromNDC(r.ndc); } }catch(e){}
+    }
+    if(ai<0){
+      const txt=(b.t||"")+(b.sub||"");
+      for(const h of WORD_HINT) if(h[0].test(txt)){ ai=h[1]; break; }
+    }
+    b.autoCat=true;
+    if(ai<0) continue;
+    const ci=catIndexForAxis(ai,opts);
+    const c=(ci>=0)? opts[ci] : AXIS_CAT[ai];
+    if(c && (b.div!==c[0]||b.cat!==c[1])){ b.div=c[0]; b.cat=c[1]; changed++; }
+  }
+  save(); renderAll();
+  if(changed) toast(`自分の本 ${changed}冊を それぞれの分野に移しました`);
+  return changed;
+}
+let catEditId=null;
+function openCatEdit(id){
+  const b=books().find(x=>x.id===id); if(!b) return;
+  catEditId=id;
+  const opts=catOptions(), sel=document.getElementById("catSel");
+  sel._opts=opts;
+  sel.innerHTML=opts.map((o,i)=>
+    `<option value="${i}">${esc(o[0]==="その他"?o[1]:o[0]+" ／ "+o[1])}</option>`).join("");
+  const cur=opts.findIndex(o=>o[0]===b.div&&o[1]===b.cat);
+  sel.value=String(cur<0?0:cur);
+  document.getElementById("catBook").textContent=b.t;
+  document.getElementById("catDlg").showModal();
+}
 function showNews(msg){
   const slot=document.getElementById("newsSlot");
   slot.innerHTML=`<div class="news"><span>${esc(msg)}</span><button id="newsX">みる</button></div>`;
@@ -3203,6 +3298,7 @@ document.getElementById("resetBtn").onclick=()=>{
 };
 
 renderAll();
+reclassifyExtras();
 </script>
 
 </body>
