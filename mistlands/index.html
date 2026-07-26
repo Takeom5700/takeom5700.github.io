@@ -1,0 +1,1890 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mistlands — 霧を食べて育つ読書の相棒</title>
+<meta name="description" content="読んだページ数だけ霧が晴れ、その霧を食べて相棒が育つ読書記録アプリ。会社の推薦図書と自分の本を分けて管理できます。">
+<meta name="theme-color" content="#FFF6E3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#241A12" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mistlands">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/mistlands/manifest.webmanifest">
+<link rel="icon" href="/mistlands/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/mistlands/icon-192.png">
+<meta property="og:title" content="Mistlands — 霧を食べて育つ読書の相棒">
+<meta property="og:description" content="読んだページ数だけ霧が晴れ、その霧を食べて相棒が育つ読書記録アプリ。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://takeom5700.github.io/mistlands/">
+<meta property="og:image" content="https://takeom5700.github.io/mistlands/icon-512.png">
+<style>
+html,body{margin:0;padding:0}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right)
+     env(safe-area-inset-bottom) env(safe-area-inset-left)}
+</style>
+</head>
+<body>
+<p style="max-width:1120px;margin:14px auto 0;padding:0 clamp(14px,3vw,28px);
+   font:600 12px/1.7 system-ui,sans-serif;opacity:.62">
+  <a href="/" style="color:inherit">&#8592; takeom5700 のアプリ一覧にもどる</a>
+</p>
+<style>
+/* ============================================================
+   Mistlands v2
+   方向性: ワクワクキュート(丸み・きらめき・物語性・マスコット)
+         × ポップエナジー(ビビッド配色・太アウトライン・ハード影)
+   主題固有: 読む → 霧が晴れる → その霧を相棒が食べて育つ
+   ============================================================ */
+:root{
+  --paper:#FFF6E3;        /* 生成り */
+  --card:#FFFFFF;
+  --card2:#FFF1DA;
+  --ink:#3B2A1E;          /* 焦茶。純黒は使わない */
+  --ink-sub:#7C6650;
+  --sea:#B6E4F7;
+  --sea2:#8FD4F2;
+  --sun:#FF8A3D;          /* 主アクセント: 陽だいだい */
+  --sun-dp:#D9631C;       /* 小さい文字用に明度を落とした橙 */
+  --berry:#FF4D6D;
+  --leaf:#2FA85C;
+  --fogc:#FFFFFF;
+  --fog-sh:#CBBBA6;
+  --line:color-mix(in srgb, var(--ink) 18%, transparent);
+  --hair:color-mix(in srgb, var(--ink) 10%, transparent);
+  --shadow:color-mix(in srgb, var(--ink) 82%, transparent);
+
+  /* 丸ゴシックを優先。Windowsには丸ゴシックのシステムフォントが無いため、
+     終端がやや柔らかい Meiryo を Yu Gothic より先に置いて少しでも丸みを稼ぐ */
+  --f-disp:"Hiragino Maru Gothic ProN","Zen Maru Gothic","M PLUS Rounded 1c",
+           "Meiryo","Yu Gothic UI",system-ui,sans-serif;
+  --f-body:"Hiragino Sans","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  --f-num:"SFMono-Regular",Menlo,Consolas,"Courier New",monospace;
+  --r:14px; --r-lg:24px; --r-pill:999px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#241A12; --card:#33251A; --card2:#3D2C1E; --ink:#FFEFD8; --ink-sub:#C0A587;
+    --sea:#123648; --sea2:#1B4C63; --fogc:#6E6152; --fog-sh:#2A1F16;
+    --sun:#FFA057; --sun-dp:#FFB877; --berry:#FF6E88; --leaf:#4FCB80;
+    --line:color-mix(in srgb, var(--ink) 26%, transparent);
+    --hair:color-mix(in srgb, var(--ink) 14%, transparent);
+    --shadow:#150E08;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#241A12; --card:#33251A; --card2:#3D2C1E; --ink:#FFEFD8; --ink-sub:#C0A587;
+  --sea:#123648; --sea2:#1B4C63; --fogc:#6E6152; --fog-sh:#2A1F16;
+  --sun:#FFA057; --sun-dp:#FFB877; --berry:#FF6E88; --leaf:#4FCB80;
+  --line:color-mix(in srgb, var(--ink) 26%, transparent);
+  --hair:color-mix(in srgb, var(--ink) 14%, transparent);
+  --shadow:#150E08;
+}
+:root[data-theme="light"]{
+  --paper:#FFF6E3; --card:#FFFFFF; --card2:#FFF1DA; --ink:#3B2A1E; --ink-sub:#7C6650;
+  --sea:#B6E4F7; --sea2:#8FD4F2; --fogc:#FFFFFF; --fog-sh:#CBBBA6;
+  --sun:#FF8A3D; --sun-dp:#D9631C; --berry:#FF4D6D; --leaf:#2FA85C;
+  --line:color-mix(in srgb, var(--ink) 18%, transparent);
+  --hair:color-mix(in srgb, var(--ink) 10%, transparent);
+  --shadow:color-mix(in srgb, var(--ink) 82%, transparent);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--f-body); font-size:15px; line-height:1.8;
+  font-feature-settings:"palt" 1; -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:99; opacity:.035;
+  background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3"/></filter><rect width="160" height="160" filter="url(%23n)"/></svg>');
+}
+::selection{background:color-mix(in srgb,var(--sun) 40%,transparent)}
+:focus-visible{outline:3px solid var(--sun); outline-offset:3px; border-radius:6px}
+button{font:inherit; color:inherit; cursor:pointer}
+h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0}
+
+.wrap{max-width:1120px; margin:0 auto; padding:0 clamp(14px,3vw,28px) 90px}
+
+/* ---------- ヘッダー ---------- */
+.top{display:flex; align-items:center; gap:14px; padding:22px 2px 16px; flex-wrap:wrap}
+.logo{font-family:var(--f-disp); font-weight:800; font-size:clamp(23px,4vw,32px);
+  letter-spacing:.02em; line-height:1.2}
+.logo i{font-style:normal; color:var(--sun)}
+.logo small{display:block; font-size:11.5px; font-weight:600; color:var(--ink-sub);
+  letter-spacing:.16em; margin-top:2px}
+.top .sp{margin-left:auto; display:flex; gap:8px; flex-wrap:wrap}
+
+/* ---------- 相棒カード ---------- */
+.buddy-card{
+  display:grid; grid-template-columns:auto 1fr; gap:clamp(14px,3vw,28px); align-items:center;
+  background:linear-gradient(168deg, var(--card) 0%, var(--card2) 100%);
+  border:3px solid var(--ink); border-radius:var(--r-lg);
+  box-shadow:6px 6px 0 var(--shadow); padding:clamp(16px,3vw,24px); position:relative; overflow:hidden;
+}
+.buddy-card::before{ /* 背景の光玉 */
+  content:""; position:absolute; width:280px; height:280px; right:-70px; top:-110px;
+  background:radial-gradient(circle, color-mix(in srgb,var(--sun) 34%,transparent), transparent 66%);
+  pointer-events:none;
+}
+.pet-stage{position:relative; width:clamp(128px,20vw,168px); flex:none}
+.pet-stage svg{display:block; width:100%; height:auto; overflow:visible}
+.pet-btn{background:none; border:none; padding:0; display:block; width:100%;
+  border-radius:50%; transition:transform .18s cubic-bezier(.34,1.7,.5,1)}
+.pet-btn:hover{transform:translateY(-4px) rotate(-2deg)}
+.pet-btn:active{transform:translateY(2px) scale(.95)}
+.pet-body{animation:bob 3.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.pet-btn.pat .pet-body{animation:pat .5s cubic-bezier(.34,1.7,.5,1)}
+@keyframes pat{0%{transform:scale(1)}35%{transform:scale(1.16,.86) translateY(5px)}
+  70%{transform:scale(.94,1.09) translateY(-9px)}100%{transform:scale(1)}}
+.pet-eye{animation:blink 5.2s infinite}
+@keyframes blink{0%,95%,100%{transform:scaleY(1)}97%{transform:scaleY(.08)}}
+.pet-info{min-width:0; position:relative}
+.pet-name{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap}
+.pet-name h2{font-size:clamp(21px,3.6vw,27px); letter-spacing:.02em}
+.pet-stage-tag{font-family:var(--f-disp); font-weight:800; font-size:11.5px; letter-spacing:.1em;
+  background:var(--sun); color:#fff; padding:3px 11px; border-radius:var(--r-pill);
+  border:2px solid var(--ink); box-shadow:2px 2px 0 var(--shadow)}
+.pet-title{font-family:var(--f-disp); font-weight:800; font-size:11.5px; letter-spacing:.06em;
+  border:2px solid var(--ink); border-radius:var(--r-pill); padding:2px 10px; background:var(--paper)}
+.depart{margin-top:11px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.depart .deph{font-size:11.5px; color:var(--ink-sub); line-height:1.65; flex:1; min-width:200px}
+.pet-say{font-family:var(--f-disp); font-weight:700; font-size:14.5px; margin:9px 0 0;
+  background:var(--paper); border:2px dashed var(--line); border-radius:var(--r);
+  padding:9px 14px; position:relative}
+.pet-meta{display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:11px; font-size:12px;
+  color:var(--ink-sub); font-family:var(--f-num)}
+.pet-meta b{color:var(--ink); font-weight:700}
+.evo{margin-top:12px}
+.evo-lbl{font-size:11.5px; color:var(--ink-sub); display:flex; justify-content:space-between}
+.evo-bar{height:12px; border:2px solid var(--ink); border-radius:var(--r-pill);
+  background:var(--paper); overflow:hidden; margin-top:4px}
+.evo-bar i{display:block; height:100%; width:calc(var(--v,0)*100%);
+  background:repeating-linear-gradient(115deg,var(--sun) 0 9px,#FFB068 9px 18px);
+  transition:width 1s cubic-bezier(.22,1,.36,1)}
+
+/* ---------- KPI ---------- */
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:10px; margin-top:14px}
+.kpi{background:var(--card); border:2.5px solid var(--ink); border-radius:var(--r);
+  box-shadow:3px 3px 0 var(--shadow); padding:10px 12px 11px}
+.kpi dt{font-size:10.5px; letter-spacing:.09em; color:var(--ink-sub); margin:0}
+.kpi dd{margin:1px 0 0; font-family:var(--f-num); font-variant-numeric:tabular-nums;
+  font-size:23px; font-weight:600; line-height:1.15}
+.kpi dd small{font-size:11.5px; color:var(--ink-sub); font-weight:400; margin-left:2px}
+.kpi.hit{animation:hit .8s cubic-bezier(.34,1.6,.5,1)}
+@keyframes hit{0%{transform:none}30%{transform:translateY(-7px) scale(1.05)}100%{transform:none}}
+
+/* ---------- タブ ---------- */
+.tabs{display:flex; gap:8px; margin:22px 0 0; flex-wrap:wrap}
+.tabs button{
+  background:var(--card); border:2.5px solid var(--ink); border-radius:var(--r-pill);
+  padding:8px 20px; font-family:var(--f-disp); font-weight:800; font-size:14px;
+  box-shadow:3px 3px 0 var(--shadow); transition:transform .15s cubic-bezier(.34,1.6,.5,1), background .15s}
+.tabs button:hover{transform:translate(-1px,-2px); box-shadow:4px 5px 0 var(--shadow)}
+.tabs button[aria-selected="true"]{background:var(--sun); color:#fff; transform:none;
+  box-shadow:3px 3px 0 var(--shadow)}
+.view{display:none; padding-top:20px}
+.view.on{display:block}
+
+/* ---------- 地図 ---------- */
+.mapbox{border:3px solid var(--ink); border-radius:var(--r-lg); background:var(--sea);
+  box-shadow:6px 6px 0 var(--shadow); position:relative; overflow:hidden}
+/* 冊数が増えて世界が広がっても画面に収める */
+.mapbox svg{display:block; width:100%; height:auto; max-height:76vh}
+.contnav{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:11px}
+.cbtn{background:var(--card); border:2.5px solid var(--ink); border-radius:var(--r-pill);
+  padding:5px 16px; font-family:var(--f-disp); font-weight:800; font-size:12.5px;
+  box-shadow:2px 2px 0 var(--shadow); transition:transform .14s cubic-bezier(.34,1.6,.5,1)}
+.cbtn:hover{transform:translate(-1px,-1px)}
+.cbtn[aria-pressed="true"]{background:var(--ink); color:var(--paper); transform:none}
+.wave{stroke:var(--sea2); stroke-width:2.4; fill:none; stroke-linecap:round; opacity:.75}
+.rgn-body{stroke:var(--ink); stroke-width:3; stroke-linejoin:round;
+  transition:fill .8s ease-out, opacity .8s ease-out}
+.rgn-shade{fill:color-mix(in srgb,var(--ink) 20%,transparent); stroke:none}
+.puff{transition:opacity .75s ease-out, transform .75s cubic-bezier(.3,1.4,.5,1)}
+.puff circle{fill:var(--fogc); stroke:var(--fog-sh); stroke-width:2}
+.puff.gone{opacity:0; transform:scale(.2)}
+.road{fill:none; stroke:var(--sun); stroke-width:4; stroke-linecap:round; stroke-linejoin:round}
+.road-next{fill:none; stroke:var(--sun); stroke-width:4; stroke-dasharray:1 11;
+  stroke-linecap:round; animation:march 1.1s linear infinite}
+@keyframes march{to{stroke-dashoffset:-24}}
+.lm{cursor:pointer}
+.lm .base{stroke:var(--ink); stroke-width:2.6; stroke-linejoin:round; fill:var(--card)}
+.lm .fill{stroke:none}
+.lm .eye{fill:var(--ink)}
+.lm:hover .base,.lm:focus-visible .base{stroke-width:3.6}
+.lm .pop{opacity:0; transition:opacity .2s}
+.lm:hover .pop,.lm.sel .pop{opacity:1}
+.lm.veiled{opacity:.4; pointer-events:none}
+.lm.sel .base{stroke:var(--berry); stroke-width:4}
+.rlabel{font-family:var(--f-disp); font-weight:800; font-size:15px; fill:var(--ink);
+  paint-order:stroke; stroke:var(--card); stroke-width:5px; stroke-linejoin:round;
+  pointer-events:none}
+.rlabel.dim{fill:var(--ink-sub)}
+.rsub{font-family:var(--f-num); font-size:10.5px; fill:var(--ink-sub); pointer-events:none;
+  paint-order:stroke; stroke:var(--card); stroke-width:4px}
+.clabel{font-family:var(--f-disp); font-weight:800; font-size:19px; fill:var(--ink);
+  opacity:.34; letter-spacing:.3em; pointer-events:none}
+.pal{cursor:default}
+
+/* 記録した瞬間、地図全体が明るくなる */
+.flashwrap{position:absolute; inset:0; pointer-events:none; opacity:0;
+  background:radial-gradient(circle at 50% 50%, color-mix(in srgb,#fff 82%,transparent), transparent 62%)}
+.mapbox.eating .flashwrap{animation:flash .95s ease-out 1}
+@keyframes flash{0%{opacity:0}18%{opacity:.9}100%{opacity:0}}
+
+.mapfoot{display:flex; flex-wrap:wrap; gap:8px 20px; padding:13px 4px 0; font-size:12px;
+  color:var(--ink-sub)}
+.mapfoot span{display:inline-flex; align-items:center; gap:7px}
+.chip{width:15px; height:15px; border:2px solid var(--ink); border-radius:4px; display:inline-block}
+.chip.rd{border-radius:50%; background:var(--fogc); border-color:var(--fog-sh)}
+
+/* ---------- 選択中の本 ---------- */
+.spot{margin-top:16px; background:var(--card); border:3px solid var(--ink); border-radius:var(--r-lg);
+  box-shadow:5px 5px 0 var(--shadow); padding:18px 20px; display:grid;
+  grid-template-columns:1fr auto; gap:16px; align-items:center}
+.spot.empty{grid-template-columns:1fr; color:var(--ink-sub); font-size:13.5px; text-align:center;
+  border-style:dashed; box-shadow:none}
+.spot h3{font-size:19px; line-height:1.5; margin:3px 0 4px}
+.kv{font-family:var(--f-num); font-size:11.5px; color:var(--ink-sub)}
+.tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px}
+.tag{font-size:11px; font-weight:700; font-family:var(--f-disp); padding:2.5px 10px;
+  border-radius:var(--r-pill); border:2px solid var(--ink); background:var(--card2)}
+.tag.co{background:var(--sun); color:#fff}
+.tag.pe{background:var(--leaf); color:#fff}
+.tag.must{background:var(--berry); color:#fff}
+
+/* ---------- ボタン ---------- */
+.btn{background:var(--card); border:2.5px solid var(--ink); border-radius:var(--r-pill);
+  padding:9px 22px; font-family:var(--f-disp); font-weight:800; font-size:14px;
+  box-shadow:3px 3px 0 var(--shadow);
+  transition:transform .15s cubic-bezier(.34,1.6,.5,1), box-shadow .15s}
+.btn:hover{transform:translate(-1px,-2px); box-shadow:4px 5px 0 var(--shadow)}
+.btn:active{transform:translate(2px,3px); box-shadow:0 0 0 var(--shadow)}
+.btn.primary{background:var(--sun); color:#fff}
+.btn.sm{padding:5px 14px; font-size:12px; box-shadow:2px 2px 0 var(--shadow)}
+.btn.quiet{background:var(--paper); font-weight:700}
+.btn:disabled{opacity:.45; cursor:not-allowed; transform:none; box-shadow:2px 2px 0 var(--shadow)}
+
+/* ---------- 書架 ---------- */
+.bar-row{display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin-bottom:14px}
+.bar-row .grow{margin-left:auto; display:flex; gap:6px; flex-wrap:wrap}
+.fbtn{background:var(--card); border:2px solid var(--line); border-radius:var(--r-pill);
+  padding:5px 14px; font-size:12px; font-weight:700; font-family:var(--f-disp); color:var(--ink-sub)}
+.fbtn:hover{border-color:var(--ink); color:var(--ink)}
+.fbtn[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:var(--paper)}
+.grp{font-family:var(--f-disp); font-weight:800; font-size:15px; margin:22px 0 9px;
+  display:flex; align-items:center; gap:9px}
+.grp .dot{width:13px; height:13px; border-radius:50%; border:2.5px solid var(--ink)}
+.grp .n{font-family:var(--f-num); font-size:12px; color:var(--ink-sub); font-weight:400}
+.row{display:grid; grid-template-columns:38px 1fr 120px 86px; gap:14px; align-items:center;
+  background:var(--card); border:2.5px solid var(--ink); border-radius:var(--r);
+  box-shadow:3px 3px 0 var(--shadow); padding:11px 14px; margin-bottom:9px; cursor:pointer;
+  transition:transform .14s cubic-bezier(.34,1.6,.5,1), box-shadow .14s}
+.row:hover{transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--shadow)}
+.row .rk{font-family:var(--f-num); font-size:16px; font-weight:600; text-align:center;
+  color:var(--ink-sub); font-variant-numeric:tabular-nums}
+.row.done .rk{color:var(--sun-dp)}
+.row .tt{font-size:14.5px; line-height:1.5; font-weight:600}
+.row .mt{font-size:11.5px; color:var(--ink-sub); margin-top:1px}
+.row .pr{text-align:right; font-family:var(--f-num); font-size:13px; font-variant-numeric:tabular-nums}
+.mini{height:8px; border:2px solid var(--ink); border-radius:var(--r-pill); background:var(--paper);
+  overflow:hidden; margin-top:6px}
+.mini i{display:block; height:100%; width:calc(var(--v,0)*100%); background:var(--sun);
+  transition:width .7s cubic-bezier(.22,1,.36,1)}
+.row.personal .mini i{background:var(--leaf)}
+.where{font-family:var(--f-disp); font-weight:700; font-size:12px; color:var(--ink-sub)}
+
+/* ---------- 相棒タブ ---------- */
+.two{display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:16px}
+.panel{background:var(--card); border:3px solid var(--ink); border-radius:var(--r-lg);
+  box-shadow:5px 5px 0 var(--shadow); padding:20px}
+.panel h3{font-size:17px; margin-bottom:10px}
+.panel p{font-size:13.5px; color:var(--ink-sub); margin:0 0 12px; max-width:46ch}
+.evolist{display:flex; flex-direction:column; gap:9px}
+.evorow{display:flex; align-items:center; gap:12px; padding:9px 12px; border-radius:var(--r);
+  border:2px solid var(--line); background:var(--paper)}
+.evorow.now{border-color:var(--sun); border-width:3px; background:var(--card2)}
+.evorow.locked{opacity:.5}
+.evorow svg{width:44px; height:44px; flex:none; overflow:visible}
+.evorow b{font-family:var(--f-disp); font-size:14px}
+.evorow em{font-style:normal; font-size:11.5px; color:var(--ink-sub); display:block}
+.friends{display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:11px}
+.friend{text-align:center; padding:11px 5px 9px; border-radius:var(--r);
+  border:2.5px solid var(--ink); background:var(--paper); box-shadow:2px 2px 0 var(--shadow)}
+.friend.locked{border-style:dashed; border-color:var(--line); box-shadow:none; opacity:.6}
+.friend svg{width:44px; height:44px; overflow:visible}
+.friend b{display:block; font-family:var(--f-disp); font-size:11.5px; margin-top:3px}
+.friend em{font-style:normal; font-size:10px; color:var(--ink-sub)}
+
+/* ---------- 塔（空へ） ---------- */
+.skybox{height:min(72vh,660px); overflow-y:auto; overflow-x:hidden; border:3px solid var(--ink);
+  border-radius:var(--r-lg); box-shadow:5px 5px 0 var(--shadow); background:#C6ECFF;
+  scrollbar-width:thin}
+.skybox svg{display:block}
+.btick{font-family:var(--f-num); font-size:8px; fill:#3B2A1E; opacity:.55}
+.tnote{font-family:var(--f-disp); font-weight:800; font-size:11px; fill:#3B2A1E;
+  paint-order:stroke; stroke:#FFF6E3; stroke-width:4px; stroke-linejoin:round}
+.tlayer:hover rect:first-child{stroke-width:3.4}
+.bands{display:flex; flex-direction:column; gap:6px}
+.bandrow{display:flex; align-items:center; gap:9px; padding:7px 10px; border-radius:var(--r);
+  border:2px solid var(--line); background:var(--paper); font-size:12.5px; opacity:.52}
+.bandrow.got{opacity:1; border-color:var(--ink)}
+.bandrow b{font-family:var(--f-disp); font-size:13px; flex:none}
+.bandrow em{font-style:normal; color:var(--ink-sub); font-size:11.5px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.bandrow .bp{margin-left:auto; font-family:var(--f-num); font-size:11px; color:var(--ink-sub); flex:none}
+.bdot{width:14px; height:14px; border-radius:50%; border:2px solid var(--ink); flex:none}
+.empty-box{width:100%; padding:36px 16px; text-align:center; color:var(--ink-sub); font-size:13px;
+  border:3px dashed var(--line); border-radius:var(--r-lg); line-height:1.9}
+
+/* ---------- お知らせ帯 ---------- */
+.news{display:flex; align-items:center; gap:12px; background:var(--sun); color:#fff;
+  border:3px solid var(--ink); border-radius:var(--r-lg); box-shadow:5px 5px 0 var(--shadow);
+  padding:13px 18px; margin-top:16px; font-family:var(--f-disp); font-weight:800; font-size:14.5px}
+.news button{margin-left:auto; background:#fff; color:var(--ink); border:2.5px solid var(--ink);
+  border-radius:var(--r-pill); padding:4px 14px; font-size:12px; font-weight:800; flex:none}
+
+/* ---------- ダイアログ ---------- */
+dialog{border:3px solid var(--ink); border-radius:var(--r-lg); background:var(--card); color:var(--ink);
+  padding:0; max-width:min(94vw,460px); width:100%; box-shadow:8px 8px 0 var(--shadow)}
+dialog::backdrop{background:color-mix(in srgb,#2A1C10 62%,transparent)}
+.din{padding:22px 24px 24px}
+.din h2{font-size:18px; line-height:1.5}
+.din .sub{font-family:var(--f-num); font-size:11px; color:var(--ink-sub); margin:3px 0 16px}
+label{display:block; font-family:var(--f-disp); font-weight:700; font-size:12.5px;
+  color:var(--ink-sub); margin:14px 0 5px}
+input,textarea{width:100%; font:inherit; font-size:15px; padding:9px 12px; background:var(--paper);
+  color:var(--ink); border:2.5px solid var(--line); border-radius:var(--r); caret-color:var(--sun)}
+input[type=number]{font-family:var(--f-num)}
+textarea{font-size:13.5px; resize:vertical; min-height:60px}
+input:focus,textarea:focus{outline:none; border-color:var(--sun)}
+.comp{display:flex; gap:6px}
+.comp button{flex:1; border:2.5px solid var(--line); background:var(--paper); padding:9px 0;
+  font-family:var(--f-num); font-size:15px; border-radius:var(--r); transition:all .15s}
+.comp button:hover{border-color:var(--ink)}
+.comp button[aria-pressed="true"]{background:var(--sun); border-color:var(--ink); color:#fff;
+  box-shadow:2px 2px 0 var(--shadow)}
+.hint{font-size:11.5px; color:var(--ink-sub); margin:6px 0 0; line-height:1.7}
+.hint.warn{color:var(--sun-dp); font-weight:700}
+.gain{font-family:var(--f-disp); font-weight:800; font-size:13.5px; color:var(--sun-dp);
+  margin-top:14px; min-height:1.5em}
+.dact{display:flex; gap:9px; justify-content:flex-end; margin-top:20px}
+
+/* ---------- トースト・ハート ---------- */
+.toast{position:fixed; left:50%; bottom:26px; transform:translate(-50%,16px);
+  background:var(--ink); color:var(--paper); padding:12px 24px; border-radius:var(--r-pill);
+  font-family:var(--f-disp); font-weight:800; font-size:13.5px; opacity:0; pointer-events:none;
+  z-index:120; box-shadow:4px 4px 0 var(--shadow); transition:opacity .3s,
+  transform .3s cubic-bezier(.34,1.6,.5,1); max-width:min(88vw,420px); text-align:center}
+.toast.on{opacity:1; transform:translate(-50%,0)}
+.heart{position:absolute; pointer-events:none; font-size:19px; animation:fly 1.1s ease-out forwards}
+@keyframes fly{0%{opacity:1; transform:translate(0,0) scale(.5)}
+  100%{opacity:0; transform:translate(var(--dx),-64px) scale(1.25)}}
+
+.foot{display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin-top:32px;
+  padding-top:16px; border-top:2px solid var(--hair); font-size:11.5px; color:var(--ink-sub)}
+.foot .sp{margin-left:auto; display:flex; gap:7px; flex-wrap:wrap}
+
+@media (max-width:720px){
+  body{font-size:14.5px}
+  .wrap{padding-bottom:64px}
+  .buddy-card{grid-template-columns:1fr; justify-items:center; text-align:center}
+  .pet-name,.pet-meta,.depart{justify-content:center}
+  .depart .deph{text-align:left}
+  .row{grid-template-columns:32px 1fr 72px; gap:10px}
+  .where{display:none}
+  /* 2カラムのパネルは1列に。塔タブのインライン指定も上書きする */
+  .two{grid-template-columns:1fr !important}
+  .spot{grid-template-columns:1fr}
+  .spot .btn{width:100%}
+  /* 地図は指でなぞって動かす。縮めて字が読めなくなるより、横に送れる方がいい */
+  .mapbox{overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch}
+  .mapbox svg{min-width:780px; max-height:none}
+  .skybox{height:min(66vh,560px)}
+  /* 指で押せる大きさを確保する */
+  .btn{min-height:44px; display:inline-flex; align-items:center; justify-content:center}
+  .btn.sm{min-height:38px}
+  .comp button{min-height:48px}
+  .fbtn,.cbtn,.tabs button{min-height:40px}
+  .kpi dd{font-size:21px}
+}
+@media (max-width:400px){
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .logo{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important;
+    transition-duration:.01ms !important}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo">Mist<i>lands</i><small>ミストランズ — 読書探検記</small></div>
+    <div class="sp">
+      <button class="btn sm quiet" id="themeBtn">いろを変える</button>
+      <button class="btn sm quiet" id="renameBtn">相棒の名前</button>
+    </div>
+  </header>
+
+  <section class="buddy-card">
+    <div class="pet-stage">
+      <button class="pet-btn" id="petBtn" aria-label="相棒をなでる"><div id="petArt"></div></button>
+    </div>
+    <div class="pet-info">
+      <div class="pet-name">
+        <h2 id="petName">モヤ</h2>
+        <span class="pet-stage-tag" id="petStage">たまご</span>
+        <span class="pet-title" id="petTitle">読みはじめ</span>
+      </div>
+      <p class="pet-say" id="petSay">…</p>
+      <div class="pet-meta">
+        <span>世代 <b id="mGen">1</b></span>
+        <span>食べた霧 <b id="mFog">0</b></span>
+        <span>なでた回数 <b id="mPat">0</b></span>
+        <span>仲間 <b id="mFriend">0</b></span>
+      </div>
+      <div class="evo">
+        <div class="evo-lbl"><span id="evoNext">つぎの姿まで</span><span id="evoNum"></span></div>
+        <div class="evo-bar"><i id="evoBar"></i></div>
+      </div>
+      <div id="departWrap" class="depart"></div>
+    </div>
+  </section>
+
+  <dl class="kpis" id="kpis">
+    <div class="kpi"><dt>レベル</dt><dd id="kLv">1</dd></div>
+    <div class="kpi"><dt>累計 XP</dt><dd id="kXp">0</dd></div>
+    <div class="kpi"><dt>読了した本</dt><dd id="kDone">0<small>冊</small></dd></div>
+    <div class="kpi"><dt>読んだページ</dt><dd id="kPg">0</dd></div>
+    <div class="kpi"><dt>連続日数</dt><dd id="kStreak">0<small>日</small></dd></div>
+    <div class="kpi"><dt>会社の本</dt><dd id="kCo">0<small>冊</small></dd></div>
+  </dl>
+
+  <div id="newsSlot"></div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-v="map">地図</button>
+    <button role="tab" aria-selected="false" data-v="shelf">本だな</button>
+    <button role="tab" aria-selected="false" data-v="buddy">相棒</button>
+    <button role="tab" aria-selected="false" data-v="tower">知の塔</button>
+  </nav>
+
+  <section class="view on" id="v-map">
+    <div class="contnav" id="contNav"></div>
+    <div class="mapbox" id="mapbox">
+      <svg id="map" role="img" aria-label="霧の大陸。読み進めるほど霧が減り、地面の色が戻る"></svg>
+      <div class="flashwrap"></div>
+    </div>
+    <div class="mapfoot">
+      <span><span class="chip" style="background:var(--sun)"></span>会社の推薦図書（補助が出る）＝ 建物</span>
+      <span><span class="chip" style="background:var(--leaf);border-radius:50% 50% 4px 4px"></span>自分で足した本 ＝ 木</span>
+      <span><span class="chip rd"></span>霧 — 読むと相棒が食べてくれる</span>
+    </div>
+    <div class="spot empty" id="spot">地図の建物や木をタップすると、その本のことが出ます。</div>
+  </section>
+
+  <section class="view" id="v-shelf">
+    <div class="bar-row">
+      <div style="font-family:var(--f-disp);font-weight:800;font-size:17px">本だな</div>
+      <div class="grow">
+        <button class="fbtn" data-f="all" aria-pressed="true">ぜんぶ</button>
+        <button class="fbtn" data-f="company" aria-pressed="false">会社の本</button>
+        <button class="fbtn" data-f="personal" aria-pressed="false">自分の本</button>
+        <button class="fbtn" data-f="reading" aria-pressed="false">読書中</button>
+        <button class="fbtn" data-f="todo" aria-pressed="false">まだ</button>
+        <button class="fbtn" data-f="done" aria-pressed="false">読了</button>
+      </div>
+    </div>
+    <div id="idx"></div>
+    <div style="margin-top:16px"><button class="btn quiet" id="addBtn">自分の本を足す</button></div>
+  </section>
+
+  <section class="view" id="v-buddy">
+    <div class="two">
+      <div class="panel">
+        <h3>そだち方</h3>
+        <p>ページを記録すると霧が晴れます。その霧が相棒のごはんです。たくさん読むほど大きくなります。</p>
+        <div class="evolist" id="evolist"></div>
+      </div>
+      <div class="panel">
+        <h3>仲間</h3>
+        <p>地域の霧をぜんぶ晴らすと、その土地の子が仲間になります。</p>
+        <div class="friends" id="friends"></div>
+      </div>
+      <div class="panel">
+        <h3>これまでの相棒</h3>
+        <p>育ち切った相棒は旅立って、この地の守り神になります。名前と、どこまで読んだかが永久に残ります。</p>
+        <div class="evolist" id="ancPanel"></div>
+      </div>
+      <div class="panel">
+        <h3>読み手としての称号</h3>
+        <p>累計ページ数で決まります。世代が替わってもリセットされません。読み続けるかぎり上がり続けます。</p>
+        <div id="titleNow"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="v-tower">
+    <div class="two" style="grid-template-columns:minmax(0,380px) 1fr">
+      <div class="skybox" id="skybox"><svg id="towerSvg" role="img"
+        aria-label="読んだページ数だけ空へ伸びる塔。高くなるほど空の景色が変わる"></svg></div>
+      <div>
+        <div class="panel">
+          <h3>空へ積む</h3>
+          <p>読み終えた本が下から一層ずつ積み上がります。層の厚みはページ数、色は分野。
+             高くなるほど空の景色が変わり、そこに住むものが見えてきます。</p>
+          <div class="kv" id="towerStat"></div>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <h3>高さでかわる景色</h3>
+          <div class="bands" id="bands"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>記録はこの端末にだけ保存されます（試作版）</span>
+    <span class="sp">
+      <button class="btn sm quiet" id="demoBtn">サンプル進捗</button>
+      <button class="btn sm quiet" id="growBtn">推薦図書が増えた場合を見る</button>
+      <button class="btn sm quiet" id="resetBtn">記録を消す</button>
+    </span>
+  </div>
+</div>
+
+<dialog id="dlg"><form method="dialog" class="din" id="dlgForm">
+  <h2 id="dTitle">—</h2>
+  <div class="sub" id="dSub">—</div>
+  <label for="dPage">今日どこまで読んだ？（ページ）</label>
+  <input type="number" id="dPage" min="0" step="1">
+  <p class="hint" id="dPageHint"></p>
+  <label>どれくらい分かった？</label>
+  <div class="comp" id="dComp">
+    <button type="button" data-c="1" aria-pressed="false">1</button>
+    <button type="button" data-c="2" aria-pressed="false">2</button>
+    <button type="button" data-c="3" aria-pressed="false">3</button>
+    <button type="button" data-c="4" aria-pressed="false">4</button>
+    <button type="button" data-c="5" aria-pressed="false">5</button>
+  </div>
+  <p class="hint" id="dCompHint">低くつけても損はしません。5のときだけ一行まとめが要ります。</p>
+  <div id="dSumWrap" hidden>
+    <label for="dSum">この本を一行でいうと</label>
+    <textarea id="dSum" placeholder="例: 解くべき問いを絞ることが、努力量より先に成果を決める。"></textarea>
+  </div>
+  <div class="gain" id="dGain"></div>
+  <div class="dact">
+    <button type="button" class="btn quiet" id="dCancel">やめる</button>
+    <button type="button" class="btn primary" id="dSave">記録する</button>
+  </div>
+</form></dialog>
+
+<dialog id="addDlg"><form method="dialog" class="din">
+  <h2>自分の本を足す</h2>
+  <div class="sub">会社の推薦図書とは別枠。補助の対象にはなりません</div>
+  <label for="aTitle">書名</label><input type="text" id="aTitle">
+  <label for="aAuthor">著者</label><input type="text" id="aAuthor">
+  <label for="aPages">ぜんぶで何ページ？</label><input type="number" id="aPages" min="1" value="200">
+  <div class="dact">
+    <button type="button" class="btn quiet" id="aCancel">やめる</button>
+    <button type="button" class="btn primary" id="aSave">植える</button>
+  </div>
+</form></dialog>
+
+<dialog id="nameDlg"><form method="dialog" class="din">
+  <h2>相棒の名前</h2>
+  <div class="sub">いつでも変えられます</div>
+  <label for="nName">なまえ</label><input type="text" id="nName" maxlength="12">
+  <div class="dact">
+    <button type="button" class="btn quiet" id="nCancel">やめる</button>
+    <button type="button" class="btn primary" id="nSave">つける</button>
+  </div>
+</form></dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   1. データ
+   ============================================================ */
+const SEED_BOOKS=[
+ ["コンサルティング",1,"基本動作","コンサルが「最初の3年間」で学ぶコト","知らないと一生後悔する99のスキルと5の挑戦","高松 智史",339],
+ ["コンサルティング",2,"基本動作","ロジカル・プレゼンテーション","自分の考えを効果的に伝える「提案の技術」","高田 貴久",298],
+ ["コンサルティング",3,"課題解決","イシューからはじめよ","知的生産の「シンプルな本質」","安宅 和人",267],
+ ["コンサルティング",4,"コミュニケーション","40字要約で仕事はどんどんうまくいく","","原田 虔一郎",221],
+ ["コンサルティング",5,"コミュニケーション","「具体⇔抽象」トレーニング","思考力が飛躍的にアップする29問","細谷 功",283],
+ ["コンサルティング",6,"マネジメント","HIGH OUTPUT MANAGEMENT","人を育て、成果を最大にする","アンドリュー・S・グローブ",333],
+ ["コンサルティング",7,"コミュニケーション","あなたの年収は1分で決まる","","三橋 泰介",190],
+ ["コンサルティング",8,"マネジメント","マンガでわかるプロジェクトマネジメント","","広兼 修",199],
+ ["コンサルティング",9,"アウトプット","外資系コンサルのスライド作成術","図解表現23のテクニック","山口 周",159],
+ ["コンサルティング",10,"基本動作","コンサルが「マネージャー時代」に学ぶコト","79のスキル/思考と矜持","高松 智史",399],
+ ["コンサルティング",11,"アウトプット","業務設計の教科書","","武内 俊介",303],
+ ["コンサルティング",12,"課題解決","仮説思考","BCG流 問題発見・解決の発想法","内田 和成",236],
+ ["コンサルティング",13,"課題解決","論点を研ぐ","戦略コンサルタントが明かす「問題解決」の実際","則武 譲二",283],
+ ["コンサルティング",14,"コミュニケーション","理科系の作文技術","","木下 是雄",244],
+ ["データサイエンス",1,"機械学習","ビジネスパーソンのための人工知能入門","","巣籠 悠輔",199],
+ ["データサイエンス",2,"統計学","統計学が最強の学問である","データ社会を生きぬくための武器と教養","西内 啓",304],
+ ["データサイエンス",3,"機械学習","教養としてのデータサイエンス","","内田 誠一 ほか",267],
+ ["データサイエンス",4,"生成AI","生成AIで世界はこう変わる","","今井 翔太",253],
+ ["データサイエンス",5,"生成AI","生成AIの安全性入門","","綿岡 晃輝",227],
+ ["データサイエンス",6,"生成AI","ChatGPTはどのように動いているのか","","中西 崇文",223]
+].map(r=>({
+  /* identity_key は書名+著者。優先順位は識別子に使わない(順位が変わると記録が孤児になる) */
+  id:"c:"+r[3]+"|"+r[5], div:r[0], rank:r[1], cat:r[2], t:r[3], sub:r[4], a:r[5], p:r[6],
+  origin:"company"
+}));
+
+/* ビビッドな地域色。カテゴリ名から決定的に選ぶので、新カテゴリでも色が付く */
+const HUES=[["陽だいだい","#FF8A3D"],["苺","#FF4D6D"],["空","#3AA5EE"],["若葉","#2FB863"],
+  ["山吹","#FBB711"],["菫","#9163EC"],["水浅葱","#0FA9B8"],["紅","#EE3D58"],
+  ["藤","#C173F0"],["青竹","#3FBE97"],["杏","#FF9243"],["露草","#5183E8"]];
+const GOLD=2.399963229728653;
+function hash(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619);} return (h>>>0); }
+function tint(hex,amt){
+  const n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  const f=v=>Math.max(0,Math.min(255,Math.round(amt>0? v+(255-v)*amt : v*(1+amt))));
+  return `rgb(${f(r)},${f(g)},${f(b)})`;
+}
+/* 地名。カテゴリ名を冒険地図の地名に読み替える。
+   知らないカテゴリでも地形語をつないで必ず地名になる（会社が分類を増やしても破綻しない） */
+const PLACES={
+  "基本動作":["礎の街","town"], "課題解決":["問いの谷","valley"],
+  "コミュニケーション":["言葉の港","port"], "マネジメント":["統べる丘","hill"],
+  "アウトプット":["顕現の工房","forge"], "機械学習":["学習機械の森","forest"],
+  "統計学":["確率の湖","lake"], "生成AI":["創発の火山","volcano"],
+  "交渉":["握手の砦","fort"], "データ基盤":["水路の遺跡","ruin"],
+  "UX":["手ざわりの岬","cape"], "情報設計":["序列の階段","town"],
+  "提案":["約束の広場","town"], "顧客理解":["傾聴の泉","spring"],
+  "会計":["勘定の鉱山","mine"], "投資判断":["天秤の峠","pass"],
+  "未踏の海":["未踏の海","sea"]
+};
+const TERRAINS=[["の森","forest"],["の丘","hill"],["の谷","valley"],["の湖","lake"],
+  ["の峠","pass"],["の泉","spring"],["の砦","fort"],["の遺跡","ruin"],["の鉱山","mine"]];
+function placeOf(cat){
+  if(PLACES[cat]) return PLACES[cat];
+  const t=TERRAINS[hash(cat)%TERRAINS.length];
+  return [cat+t[0], t[1]];
+}
+/* 地形の書き込み。地名の種類に応じて山・木・水・建物などを撒く */
+function terrainArt(R){
+  const t=R.terrain;
+  const n={forest:13,hill:5,pass:5,valley:4,lake:2,spring:2,volcano:1,
+           mine:4,ruin:4,cape:3,sea:0,town:6,port:5,fort:4,forge:5}[t] ?? 5;
+  const dk=tint(R.hue,-0.42), md=tint(R.hue,-0.18), lt=tint(R.hue,0.35);
+  let g="";
+  for(let i=0;i<n;i++){
+    const a=i*GOLD+(R.seed%50)/8, rr=R.rad*0.58*Math.sqrt((i+0.5)/Math.max(1,n));
+    const x=R.cx+Math.cos(a)*rr, y=R.cy+Math.sin(a)*rr*0.78;
+    const j=(hash(R.name+"t"+i)%100)/100, s=0.82+j*0.46;   /* 個体差 */
+    if(t==="forest"){
+      g+=`<rect x="${(x-1.3*s).toFixed(1)}" y="${(y-3*s).toFixed(1)}" width="${(2.6*s).toFixed(1)}"
+        height="${(4*s).toFixed(1)}" fill="${dk}"/>
+        <path d="M${x},${(y-15*s).toFixed(1)} L${(x+6*s).toFixed(1)},${(y-2*s).toFixed(1)}
+        L${(x-6*s).toFixed(1)},${(y-2*s).toFixed(1)} Z" fill="${dk}"/>`;
+    }else if(t==="hill"||t==="pass"||t==="cape"){
+      g+=`<path d="M${(x-13*s).toFixed(1)},${y.toFixed(1)} L${x},${(y-15*s).toFixed(1)}
+        L${(x+13*s).toFixed(1)},${y.toFixed(1)} Z" fill="${md}" stroke="${dk}" stroke-width="1.4"/>
+        <path d="M${(x-4.4*s).toFixed(1)},${(y-10*s).toFixed(1)} L${x},${(y-15*s).toFixed(1)}
+        L${(x+4.4*s).toFixed(1)},${(y-10*s).toFixed(1)} Z" fill="${lt}"/>`;
+    }else if(t==="valley"){
+      g+=`<path d="M${(x-16*s).toFixed(1)},${(y-9*s).toFixed(1)} L${x},${(y+4*s).toFixed(1)}
+        L${(x+16*s).toFixed(1)},${(y-9*s).toFixed(1)}" fill="none" stroke="${dk}"
+        stroke-width="${(2.2*s).toFixed(1)}" stroke-linecap="round"/>`;
+    }else if(t==="lake"||t==="spring"){
+      g+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(17*s).toFixed(1)}"
+        ry="${(10*s).toFixed(1)}" fill="#8FD4F2" stroke="${dk}" stroke-width="1.8"/>
+        <path d="M${(x-7*s).toFixed(1)},${(y-1*s).toFixed(1)} q${(3.5*s).toFixed(1)},${(-2.4*s).toFixed(1)}
+        ${(7*s).toFixed(1)},0" fill="none" stroke="#fff" stroke-width="1.4" opacity=".85"/>`;
+    }else if(t==="volcano"){
+      g+=`<path d="M${(x-22*s).toFixed(1)},${(y+6*s).toFixed(1)} L${(x-7*s).toFixed(1)},${(y-16*s).toFixed(1)}
+        L${(x+7*s).toFixed(1)},${(y-16*s).toFixed(1)} L${(x+22*s).toFixed(1)},${(y+6*s).toFixed(1)} Z"
+        fill="${md}" stroke="${dk}" stroke-width="1.8" stroke-linejoin="round"/>
+        <ellipse cx="${x.toFixed(1)}" cy="${(y-16*s).toFixed(1)}" rx="${(7*s).toFixed(1)}"
+        ry="${(2.6*s).toFixed(1)}" fill="#FF4D6D"/>`;
+    }else if(t==="mine"){
+      g+=`<path d="M${(x-9*s).toFixed(1)},${y.toFixed(1)} l${(4*s).toFixed(1)},${(-8*s).toFixed(1)}
+        l${(10*s).toFixed(1)},0 l${(4*s).toFixed(1)},${(8*s).toFixed(1)} z"
+        fill="${md}" stroke="${dk}" stroke-width="1.5" stroke-linejoin="round"/>`;
+    }else if(t==="ruin"){
+      g+=`<rect x="${(x-2.2*s).toFixed(1)}" y="${(y-13*s).toFixed(1)}" width="${(4.4*s).toFixed(1)}"
+        height="${(13*s).toFixed(1)}" fill="${lt}" stroke="${dk}" stroke-width="1.4"/>
+        <rect x="${(x-4*s).toFixed(1)}" y="${(y-15*s).toFixed(1)}" width="${(8*s).toFixed(1)}"
+        height="${(2.6*s).toFixed(1)}" fill="${lt}" stroke="${dk}" stroke-width="1.4"/>`;
+    }else{ /* 街・港・砦・工房 */
+      g+=`<rect x="${(x-6*s).toFixed(1)}" y="${(y-8*s).toFixed(1)}" width="${(12*s).toFixed(1)}"
+        height="${(8*s).toFixed(1)}" fill="${lt}" stroke="${dk}" stroke-width="1.5"/>
+        <path d="M${(x-7.6*s).toFixed(1)},${(y-8*s).toFixed(1)} L${x},${(y-14*s).toFixed(1)}
+        L${(x+7.6*s).toFixed(1)},${(y-8*s).toFixed(1)} Z" fill="${md}" stroke="${dk}"
+        stroke-width="1.5" stroke-linejoin="round"/>`;
+    }
+  }
+  /* 等高線（内陸の奥行き） */
+  [0.78,0.56].forEach(k=>{
+    const p=R.poly.map(([x,y])=>[R.cx+(x-R.cx)*k, R.cy+(y-R.cy)*k]);
+    g+=`<polygon points="${pstr(p)}" fill="none" stroke="${dk}" stroke-width="1"
+      opacity=".22" stroke-dasharray="5 5"/>`;
+  });
+  /* 川 */
+  if(["valley","lake","spring","hill","pass"].includes(t)){
+    const a=(R.seed%628)/100;
+    const ex=R.cx+Math.cos(a)*R.rad*0.98, ey=R.cy+Math.sin(a)*R.rad*0.84;
+    g+=`<path d="M${R.cx.toFixed(1)},${R.cy.toFixed(1)}
+      Q${(R.cx+(ex-R.cx)*0.4+18).toFixed(1)},${(R.cy+(ey-R.cy)*0.6).toFixed(1)}
+      ${ex.toFixed(1)},${ey.toFixed(1)}" fill="none" stroke="#8FD4F2"
+      stroke-width="3.4" stroke-linecap="round" opacity=".9"/>`;
+  }
+  return g;
+}
+/* 海の書き込み。船・海竜・渦・小島 */
+function seaArt(VB,VC){
+  const [vx,vy,vw,vh]=VB;
+  const spots=[[0.09,0.86,"ship"],[0.88,0.13,"serpent"],[0.07,0.20,"whirl"],
+    [0.92,0.84,"islet"],[0.50,0.95,"islet"],[0.05,0.56,"islet"],[0.95,0.50,"islet"]];
+  let g="";
+  spots.forEach(([fx,fy,kind])=>{
+    const x=vx+vw*fx, y=vy+vh*fy;
+    if(VC.some(C=>C.regions.some(R=>Math.hypot(R.cx-x,R.cy-y)<R.rad*1.2))) return;
+    if(kind==="ship"){
+      g+=`<g opacity=".9"><path d="M${x-16},${y} q16,10 32,0 z" fill="#8B5E3C"
+        stroke="#3B2A1E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M${x},${y-2} L${x},${y-24}" stroke="#3B2A1E" stroke-width="2.2"/>
+        <path d="M${x+1},${y-23} L${x+15},${y-13} L${x+1},${y-6} z" fill="#FFF1DA"
+        stroke="#3B2A1E" stroke-width="1.8" stroke-linejoin="round"/></g>`;
+    }else if(kind==="serpent"){
+      g+=`<g opacity=".85"><path d="M${x-40},${y+8} q12,-16 24,0 q12,16 24,0 q12,-16 24,0"
+        fill="none" stroke="#2FB863" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="${x+36}" cy="${y+1}" r="7" fill="#2FB863"/>
+        <circle cx="${x+39}" cy="${y-1}" r="1.9" fill="#3B2A1E"/></g>`;
+    }else if(kind==="whirl"){
+      g+=`<g opacity=".5" fill="none" stroke="#3AA5EE" stroke-width="2.4" stroke-linecap="round">
+        <path d="M${x},${y} a7,5 0 1,1 7,-4"/><path d="M${x-3},${y+8} a14,10 0 1,1 17,-9"/>
+        <path d="M${x-7},${y+16} a22,15 0 1,1 27,-14"/></g>`;
+    }else{
+      const s=0.7+((hash(kind+fx)%40)/100);
+      g+=`<g><ellipse cx="${x}" cy="${y}" rx="${18*s}" ry="${10*s}" fill="#F2D9A8"
+        stroke="#3B2A1E" stroke-width="2"/>
+        <path d="M${x},${y-16*s} L${x+5*s},${y-5*s} L${x-5*s},${y-5*s} Z" fill="#2FB863"
+        stroke="#3B2A1E" stroke-width="1.6"/></g>`;
+    }
+  });
+  return g;
+}
+
+/* ============================================================
+   2. 状態
+   ============================================================ */
+const KEY="mistlands.v2";
+let S=load();
+function load(){
+  try{ const r=JSON.parse(localStorage.getItem(KEY));
+    if(r&&r.rec){ r.extra=r.extra||[]; r.synth=r.synth||[]; r.dayXp=r.dayXp||{}; r.ord=r.ord||{};
+      r.gen=r.gen||1; r.genBase=r.genBase||0; r.ancestors=r.ancestors||[];
+      r.pat=r.pat||0; r.name=r.name||"モヤ"; r.streak=r.streak||0; return r; } }catch(e){}
+  return {rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ",
+          lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[]};
+}
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+function books(){ return SEED_BOOKS.concat(S.synth, S.extra); }
+function st(id){ return S.rec[id]||{page:0,comp:0,sum:""}; }
+function isDone(b){ return st(b.id).page>=b.p; }
+
+/* XP倍率は読みはじめた時点で凍結する(順位の繰り下がりで過去のXPが減らないように) */
+function baseMult(b){ if(b.origin!=="company") return 1.0;
+  return b.rank<=3?1.5 : b.rank<=10?1.3 : 1.2; }
+function mult(b){ const s=st(b.id); return s.mult || baseMult(b); }
+const DAY_CAP=400;
+function xpOf(b){
+  const s=st(b.id); if(!s.page) return 0;
+  let x=s.page*mult(b);
+  if(s.page>=b.p){ x+=b.p*0.3*mult(b); x*= s.comp>=5?1.3 : s.comp>=4?1.15 : 1.0; }
+  return Math.round(x);
+}
+function totalXp(){ return books().reduce((n,b)=>n+xpOf(b),0); }
+function levelOf(xp){ let lv=1,need=420,acc=0;
+  while(xp>=acc+need){ acc+=need; lv++; need=Math.round(need*1.26); }
+  return {lv, into:xp-acc, need}; }
+function pagesRead(){ return books().reduce((n,b)=>n+Math.min(st(b.id).page,b.p),0); }
+function doneCount(){ return books().filter(isDone).length; }
+function fogEaten(){ return Math.floor(pagesRead()/12); } /* 12ページ = 霧ひとかたまり */
+
+/* ============================================================
+   3. 手続き的な地図の生成
+   規則: 追記のみ。既存の大陸・地域・建物は絶対に動かさない。
+        黄金角スパイラルで並べるので、n個目を足しても 0..n-1 の位置は不変。
+   ============================================================ */
+let WORLD=null;
+/* 「初めて見た順」を永続化する。優先順位や配列の並びに依存させないための土台。
+   これがないと、Excelの途中に1冊挿入されただけで以降の建物が全部ずれる。 */
+function ordIdx(ns,key){
+  S.ord=S.ord||{};
+  const m=S.ord[ns]=S.ord[ns]||{};
+  if(m[key]===undefined){ m[key]=Object.keys(m).length; S._ordDirty=true; }
+  return m[key];
+}
+function buildWorld(){
+  const bs=books(); S._ordDirty=false;
+  const cmap={};
+  bs.forEach(b=>{
+    const dv=b.origin==="company"?b.div:"自分の本";
+    const ct=b.origin==="company"?b.cat:"未踏の海";
+    const C=cmap[dv]=cmap[dv]||{name:dv, i:ordIdx("cont",dv), regions:[], rmap:{}};
+    let R=C.rmap[ct];
+    if(!R){ R=C.rmap[ct]={name:ct, i:ordIdx("rgn:"+dv,ct), cont:C, books:[]}; C.regions.push(R); }
+    b._seq=ordIdx("bk:"+dv+"|"+ct, b.id);
+    R.books.push(b);
+  });
+  if(S._ordDirty) save();
+  const conts=Object.values(cmap).sort((a,b)=>a.i-b.i);
+  conts.forEach(C=>{ C.regions.sort((a,b)=>a.i-b.i);
+    C.regions.forEach(R=>R.books.sort((a,b)=>a._seq-b._seq)); });
+  /* 大陸: 黄金角で外へ。位置は初出順 C.i だけで決まる */
+  conts.forEach(C=>{
+    /* 横長の画面に収まるよう、縦方向を圧縮して配置する */
+    const a=C.i*GOLD+0.6, r=430*Math.sqrt(C.i+0.28);
+    C.cx=Math.cos(a)*r*1.22; C.cy=Math.sin(a)*r*0.56;
+    /* 地域: 大陸内で黄金角。位置は初出順 R.i だけで決まる */
+    C.regions.forEach(R=>{
+      const ra=R.i*GOLD+hash(C.name)%628/100, rr=138*Math.sqrt(R.i+0.42);
+      R.cx=C.cx+Math.cos(ra)*rr; R.cy=C.cy+Math.sin(ra)*rr*0.82;
+      /* 建物: 位置は初出順 _seq だけで決まる。
+         配列の添字を使わないので、途中の本が消えても残りは動かない */
+      let maxk=0;
+      R.books.forEach(b=>{
+        const k=b._seq;
+        maxk=Math.max(maxk,k);
+        const ba=k*GOLD+hash(R.name)%628/100, br=30*Math.sqrt(k+0.55);
+        b._x=R.cx+Math.cos(ba)*br; b._y=R.cy+Math.sin(ba)*br*0.86;
+      });
+      R.rad=Math.max(52, 30*Math.sqrt(maxk+0.55)+40);
+      /* 色: カテゴリ名から決定的に。同一大陸内で重複したらずらす */
+      let hi=hash(R.name)%HUES.length, guard=0;
+      while(C.regions.some(o=>o!==R&&o._hi===hi)&&guard++<HUES.length) hi=(hi+5)%HUES.length;
+      R._hi=hi; R.hue=HUES[hi][1]; R.hueName=HUES[hi][0];
+      R.seed=hash(R.name+C.name);
+      const pl=placeOf(R.name); R.place=pl[0]; R.terrain=pl[1];
+      R.poly=blob(R.cx,R.cy,R.rad,R.seed);
+      R.puffs=puffs(R);
+    });
+  });
+  /* 隣接: 距離で判定(規則が汎用なのでカテゴリが増えても効く) */
+  conts.forEach(C=>C.regions.forEach(R=>{
+    R.adj=C.regions.filter(o=>o!==R &&
+      Math.hypot(o.cx-R.cx,o.cy-R.cy) < (o.rad+R.rad)*1.30);
+  }));
+  WORLD={conts, vb:boundsOf(conts)};
+  return WORLD;
+}
+/* 表示範囲。大陸を絞れば、総冊数が何冊でも1画面の密度は変わらない */
+function boundsOf(cs){
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  cs.forEach(C=>C.regions.forEach(R=>{
+    x0=Math.min(x0,R.cx-R.rad*1.34); x1=Math.max(x1,R.cx+R.rad*1.34);
+    y0=Math.min(y0,R.cy-R.rad*1.34); y1=Math.max(y1,R.cy+R.rad*1.34);
+  }));
+  if(x0>x1) return [0,0,200,120];
+  const pad=58;
+  return [x0-pad, y0-pad-26, (x1-x0)+pad*2, (y1-y0)+pad*2+44];
+}
+/* 有機的な島の輪郭(完全な円にしない) */
+function blob(cx,cy,r,seed){
+  const p1=(seed%628)/100, p2=((seed>>7)%628)/100, p3=((seed>>13)%628)/100, pts=[];
+  for(let i=0;i<40;i++){
+    const t=i/40*Math.PI*2;
+    const rr=r*(1+0.135*Math.sin(3*t+p1)+0.075*Math.sin(5*t+p2)+0.042*Math.sin(8*t+p3));
+    pts.push([cx+Math.cos(t)*rr, cy+Math.sin(t)*rr*0.85]);
+  }
+  return pts;
+}
+/* 霧のかたまり。読むほど数が減る */
+function puffs(R){
+  const n=Math.max(7, Math.min(26, 6+R.books.length*2)), out=[];
+  for(let i=0;i<n;i++){
+    const a=i*GOLD+R.seed%100/16, rr=R.rad*0.86*Math.sqrt((i+0.4)/n);
+    const j=(hash(R.name+i)%100)/100;
+    out.push({x:R.cx+Math.cos(a)*rr, y:R.cy+Math.sin(a)*rr*0.85,
+      r:R.rad*(0.24+j*0.12), rot:(j-0.5)*22, j});
+  }
+  return out;
+}
+function regionStat(R){
+  const tot=R.books.reduce((n,b)=>n+b.p,0);
+  const red=R.books.reduce((n,b)=>n+Math.min(st(b.id).page,b.p),0);
+  return {tot, red, ratio: tot?red/tot:0, done:R.books.filter(isDone).length};
+}
+function contOpen(C){ return C.name==="自分の本" ? true : levelOf(totalXp()).lv >= 1+2*C.i; }
+function rgnOpen(R){
+  if(!contOpen(R.cont)) return false;
+  if(R.i===0) return true;
+  return R.adj.some(o=>regionStat(o).done>0);
+}
+
+/* ============================================================
+   4. 相棒
+   ============================================================ */
+/* 読書は一生つづく。だから「育ち切って終わり」にはしない。
+   絆(きずな) … いまの世代でためたXP。世代が替わると0から。5段階で育ち切る
+   世代    … 育ち切った相棒は旅立って守り神になり、次のたまごが来る。無限に続く
+   レベル・累計ページ・称号 … 世代をまたいで永遠に増える軸 */
+const BOND=[0,900,2600,5600,10500];      /* 推薦図書20冊 ≒ 10,100XP で第5段階の手前 */
+const DEPART=15600;                       /* 旅立ちに必要な絆 */
+const STAGES=[
+  {n:"たまご",   say:["ふるふる…","なかから こえが する"]},
+  {n:"もやのこ", say:["ふわ…","きり、おいしい"]},
+  {n:"きりまる", say:["きょうも よむ？","もっと たべたいな"]},
+  {n:"かすみ",   say:["とおくまで みえるよ","つぎの しま、いこう"]},
+  {n:"きりのぬし",say:["ずいぶん とおくまで きたね","そろそろ 旅に でる ときかも"]}
+];
+function bondXp(){ return Math.max(0, totalXp()-(S.genBase||0)); }
+function stageIdx(){ let s=0; BOND.forEach((v,i)=>{ if(bondXp()>=v) s=i; }); return s; }
+function canDepart(){ return stageIdx()===4 && bondXp()>=DEPART; }
+function genNo(){ return S.gen||1; }
+
+/* 称号は累計ページ数で決まる。上限を作らず、いつまでも上がっていく */
+const TITLES=[[0,"読みはじめ"],[900,"読み手"],[2600,"旅の読み手"],[6000,"踏破者"],
+  [13000,"万巻の徒"],[26000,"大読破者"],[52000,"書架のぬし"]];
+function title(){
+  const p=pagesRead(); let t=TITLES[0][1];
+  TITLES.forEach(([n,s])=>{ if(p>=n) t=s; });
+  if(p>=104000) t=`第${Math.floor(Math.log2(p/52000))+1}階梯の賢者`;
+  return t;
+}
+function nextTitle(){
+  const p=pagesRead();
+  const nx=TITLES.find(([n])=>p<n);
+  return nx? {need:nx[0]-p, name:nx[1]} : null;
+}
+/* 旅立ち: 相棒は地図の守り神になり、記録として永久に残る */
+function depart(){
+  S.ancestors=S.ancestors||[];
+  S.ancestors.push({name:S.name, hue:petHue(), gen:genNo(),
+    pages:pagesRead(), books:doneCount(), at:Date.now()});
+  S.gen=genNo()+1; S.genBase=totalXp(); S.name="たまご";
+  save(); selected=null; renderAll();
+  toast(`${S.ancestors[S.ancestors.length-1].name}は 旅立った。あたらしい たまごが とどいた`);
+  setTimeout(()=>{ document.getElementById("nName").value="";
+    document.getElementById("nameDlg").showModal(); },900);
+}
+function petHue(){
+  let best=null,bv=-1;
+  (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{
+    const v=regionStat(R).red; if(v>bv){bv=v; best=R;} }));
+  return (bv>0&&best)?best.hue:"#FF8A3D";
+}
+function mood(){
+  const today=new Date().toISOString().slice(0,10);
+  if(S._just) return "full";
+  if(S.lastDate!==today) return "hungry";
+  if((S.streak||0)>=3) return "happy";
+  return "ok";
+}
+/* 段階と気分から相棒のSVGを組み立てる */
+function petSVG(si, md, hue, size){
+  const s=size||120, k=s/120;
+  const R=[19,23,28,32,36][si]*k, cy=s*0.60, cx=s/2;
+  const ink="var(--ink)", body="var(--card)";
+  let g=`<svg viewBox="0 0 ${s} ${s}" aria-hidden="true"><g class="pet-body">`;
+  /* 影 */
+  g+=`<ellipse cx="${cx}" cy="${cy+R*0.98}" rx="${R*0.86}" ry="${R*0.2}"
+        fill="${ink}" opacity=".16"/>`;
+  if(si===0){
+    g+=`<ellipse cx="${cx}" cy="${cy}" rx="${R}" ry="${R*1.24}" fill="${body}"
+          stroke="${ink}" stroke-width="${3*k}"/>`;
+    g+=`<path d="M${cx-R*0.6},${cy-R*0.1} l${R*0.4},${R*0.22} l${-R*0.3},${R*0.26} l${R*0.55},${R*0.2}"
+          fill="none" stroke="${ink}" stroke-width="${2.4*k}" stroke-linejoin="round"/>`;
+    g+=`<circle cx="${cx-R*0.34}" cy="${cy+R*0.55}" r="${R*0.15}" fill="${hue}" opacity=".55"/>`;
+    g+=`<circle cx="${cx+R*0.36}" cy="${cy+R*0.5}" r="${R*0.13}" fill="${hue}" opacity=".45"/>`;
+    g+=`</g></svg>`; return g;
+  }
+  /* 冠・たてがみ(最終段階) */
+  if(si>=4){
+    g+=`<path d="M${cx-R*0.75},${cy-R*0.92} l${R*0.3},${-R*0.5} l${R*0.45},${R*0.3}
+          l${R*0.45},${-R*0.44} l${R*0.42},${R*0.42} l${R*0.3},${-R*0.28} l${R*0.05},${R*0.62} z"
+          fill="${hue}" stroke="${ink}" stroke-width="${2.6*k}" stroke-linejoin="round"/>`;
+  }
+  /* 耳 */
+  if(si>=2){
+    [-1,1].forEach(d=>{
+      g+=`<path d="M${cx+d*R*0.62},${cy-R*0.62} q${d*R*0.5},${-R*0.72} ${d*R*0.72},${-R*0.02}
+            q${-d*R*0.3},${R*0.28} ${-d*R*0.72},${R*0.04} z"
+            fill="${body}" stroke="${ink}" stroke-width="${2.8*k}" stroke-linejoin="round"/>`;
+    });
+  }
+  /* 羽 */
+  if(si>=3){
+    [-1,1].forEach(d=>{
+      g+=`<path d="M${cx+d*R*0.82},${cy-R*0.1} q${d*R*0.86},${-R*0.5} ${d*R*0.98},${R*0.16}
+            q${-d*R*0.2},${R*0.44} ${-d*R*0.98},${R*0.06} z"
+            fill="${hue}" opacity=".72" stroke="${ink}" stroke-width="${2.4*k}" stroke-linejoin="round"/>`;
+    });
+  }
+  /* しっぽ */
+  if(si>=3){
+    g+=`<path d="M${cx+R*0.86},${cy+R*0.4} q${R*0.7},${R*0.2} ${R*0.5},${-R*0.5}"
+          fill="none" stroke="${ink}" stroke-width="${2.8*k}" stroke-linecap="round"/>
+        <circle cx="${cx+R*1.36}" cy="${cy-R*0.12}" r="${R*0.2}" fill="${hue}"
+          stroke="${ink}" stroke-width="${2.4*k}"/>`;
+  }
+  /* からだ */
+  g+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${body}" stroke="${ink}" stroke-width="${3.2*k}"/>`;
+  /* ほっぺ */
+  g+=`<circle cx="${cx-R*0.56}" cy="${cy+R*0.2}" r="${R*0.19}" fill="${hue}" opacity=".62"/>
+      <circle cx="${cx+R*0.56}" cy="${cy+R*0.2}" r="${R*0.19}" fill="${hue}" opacity=".62"/>`;
+  /* 目 */
+  const ey=cy-R*0.14, ex=R*0.34;
+  if(md==="happy"||md==="full"){
+    [-1,1].forEach(d=>{ g+=`<path d="M${cx+d*ex-R*0.17},${ey+R*0.04}
+      q${R*0.17},${-R*0.24} ${R*0.34},0" fill="none" stroke="${ink}"
+      stroke-width="${3*k}" stroke-linecap="round"/>`; });
+  }else{
+    [-1,1].forEach(d=>{
+      g+=`<g class="pet-eye" style="transform-origin:${cx+d*ex}px ${ey}px">
+        <circle cx="${cx+d*ex}" cy="${ey}" r="${R*0.19}" fill="${ink}"/>
+        <circle cx="${cx+d*ex+R*0.07}" cy="${ey-R*0.07}" r="${R*0.062}" fill="#fff"/></g>`;
+    });
+    if(md==="hungry") [-1,1].forEach(d=>{
+      g+=`<path d="M${cx+d*ex-R*0.2},${ey-R*0.36} q${R*0.2},${-R*0.1} ${R*0.4},${R*0.03}"
+        fill="none" stroke="${ink}" stroke-width="${2.2*k}" stroke-linecap="round"
+        transform="scale(${d},1) translate(${d<0?-2*cx:0},0)"/>`; });
+  }
+  /* くち */
+  const my=cy+R*0.36;
+  if(md==="full")
+    g+=`<ellipse cx="${cx}" cy="${my}" rx="${R*0.2}" ry="${R*0.16}" fill="${ink}"/>`;
+  else if(md==="hungry")
+    g+=`<path d="M${cx-R*0.15},${my+R*0.05} q${R*0.15},${-R*0.12} ${R*0.3},0"
+          fill="none" stroke="${ink}" stroke-width="${2.6*k}" stroke-linecap="round"/>`;
+  else
+    g+=`<path d="M${cx-R*0.18},${my-R*0.05} q${R*0.18},${R*0.2} ${R*0.36},0"
+          fill="none" stroke="${ink}" stroke-width="${2.6*k}" stroke-linecap="round"/>`;
+  /* あし */
+  if(si>=1) [-1,1].forEach(d=>{
+    g+=`<ellipse cx="${cx+d*R*0.38}" cy="${cy+R*0.96}" rx="${R*0.22}" ry="${R*0.13}"
+      fill="${body}" stroke="${ink}" stroke-width="${2.6*k}"/>`; });
+  /* きらめき(控えめに2つ) */
+  if(si>=3){
+    g+=`<path d="M${cx-R*1.25},${cy-R*0.9} l${R*0.09},${R*0.22} l${R*0.22},${R*0.09}
+      l${-R*0.22},${R*0.09} l${-R*0.09},${R*0.22} l${-R*0.09},${-R*0.22}
+      l${-R*0.22},${-R*0.09} l${R*0.22},${-R*0.09} z" fill="${hue}"/>`;
+  }
+  g+=`</g></svg>`;
+  return g;
+}
+function renderPet(){
+  const si=stageIdx(), md=mood(), hue=petHue();
+  document.getElementById("petArt").innerHTML=petSVG(si,md,hue);
+  document.getElementById("petName").textContent=S.name;
+  document.getElementById("petStage").textContent=STAGES[si].n;
+  const says={
+    hungry:["きょうは まだ きりを たべてないよ","おなか すいた…"],
+    full:["もぐもぐ… おいしい！","きりが へった！"],
+    happy:[`${S.streak}にち つづいてる！`,"きょうも いっしょに よもう"],
+    ok:STAGES[si].say
+  }[md];
+  document.getElementById("petSay").textContent=
+    says[hash(S.name+doneCount()+md)%says.length];
+  document.getElementById("mFog").textContent=fogEaten().toLocaleString();
+  document.getElementById("mPat").textContent=(S.pat||0).toLocaleString();
+  document.getElementById("mFriend").textContent=friendList().filter(f=>f.got).length;
+  document.getElementById("mGen").textContent=genNo();
+  document.getElementById("petTitle").textContent=title();
+  const b=bondXp(), nx=STAGES[si+1];
+  const lo=BOND[si], hi=nx? BOND[si+1] : DEPART;
+  document.getElementById("evoNext").textContent =
+    nx? `つぎは「${nx.n}」` : (canDepart()? "旅立てる" : "旅立ちまで");
+  document.getElementById("evoNum").textContent=`${b.toLocaleString()} / ${hi.toLocaleString()} 絆`;
+  document.getElementById("evoBar").style.setProperty("--v",
+    Math.min(1,(b-lo)/Math.max(1,hi-lo)).toFixed(3));
+  const dep=document.getElementById("departWrap");
+  dep.innerHTML = canDepart()
+    ? `<button class="btn primary sm" id="departBtn">旅立たせる</button>
+       <span class="deph">${esc(S.name)}は じゅうぶんに 育ちました。旅立つと
+       この地の守り神になり、記録は永久に残ります。あたらしい たまごが来て、また一緒に読みはじめます。</span>`
+    : "";
+  if(canDepart()) document.getElementById("departBtn").onclick=()=>{
+    if(confirm(`${S.name}を旅立たせますか？\nこれまでの記録・レベル・累計ページはそのまま残ります。`)) depart();
+  };
+}
+function friendList(){
+  const out=[];
+  (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{
+    const s=regionStat(R);
+    out.push({name:R.name, hue:R.hue, hueName:R.hueName, got:s.ratio>=1, ratio:s.ratio});
+  }));
+  return out;
+}
+document.getElementById("petBtn").onclick=e=>{
+  S.pat=(S.pat||0)+1; save();
+  const b=e.currentTarget; b.classList.remove("pat"); void b.offsetWidth; b.classList.add("pat");
+  const h=document.createElement("div"); h.className="heart"; h.textContent="♥";
+  h.style.color=petHue(); h.style.left=(30+Math.random()*54)+"%"; h.style.top="34%";
+  h.style.setProperty("--dx",(Math.random()*44-22)+"px");
+  b.parentElement.appendChild(h); setTimeout(()=>h.remove(),1100);
+  document.getElementById("mPat").textContent=S.pat.toLocaleString();
+  if(S.pat%25===0) toast(`${S.name}は とても うれしそうだ（${S.pat}回）`);
+};
+
+/* ============================================================
+   5. 地図の描画
+   ============================================================ */
+const NS="http://www.w3.org/2000/svg";
+function E(n,a){ const e=document.createElementNS(NS,n);
+  for(const k in a) e.setAttribute(k,a[k]); return e; }
+function pstr(p){ return p.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" "); }
+let selected=null;
+
+let mapFocus=null;
+function visibleConts(W){
+  if(mapFocus==="all") return W.conts;
+  const c=W.conts.find(C=>C.name===mapFocus);
+  return c? [c] : (W.conts.length? [W.conts[0]] : []);
+}
+function drawContNav(W){
+  const nav=document.getElementById("contNav");
+  const opts=W.conts.filter(C=>contOpen(C)||C.i===0);
+  nav.innerHTML=opts.map(C=>
+    `<button class="cbtn" data-c="${esc(C.name)}" aria-pressed="${mapFocus===C.name}">
+      ${esc(C.name)}</button>`).join("")
+    + (opts.length>1? `<button class="cbtn" data-c="all"
+      aria-pressed="${mapFocus==="all"}">ぜんぶ</button>`:"");
+  nav.querySelectorAll(".cbtn").forEach(b=>b.onclick=()=>{
+    mapFocus=b.dataset.c; drawMap(); });
+}
+function drawMap(){
+  const W=buildWorld(), svg=document.getElementById("map");
+  /* 初期表示は「いま読んでいる本の大陸」 */
+  if(mapFocus===null){
+    let last=null, lt=-1;
+    books().forEach(b=>{ const s=st(b.id); if(s.at&&s.at>lt){lt=s.at; last=b;} });
+    mapFocus = last? (last.origin==="company"?last.div:"自分の本") : (W.conts[0]||{}).name;
+  }
+  if(mapFocus!=="all" && !W.conts.some(C=>C.name===mapFocus))
+    mapFocus=(W.conts[0]||{}).name;
+  drawContNav(W);
+  const VC=visibleConts(W), VB=boundsOf(VC);
+  svg.innerHTML=""; svg.setAttribute("viewBox", VB.map(v=>v.toFixed(1)).join(" "));
+  /* 波 */
+  const gW=E("g",{}); svg.appendChild(gW);
+  const [vx,vy,vw,vh]=VB;
+  /* 縦横比が変わって余白ができても海が続いて見えるよう外側まで敷く */
+  const mx=vw*0.45, my=vh*0.25;
+  for(let y=vy-my; y<vy+vh+my; y+=52){
+    for(let x=vx-mx; x<vx+vw+mx; x+=74){
+      const o=((x*13+y*7)%37)/37*26;
+      gW.appendChild(E("path",{class:"wave",
+        d:`M${x+o},${y} q9,-7 18,0 q9,7 18,0`}));
+    }
+  }
+  /* 海の書き込み（船・海竜・渦・小島）と、旅立った相棒たち */
+  const gSea=E("g",{}); gSea.innerHTML=seaArt(VB,VC); svg.appendChild(gSea);
+  const anc=(S.ancestors||[]);
+  if(anc.length){
+    const gA=E("g",{}); let ax="";
+    anc.slice(-4).forEach((a,i)=>{
+      const x=vx+vw*(0.20+i*0.20), y=vy+vh*0.965;
+      if(VC.some(C=>C.regions.some(R=>Math.hypot(R.cx-x,R.cy-y)<R.rad*1.1))) return;
+      ax+=`<g transform="translate(${x-20},${y-46})">
+        ${petSVG(4,"happy",a.hue,40).replace(/class="pet-body"/,"")}
+        <text x="20" y="52" text-anchor="middle" class="rsub">${esc(a.name)}</text></g>`;
+    });
+    gA.innerHTML=ax; svg.appendChild(gA);
+  }
+  const gLand=E("g",{}), gFog=E("g",{}), gRoad=E("g",{}),
+        gMark=E("g",{}), gLab=E("g",{});
+  [gLand,gFog,gRoad,gMark,gLab].forEach(g=>svg.appendChild(g));
+
+  VC.forEach(C=>{
+    const open=contOpen(C);
+    C.regions.forEach(R=>{
+      const s=regionStat(R), ro=open&&rgnOpen(R);
+      /* 地面。霧が濃いほど色が抜ける */
+      const sh=E("polygon",{points:pstr(R.poly.map(([x,y])=>[x+5,y+7])), class:"rgn-shade"});
+      gLand.appendChild(sh);
+      const land=E("polygon",{points:pstr(R.poly), class:"rgn-body"});
+      land.setAttribute("fill", ro? R.hue : "#9E927F");
+      land.style.opacity = ro? (0.42+0.58*s.ratio).toFixed(2) : "0.5";
+      gLand.appendChild(land);
+      /* 地形の書き込み。未測量の地では描かない */
+      if(ro){
+        const gt=E("g",{opacity:(0.30+0.70*s.ratio).toFixed(2)});
+        gt.innerHTML=terrainArt(R);
+        gLand.appendChild(gt);
+        if(s.ratio>=0.5&&s.ratio<1){   /* 半分踏破で宝箱があらわれる */
+          const bx=E("g",{}); const tx=R.cx-R.rad*0.55, ty=R.cy+R.rad*0.3;
+          bx.innerHTML=`<g><rect x="${tx-7}" y="${ty-6}" width="14" height="10" rx="1.5"
+            fill="#C88A3A" stroke="#3B2A1E" stroke-width="2"/>
+            <path d="M${tx-7},${ty-6} q7,-7 14,0" fill="#E0A64F" stroke="#3B2A1E" stroke-width="2"/>
+            <rect x="${tx-1.6}" y="${ty-4}" width="3.2" height="5" fill="#3B2A1E"/></g>`;
+          gLand.appendChild(bx);
+        }
+      }
+
+      /* 霧のかたまり。読んだ分だけ消える */
+      const gone=Math.floor(R.puffs.length*(ro? s.ratio : 0));
+      R.puffs.forEach((p,i)=>{
+        const g=E("g",{class:"puff"+(i<gone?" gone":""),
+          transform:`translate(${p.x.toFixed(1)},${p.y.toFixed(1)}) rotate(${p.rot.toFixed(1)})`});
+        g.appendChild(E("circle",{cx:-p.r*0.5, cy:p.r*0.12, r:p.r*0.62}));
+        g.appendChild(E("circle",{cx:p.r*0.05, cy:-p.r*0.2, r:p.r*0.78}));
+        g.appendChild(E("circle",{cx:p.r*0.62, cy:p.r*0.1, r:p.r*0.56}));
+        gFog.appendChild(g);
+      });
+
+      /* 地域名 */
+      const ly=R.cy+R.rad*0.80;
+      const lab=E("text",{x:R.cx, y:ly, "text-anchor":"middle",
+        class:"rlabel"+(ro?"":" dim")});
+      lab.textContent= ro? R.place : "？ ？ ？";
+      gLab.appendChild(lab);
+      if(ro){
+        const sub=E("text",{x:R.cx, y:ly+15, "text-anchor":"middle", class:"rsub"});
+        sub.textContent=`${R.name} ・ ${s.done}/${R.books.length}冊 ・ 霧 ${R.puffs.length-gone}`;
+        gLab.appendChild(sub);
+        if(s.ratio>=1){ /* 仲間が住みついている */
+          const f=E("g",{class:"pal",
+            transform:`translate(${(R.cx+R.rad*0.52).toFixed(1)},${(R.cy-R.rad*0.55).toFixed(1)})`});
+          f.innerHTML=petSVG(1,"happy",R.hue,44).replace(/^<svg[^>]*>|<\/svg>$/g,"")
+            .replace('class="pet-body"','');
+          f.setAttribute("transform", f.getAttribute("transform")+" translate(-22,-22)");
+          gLab.appendChild(f);
+        }
+      }
+    });
+
+    /* 街道: 読了済み + 次の1本だけ(冊数が増えても線が増えない) */
+    if(open){
+      const bs=C.regions.flatMap(R=>R.books).filter(b=>b.origin==="company")
+        .sort((a,b)=>a.rank-b.rank);
+      let k=0; while(k<bs.length&&isDone(bs[k])) k++;
+      if(k>1) gRoad.appendChild(E("path",{class:"road",
+        d:"M"+bs.slice(0,k).map(b=>b._x.toFixed(1)+","+b._y.toFixed(1)).join("L")}));
+      if(k>0&&k<bs.length&&rgnOpen(regionOf(bs[k]))) gRoad.appendChild(E("path",{class:"road-next",
+        d:`M${bs[k-1]._x.toFixed(1)},${bs[k-1]._y.toFixed(1)}L${bs[k]._x.toFixed(1)},${bs[k]._y.toFixed(1)}`}));
+    }
+  });
+
+  /* 建物と木 */
+  VC.forEach(C=>C.regions.forEach(R=>{
+    const ro=contOpen(C)&&rgnOpen(R);
+    R.books.forEach(b=>{
+      if(!ro && !(b.origin==="company"&&b.rank<=3)) return;
+      const s=st(b.id), prog=Math.min(1,s.page/b.p), done=prog>=1;
+      const g=E("g",{class:`lm ${b.origin} ${done?"done":""} ${ro?"":"veiled"}`,
+        transform:`translate(${b._x.toFixed(1)},${b._y.toFixed(1)})`,
+        tabindex: ro?"0":"-1", role:"button"});
+      const ti=E("title"); ti.textContent=`${b.t}（${s.page}/${b.p}ページ）`; g.appendChild(ti);
+      const jit=((hash(b.id)%9)-4)*0.8;
+      const inner=E("g",{transform:`rotate(${jit.toFixed(1)})`});
+      /* 高さは対数。800ページの本が突出しないように */
+      const H = b.origin==="company"
+        ? 20+Math.round(Math.log2(1+b.p/60)*8)
+        : 16+Math.round(Math.log2(1+b.p/70)*6);
+      const clip="cl"+hash(b.id);
+      const cp=E("clipPath",{id:clip});
+      cp.appendChild(E("rect",{x:-22, y:-H*prog-14, width:44, height:(H*prog+14).toFixed(1)}));
+      inner.appendChild(cp);
+      let d;
+      if(b.origin==="company"){
+        d=`M-10,0 L-10,${-H} L-6,${-H-5} L0,${-H-9} L6,${-H-5} L10,${-H} L10,0 Z`;
+        if(b.rank<=3){ /* 最重要3冊は旗が立つ */
+          inner.appendChild(E("path",{d:`M0,${-H-9} L0,${-H-24}`,
+            stroke:"var(--ink)","stroke-width":2.4,fill:"none","stroke-linecap":"round"}));
+          inner.appendChild(E("path",{d:`M0,${-H-24} L14,${-H-19} L0,${-H-14} Z`,
+            fill:R.hue, stroke:"var(--ink)","stroke-width":2.2,"stroke-linejoin":"round"}));
+        }
+      }else{
+        d=`M-3,0 L-3,${-H*0.42} L3,${-H*0.42} L3,0 Z
+           M0,${-H-9} C11,${-H-3} 10,${-H*0.34} 0,${-H*0.3}
+           C-10,${-H*0.34} -11,${-H-3} 0,${-H-9} Z`;
+      }
+      inner.appendChild(E("path",{d, class:"base"}));
+      const fill=E("path",{d, class:"fill", "clip-path":`url(#${clip})`});
+      fill.setAttribute("fill", b.origin==="company"? R.hue : "var(--leaf)");
+      inner.appendChild(fill);
+      if(done){ /* 読了したら窓に灯りがともる */
+        inner.appendChild(E("circle",{cx:0, cy:-H*0.55, r:2.6, class:"eye"}));
+      }
+      /* 指で押せるよう、見た目より広い当たり判定を重ねる */
+      inner.appendChild(E("circle",{cx:0, cy:-H*0.5, r:Math.max(20,H*0.75),
+        fill:"transparent", stroke:"none"}));
+      g.appendChild(inner);
+      const pop=E("text",{x:0, y:-H-30, "text-anchor":"middle", class:"rsub pop"});
+      pop.textContent=b.t.length>13? b.t.slice(0,13)+"…" : b.t;
+      g.appendChild(pop);
+      if(selected===b.id) g.classList.add("sel");
+      g.addEventListener("click",()=>pick(b.id));
+      g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault(); pick(b.id);} });
+      gMark.appendChild(g);
+    });
+  }));
+
+  /* 大陸名 */
+  VC.forEach(C=>{
+    if(!C.regions.length) return;
+    const ty=Math.min(...C.regions.map(R=>R.cy-R.rad))-22;
+    const t=E("text",{x:C.cx, y:ty, "text-anchor":"middle", class:"clabel"});
+    t.textContent=contOpen(C)? C.name : "？？？";
+    gLab.appendChild(t);
+  });
+}
+function regionOf(b){
+  let f=null;
+  WORLD.conts.forEach(C=>C.regions.forEach(R=>{ if(R.books.includes(b)) f=R; }));
+  return f;
+}
+function findBook(id){ return books().find(b=>b.id===id); }
+function pick(id){ selected=id; drawMap(); renderSpot();
+  document.getElementById("spot").scrollIntoView({block:"nearest",behavior:"smooth"}); }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function renderSpot(){
+  const el=document.getElementById("spot"), b=findBook(selected);
+  if(!b){ el.className="spot empty";
+    el.textContent="地図の建物や木をタップすると、その本のことが出ます。"; return; }
+  const s=st(b.id), R=regionOf(b), done=s.page>=b.p;
+  el.className="spot";
+  el.innerHTML=`<div>
+    <div class="kv">${esc(R.name)}${b.origin==="company"?` ／ ${esc(b.div)} 優先順位 ${b.rank}`:" ／ 自分の本"}</div>
+    <h3>${esc(b.t)}</h3>
+    <div class="kv">${esc(b.a)}${b.sub?" ／ "+esc(b.sub):""}</div>
+    <div class="tags">
+      ${b.origin==="company"?`<span class="tag co">会社の本・補助あり</span>`
+        :`<span class="tag pe">自分の本</span>`}
+      ${b.origin==="company"&&b.rank<=3?`<span class="tag must">最重要</span>`:""}
+      <span class="tag">XP ×${mult(b).toFixed(1)}</span>
+    </div>
+    <div class="mini" style="--v:${Math.min(1,s.page/b.p).toFixed(3)};margin-top:12px"><i></i></div>
+    <div class="kv" style="margin-top:6px">${s.page} / ${b.p} ページ
+      ${done?" ・ 読了！":` ・ のこり ${b.p-s.page}`} ・ ${xpOf(b)} XP</div>
+  </div>
+  <div><button class="btn primary" id="spotLog">${s.page?"きろくする":"よみはじめる"}</button></div>`;
+  document.getElementById("spotLog").onclick=()=>openLog(b.id);
+}
+
+/* ============================================================
+   6. 本だな
+   ============================================================ */
+let filter="all";
+function renderShelf(){
+  const box=document.getElementById("idx"); box.innerHTML="";
+  let list=books();
+  if(filter==="company") list=list.filter(b=>b.origin==="company");
+  if(filter==="personal") list=list.filter(b=>b.origin!=="company");
+  if(filter==="done") list=list.filter(isDone);
+  if(filter==="reading") list=list.filter(b=>{const s=st(b.id); return s.page>0&&s.page<b.p;});
+  if(filter==="todo") list=list.filter(b=>st(b.id).page===0);
+  const W=WORLD;
+  const groups={};
+  list.forEach(b=>{ const k=b.origin==="company"?b.div:"自分で足した本";
+    (groups[k]=groups[k]||[]).push(b); });
+  Object.keys(groups).forEach(k=>{
+    const h=document.createElement("div"); h.className="grp";
+    const any=groups[k][0], R=regionOf(any);
+    h.innerHTML=`<span class="dot" style="background:${R?R.hue:"var(--leaf)"}"></span>
+      ${esc(k)}${k==="自分で足した本"?"":"（補助が出る）"}
+      <span class="n">${groups[k].length}冊</span>`;
+    box.appendChild(h);
+    groups[k].sort((a,b)=>(a.rank||999)-(b.rank||999)).forEach(b=>{
+      const s=st(b.id), prog=Math.min(1,s.page/b.p), done=prog>=1, Rg=regionOf(b);
+      const r=document.createElement("div");
+      r.className=`row ${b.origin} ${done?"done":""}`; r.tabIndex=0;
+      r.innerHTML=`
+        <div class="rk">${b.origin==="company"?b.rank:"—"}</div>
+        <div>
+          <div class="tt">${esc(b.t)}</div>
+          <div class="mt">${esc(b.a)} ・ ${b.p}ページ${done?" ・ 読了":""}</div>
+          <div class="mini" style="--v:${prog.toFixed(3)}"><i></i></div>
+        </div>
+        <div class="where">${Rg?esc(Rg.name):""}</div>
+        <div class="pr">${s.page}<span style="color:var(--ink-sub)">/${b.p}</span></div>`;
+      r.onclick=()=>openLog(b.id);
+      r.onkeydown=e=>{ if(e.key==="Enter"){e.preventDefault(); openLog(b.id);} };
+      box.appendChild(r);
+    });
+  });
+  if(!list.length){ const e=document.createElement("div"); e.className="empty-box";
+    e.textContent="この条件の本はありません。"; box.appendChild(e); }
+}
+
+/* ============================================================
+   7. 相棒タブ・塔
+   ============================================================ */
+function renderBuddyTab(){
+  const si=stageIdx(), hue=petHue(), b=bondXp();
+  document.getElementById("evolist").innerHTML=STAGES.map((s,i)=>{
+    const cls=i===si?"now":(b>=BOND[i]?"":"locked");
+    return `<div class="evorow ${cls}">${petSVG(i,i===si?mood():"ok",hue,44)}
+      <div><b>${s.n}</b><em>${b>=BOND[i]?`絆 ${BOND[i].toLocaleString()} 到達ずみ`
+        :`絆 ${BOND[i].toLocaleString()} で なれる`}</em></div></div>`;
+  }).join("")
+  + `<div class="evorow ${canDepart()?"now":"locked"}">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M22 6 L27 17 L39 18 L30 26 L33 38
+        L22 31 L11 38 L14 26 L5 18 L17 17 Z" fill="${canDepart()?hue:"none"}"
+        stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/></svg>
+      <div><b>旅立ち</b><em>絆 ${DEPART.toLocaleString()} で 守り神になる（いまの絆 ${b.toLocaleString()}）</em></div></div>`;
+  /* 守り神 = これまでの相棒たち。読書を続けるかぎり増え続ける */
+  const anc=(S.ancestors||[]);
+  document.getElementById("ancPanel").innerHTML= anc.length
+    ? anc.slice().reverse().map(a=>`<div class="evorow">${petSVG(4,"happy",a.hue,44)}
+        <div><b>${esc(a.name)}</b><em>第${a.gen}代 ・ ${a.pages.toLocaleString()}ページ地点で旅立ち
+        ・ ${new Date(a.at).toLocaleDateString("ja-JP")}</em></div></div>`).join("")
+    : `<div class="empty-box" style="padding:22px 14px">まだ誰も旅立っていません。<br>
+       いまの相棒が育ち切ると、ここに名前が残ります。</div>`;
+  const nt=nextTitle();
+  document.getElementById("titleNow").innerHTML=
+    `<b style="font-family:var(--f-disp);font-size:19px">${esc(title())}</b>
+     <div class="kv" style="margin-top:4px">累計 ${pagesRead().toLocaleString()} ページ${
+       nt? ` ／ あと ${nt.need.toLocaleString()} ページで「${esc(nt.name)}」` : " ／ 最高位を更新中"}</div>`;
+  document.getElementById("friends").innerHTML=friendList().map(f=>
+    `<div class="friend ${f.got?"":"locked"}">
+      ${f.got? petSVG(1,"happy",f.hue,44)
+             : `<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="24" r="13"
+                fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 4"/></svg>`}
+      <b>${f.got?esc(f.hueName)+"の子":"？？？"}</b>
+      <em>${esc(f.name)}${f.got?"":" "+Math.round(f.ratio*100)+"%"}</em></div>`).join("");
+}
+/* 高さは「読んだページ数」。1万ページを超えたら伸びを緩めて画面に収める */
+function uOf(p){ return p<=10000 ? p*0.078 : 780+(p-10000)*0.034; }
+const BANDS=[
+  {p:0,     c:"#C6ECFF", n:"地上",      d:"草原と、はじまりの家"},
+  {p:900,   c:"#A6DCF6", n:"雲の下",    d:"すずめ、ちぎれ雲"},
+  {p:2600,  c:"#7CC3EE", n:"雲海",      d:"かもめ、雲の海を抜ける"},
+  {p:6000,  c:"#4A96DA", n:"高空",      d:"わし、飛行船"},
+  {p:13000, c:"#2A57AC", n:"竜の領域",  d:"渡り鳥の群れ、そして竜"},
+  {p:26000, c:"#1A2A66", n:"星の海",    d:"流星、月"},
+  {p:52000, c:"#0A1038", n:"夜のむこう",d:"星座、彗星"}
+];
+function bandOf(p){ let b=BANDS[0]; BANDS.forEach(x=>{ if(p>=x.p) b=x; }); return b; }
+
+/* --- 空に住むものたち --- */
+function birdSVG(x,y,s,col){
+  return `<path d="M${x-s},${y} q${s*0.5},${-s*0.75} ${s},0 q${s*0.5},${-s*0.75} ${s},0"
+    fill="none" stroke="${col}" stroke-width="${Math.max(1.4,s*0.28)}"
+    stroke-linecap="round"/>`;
+}
+function cloudSVG(x,y,s,op){
+  return `<g opacity="${op}"><circle cx="${x-s*0.75}" cy="${y+s*0.14}" r="${s*0.56}" fill="#fff"/>
+    <circle cx="${x}" cy="${y-s*0.2}" r="${s*0.78}" fill="#fff"/>
+    <circle cx="${x+s*0.82}" cy="${y+s*0.1}" r="${s*0.6}" fill="#fff"/>
+    <rect x="${x-s*1.3}" y="${y+s*0.06}" width="${s*2.6}" height="${s*0.55}" rx="${s*0.27}" fill="#fff"/></g>`;
+}
+function airshipSVG(x,y,s){
+  return `<g><ellipse cx="${x}" cy="${y}" rx="${s}" ry="${s*0.42}" fill="#F6E7C8"
+    stroke="#3B2A1E" stroke-width="2"/>
+    <path d="M${x+s},${y} l${s*0.34},${-s*0.28} l0,${s*0.56} z" fill="#FF8A3D" stroke="#3B2A1E" stroke-width="1.6"/>
+    <rect x="${x-s*0.24}" y="${y+s*0.42}" width="${s*0.48}" height="${s*0.28}" rx="3"
+      fill="#3B2A1E"/>
+    <path d="M${x-s*0.5},${y-s*0.36} h${s}" stroke="#D9631C" stroke-width="2.4"/></g>`;
+}
+function flockSVG(x,y,s,col){
+  let g="";
+  [[0,0],[-s*1.5,s*0.8],[s*1.5,s*0.8],[-s*3,s*1.7],[s*3,s*1.7]].forEach(([dx,dy])=>
+    g+=birdSVG(x+dx,y+dy,s*0.6,col));
+  return `<g>${g}</g>`;
+}
+function dragonSVG(x,y,s,col){
+  return `<g transform="translate(${x},${y}) scale(${s/40})">
+    <path d="M-52,6 q18,-16 36,-4 q16,10 32,-2 q14,-10 30,2"
+      fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round"/>
+    <path d="M-6,-2 q-14,-26 -40,-30 q22,-2 34,8 q6,-14 20,-16 q-6,16 2,26 z"
+      fill="${col}" opacity=".92"/>
+    <path d="M14,4 q10,-22 34,-26 q-14,14 -12,26 z" fill="${col}" opacity=".72"/>
+    <circle cx="46" cy="2" r="9" fill="${col}"/>
+    <path d="M42,-5 l-8,-11 l13,5 z" fill="${col}"/>
+    <circle cx="50" cy="0" r="2.1" fill="#FFF3D0"/>
+    <path d="M-52,6 l-13,-8 l4,9 l-6,7 z" fill="${col}"/></g>`;
+}
+function moonSVG(x,y,s){
+  return `<g><circle cx="${x}" cy="${y}" r="${s}" fill="#FFF0BC"/>
+    <circle cx="${x+s*0.42}" cy="${y-s*0.2}" r="${s*0.86}" fill="#1A2A66"/></g>`;
+}
+function meteorSVG(x,y,s,col){
+  return `<g><path d="M${x},${y} l${-s*2.4},${s*1.3}" stroke="${col}" stroke-width="2.6"
+    stroke-linecap="round" opacity=".8"/><circle cx="${x}" cy="${y}" r="${s*0.28}" fill="${col}"/></g>`;
+}
+function starSVG(x,y,s,col){
+  return `<path d="M${x},${y-s} l${s*0.28},${s*0.66} l${s*0.72},${s*0.06} l${-s*0.55},${s*0.5}
+    l${s*0.2},${s*0.7} l${-s*0.65},${-s*0.38} l${-s*0.65},${s*0.38} l${s*0.2},${-s*0.7}
+    l${-s*0.55},${-s*0.5} l${s*0.72},${-s*0.06} z" fill="${col}"/>`;
+}
+/* 高度(ページ)ごとの住人。上に行くほど非日常になる */
+function skyLife(){
+  const L=[
+    [140,(x,y)=>birdSVG(x+52,y,7,"#5B4635")],
+    [330,(x,y)=>birdSVG(x+88,y,6,"#5B4635")],
+    [560,(x,y)=>birdSVG(x+44,y,8,"#5B4635")],
+    [880,(x,y)=>cloudSVG(x+96,y,16,.9)],
+    [1150,(x,y)=>birdSVG(x+62,y,10,"#4A3A2C")],
+    [1500,(x,y)=>cloudSVG(x+42,y,22,.95)],
+    [1950,(x,y)=>birdSVG(x+104,y,11,"#4A3A2C")],
+    [2400,(x,y)=>cloudSVG(x+88,y,26,.97)],
+    [2900,(x,y)=>cloudSVG(x+40,y,30,.98)],
+    [3400,(x,y)=>birdSVG(x+96,y,15,"#2E2419")],
+    [4200,(x,y)=>cloudSVG(x+104,y,20,.7)],
+    [5000,(x,y)=>airshipSVG(x+86,y,26)],
+    [6400,(x,y)=>birdSVG(x+44,y,17,"#241C12")],
+    [8000,(x,y)=>flockSVG(x+92,y,12,"#1C1610")],
+    [10000,(x,y)=>cloudSVG(x+46,y,24,.5)],
+    [11500,(x,y)=>starSVG(x+104,y,7,"#FFF0BC")],
+    [14000,(x,y)=>dragonSVG(x+82,y,54,"#2A1533")],
+    [17500,(x,y)=>starSVG(x+40,y,6,"#FFF0BC")],
+    [20500,(x,y)=>dragonSVG(x+56,y,64,"#3A1030")],
+    [24000,(x,y)=>meteorSVG(x+100,y,10,"#FFF0BC")],
+    [27500,(x,y)=>moonSVG(x+92,y,24)],
+    [32000,(x,y)=>starSVG(x+44,y,9,"#FFF6D8")],
+    [38000,(x,y)=>meteorSVG(x+72,y,13,"#FFE9A8")],
+    [45000,(x,y)=>starSVG(x+108,y,8,"#FFF6D8")]
+  ];
+  /* それより上は永久に星が増えていく */
+  for(let p=54000;p<400000;p+=9000)
+    L.push([p,(x,y)=>starSVG(x+((p/9000)%5)*24+30, y, 5+((p/9000)%3)*2, "#FFF6D8")]);
+  return L;
+}
+
+function renderTower(){
+  const svg=document.getElementById("towerSvg"), box=document.getElementById("skybox");
+  const done=books().filter(isDone).sort((a,b)=>(st(a.id).at||0)-(st(b.id).at||0));
+  const wipAll=books().filter(b=>{const s=st(b.id); return s.page>0&&s.page<b.p;});
+  const donePages=done.reduce((n,b)=>n+b.p,0);
+  const W=340, GRD=54, HEAD=210, cx=118;
+  const towerU=uOf(donePages), H=Math.round(towerU+HEAD+GRD);
+  const baseY=H-GRD;
+  const yOf=p=>baseY-uOf(p);
+  const topPages=donePages + (HEAD/0.078);
+  const wOf=u=>60*(1-0.26*Math.min(1,u/1500))+18;
+
+  let g="";
+  /* 空のグラデーション。SVGは offset が昇順でないと効かないので、高い帯から順に置く */
+  let stops=`<stop offset="0%" stop-color="${bandOf(topPages).c}"/>`;
+  const seen=new Set(["0.00"]);
+  [...BANDS].reverse().forEach(b=>{
+    if(b.p>topPages+400) return;
+    const y=Math.max(0,Math.min(H,yOf(b.p)));
+    const key=(y/H*100).toFixed(2);       /* 上端=0% 下端=100% */
+    if(seen.has(key)) return; seen.add(key);
+    stops+=`<stop offset="${key}%" stop-color="${b.c}"/>`;
+  });
+  g+=`<defs><linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">${stops}</linearGradient></defs>`;
+  g+=`<rect x="0" y="0" width="${W}" height="${H}" fill="url(#skyG)"/>`;
+
+  /* 空の住人（届いた高さまで＋少し先が見える） */
+  skyLife().forEach(([p,fn])=>{ if(p<=topPages) g+=fn(0,yOf(p)); });
+
+  /* 高度の目盛り */
+  BANDS.forEach(b=>{
+    if(b.p>topPages) return;
+    const y=yOf(b.p);
+    g+=`<line x1="${W-96}" y1="${y}" x2="${W-8}" y2="${y}" stroke="#3B2A1E"
+      stroke-width="1" opacity=".28" stroke-dasharray="3 4"/>
+      <text x="${W-8}" y="${y-5}" text-anchor="end" class="btick">${b.n} ${b.p.toLocaleString()}p</text>`;
+  });
+
+  /* 地面 */
+  g+=`<rect x="0" y="${baseY}" width="${W}" height="${GRD}" fill="#6FBF5C"/>
+      <path d="M0,${baseY} q26,-9 52,0 q26,-9 52,0 q26,-9 52,0 q26,-9 52,0 q26,-9 52,0
+        q26,-9 52,0 q26,-9 52,0" fill="#8AD473" opacity=".85"/>`;
+  /* はじまりの家 */
+  g+=`<g><rect x="${W-72}" y="${baseY+14}" width="30" height="22" fill="#FFF1DA"
+      stroke="#3B2A1E" stroke-width="2.2"/>
+      <path d="M${W-76},${baseY+14} l19,-14 l19,14 z" fill="#FF8A3D" stroke="#3B2A1E" stroke-width="2.2"
+      stroke-linejoin="round"/>
+      <rect x="${W-61}" y="${baseY+24}" width="9" height="12" fill="#3B2A1E"/></g>`;
+  [26,60].forEach((x,i)=>{
+    g+=`<g><rect x="${x-2.5}" y="${baseY+22}" width="5" height="14" fill="#6B4A2E"/>
+      <circle cx="${x}" cy="${baseY+17}" r="11" fill="#3E9E4E" stroke="#3B2A1E" stroke-width="2"/></g>`;
+  });
+
+  if(!done.length){
+    g+=`<rect x="${cx-40}" y="${baseY-14}" width="80" height="14" fill="#CFC0A8"
+        stroke="#3B2A1E" stroke-width="2.4"/>
+        <text x="${cx}" y="${baseY-30}" text-anchor="middle" class="tnote">
+        まだ土台だけ。1冊読み終えると 最初の層がのります</text>`;
+  }else{
+    /* 塔 */
+    let acc=0;
+    done.forEach((b,i)=>{
+      const R=regionOf(b), u0=uOf(acc), u1=uOf(acc+b.p);
+      const y1=baseY-u1, hgt=Math.max(3,u1-u0), w=wOf((u0+u1)/2);
+      g+=`<g class="tlayer" data-id="${esc(b.id)}">
+        <rect x="${(cx-w/2).toFixed(1)}" y="${y1.toFixed(1)}" width="${w.toFixed(1)}"
+          height="${hgt.toFixed(1)}" fill="${R?R.hue:"#2FA85C"}" stroke="#3B2A1E"
+          stroke-width="2"/>`;
+      if(hgt>11){
+        const nw=Math.max(1,Math.floor(w/26));
+        for(let k=0;k<nw;k++){
+          const wx=cx-w/2+ (w/(nw+1))*(k+1);
+          g+=`<rect x="${(wx-3.2).toFixed(1)}" y="${(y1+hgt/2-3.6).toFixed(1)}"
+            width="6.4" height="7.2" rx="1.4" fill="#FFF0BC" stroke="#3B2A1E" stroke-width="1.2"/>`;
+        }
+      }
+      g+=`<title>${esc(b.t)}（${b.p}ページ）</title></g>`;
+      acc+=b.p;
+    });
+    /* 屋根と旗 */
+    const tw=wOf(towerU), ty=baseY-towerU;
+    g+=`<path d="M${cx-tw/2-6},${ty} L${cx},${ty-30} L${cx+tw/2+6},${ty} z"
+        fill="#FF8A3D" stroke="#3B2A1E" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M${cx},${ty-30} L${cx},${ty-56}" stroke="#3B2A1E" stroke-width="2.6"
+        stroke-linecap="round"/>
+        <path d="M${cx},${ty-56} L${cx+26},${ty-49} L${cx},${ty-42} z"
+        fill="${petHue()}" stroke="#3B2A1E" stroke-width="2.2" stroke-linejoin="round"/>`;
+    /* 積みあげ中の本は半透明で次の層として見せる */
+    if(wipAll.length){
+      const b=wipAll[0], s=st(b.id), R=regionOf(b);
+      const u2=uOf(donePages+s.page)-towerU, w=wOf(towerU);
+      if(u2>2) g+=`<rect x="${(cx-w/2).toFixed(1)}" y="${(ty-u2).toFixed(1)}"
+        width="${w.toFixed(1)}" height="${u2.toFixed(1)}" fill="${R?R.hue:"#2FA85C"}"
+        opacity=".38" stroke="#3B2A1E" stroke-width="1.8" stroke-dasharray="4 3"/>`;
+    }
+  }
+  /* つぎの景色 */
+  const nb=BANDS.find(b=>b.p>donePages);
+  if(nb) g+=`<text x="${cx}" y="${Math.max(20,baseY-towerU-84)}" text-anchor="middle"
+    class="tnote">あと ${(nb.p-donePages).toLocaleString()} ページで「${nb.n}」</text>`;
+
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.innerHTML=g;
+  const cw=Math.max(230,(box.clientWidth||340)-4), sc=cw/W;
+  svg.style.width=cw+"px"; svg.style.height=(H*sc)+"px";
+  svg.querySelectorAll(".tlayer").forEach(el=>{
+    el.style.cursor="pointer"; el.onclick=()=>openLog(el.dataset.id); });
+  box.scrollTop=0;
+
+  const cur=bandOf(donePages);
+  document.getElementById("towerStat").innerHTML=
+    `${done.length} 層 ／ 累計 ${donePages.toLocaleString()} ページ<br>
+     いまは <b>${cur.n}</b> — ${cur.d}`;
+  document.getElementById("bands").innerHTML=BANDS.map(b=>{
+    const got=donePages>=b.p;
+    return `<div class="bandrow ${got?"got":""}">
+      <span class="bdot" style="background:${b.c}"></span>
+      <b>${b.n}</b><em>${b.d}</em>
+      <span class="bp">${b.p.toLocaleString()}p</span></div>`;
+  }).join("")+`<div class="bandrow"><span class="bdot" style="background:#0A1038"></span>
+    <b>その先</b><em>星がふえていく。終わりはありません</em><span class="bp">∞</span></div>`;
+}
+
+/* ============================================================
+   8. 記録
+   ============================================================ */
+let curId=null, curComp=0;
+const dlg=document.getElementById("dlg");
+function openLog(id){
+  const b=findBook(id); if(!b) return;
+  curId=id; const s=st(id); curComp=s.comp||0;
+  document.getElementById("dTitle").textContent=b.t;
+  document.getElementById("dSub").textContent=`${b.a} ／ ぜんぶで ${b.p} ページ`;
+  const i=document.getElementById("dPage");
+  i.max=b.p; i.min=s.page; i.value=s.page||""; i.placeholder=`${s.page} 〜 ${b.p}`;
+  document.getElementById("dPageHint").textContent=
+    s.page? `前は ${s.page} ページまで。戻しての記録はできません。` : "1ページ目から はじめます。";
+  document.getElementById("dSum").value=s.sum||"";
+  setComp(curComp); preview(); dlg.showModal(); setTimeout(()=>i.focus(),30);
+}
+function setComp(c){ curComp=c;
+  document.querySelectorAll("#dComp button").forEach(b=>
+    b.setAttribute("aria-pressed",String(+b.dataset.c===c)));
+  document.getElementById("dSumWrap").hidden=c!==5;
+  const h=document.getElementById("dCompHint");
+  h.textContent=c===5? "5のときは一行まとめが要ります。書けたことが分かった証拠になります。"
+    : "低くつけても損はしません。5のときだけ一行まとめが要ります。";
+  h.className=c===5?"hint warn":"hint"; preview();
+}
+function preview(){
+  const b=findBook(curId); if(!b) return;
+  const v=Math.min(b.p,Math.max(0,+document.getElementById("dPage").value||0));
+  const prev=st(curId).page, delta=Math.max(0,v-prev), fin=v>=b.p&&prev<b.p;
+  let g=Math.round(delta*mult(b));
+  if(fin) g=Math.round((delta*mult(b)+b.p*0.3*mult(b))*(curComp>=5?1.3:curComp>=4?1.15:1.0));
+  const today=new Date().toISOString().slice(0,10), used=S.dayXp[today]||0;
+  const cap=Math.min(g,Math.max(0,DAY_CAP-used));
+  document.getElementById("dGain").textContent = delta<=0? "" :
+    `+${cap} XP ・ 霧を ${Math.floor(delta/12)} こ たべる`
+    + (cap<g?`（きょうの上限 ${DAY_CAP} XP）`:"") + (fin?" ・ 読了！":"");
+}
+document.getElementById("dPage").addEventListener("input",preview);
+document.querySelectorAll("#dComp button").forEach(b=>
+  b.addEventListener("click",()=>setComp(+b.dataset.c)));
+document.getElementById("dCancel").onclick=()=>dlg.close();
+document.getElementById("dSave").onclick=()=>{
+  const b=findBook(curId), s=st(curId);
+  const v=Math.min(b.p,Math.max(s.page,+document.getElementById("dPage").value||0));
+  if(v<=s.page&&curComp===(s.comp||0)){ toast("かわっていません"); return; }
+  const fin=v>=b.p&&s.page<b.p;
+  if(v>=b.p&&curComp===5&&!document.getElementById("dSum").value.trim()){
+    toast("5のときは一行まとめが要ります"); document.getElementById("dSum").focus(); return; }
+  const today=new Date().toISOString().slice(0,10), before=totalXp();
+  S.rec[curId]={page:v, comp:curComp, sum:document.getElementById("dSum").value.trim(),
+    at: s.at||Date.now(), mult: s.mult||baseMult(b)};   /* 倍率を凍結 */
+  if(fin) S.rec[curId].at=Date.now();
+  S.dayXp[today]=(S.dayXp[today]||0)+Math.max(0,totalXp()-before);
+  if(S.lastDate!==today){
+    const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
+    S.streak=S.lastDate===y?(S.streak||0)+1:1; S.lastDate=today;
+  }
+  save(); dlg.close(); eat(); selected=curId; renderAll();
+  toast(fin? `「${b.t}」よみおわった！ ${S.name}が よろこんでいる` : `${v}ページまで きろくした`);
+};
+/* 記録した瞬間、地図が明るくなり相棒が食べる */
+function eat(){
+  const m=document.getElementById("mapbox");
+  m.classList.remove("eating"); void m.offsetWidth; m.classList.add("eating");
+  S._just=true; setTimeout(()=>{ S._just=false; renderPet(); },2600);
+  document.querySelectorAll(".kpi").forEach((k,i)=>{
+    setTimeout(()=>{ k.classList.add("hit"); setTimeout(()=>k.classList.remove("hit"),800); },i*55);
+  });
+}
+
+/* ============================================================
+   9. 追加・お知らせ・その他
+   ============================================================ */
+const addDlg=document.getElementById("addDlg"), nameDlg=document.getElementById("nameDlg");
+document.getElementById("addBtn").onclick=()=>addDlg.showModal();
+document.getElementById("aCancel").onclick=()=>addDlg.close();
+document.getElementById("aSave").onclick=()=>{
+  const t=document.getElementById("aTitle").value.trim();
+  const a=document.getElementById("aAuthor").value.trim()||"著者不明";
+  const p=Math.max(1,+document.getElementById("aPages").value||200);
+  if(!t){ toast("書名を入れてください"); return; }
+  S.extra.push({id:"p:"+t+"|"+a, div:"自分の本", rank:null, cat:"未踏の海",
+    t, sub:"", a, p, origin:"personal"});
+  save(); addDlg.close();
+  document.getElementById("aTitle").value=""; document.getElementById("aAuthor").value="";
+  renderAll(); toast(`「${t}」を 未踏の海に 植えた`);
+};
+addDlg.querySelector("form").addEventListener("submit",e=>{
+  e.preventDefault(); document.getElementById("aSave").click(); });
+document.getElementById("renameBtn").onclick=()=>{
+  document.getElementById("nName").value=S.name; nameDlg.showModal(); };
+document.getElementById("nCancel").onclick=()=>nameDlg.close();
+document.getElementById("nSave").onclick=()=>{
+  const v=document.getElementById("nName").value.trim();
+  if(v){ S.name=v; save(); renderPet(); toast(`これから「${v}」だ`); }
+  nameDlg.close();
+};
+nameDlg.querySelector("form").addEventListener("submit",e=>{
+  e.preventDefault(); document.getElementById("nSave").click(); });
+document.getElementById("dlgForm").addEventListener("submit",e=>{
+  e.preventDefault(); document.getElementById("dSave").click(); });
+
+function showNews(msg){
+  const slot=document.getElementById("newsSlot");
+  slot.innerHTML=`<div class="news"><span>${esc(msg)}</span><button id="newsX">みる</button></div>`;
+  document.getElementById("newsX").onclick=()=>{ slot.innerHTML="";
+    document.querySelector('.tabs button[data-v="map"]').click(); };
+}
+
+/* ---------- 表示 ---------- */
+function renderKpi(){
+  const xp=totalXp(), L=levelOf(xp);
+  document.getElementById("kLv").textContent=L.lv;
+  document.getElementById("kXp").textContent=xp.toLocaleString();
+  document.getElementById("kDone").innerHTML=doneCount()+"<small>冊</small>";
+  document.getElementById("kPg").textContent=pagesRead().toLocaleString();
+  document.getElementById("kStreak").innerHTML=(S.streak||0)+"<small>日</small>";
+  document.getElementById("kCo").innerHTML=
+    books().filter(b=>b.origin==="company"&&isDone(b)).length+"<small>冊</small>";
+}
+function renderAll(){ drawMap(); renderKpi(); renderPet(); renderSpot();
+  renderShelf(); renderBuddyTab(); renderTower(); }
+
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>
+    x.setAttribute("aria-selected",String(x===b)));
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
+  document.getElementById("v-"+b.dataset.v).classList.add("on");
+});
+document.querySelectorAll(".fbtn").forEach(b=>b.onclick=()=>{
+  filter=b.dataset.f;
+  document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+  renderShelf();
+});
+
+let tT; function toast(m){ const t=document.getElementById("toast");
+  t.textContent=m; t.classList.add("on"); clearTimeout(tT);
+  tT=setTimeout(()=>t.classList.remove("on"),2800); }
+
+document.getElementById("themeBtn").onclick=()=>{
+  const c=document.documentElement.getAttribute("data-theme");
+  const dark=c? c==="dark" : matchMedia("(prefers-color-scheme:dark)").matches;
+  document.documentElement.setAttribute("data-theme",dark?"light":"dark");
+  toast(dark?"ひるの ミストランズ":"よるの ミストランズ");
+};
+document.getElementById("demoBtn").onclick=()=>{
+  const pick=(t,a)=>SEED_BOOKS.find(b=>b.t===t&&b.a===a).id;
+  const now=Date.now();
+  S.rec={
+    [pick("コンサルが「最初の3年間」で学ぶコト","高松 智史")]:{page:339,comp:4,at:now-6*864e5,mult:1.5},
+    [pick("ロジカル・プレゼンテーション","高田 貴久")]:{page:298,comp:3,at:now-4*864e5,mult:1.5},
+    [pick("イシューからはじめよ","安宅 和人")]:{page:267,comp:5,
+      sum:"解くべき問いを絞ることが、努力量より先に成果を決める。",at:now-2*864e5,mult:1.5},
+    [pick("40字要約で仕事はどんどんうまくいく","原田 虔一郎")]:{page:96,comp:3,at:now,mult:1.3},
+    [pick("コンサルが「マネージャー時代」に学ぶコト","高松 智史")]:{page:140,comp:3,at:now,mult:1.3}
+  };
+  S.streak=4; S.lastDate=new Date().toISOString().slice(0,10); S.dayXp={}; S.pat=S.pat||7;
+  save(); selected=null; renderAll(); eat();
+  toast("サンプルの進捗を入れました。霧が減っています");
+};
+/* 推薦図書が増えた場合のシミュレーション。新しい大分類・カテゴリも足して汎用性を確かめる */
+const SYNTH=[
+  ["コンサルティング","課題解決","事実から筋を立てる技術","佐倉 実","",262],
+  ["コンサルティング","課題解決","前提を疑う会議のつくり方","湯浅 拓真","",214],
+  ["コンサルティング","アウトプット","一枚で伝える資料設計","北條 みどり","",188],
+  ["コンサルティング","アウトプット","数字で語る提案書","三雲 隆","",240],
+  ["コンサルティング","マネジメント","任せる技術","菅野 那月","",206],
+  ["コンサルティング","マネジメント","1on1のはじめかた","榎並 佳世","",178],
+  ["コンサルティング","コミュニケーション","反論されない説明のしかた","立花 悠","",196],
+  ["コンサルティング","交渉","合意をつくる交渉術","日下部 亮","",284],
+  ["コンサルティング","交渉","値決めの思考法","森重 千夏","",232],
+  ["データサイエンス","統計学","因果推論の入り口","相良 健","",318],
+  ["データサイエンス","統計学","実験計画とA/Bテスト","黒木 冴","",266],
+  ["データサイエンス","機械学習","評価指標の選び方","真野 湊","",244],
+  ["データサイエンス","生成AI","RAGの設計と運用","朝比奈 蓮","",290],
+  ["データサイエンス","データ基盤","データ基盤のつくりかた","戸田 志乃","",352],
+  ["データサイエンス","データ基盤","SQLで考える業務分析","南 一輝","",278],
+  ["デザイン","UX","使いやすさの原理","羽鳥 咲","",224],
+  ["デザイン","UX","ユーザー調査の実務","堂島 光","",258],
+  ["デザイン","情報設計","情報の並べ方","四方 里佳","",198],
+  ["デザイン","情報設計","図解の文法","江木 総一","",212],
+  ["営業","提案","課題を売る営業","比嘉 陽向","",236],
+  ["営業","提案","失注から学ぶ","槙原 佳","",184],
+  ["営業","顧客理解","顧客の言葉を疑う","土田 涼","",208],
+  ["営業","顧客理解","継続してもらう設計","宇野辺 澪","",250],
+  ["ファイナンス","会計","決算書の読みどころ","近江 諒","",296],
+  ["ファイナンス","会計","管理会計のはじめ","高瀬 まり","",244],
+  ["ファイナンス","投資判断","投資判断のものさし","仙道 圭","",268],
+  ["ファイナンス","投資判断","事業計画の数字","波多野 慶","",222],
+  ["ファイナンス","投資判断","リスクを言葉にする","小泉 藍","",204],
+  ["デザイン","UX","プロトタイプで決める","三原 匠","",190],
+  ["営業","提案","価格を守る話法","柏木 遥","",176]
+];
+document.getElementById("growBtn").onclick=()=>{
+  if(S.synth.length){ S.synth=[]; save(); renderAll();
+    toast("推薦図書を元の20冊に戻しました"); return; }
+  const rk={};
+  S.synth=SYNTH.map(r=>{
+    rk[r[0]]=(rk[r[0]]||SEED_BOOKS.filter(b=>b.div===r[0]).length)+1;
+    return {id:"c:"+r[2]+"|"+r[3], div:r[0], rank:rk[r[0]], cat:r[1],
+      t:r[2], sub:r[4], a:r[3], p:r[5], origin:"company"};
+  });
+  save(); renderAll();
+  showNews(`霧の向こうに 新しい土地が 見えた（推薦図書 +${SYNTH.length}冊）`);
+  toast("大分類3つ・カテゴリ7つが増えました。既存の島は動いていません");
+};
+document.getElementById("resetBtn").onclick=()=>{
+  const nm=S.name;
+  S={rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:nm, lastDate:null, streak:0,
+     ord:{}, gen:1, genBase:0, ancestors:[]}; mapFocus=null;
+  save(); selected=null; document.getElementById("newsSlot").innerHTML="";
+  renderAll(); toast("きろくを 消しました");
+};
+
+renderAll();
+</script>
+
+</body>
+</html>
