@@ -568,12 +568,17 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
     <button role="tab" aria-selected="true" data-v="map">地図</button>
     <button role="tab" aria-selected="false" data-v="shelf">本だな</button>
     <button role="tab" aria-selected="false" data-v="buddy">相棒</button>
-    <button role="tab" aria-selected="false" data-v="exped">遠征</button>
+    <button role="tab" aria-selected="false" data-v="items">おみやげ</button>
     <button role="tab" aria-selected="false" data-v="tower">知の塔</button>
   </nav>
 
   <section class="view on" id="v-map">
     <div class="contnav" id="contNav"></div>
+    <div class="contnav" id="kindNav">
+      <button class="cbtn" data-k="all" aria-pressed="true">すべて</button>
+      <button class="cbtn" data-k="company" aria-pressed="false">会社の本</button>
+      <button class="cbtn" data-k="personal" aria-pressed="false">自分の本</button>
+    </div>
     <div class="mapbox" id="mapbox">
       <svg id="map" role="img" aria-label="霧の大陸。読み進めるほど霧が減り、地面の色が戻る"></svg>
       <div class="flashwrap"></div>
@@ -584,6 +589,16 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       <span><span class="chip rd"></span>霧 — 読むと相棒が食べてくれる</span>
     </div>
     <div class="spot empty" id="spot">地図の建物や木をタップすると、その本のことが出ます。</div>
+
+    <div class="panel" style="margin-top:16px">
+      <h3>土地に送り出す</h3>
+      <p>置いておくと、1時間に1度なにかを見つけてきます。いつでも入れ替えられます。</p>
+      <div class="slots" id="expSlots"></div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h3>便り</h3>
+      <div class="loglist" id="expLog"></div>
+    </div>
   </section>
 
   <section class="view" id="v-shelf">
@@ -631,22 +646,11 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
     </div>
   </section>
 
-  <section class="view" id="v-exped">
+  <section class="view" id="v-items">
     <div class="panel">
-      <h3>土地に送り出す</h3>
-      <p>置いておくと、1時間に1度なにかを見つけてきます。いつでも入れ替えられます。</p>
-      <div class="slots" id="expSlots"></div>
-    </div>
-    <div class="two" style="margin-top:16px">
-      <div class="panel">
-        <h3>便り</h3>
-        <div class="loglist" id="expLog"></div>
-      </div>
-      <div class="panel">
-        <h3>おみやげ</h3>
-        <div class="kv" id="expCount" style="margin-bottom:10px"></div>
-        <div class="itemgrid" id="expItems"></div>
-      </div>
+      <h3>おみやげ</h3>
+      <div class="kv" id="expCount" style="margin-bottom:12px"></div>
+      <div class="itemgrid" id="expItems"></div>
     </div>
   </section>
 
@@ -740,6 +744,8 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       <input type="number" id="aPages" min="1" value="200">
       <label for="aCat">分野</label>
       <select id="aCat"></select>
+      <p class="hint" id="aCatNote"></p>
+      <span id="aBook" hidden></span>
     </div>
   </div>
   <div class="dact">
@@ -1687,7 +1693,7 @@ function E(n,a){ const e=document.createElementNS(NS,n);
 function pstr(p){ return p.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" "); }
 let selected=null;
 
-let mapFocus=null;
+let mapFocus=null, mapKind="all";
 function visibleConts(W){
   if(mapFocus==="all") return W.conts;
   const c=W.conts.find(C=>C.name===mapFocus);
@@ -1810,8 +1816,9 @@ function drawMap(){
 
     /* 街道: 読了済み + 次の1本だけ(冊数が増えても線が増えない) */
     if(open){
-      const bs=C.regions.flatMap(R=>R.books).filter(b=>b.origin==="company")
-        .sort((a,b)=>a.rank-b.rank);
+      const bs=(mapKind==="personal")? []
+        : C.regions.flatMap(R=>R.books).filter(b=>b.origin==="company")
+            .sort((a,b)=>a.rank-b.rank);
       let k=0; while(k<bs.length&&isDone(bs[k])) k++;
       if(k>1) gRoad.appendChild(E("path",{class:"road",
         d:"M"+bs.slice(0,k).map(b=>b._x.toFixed(1)+","+b._y.toFixed(1)).join("L")}));
@@ -1824,6 +1831,8 @@ function drawMap(){
   VC.forEach(C=>C.regions.forEach(R=>{
     const ro=contOpen(C)&&rgnOpen(R);
     R.books.forEach(b=>{
+      if(mapKind==="company" && b.origin!=="company") return;
+      if(mapKind==="personal" && b.origin==="company") return;
       if(!ro && !(b.origin==="company"&&b.rank<=3)) return;
       const s=st(b.id), prog=Math.min(1,s.page/b.p), done=prog>=1;
       const g=E("g",{class:`lm ${b.origin} ${done?"done":""} ${ro?"":"veiled"}`,
@@ -2319,8 +2328,9 @@ function eat(){
    ============================================================ */
 /* 自分の本も会社の本と同じ地域に入れるため、分野を選ぶ。
    会社のリストにある分野＋一般的な分野から選べる */
-const GENERIC_CATS=[["その他","哲学・思想"],["その他","歴史・地理"],["その他","芸術・音楽"],
-  ["その他","語学"],["その他","小説・文学"],["その他","自然科学"],["その他","産業・経済"],
+const GENERIC_CATS=[["その他","論理・思考"],["その他","経営・組織"],["その他","技術・実務"],
+  ["その他","心理・対人"],["その他","産業・経済"],["その他","自然科学"],["その他","哲学・思想"],
+  ["その他","歴史・地理"],["その他","芸術・音楽"],["その他","語学"],["その他","小説・文学"],
   ["その他","教養・総記"],["その他","未踏の海"]];
 function catOptions(){
   const seen={}, out=[];
@@ -2330,6 +2340,49 @@ function catOptions(){
     if(!seen[k]){ seen[k]=1; out.push([b.div||"その他",b.cat||"未踏の海"]); } });
   GENERIC_CATS.forEach(c=>{ const k=c[0]+"|"+c[1]; if(!seen[k]){ seen[k]=1; out.push(c); } });
   return out;
+}
+/* 日本十進分類法(NDC)の番号から軸を決める。細かいものから順に見る */
+const NDC_RULE=[
+ [7,8,0],        /* 007 情報学・人工知能 → 理 */
+ [410,420,0],    /* 数学 → 理 */
+ [350,360,0],    /* 統計 → 理 */
+ [140,150,3],    /* 心理学 → 情 */
+ [360,380,3],    /* 社会・教育 → 情 */
+ [100,200,6],    /* 哲学・宗教 → 玄 */
+ [200,300,7],    /* 歴史・地理・伝記 → 史 */
+ [380,400,7],    /* 風俗・民俗・国防 → 史 */
+ [310,330,1],    /* 政治・法律 → 統 */
+ [335,338,1],    /* 企業・経営 → 統 */
+ [330,350,4],    /* 経済・財政・金融 → 産 */
+ [300,310,1],    /* 社会科学総記 → 統 */
+ [400,500,5],    /* 自然科学・医学 → 究 */
+ [596,598,8],    /* 料理・家事 → 芸 */
+ [500,600,2],    /* 技術・工学 → 匠 */
+ [690,700,11],   /* 通信 → 総 */
+ [600,700,4],    /* 産業・商業・運輸 → 産 */
+ [700,800,8],    /* 芸術・スポーツ → 芸 */
+ [800,900,9],    /* 言語・語学 → 語 */
+ [900,1000,10],  /* 文学・小説 → 詩 */
+ [0,100,11]      /* 総記 → 総 */
+];
+function axisFromNDC(code){
+  const c=parseFloat(code);
+  if(isNaN(c)) return -1;
+  for(const r of NDC_RULE) if(c>=r[0] && c<r[1]) return r[2];
+  return -1;
+}
+/* 軸に対応する分野。会社のリストに合う分類があればそれを優先する */
+const AXIS_CAT=[["その他","論理・思考"],["その他","経営・組織"],["その他","技術・実務"],
+ ["その他","心理・対人"],["その他","産業・経済"],["その他","自然科学"],["その他","哲学・思想"],
+ ["その他","歴史・地理"],["その他","芸術・音楽"],["その他","語学"],["その他","小説・文学"],
+ ["その他","教養・総記"]];
+function catIndexForAxis(ai,opts){
+  if(ai<0) return -1;
+  for(let i=0;i<opts.length;i++)
+    for(const h of CAT_HINT) if(h[1]===ai && h[0].test(opts[i][1])) return i;
+  const g=AXIS_CAT[ai];
+  for(let i=0;i<opts.length;i++) if(opts[i][0]===g[0]&&opts[i][1]===g[1]) return i;
+  return -1;
 }
 function guessCat(txt,opts){
   let ai=-1;
@@ -2371,7 +2424,11 @@ async function lookupIsbn(isbn){
     const q=encodeURIComponent('isbn="'+isbn+'"');
     const r=await fetch("https://ndlsearch.ndl.go.jp/api/sru?operation=searchRetrieve"+
       "&recordSchema=dcndl&maximumRecords=3&query="+q);
-    const xml=new DOMParser().parseFromString(await r.text(),"application/xml");
+    const raw=await r.text();
+    /* 分類番号(NDC)。これで分野を自動で決める */
+    const nm=raw.match(/class\/ndc\d*\/([\d.]+)/);
+    if(nm) out.ndc=nm[1];
+    const xml=new DOMParser().parseFromString(raw,"application/xml");
     const pick=(node,tag)=>{
       const els=node.getElementsByTagNameNS("*",tag);
       return els.length? (els[0].textContent||"").trim() : "";
@@ -2399,7 +2456,17 @@ function fillFound(b){
   const img=$("aCover");
   if(b.cover){ img.hidden=false; img.src=b.cover; img.onerror=()=>{img.hidden=true;}; }
   else img.hidden=true;
-  fillCatSelect((b.title||"")+(b.publisher||""));
+  const sel=$("aCat"), opts=sel._opts||[];
+  const ai=axisFromNDC(b.ndc), ci=catIndexForAxis(ai,opts);
+  const note=$("aCatNote");
+  if(ci>=0){
+    sel.value=String(ci);
+    note.textContent=`分類 NDC ${b.ndc}（${AXES[ai].d}）から自動で選びました。違っていれば直せます`;
+  }else{
+    fillCatSelect((b.title||"")+(b.publisher||""));
+    note.textContent="書名から推定しました。違っていれば直せます";
+  }
+  $("aBook")._ndc=b.ndc||null;
 }
 async function handleIsbn(raw){
   const isbn=normIsbn(raw);
@@ -2619,6 +2686,7 @@ document.getElementById("addBtn").onclick=()=>{
   ["aIsbn","aTitle","aAuthor"].forEach(k=>$(k).value="");
   $("aPages").value=200; $("aFound").hidden=true; $("aCover").hidden=true;
   $("aLookMsg").className="hint"; $("aLookMsg").textContent="";
+  $("aCatNote").textContent=""; $("aBook")._ndc=null;
   const hit=$("aHit"); if(hit) hit.remove();
   fillCatSelect("");
   $("aScan").hidden=!canScan;
@@ -2637,7 +2705,8 @@ document.getElementById("aSave").onclick=()=>{
   stopCam();
   const sel=$("aCat"), oc=(sel._opts&&sel._opts[+sel.value])||["その他","未踏の海"];
   S.extra.push({id: isbn? "p:isbn:"+isbn : "p:"+t+"|"+a, div:oc[0], rank:null,
-    cat:oc[1], t, sub:"", a, p, origin:"personal", isbn:isbn||null});
+    cat:oc[1], t, sub:"", a, p, origin:"personal", isbn:isbn||null,
+    ndc:($("aBook")._ndc)||null});
   save(); addDlg.close();
   renderAll(); toast(`「${t}」を 未踏の海に 植えた`);
 };
@@ -3041,6 +3110,12 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
     x.setAttribute("aria-selected",String(x===b)));
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
   document.getElementById("v-"+b.dataset.v).classList.add("on");
+});
+document.querySelectorAll("#kindNav .cbtn").forEach(b=>b.onclick=()=>{
+  mapKind=b.dataset.k;
+  document.querySelectorAll("#kindNav .cbtn").forEach(x=>
+    x.setAttribute("aria-pressed",String(x===b)));
+  drawMap();
 });
 document.querySelectorAll(".fbtn").forEach(b=>b.onclick=()=>{
   filter=b.dataset.f;
