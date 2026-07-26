@@ -11,9 +11,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Mistlands">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="manifest" href="/mistlands/manifest.webmanifest">
-<link rel="icon" href="/mistlands/icon-192.png" sizes="192x192" type="image/png">
-<link rel="apple-touch-icon" href="/mistlands/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta property="og:title" content="Mistlands — 霧を食べて育つ読書の相棒">
 <meta property="og:description" content="読んだページ数だけ霧が晴れ、その霧を食べて相棒が育つ読書記録アプリ。">
 <meta property="og:type" content="website">
@@ -23,13 +23,14 @@
 html,body{margin:0;padding:0}
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right)
      env(safe-area-inset-bottom) env(safe-area-inset-left)}
+/* アプリとして起動しているときは、サイトへ戻るリンクを出さない */
+.site-back{max-width:1120px;margin:14px auto 0;padding:0 clamp(14px,3vw,28px);
+  font:600 12px/1.7 system-ui,sans-serif;opacity:.62}
+@media (display-mode:standalone),(display-mode:fullscreen){ .site-back{display:none} }
 </style>
 </head>
 <body>
-<p style="max-width:1120px;margin:14px auto 0;padding:0 clamp(14px,3vw,28px);
-   font:600 12px/1.7 system-ui,sans-serif;opacity:.62">
-  <a href="/" style="color:inherit">&#8592; takeom5700 のアプリ一覧にもどる</a>
-</p>
+<p class="site-back"><a href="../" style="color:inherit">&#8592; takeom5700 のアプリ一覧にもどる</a></p>
 <style>
 /* ============================================================
    Mistlands v2
