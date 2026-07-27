@@ -442,6 +442,20 @@ input,textarea{width:100%; font:inherit; font-size:15px; padding:9px 12px; backg
 input[type=number]{font-family:var(--f-num)}
 textarea{font-size:13.5px; resize:vertical; min-height:60px}
 input:focus,textarea:focus{outline:none; border-color:var(--sun)}
+label.chk{display:flex; align-items:flex-start; gap:9px; font-size:13.5px; line-height:1.6;
+  margin:12px 0; cursor:pointer}
+label.chk input[type=checkbox]{width:auto; flex:none; margin-top:3px; accent-color:var(--sun)}
+.policytext{max-height:52vh; overflow-y:auto; font-size:13px; line-height:1.85;
+  border:2.5px solid var(--line); border-radius:var(--r); padding:14px 16px; background:var(--paper)}
+.policytext h4{font-family:var(--f-disp); font-size:14px; margin:14px 0 4px}
+.policytext h4:first-child{margin-top:0}
+.game-kpi{transition:none}
+html.plain-mode .game-kpi,
+html.plain-mode .tabs button[data-v="buddy"],
+html.plain-mode .tabs button[data-v="items"],
+html.plain-mode .tabs button[data-v="tower"],
+html.plain-mode .buddy-card,
+html.plain-mode .wearbar{display:none !important}
 .comp{display:flex; gap:6px}
 .comp button{flex:1; border:2.5px solid var(--line); background:var(--paper); padding:9px 0;
   font-family:var(--f-num); font-size:15px; border-radius:var(--r); transition:all .15s}
@@ -669,6 +683,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       <button class="btn sm quiet" id="themeBtn">いろを変える</button>
       <button class="btn sm quiet" id="muteBtn">音を消す</button>
       <button class="btn sm quiet" id="renameBtn">相棒の名前</button>
+      <button class="btn sm quiet" id="settingsBtn">設定</button>
     </div>
   </header>
 
@@ -701,8 +716,8 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   </section>
 
   <dl class="kpis" id="kpis">
-    <div class="kpi"><dt>レベル</dt><dd id="kLv">1</dd></div>
-    <div class="kpi"><dt>累計 XP</dt><dd id="kXp">0</dd></div>
+    <div class="kpi game-kpi"><dt>レベル</dt><dd id="kLv">1</dd></div>
+    <div class="kpi game-kpi"><dt>累計 XP</dt><dd id="kXp">0</dd></div>
     <div class="kpi"><dt>読了した本</dt><dd id="kDone">0<small>冊</small></dd></div>
     <div class="kpi"><dt>読んだページ</dt><dd id="kPg">0</dd></div>
     <div class="kpi"><dt>連続日数</dt><dd id="kStreak">0<small>日</small></dd></div>
@@ -878,6 +893,49 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   <div class="dact">
     <button type="button" class="btn quiet" id="dCancel">やめる</button>
     <button type="button" class="btn primary" id="dSave">記録する</button>
+  </div>
+</form></dialog>
+
+<dialog id="notesDlg"><form method="dialog" class="din">
+  <h2>感想メモ</h2>
+  <div class="sub" id="notesBookTitle">—</div>
+  <label for="noGood">面白かった点</label>
+  <textarea id="noGood" placeholder="ここが面白かった、役に立った、など"></textarea>
+  <label for="noBad">不満を感じた点</label>
+  <textarea id="noBad" placeholder="ここはイマイチだった、読みにくかった、など"></textarea>
+  <label for="noMemo">そのほかメモ</label>
+  <textarea id="noMemo" placeholder="自由に書き留めておきたいこと"></textarea>
+  <label class="chk"><input type="checkbox" id="noPublic">
+    このメモを公開する（将来オンラインになったとき、ほかの人にも見えるようにする）</label>
+  <div class="dact">
+    <button type="button" class="btn quiet" id="noCancel">やめる</button>
+    <button type="button" class="btn primary" id="noSave">保存する</button>
+  </div>
+</form></dialog>
+
+<dialog id="settingsDlg"><form method="dialog" class="din">
+  <h2>設定</h2>
+  <label class="chk"><input type="checkbox" id="setPublic">
+    ステータス・読んでる本を公開する（将来オンラインになったとき、ほかの人が見られるようにする）</label>
+  <label class="chk"><input type="checkbox" id="setNotify">
+    お知らせ・便りの通知を受け取る</label>
+  <label class="chk"><input type="checkbox" id="setPlain">
+    育成・そうび・ガチャなどのゲーム的な要素を非表示にして、本の進捗や記録だけを管理するツールとして使う</label>
+  <hr>
+  <label class="chk"><input type="checkbox" id="setConsent">
+    感想メモなどのデータを、製品改善の目的で出版社や第三者機関へ提供することに同意する</label>
+  <button type="button" class="btn quiet sm" id="openPrivacy" style="margin-top:6px">プライバシーポリシーを見る</button>
+  <div class="dact">
+    <button type="button" class="btn quiet" id="setCancel">閉じる</button>
+    <button type="button" class="btn primary" id="setSave">保存する</button>
+  </div>
+</form></dialog>
+
+<dialog id="privacyDlg"><form method="dialog" class="din">
+  <h2>プライバシーポリシー</h2>
+  <div class="policytext" id="policyText"></div>
+  <div class="dact">
+    <button type="button" class="btn primary" id="privacyClose">閉じる</button>
   </div>
 </form></dialog>
 
@@ -1221,10 +1279,13 @@ function load(){
       r.exped=r.exped||{}; r.items=r.items||{}; r.expLog=r.expLog||[]; r.star=r.star||{};
       r.equip=r.equip||{}; r.worn=r.worn||{};
       r.important=r.important||{}; r.fav=r.fav||{};
+      r.notes=r.notes||{};
+      r.settings=Object.assign({publicProfile:false, notify:true, plainMode:false, consent:false}, r.settings||{});
       r.pat=r.pat||0; r.name=r.name||"モヤ"; r.streak=r.streak||0; return r; } }catch(e){}
   return {rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ", star:{}, equip:{}, worn:{},
           lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[],
-          important:{}, fav:{}};
+          important:{}, fav:{}, notes:{},
+          settings:{publicProfile:false, notify:true, plainMode:false, consent:false}};
 }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 function books(){ return SEED_BOOKS.concat(S.synth, S.extra); }
@@ -2627,6 +2688,9 @@ function renderSpot(){
     <div class="mini" style="--v:${Math.min(1,s.page/b.p).toFixed(3)};margin-top:12px"><i></i></div>
     <div class="kv" style="margin-top:6px">${s.page} / ${b.p} ページ
       ${done?" ・ 読了！":` ・ のこり ${b.p-s.page}`} ・ ${xpOf(b)} XP</div>
+    <div style="margin-top:8px">
+      <button class="btn quiet sm" id="spotNotes">${hasNote(b)?"感想メモを見る・編集する":"感想メモを書く"}</button>
+    </div>
   </div>
   <div><button class="btn primary" id="spotLog">${s.page?"きろくする":"よみはじめる"}</button></div>`;
   document.getElementById("spotLog").onclick=()=>openLog(b.id);
@@ -2638,6 +2702,8 @@ function renderSpot(){
   if(fb) fb.onclick=()=>toggleFav(b.id);
   const cb=document.getElementById("spotCat");
   if(cb) cb.onclick=()=>openCatEdit(b.id);
+  const nb=document.getElementById("spotNotes");
+  if(nb) nb.onclick=()=>openNotes(b.id);
 }
 
 /* ============================================================
@@ -3368,6 +3434,8 @@ function fillCatSelect(txt){
   if(txt) sel.value=String(guessCat(txt,opts));
 }
 const addDlg=document.getElementById("addDlg"), nameDlg=document.getElementById("nameDlg");
+const notesDlg=document.getElementById("notesDlg"), settingsDlg=document.getElementById("settingsDlg"),
+  privacyDlg=document.getElementById("privacyDlg");
 const $=id=>document.getElementById(id);
 
 /* ---- バーコード(ISBN)から本を引く。openBDとNDLはどちらもCORS許可済みなので
@@ -3691,6 +3759,94 @@ document.getElementById("nSave").onclick=()=>{
 };
 nameDlg.querySelector("form").addEventListener("submit",e=>{
   e.preventDefault(); document.getElementById("nSave").click(); });
+
+/* ---------- 感想メモ ---------- */
+let notesBookId=null;
+function hasNote(b){ const n=(S.notes||{})[b.id]; return !!(n&&(n.good||n.bad||n.memo)); }
+function openNotes(id){
+  notesBookId=id; const b=findBook(id); if(!b) return;
+  const n=(S.notes||{})[id]||{good:"",bad:"",memo:"",public:false};
+  document.getElementById("notesBookTitle").textContent=b.t;
+  document.getElementById("noGood").value=n.good||"";
+  document.getElementById("noBad").value=n.bad||"";
+  document.getElementById("noMemo").value=n.memo||"";
+  document.getElementById("noPublic").checked=!!n.public;
+  notesDlg.showModal();
+}
+document.getElementById("noCancel").onclick=()=>notesDlg.close();
+document.getElementById("noSave").onclick=()=>{
+  const good=document.getElementById("noGood").value.trim();
+  const bad=document.getElementById("noBad").value.trim();
+  const memo=document.getElementById("noMemo").value.trim();
+  const pub=document.getElementById("noPublic").checked;
+  S.notes=S.notes||{};
+  if(!good&&!bad&&!memo) delete S.notes[notesBookId];
+  else S.notes[notesBookId]={good,bad,memo,public:pub};
+  save(); notesDlg.close(); renderAll();
+  toast("メモを保存しました");
+};
+notesDlg.querySelector("form").addEventListener("submit",e=>{
+  e.preventDefault(); document.getElementById("noSave").click(); });
+
+/* ---------- 設定・プライバシー ---------- */
+function applyPlainMode(){
+  const on=!!(S.settings&&S.settings.plainMode);
+  document.documentElement.classList.toggle("plain-mode",on);
+  if(on){
+    const cur=document.querySelector('.tabs button[aria-selected="true"]');
+    if(cur && ["buddy","items","tower"].indexOf(cur.dataset.v)>=0)
+      document.querySelector('.tabs button[data-v="map"]').click();
+  }
+}
+const PRIVACY_HTML=`
+<h4>集めるデータ</h4>
+<p>読んだページ数・読了記録・登録した本・そうびやおみやげなどの遊びの記録、
+そして本ごとに書く「感想メモ」（面白かった点・不満を感じた点・そのほかメモ）です。</p>
+<h4>保存される場所</h4>
+<p>今の版では、すべてこの端末のブラウザ内（localStorage）だけに保存されます。
+サーバーには送られません。「記録の持ち出し」機能で書き出したファイルを、
+あなた自身が別の端末に読み込ませたときだけ、その内容が移ります。</p>
+<h4>公開・共有について</h4>
+<p>感想メモには本ごとに「公開する」設定があります。オンにした感想メモだけが、
+将来オンライン機能ができたときに、ほかの人（同じ会社の人など）に見えるようになる
+予定です。オフのメモは、あなた自身だけのものとして扱われます。</p>
+<h4>第三者への提供について</h4>
+<p>製品改善のため、感想メモなどのデータを出版社や第三者機関へ提供することを
+検討する場合があります。これは設定画面の同意を明示的にオンにした場合に限られ、
+同意していない間は一切提供されません。同意はいつでも設定画面からオフに戻せます。</p>
+<h4>ゲーム的な要素について</h4>
+<p>設定で「ゲーム的な要素を非表示にする」をオンにすると、育成・そうび・ガチャなど
+遊びの要素を隠し、本の進捗や記録だけを扱う道具として使うことができます。</p>
+<h4>お問い合わせ</h4>
+<p>このアプリは試作段階です。内容について気になる点があれば、この記録の
+持ち主（利用者本人）を通じて開発者へご確認ください。</p>`;
+document.getElementById("settingsBtn").onclick=()=>{
+  const st=S.settings||{};
+  document.getElementById("setPublic").checked=!!st.publicProfile;
+  document.getElementById("setNotify").checked=st.notify!==false;
+  document.getElementById("setPlain").checked=!!st.plainMode;
+  document.getElementById("setConsent").checked=!!st.consent;
+  settingsDlg.showModal();
+};
+document.getElementById("setCancel").onclick=()=>settingsDlg.close();
+document.getElementById("openPrivacy").onclick=()=>{
+  document.getElementById("policyText").innerHTML=PRIVACY_HTML;
+  privacyDlg.showModal();
+};
+document.getElementById("privacyClose").onclick=()=>privacyDlg.close();
+document.getElementById("setSave").onclick=()=>{
+  S.settings={
+    publicProfile:document.getElementById("setPublic").checked,
+    notify:document.getElementById("setNotify").checked,
+    plainMode:document.getElementById("setPlain").checked,
+    consent:document.getElementById("setConsent").checked
+  };
+  save(); applyPlainMode(); settingsDlg.close(); renderAll();
+  toast("設定を保存しました");
+};
+settingsDlg.querySelector("form").addEventListener("submit",e=>e.preventDefault());
+privacyDlg.querySelector("form").addEventListener("submit",e=>e.preventDefault());
+applyPlainMode();
 document.getElementById("catCancel").onclick=()=>document.getElementById("catDlg").close();
 document.getElementById("catSave").onclick=()=>{
   const sel=document.getElementById("catSel"), o=(sel._opts||[])[+sel.value];
@@ -3833,7 +3989,8 @@ document.getElementById("xCheck").onclick=()=>{
 };
 function applyImport(next,msg){
   S=Object.assign({rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ",
-    lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[]}, next);
+    lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[],
+    notes:{}, settings:{publicProfile:false, notify:true, plainMode:false, consent:false}}, next);
   save(); selected=null; mapFocus=null; xferDlg.close(); renderAll(); toast(msg);
 }
 
@@ -4743,7 +4900,8 @@ document.getElementById("resetBtn").onclick=()=>{
   const nm=S.name;
   S={rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:nm, lastDate:null, streak:0,
      ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[],
-     star:{}, equip:{}, worn:{}}; mapFocus=null;
+     star:{}, equip:{}, worn:{}, important:{}, fav:{}, notes:{},
+     settings:{publicProfile:false, notify:true, plainMode:false, consent:false}}; mapFocus=null;
   save(); selected=null; document.getElementById("newsSlot").innerHTML="";
   renderAll(); toast("きろくを 消しました");
 };
