@@ -50,6 +50,8 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right)
   --sun-dp:#D9631C;       /* 小さい文字用に明度を落とした橙 */
   --berry:#FF4D6D;
   --leaf:#2FA85C;
+  --imp:#3B7DD8;
+  --favc:#E85C97;
   --fogc:#FFFFFF;
   --fog-sh:#CBBBA6;
   --line:color-mix(in srgb, var(--ink) 18%, transparent);
@@ -69,6 +71,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right)
     --paper:#241A12; --card:#33251A; --card2:#3D2C1E; --ink:#FFEFD8; --ink-sub:#C0A587;
     --sea:#123648; --sea2:#1B4C63; --fogc:#6E6152; --fog-sh:#2A1F16;
     --sun:#FFA057; --sun-dp:#FFB877; --berry:#FF6E88; --leaf:#4FCB80;
+    --imp:#6FA3EA; --favc:#F084B0;
     --line:color-mix(in srgb, var(--ink) 26%, transparent);
     --hair:color-mix(in srgb, var(--ink) 14%, transparent);
     --shadow:#150E08;
@@ -78,6 +81,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right)
   --paper:#241A12; --card:#33251A; --card2:#3D2C1E; --ink:#FFEFD8; --ink-sub:#C0A587;
   --sea:#123648; --sea2:#1B4C63; --fogc:#6E6152; --fog-sh:#2A1F16;
   --sun:#FFA057; --sun-dp:#FFB877; --berry:#FF6E88; --leaf:#4FCB80;
+  --imp:#6FA3EA; --favc:#F084B0;
   --line:color-mix(in srgb, var(--ink) 26%, transparent);
   --hair:color-mix(in srgb, var(--ink) 14%, transparent);
   --shadow:#150E08;
@@ -86,6 +90,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right)
   --paper:#FFF6E3; --card:#FFFFFF; --card2:#FFF1DA; --ink:#3B2A1E; --ink-sub:#7C6650;
   --sea:#B6E4F7; --sea2:#8FD4F2; --fogc:#FFFFFF; --fog-sh:#CBBBA6;
   --sun:#FF8A3D; --sun-dp:#D9631C; --berry:#FF4D6D; --leaf:#2FA85C;
+  --imp:#3B7DD8; --favc:#E85C97;
   --line:color-mix(in srgb, var(--ink) 18%, transparent);
   --hair:color-mix(in srgb, var(--ink) 10%, transparent);
   --shadow:color-mix(in srgb, var(--ink) 82%, transparent);
@@ -266,6 +271,8 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
 .wave{stroke:var(--sea2); stroke-width:2.4; fill:none; stroke-linecap:round; opacity:.75}
 .rgn-body{stroke:var(--ink); stroke-width:3; stroke-linejoin:round;
   transition:fill .8s ease-out, opacity .8s ease-out}
+.rgn-body.clickable{cursor:pointer}
+.rgn-body.sel{stroke:var(--sun); stroke-width:5}
 .rgn-shade{fill:color-mix(in srgb,var(--ink) 20%,transparent); stroke:none}
 .puff{transition:opacity .75s ease-out, transform .75s cubic-bezier(.3,1.4,.5,1)}
 .puff circle{fill:var(--fogc); stroke:var(--fog-sh); stroke-width:2}
@@ -287,6 +294,8 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
   paint-order:stroke; stroke:var(--card); stroke-width:5px; stroke-linejoin:round;
   pointer-events:none}
 .rlabel.dim{fill:var(--ink-sub)}
+.rlabel.clickable{pointer-events:auto; cursor:pointer; text-decoration:underline;
+  text-decoration-style:dotted; text-underline-offset:3px}
 .rsub{font-family:var(--f-num); font-size:10.5px; fill:var(--ink-sub); pointer-events:none;
   paint-order:stroke; stroke:var(--card); stroke-width:4px}
 .clabel{font-family:var(--f-disp); font-weight:800; font-size:19px; fill:var(--ink);
@@ -319,6 +328,9 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
 .tag.co{background:var(--sun); color:#fff}
 .tag.pe{background:var(--leaf); color:#fff}
 .tag.must{background:var(--berry); color:#fff}
+.tag.imp{background:var(--imp); color:#fff}
+.tag.fav{background:var(--favc); color:#fff}
+.tag.sm{font-size:9.5px; padding:1px 7px; border-width:1.5px; vertical-align:middle}
 .starbtn{cursor:pointer; background:var(--paper)}
 .starbtn:hover{border-color:var(--berry); color:var(--berry)}
 
@@ -512,8 +524,11 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 /* ---------- 遠征 ---------- */
 .slots{display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:11px}
 .slot{border:2.5px solid var(--line); border-radius:var(--r); padding:12px 13px; background:var(--paper);
-  display:flex; flex-direction:column; gap:9px; overflow:hidden; min-width:0}
+  display:flex; flex-direction:column; gap:9px; overflow:hidden; min-width:0;
+  font:inherit; color:inherit; text-align:left; cursor:pointer; width:100%}
 .slot.on{border-color:var(--ink); background:var(--card)}
+.slot:hover{border-color:var(--sun)}
+.slot:focus-visible{outline:3px solid var(--sun); outline-offset:2px}
 .slot-h{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
 .slot-h b{font-family:var(--f-disp); font-size:14.5px; overflow-wrap:anywhere}
 .slot-h em{font-style:normal; font-size:11px; color:var(--ink-sub)}
@@ -559,7 +574,6 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
   55%{transform:translate(13px,0)}
   80%{transform:translate(5px,-2px)}
 }
-.slot .btn{align-self:flex-start}
 .loglist{display:flex; flex-direction:column; gap:8px; max-height:min(52vh,420px);
   overflow-y:auto; overflow-x:hidden}
 .logrow{display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-radius:var(--r);
@@ -722,15 +736,17 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       <div class="flashwrap"></div>
     </div>
     <div class="mapfoot">
-      <span><span class="chip" style="background:var(--sun)"></span>会社の推薦図書（補助が出る）＝ 建物</span>
+      <span><span class="chip" style="background:var(--sun)"></span>会社推薦の本 ＝ 建物</span>
       <span><span class="chip" style="background:var(--leaf);border-radius:50% 50% 4px 4px"></span>自分で足した本 ＝ 木</span>
       <span><span class="chip rd"></span>霧 — 読むと相棒が食べてくれる</span>
     </div>
-    <div class="spot empty" id="spot">地図の建物や木をタップすると、その本のことが出ます。</div>
+    <div class="spot empty" id="spot">地図の建物や木、または地域の土地・地域名をタップすると、詳しいことが出ます。</div>
 
     <div class="panel" style="margin-top:16px">
       <h3>探検する</h3>
-      <p>相棒を土地へ送ると、20分に1度たよりが届きます。ときどき おみやげも見つけてきます。</p>
+      <p>地図の土地または地域名（<span style="text-decoration:underline;text-decoration-style:dotted">下線つきの文字</span>）をタップすると、
+        すぐ上の欄で相棒を送り出せます。20分に1度たよりが届き、ときどき おみやげも見つけてきます。
+        下の一覧は今の状況のまとめです。タップすると地図でその土地を開きます。</p>
       <div class="slots" id="expSlots"></div>
     </div>
     <div class="panel" style="margin-top:14px">
@@ -749,6 +765,14 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <button class="fbtn" data-f="reading" aria-pressed="false">読書中</button>
         <button class="fbtn" data-f="todo" aria-pressed="false">まだ</button>
         <button class="fbtn" data-f="done" aria-pressed="false">読了</button>
+      </div>
+    </div>
+    <div class="bar-row" style="margin-top:6px">
+      <div style="font-size:12px;color:var(--ink-sub)">並び替え</div>
+      <div class="grow">
+        <button class="fbtn sbtn" data-s="rank" aria-pressed="true">標準</button>
+        <button class="fbtn sbtn" data-s="important" aria-pressed="false">重要</button>
+        <button class="fbtn sbtn" data-s="fav" aria-pressed="false">お気に入り</button>
       </div>
     </div>
     <div id="idx"></div>
@@ -859,7 +883,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
 
 <dialog id="addDlg"><form method="dialog" class="din">
   <h2>自分の本を足す</h2>
-  <div class="sub">会社の推薦図書とは別枠。補助の対象にはなりません</div>
+  <div class="sub">会社推薦の本とは別枠です</div>
 
   <div class="scanbar">
     <button type="button" class="btn primary sm" id="aScan">カメラでかざす</button>
@@ -1069,8 +1093,7 @@ const PLACES={
   "交渉":["握手の砦","fort"], "データ基盤":["水路の遺跡","ruin"],
   "UX":["手ざわりの岬","cape"], "情報設計":["序列の階段","town"],
   "提案":["約束の広場","town"], "顧客理解":["傾聴の泉","spring"],
-  "会計":["勘定の鉱山","mine"], "投資判断":["天秤の峠","pass"],
-  "未踏の海":["未踏の海","sea"]
+  "会計":["勘定の鉱山","mine"], "投資判断":["天秤の峠","pass"]
 };
 const TERRAINS=[["の森","forest"],["の丘","hill"],["の谷","valley"],["の湖","lake"],
   ["の峠","pass"],["の泉","spring"],["の砦","fort"],["の遺跡","ruin"],["の鉱山","mine"]];
@@ -1193,13 +1216,15 @@ function load(){
   try{ const r=JSON.parse(localStorage.getItem(KEY));
     if(r&&r.rec){ r.extra=r.extra||[]; r.synth=r.synth||[]; r.dayXp=r.dayXp||{}; r.ord=r.ord||{};
       r.extra.forEach(b=>{ if(!b.div||b.div==="自分の本") b.div="その他";
-                           if(!b.cat) b.cat="未踏の海"; });
+                           if(!b.cat||b.cat==="未踏の海") b.cat="教養・総記"; });
       r.gen=r.gen||1; r.genBase=r.genBase||0; r.ancestors=r.ancestors||[];
       r.exped=r.exped||{}; r.items=r.items||{}; r.expLog=r.expLog||[]; r.star=r.star||{};
       r.equip=r.equip||{}; r.worn=r.worn||{};
+      r.important=r.important||{}; r.fav=r.fav||{};
       r.pat=r.pat||0; r.name=r.name||"モヤ"; r.streak=r.streak||0; return r; } }catch(e){}
   return {rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ", star:{}, equip:{}, worn:{},
-          lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[]};
+          lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[],
+          important:{}, fav:{}};
 }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 function books(){ return SEED_BOOKS.concat(S.synth, S.extra); }
@@ -1214,6 +1239,19 @@ function toggleStar(id){
   const b=books().find(x=>x.id===id); if(!b) return;
   S.star=S.star||{}; S.star[id]=!isStar(b); save(); renderAll();
   toast(S.star[id]? "最重要にしました" : "最重要をはずしました");
+}
+/* 「重要」「お気に入り」は最重要とは独立した、ユーザー自身が自由に付け外しするラベル */
+function isImportant(b){ return !!(S.important&&S.important[b.id]); }
+function toggleImportant(id){
+  const b=books().find(x=>x.id===id); if(!b) return;
+  S.important=S.important||{}; S.important[id]=!isImportant(b); save(); renderAll();
+  toast(S.important[id]? "「重要」にしました" : "「重要」をはずしました");
+}
+function isFav(b){ return !!(S.fav&&S.fav[b.id]); }
+function toggleFav(id){
+  const b=books().find(x=>x.id===id); if(!b) return;
+  S.fav=S.fav||{}; S.fav[id]=!isFav(b); save(); renderAll();
+  toast(S.fav[id]? "お気に入りにしました" : "お気に入りをはずしました");
 }
 
 /* XP倍率は読みはじめた時点で凍結する(順位の繰り下がりで過去のXPが減らないように) */
@@ -1253,9 +1291,10 @@ function buildWorld(){
   const bs=books(); S._ordDirty=false;
   const cmap={};
   bs.forEach(b=>{
-    /* 自分で足した本も会社の本と同じ地域に置く。
-       あとで会社の指定本になっても、同じ場所のまま引き継がれる */
-    const dv=b.div||"その他", ct=b.cat||"未踏の海";
+    /* エリア(大陸)は「会社が独自につけた部署名(div)」ではなく、本の内容から
+       決まる公平な12ジャンル(bookAxis)で分ける。どの会社の・どんな分類名の
+       本棚を取り込んでも同じ基準になり、自分で足した本も同じ軸なら同じ大陸に入る */
+    const dv=AXES[bookAxis(b)].d, ct=b.cat||AXES[bookAxis(b)].d;
     const C=cmap[dv]=cmap[dv]||{name:dv, i:ordIdx("cont",dv), regions:[], rmap:{}};
     let R=C.rmap[ct];
     if(!R){ R=C.rmap[ct]={name:ct, i:ordIdx("rgn:"+dv,ct), cont:C, books:[]}; C.regions.push(R); }
@@ -1344,7 +1383,6 @@ function regionStat(R){
    自分で入れた本が霧の向こうに隠れているのはおかしいため */
 function hasOwn(o){ return (o.regions||[o]).some(R=>(R.books||[]).some(b=>b.origin!=="company")); }
 function contOpen(C){
-  if(C.name==="その他"||C.name==="自分の本") return true;
   if(hasOwn(C)) return true;
   return levelOf(totalXp()).lv >= 1+2*C.i;
 }
@@ -1407,15 +1445,21 @@ const WORD_HINT=[
  [/教養|世界|未来|変わる|動いて|事典|まとめ|すべて|大全|地図/,11]
 ];
 const NAX=AXES.length;
+/* 本1冊の軸(ジャンル)を決める。会社の独自分類名でも、どんな分類名でも
+   必ずどこかの軸に落ち着く（ハッシュ フォールバック）。
+   相棒の育ち・地図のエリア分けの両方で これを使うことで、
+   「どの会社の・どんな分類名の本棚か」に関係なく 同じ基準でエリアが決まる */
+function bookAxis(b){
+  for(const h of CAT_HINT) if(h[0].test(b.cat||"")) return h[1];
+  return hash(b.cat||"x")%NAX;
+}
 function axisScores(){
   const v=new Array(NAX).fill(0);
   books().forEach(b=>{
     const read=Math.min(st(b.id).page,b.p);
     if(read<=0) return;
     const w=read/100;
-    let ai=-1;
-    for(const h of CAT_HINT) if(h[0].test(b.cat||"")){ ai=h[1]; break; }
-    if(ai<0) ai=hash(b.cat||"x")%NAX;    /* 知らない分類でも必ずどこかへ寄る */
+    const ai=bookAxis(b);
     v[ai]+=w;
     const txt=(b.t||"")+(b.sub||"");
     for(const h of WORD_HINT) if(h[0].test(txt)) v[h[1]]+=w*0.45;
@@ -2246,6 +2290,7 @@ function E(n,a){ const e=document.createElementNS(NS,n);
   for(const k in a) e.setAttribute(k,a[k]); return e; }
 function pstr(p){ return p.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" "); }
 let selected=null;
+let selectedRegion=null; /* 地域そのものをタップしたとき（探検の管理をここで完結させる） */
 
 let mapFocus=null, mapKind="all";
 function visibleConts(W){
@@ -2270,7 +2315,7 @@ function drawMap(){
   if(mapFocus===null){
     let last=null, lt=-1;
     books().forEach(b=>{ const s=st(b.id); if(s.at&&s.at>lt){lt=s.at; last=b;} });
-    mapFocus = last? (last.origin==="company"?last.div:"自分の本") : (W.conts[0]||{}).name;
+    mapFocus = last? AXES[bookAxis(last)].d : (W.conts[0]||{}).name;
   }
   if(mapFocus!=="all" && !W.conts.some(C=>C.name===mapFocus))
     mapFocus=(W.conts[0]||{}).name;
@@ -2373,9 +2418,15 @@ function drawMap(){
       const s=regionStat(R), ro=open&&rgnOpen(R);
       /* 地面。霧が濃いほど色が抜ける */
       if(!open) gLand.appendChild(E("polygon",{points:pstr(R.poly.map(q=>[q[0]+5,q[1]+7])), class:"rgn-shade"}));
-      const land=E("polygon",{points:pstr(R.poly), class:"rgn-body"});
+      const land=E("polygon",{points:pstr(R.poly),
+        class:"rgn-body"+(ro?" clickable":"")+(ro&&selectedRegion===R.name?" sel":"")});
       land.setAttribute("fill", ro? R.hue : "#9E927F");
       land.style.opacity = ro? (0.42+0.58*s.ratio).toFixed(2) : "0.5";
+      if(ro){
+        land.setAttribute("tabindex","0"); land.setAttribute("role","button");
+        land.addEventListener("click",()=>pickRegion(R.name));
+        land.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault(); pickRegion(R.name);} });
+      }
       gLand.appendChild(land);
       /* 地形の書き込み。未測量の地では描かない */
       if(ro){
@@ -2403,11 +2454,16 @@ function drawMap(){
         gFog.appendChild(g);
       });
 
-      /* 地域名 */
+      /* 地域名。タップすると下の詳細パネルでその土地の探検（派遣・交代）を直接完結できる */
       const ly=R.cy+R.rad*0.80;
       const lab=E("text",{x:R.cx, y:ly, "text-anchor":"middle",
-        class:"rlabel"+(ro?"":" dim")});
+        class:"rlabel"+(ro?"":" dim")+(ro?" clickable":"")});
       lab.textContent= ro? R.place : "？ ？ ？";
+      if(ro){
+        lab.setAttribute("tabindex","0"); lab.setAttribute("role","button");
+        lab.addEventListener("click",()=>pickRegion(R.name));
+        lab.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault(); pickRegion(R.name);} });
+      }
       gLab.appendChild(lab);
       if(ro){
         const sub=E("text",{x:R.cx, y:ly+15, "text-anchor":"middle", class:"rsub"});
@@ -2512,14 +2568,43 @@ function regionOf(b){
   return f;
 }
 function findBook(id){ return books().find(b=>b.id===id); }
-function pick(id){ selected=id; drawMap(); renderSpot();
+function pick(id){ selected=id; selectedRegion=null; drawMap(); renderSpot();
+  document.getElementById("spot").scrollIntoView({block:"nearest",behavior:"smooth"}); }
+function pickRegion(name){ selectedRegion=name; selected=null; drawMap(); renderSpot();
   document.getElementById("spot").scrollIntoView({block:"nearest",behavior:"smooth"}); }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
+/* 地域をタップしたときの詳細。ここで探検の派遣・交代までを地図上だけで完結させる
+   （下の「探検する」欄と同じ情報源 S.exped を見るので、状態はどちらから操作しても常に一致する） */
+function renderRegionSpot(regionName){
+  const el=document.getElementById("spot"), R=regionByName(regionName);
+  if(!R){ el.className="spot empty";
+    el.textContent="地図の建物や木、または地域名をタップすると、詳しいことが出ます。"; return; }
+  const e=(S.exped||{})[R.name], u=e? unitById(e.uid):null;
+  const iv=hasBoon(R,"風の便り")? ROLL_MS*0.83 : ROLL_MS;
+  const nx=e&&u? Math.max(0,iv-((Date.now()-(e.last||e.since))%iv)) : 0;
+  const s=regionStat(R);
+  el.className="spot";
+  el.innerHTML=`<div>
+    <div class="kv">${esc(R.name)}${R.cont?` ／ ${esc(R.cont.name)}`:""}</div>
+    <h3>${esc(R.place||R.name)}</h3>
+    <div class="kv">${s.done}/${R.books.length}冊 読了 ・ 霧 ${R.puffs.length-Math.floor(R.puffs.length*s.ratio)} 残り</div>
+    ${u? `<div class="slot-u" style="margin-top:10px">${walkScene(u.spec,"happy")}
+          <div class="slot-t"><b>${esc(u.name)}</b>
+          <em class="expmsg">${esc(expedLine(R,u,e))}</em>
+          <em>探索力 ${u.power}${u.axis===regionAxis(R)?" ・ 得意な土地"
+            :(eqFitsHere(u.uid,R)?" ・ そうびで なじむ土地":"")} ／ つぎの便り あと ${Math.ceil(nx/60000)}分</em>
+          </div></div>`
+        : `<div class="slot-empty" style="margin-top:10px">まだ誰も いない</div>`}
+  </div>
+  <div><button class="btn primary" id="spotExp">${u?"交代させる":"探検に出す"}</button></div>`;
+  document.getElementById("spotExp").onclick=()=>openPick(R.name);
+}
 function renderSpot(){
+  if(selectedRegion){ renderRegionSpot(selectedRegion); return; }
   const el=document.getElementById("spot"), b=findBook(selected);
   if(!b){ el.className="spot empty";
-    el.textContent="地図の建物や木をタップすると、その本のことが出ます。"; return; }
+    el.textContent="地図の建物や木、または地域名をタップすると、詳しいことが出ます。"; return; }
   const s=st(b.id), R=regionOf(b), done=s.page>=b.p;
   el.className="spot";
   el.innerHTML=`<div>
@@ -2527,11 +2612,15 @@ function renderSpot(){
     <h3>${esc(b.t)}</h3>
     <div class="kv">${esc(b.a)}${b.sub?" ／ "+esc(b.sub):""}</div>
     <div class="tags">
-      ${b.origin==="company"?`<span class="tag co">会社の本・補助あり</span>`
+      ${b.origin==="company"?`<span class="tag co">会社推薦の本</span>`
         :`<span class="tag pe">自分の本</span>`}
       ${isStar(b)?`<span class="tag must">最重要</span>`:""}
+      ${isImportant(b)?`<span class="tag imp">重要</span>`:""}
+      ${isFav(b)?`<span class="tag fav">お気に入り</span>`:""}
       <span class="tag">XP ×${mult(b).toFixed(1)}</span>
       <button class="tag starbtn" id="spotStar">${isStar(b)?"最重要をはずす":"最重要にする"}</button>
+      <button class="tag starbtn" id="spotImp">${isImportant(b)?"「重要」をはずす":"「重要」にする"}</button>
+      <button class="tag starbtn" id="spotFav">${isFav(b)?"お気に入りをはずす":"お気に入りにする"}</button>
     </div>
     ${b.origin!=="company"? `<div class="kv" style="margin-top:8px">分野: ${esc(R.place||R.name)}
       <button class="btn quiet sm" id="spotCat" style="margin-left:8px">変える</button></div>`:""}
@@ -2543,6 +2632,10 @@ function renderSpot(){
   document.getElementById("spotLog").onclick=()=>openLog(b.id);
   const sb=document.getElementById("spotStar");
   if(sb) sb.onclick=()=>toggleStar(b.id);
+  const ib=document.getElementById("spotImp");
+  if(ib) ib.onclick=()=>toggleImportant(b.id);
+  const fb=document.getElementById("spotFav");
+  if(fb) fb.onclick=()=>toggleFav(b.id);
   const cb=document.getElementById("spotCat");
   if(cb) cb.onclick=()=>openCatEdit(b.id);
 }
@@ -2551,6 +2644,27 @@ function renderSpot(){
    6. 本だな
    ============================================================ */
 let filter="all";
+let shelfSort="rank";
+function shelfRow(b){
+  const s=st(b.id), prog=Math.min(1,s.page/b.p), done=prog>=1, Rg=regionOf(b);
+  const r=document.createElement("div");
+  r.className=`row ${b.origin} ${done?"done":""}`; r.tabIndex=0;
+  const badges=[isStar(b)?`<span class="tag must sm">最重要</span>`:"",
+    isImportant(b)?`<span class="tag imp sm">重要</span>`:"",
+    isFav(b)?`<span class="tag fav sm">お気に入り</span>`:""].join("");
+  r.innerHTML=`
+    <div class="rk">${b.origin==="company"?b.rank:"—"}</div>
+    <div>
+      <div class="tt">${esc(b.t)}${badges? " "+badges : ""}</div>
+      <div class="mt">${esc(b.a)} ・ ${b.p}ページ${done?" ・ 読了":""}</div>
+      <div class="mini" style="--v:${prog.toFixed(3)}"><i></i></div>
+    </div>
+    <div class="where">${Rg?esc(Rg.name):""}</div>
+    <div class="pr">${s.page}<span style="color:var(--ink-sub)">/${b.p}</span></div>`;
+  r.onclick=()=>openLog(b.id);
+  r.onkeydown=e=>{ if(e.key==="Enter"){e.preventDefault(); openLog(b.id);} };
+  return r;
+}
 function renderShelf(){
   const box=document.getElementById("idx"); box.innerHTML="";
   let list=books();
@@ -2559,7 +2673,31 @@ function renderShelf(){
   if(filter==="done") list=list.filter(isDone);
   if(filter==="reading") list=list.filter(b=>{const s=st(b.id); return s.page>0&&s.page<b.p;});
   if(filter==="todo") list=list.filter(b=>st(b.id).page===0);
-  const W=WORLD;
+
+  if(shelfSort==="important"||shelfSort==="fav"){
+    /* 重要・お気に入りは大分類をまたいで一望したいのでグループ分けせずフラットに並べる */
+    const flag=shelfSort==="important"? isImportant : isFav;
+    const sorted=list.slice().sort((a,b)=>
+      (flag(b)?1:0)-(flag(a)?1:0) || (a.rank||999)-(b.rank||999) || a.t.localeCompare(b.t,"ja"));
+    const on=sorted.filter(flag), off=sorted.filter(b=>!flag(b));
+    if(on.length){
+      const h=document.createElement("div"); h.className="grp";
+      h.innerHTML=`<span class="dot" style="background:${shelfSort==="important"?"var(--imp)":"var(--favc)"}"></span>
+        ${shelfSort==="important"?"重要":"お気に入り"}<span class="n">${on.length}冊</span>`;
+      box.appendChild(h);
+      on.forEach(b=>box.appendChild(shelfRow(b)));
+    }
+    if(off.length){
+      const h=document.createElement("div"); h.className="grp";
+      h.innerHTML=`<span class="dot" style="background:var(--ink-sub)"></span>それ以外<span class="n">${off.length}冊</span>`;
+      box.appendChild(h);
+      off.forEach(b=>box.appendChild(shelfRow(b)));
+    }
+    if(!list.length){ const e=document.createElement("div"); e.className="empty-box";
+      e.textContent="この条件の本はありません。"; box.appendChild(e); }
+    return;
+  }
+
   const groups={};
   list.forEach(b=>{ const k=b.div||"その他"; (groups[k]=groups[k]||[]).push(b); });
   Object.keys(groups).forEach(k=>{
@@ -2568,23 +2706,7 @@ function renderShelf(){
     h.innerHTML=`<span class="dot" style="background:${R?R.hue:"var(--leaf)"}"></span>
       ${esc(k)}<span class="n">${groups[k].length}冊</span>`;
     box.appendChild(h);
-    groups[k].sort((a,b)=>(a.rank||999)-(b.rank||999)).forEach(b=>{
-      const s=st(b.id), prog=Math.min(1,s.page/b.p), done=prog>=1, Rg=regionOf(b);
-      const r=document.createElement("div");
-      r.className=`row ${b.origin} ${done?"done":""}`; r.tabIndex=0;
-      r.innerHTML=`
-        <div class="rk">${b.origin==="company"?b.rank:"—"}</div>
-        <div>
-          <div class="tt">${esc(b.t)}</div>
-          <div class="mt">${esc(b.a)} ・ ${b.p}ページ${done?" ・ 読了":""}</div>
-          <div class="mini" style="--v:${prog.toFixed(3)}"><i></i></div>
-        </div>
-        <div class="where">${Rg?esc(Rg.name):""}</div>
-        <div class="pr">${s.page}<span style="color:var(--ink-sub)">/${b.p}</span></div>`;
-      r.onclick=()=>openLog(b.id);
-      r.onkeydown=e=>{ if(e.key==="Enter"){e.preventDefault(); openLog(b.id);} };
-      box.appendChild(r);
-    });
+    groups[k].sort((a,b)=>(a.rank||999)-(b.rank||999)).forEach(b=>box.appendChild(shelfRow(b)));
   });
   if(!list.length){ const e=document.createElement("div"); e.className="empty-box";
     e.textContent="この条件の本はありません。"; box.appendChild(e); }
@@ -3155,16 +3277,18 @@ function eat(){
    ============================================================ */
 /* 自分の本も会社の本と同じ地域に入れるため、分野を選ぶ。
    会社のリストにある分野＋一般的な分野から選べる */
+/* 「未踏の海」という当て先なしの分類は もう使わない。
+   手がかりが無い本も 必ずどれかの実在するジャンルに入る */
 const GENERIC_CATS=[["その他","論理・思考"],["その他","経営・組織"],["その他","技術・実務"],
   ["その他","心理・対人"],["その他","産業・経済"],["その他","自然科学"],["その他","哲学・思想"],
   ["その他","歴史・地理"],["その他","芸術・音楽"],["その他","語学"],["その他","小説・文学"],
-  ["その他","教養・総記"],["その他","未踏の海"]];
+  ["その他","教養・総記"]];
 function catOptions(){
   const seen={}, out=[];
   books().forEach(b=>{ if(b.origin!=="company") return;
     const k=(b.div||"")+"|"+(b.cat||""); if(!seen[k]){ seen[k]=1; out.push([b.div,b.cat]); } });
   (S.extra||[]).forEach(b=>{ const k=(b.div||"")+"|"+(b.cat||"");
-    if(!seen[k]){ seen[k]=1; out.push([b.div||"その他",b.cat||"未踏の海"]); } });
+    if(!seen[k]){ seen[k]=1; out.push([b.div||"その他",b.cat||"教養・総記"]); } });
   GENERIC_CATS.forEach(c=>{ const k=c[0]+"|"+c[1]; if(!seen[k]){ seen[k]=1; out.push(c); } });
   return out;
 }
@@ -3214,17 +3338,24 @@ const AXIS_PREFER=[
 ];
 function catIndexForAxis(ai,opts){
   if(ai<0) return -1;
+  /* まず「その軸そのもの」の汎用ジャンルを探す。これが本来の分類先であり、
+     特定の会社の分類名にたまたま語が似ているという理由で誤って合流させない
+     （会社のカテゴリが増えるほど有利になる偏りを防ぐ＝将来どの会社が使っても公平） */
+  const g=AXIS_CAT[ai];
+  for(let i=0;i<opts.length;i++) if(opts[i][0]===g[0]&&opts[i][1]===g[1]) return i;
+  /* 汎用ジャンルが選択肢にない場合のみ、既存カテゴリ名との語の近さで補完する */
   for(let i=0;i<opts.length;i++) if(AXIS_PREFER[ai]&&AXIS_PREFER[ai].test(opts[i][1])) return i;
   for(let i=0;i<opts.length;i++)
     for(const h of CAT_HINT) if(h[1]===ai && h[0].test(opts[i][1])) return i;
-  const g=AXIS_CAT[ai];
-  for(let i=0;i<opts.length;i++) if(opts[i][0]===g[0]&&opts[i][1]===g[1]) return i;
   return -1;
 }
 function guessCat(txt,opts){
   let ai=-1;
   for(const h of WORD_HINT) if(h[0].test(txt)){ ai=h[1]; break; }
-  if(ai<0) return opts.length-1;
+  if(ai<0) ai=NAX-1;   /* 手がかりが無ければ「教養・総記」へ。存在しない「未踏の海」は使わない */
+  /* 軸そのものの汎用ジャンルを優先（会社カテゴリ名との偶然の語の一致より先に見る） */
+  const g=AXIS_CAT[ai];
+  for(let i=0;i<opts.length;i++) if(opts[i][0]===g[0]&&opts[i][1]===g[1]) return i;
   for(let i=0;i<opts.length;i++){
     for(const h of CAT_HINT) if(h[1]===ai && h[0].test(opts[i][1])) return i;
   }
@@ -3540,12 +3671,13 @@ document.getElementById("aSave").onclick=()=>{
   const isbn=normIsbn($("aIsbn").value);
   if(!t){ toast("書名を入れてください（バーコードを撮るか、ISBNを調べると自動で入ります）"); return; }
   stopCam();
-  const sel=$("aCat"), oc=(sel._opts&&sel._opts[+sel.value])||["その他","未踏の海"];
+  const sel=$("aCat"), oc=(sel._opts&&sel._opts[+sel.value])||["その他","教養・総記"];
   S.extra.push({id: isbn? "p:isbn:"+isbn : "p:"+t+"|"+a, div:oc[0], rank:null,
     cat:oc[1], t, sub:"", a, p, origin:"personal", isbn:isbn||null,
     ndc:($("aBook")._ndc)||null});
   save(); addDlg.close();
-  renderAll(); toast(`「${t}」を 未踏の海に 植えた`);
+  renderAll();
+  toast(`「${t}」を ${oc[1]}の土地に 植えた`);
 };
 addDlg.querySelector("form").addEventListener("submit",e=>{
   e.preventDefault(); document.getElementById("aSave").click(); });
@@ -3571,7 +3703,9 @@ document.getElementById("catSave").onclick=()=>{
 document.getElementById("pickCancel").onclick=()=>document.getElementById("pickDlg").close();
 document.getElementById("pickClear").onclick=()=>{
   if(expPick&&S.exped){ delete S.exped[expPick]; save(); }
-  document.getElementById("pickDlg").close(); renderExped(); toast("よびもどしました");
+  document.getElementById("pickDlg").close(); renderExped();
+  if(selectedRegion===expPick) renderSpot();
+  toast("よびもどしました");
 };
 document.getElementById("itemClose").onclick=()=>document.getElementById("itemDlg").close();
 document.getElementById("dlgForm").addEventListener("submit",e=>{
@@ -4159,6 +4293,14 @@ function expedLine(R,u,e){
 }
 /* ---------- 遠征タブの描画 ---------- */
 let expPick=null;
+/* 一覧はいまや「状況の一覧・地図への入口」。派遣・交代そのものは地図の地域タップ
+   （renderRegionSpot／openPick）で完結させるので、ここに操作ボタンは置かない */
+function jumpToRegionOnMap(regionName){
+  const R=regionByName(regionName); if(!R) return;
+  mapFocus=R.cont? R.cont.name : mapFocus;
+  pickRegion(regionName);
+  document.getElementById("mapbox").scrollIntoView({block:"start",behavior:"smooth"});
+}
 function renderExped(){
   processExped();
   const regs=[];
@@ -4170,7 +4312,7 @@ function renderExped(){
     const e=(S.exped||{})[R.name], u=e? unitById(e.uid):null;
     const iv=hasBoon(R,"風の便り")? ROLL_MS*0.83 : ROLL_MS;
     const nx=e&&u? Math.max(0,iv-((Date.now()-(e.last||e.since))%iv)) : 0;
-    return `<div class="slot${u?" on":""}">
+    return `<button type="button" class="slot${u?" on":""}" data-region="${esc(R.name)}">
       <div class="slot-h"><span class="bdot" style="background:${R.hue}"></span>
         <b>${esc(R.place||R.name)}</b><em>${esc(R.name)}</em></div>
       ${u? `<div class="slot-u">${walkScene(u.spec,"happy")}
@@ -4179,11 +4321,11 @@ function renderExped(){
             <em>探索力 ${u.power}${u.axis===regionAxis(R)?" ・ 得意な土地"
               :(eqFitsHere(u.uid,R)?" ・ そうびで なじむ土地":"")} ／ つぎの便り あと ${Math.ceil(nx/60000)}分</em>
             </div></div>`
-          : `<div class="slot-empty">まだ誰も いない</div>`}
-      <button class="btn quiet sm" data-r="${esc(R.name)}">${u?"交代させる":"探検に出す"}</button>
-    </div>`;
+          : `<div class="slot-empty">まだ誰も いない ・ タップして地図で送り出す</div>`}
+    </button>`;
   }).join("") : `<div class="empty-box">まだ行ける土地がありません。</div>`;
-  document.querySelectorAll("#expSlots button[data-r]").forEach(b=>b.onclick=()=>openPick(b.dataset.r));
+  document.querySelectorAll("#expSlots .slot[data-region]").forEach(b=>
+    b.onclick=()=>jumpToRegionOnMap(b.dataset.region));
   /* 便り */
   const log=(S.expLog||[]).slice(0,40);
   document.getElementById("expLog").innerHTML = log.length? log.map(l=>
@@ -4220,6 +4362,7 @@ function openPick(rn){
     Object.keys(S.exped).forEach(k=>{ if(S.exped[k]&&S.exped[k].uid===b.dataset.u) delete S.exped[k]; });
     S.exped[expPick]={uid:b.dataset.u, since:Date.now(), last:Date.now()};
     save(); document.getElementById("pickDlg").close(); renderExped();
+    if(selectedRegion===expPick) renderSpot();
     toast("探検に出発しました");
   });
   document.getElementById("pickClear").hidden=!((S.exped||{})[rn]);
@@ -4473,9 +4616,14 @@ document.querySelectorAll("#kindNav .cbtn").forEach(b=>b.onclick=()=>{
     x.setAttribute("aria-pressed",String(x===b)));
   drawMap();
 });
-document.querySelectorAll(".fbtn").forEach(b=>b.onclick=()=>{
+document.querySelectorAll(".fbtn:not(.sbtn)").forEach(b=>b.onclick=()=>{
   filter=b.dataset.f;
-  document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+  document.querySelectorAll(".fbtn:not(.sbtn)").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+  renderShelf();
+});
+document.querySelectorAll(".sbtn").forEach(b=>b.onclick=()=>{
+  shelfSort=b.dataset.s;
+  document.querySelectorAll(".sbtn").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
   renderShelf();
 });
 
