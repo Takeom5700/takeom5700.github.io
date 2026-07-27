@@ -575,6 +575,7 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
   display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer;
   transition:transform .14s cubic-bezier(.34,1.6,.5,1)}
 .itm:hover{transform:translateY(-3px); border-color:var(--ink)}
+.itm.disabled{opacity:.35; pointer-events:none}
 .itm b{font-family:var(--f-disp); font-size:10.5px; line-height:1.4; text-align:center}
 .itm em{font-style:normal; font-size:10px; color:var(--ink-sub); font-family:var(--f-num)}
 .picklist{display:flex; flex-direction:column; gap:8px; max-height:46vh; overflow-y:auto; margin-top:8px}
@@ -3705,7 +3706,7 @@ function applyImport(next,msg){
 /* ============================================================
    9.8 そうび
    おみやげを3つ合成すると そうびになる。ひとりに2つまで。
-   型20 × 属性8 × 位階6 = 960種類。
+   型24 × 属性8 × 位階6 = 1152種類。
    ・その子の伸びる軸に補正がかかる（進化先を すこし導ける）
    ・見た目が変わる（見せ合うのが たのしい）
    ・探検のときに はたらく効果がつく
@@ -3715,7 +3716,8 @@ const EQ_FORM=[
  {n:"丸めがね",     fx:4}, {n:"襟巻き",   fx:0}, {n:"外套",     fx:1}, {n:"翼飾り",   fx:2},
  {n:"首飾り",       fx:3}, {n:"鈴",       fx:4}, {n:"角飾り",   fx:0}, {n:"背負い袋", fx:1},
  {n:"旗",           fx:2}, {n:"傘",       fx:3}, {n:"提灯",     fx:4}, {n:"花冠",     fx:0},
- {n:"耳飾り",       fx:1}, {n:"足環",     fx:2}, {n:"尾飾り",   fx:3}, {n:"光輪",     fx:4}
+ {n:"耳飾り",       fx:1}, {n:"足環",     fx:2}, {n:"尾飾り",   fx:3}, {n:"光輪",     fx:4},
+ {n:"渦まくオーラ", fx:0}, {n:"燃えたつ後光", fx:1}, {n:"渡る風のヴェール", fx:2}, {n:"星屑のとばり", fx:4}
 ];
 const EQ_RANK=[
  {n:"ありふれた", w:1.0}, {n:"よい",     w:1.6}, {n:"珍しい",   w:2.4},
@@ -3851,7 +3853,29 @@ function equipArt(id,cx,cy,R,k,bh,ink,skin){
    ()=>`<g><circle cx="${cx+R*1.15}" cy="${cy+R*0.2}" r="${R*0.19}" fill="${c}" stroke="${ink}"
       stroke-width="${w}"/><circle cx="${cx+R*1.15}" cy="${cy+R*0.2}" r="${R*0.07}" fill="#fff"/></g>`,
    ()=>`<ellipse cx="${cx}" cy="${top-R*0.42}" rx="${R*0.7}" ry="${R*0.2}" fill="none"
-      stroke="${c}" stroke-width="${(3.4*k).toFixed(2)}"/>`
+      stroke="${c}" stroke-width="${(3.4*k).toFixed(2)}"/>`,
+   /* 渦まくオーラ：からだの周りを ぐるりと巻く 3本の帯 */
+   ()=>{ let s=""; for(let i=0;i<3;i++){ const a=(Math.PI*2/3)*i,
+      x=cx+Math.cos(a)*R*1.15, y=cy+Math.sin(a)*R*1.15*bh;
+      s+=`<path d="M${x.toFixed(2)},${y.toFixed(2)} q${(R*0.5).toFixed(2)},${(-R*0.3).toFixed(2)} ${(R*0.2).toFixed(2)},${(-R*0.62).toFixed(2)}"
+      fill="none" stroke="${c}" stroke-width="${(2.6*k).toFixed(2)}" stroke-linecap="round" opacity=".75"/>`; }
+      return s; },
+   /* 燃えたつ後光：頭のうしろから のびる 炎のような光の筋 */
+   ()=>{ let s=""; for(let i=0;i<5;i++){ const a=-Math.PI*0.95+i*(Math.PI*0.9/4),
+      x=cx+Math.cos(a)*R*1.1, y=top+R*0.1+Math.sin(a)*R*0.6;
+      s+=`<path d="M${x.toFixed(2)},${y.toFixed(2)} l${(Math.cos(a)*R*0.42).toFixed(2)},${(Math.sin(a)*R*0.42-R*0.1).toFixed(2)}"
+      stroke="${i%2?tint(c,0.3):c}" stroke-width="${(3.2*k).toFixed(2)}" stroke-linecap="round"/>`; }
+      return s; },
+   /* 渡る風のヴェール：からだの両脇を なでていく 風の線 */
+   ()=>[-1,1].map(d=>`<path d="M${cx+d*R*1.05},${cy-R*0.5} q${d*R*0.34},${R*0.9} 0,${R*1.5}"
+      fill="none" stroke="${c}" stroke-width="${(2.4*k).toFixed(2)}" stroke-linecap="round" opacity=".65"/>`).join(""),
+   /* 星屑のとばり：まわりを ゆっくり めぐる 光の粒（位階が高いほど 数が増える） */
+   ()=>{ const n=3+Math.min(3,q.r); let s=""; for(let i=0;i<n;i++){
+      const a=(Math.PI*2/n)*i, rr=R*(1.05+0.18*(i%2)),
+      x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr*bh;
+      s+=`<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${(R*0.1).toFixed(2)}"
+      fill="${i%2?tint(c,0.4):c}"/>`; }
+      return s; }
   ];
   let g=A[q.f]();
   if(glow) g+=`<circle cx="${cx}" cy="${cy}" r="${R*1.5}" fill="${c}" opacity="${q.r>=5?".14":".08"}"/>`;
@@ -3994,8 +4018,9 @@ function processExped(){
       const seed=hash(rn+"|"+e.uid+"|"+e.last+"|"+i);
       const lore=LORE[ax];
       let line=`${u.name}は ${R.place||R.name}の ${lore.sp[seed%3]}を たずねた。`;
-      const chance=Math.min(0.70, 0.16+u.power*0.035+fit*0.10
-        +lv*0.012+(hasBoon(R,"道しるべ")?0.06:0)+eb.find);
+      /* 見つかる確率は控えめに。毎回なにか拾えると おみやげのありがたみが薄れる */
+      const chance=Math.min(0.50, 0.10+u.power*0.025+fit*0.07
+        +lv*0.009+(hasBoon(R,"道しるべ")?0.045:0)+eb.find);
       if(((seed>>>5)%1000)/1000 < chance){
         /* 位階は重みつき。得意分野なら良いものが出やすい */
         const boost=1+u.power*0.12+fit*0.4+lv*0.05+(hasBoon(R,"実り")?0.6:0)+eb.rare;
@@ -4305,15 +4330,23 @@ function renderEquipTab(){
 function openPickItem(i){
   forgeIdx=i;
   const owned=Object.keys(S.items||{}).filter(id=>S.items[id]>0);
+  /* 他の枠で すでに使っている分は 選べる数から差し引く（同じおみやげの重複選択で不足するのを防ぐ） */
+  const usedElsewhere={};
+  forgeSel.forEach((id,si)=>{ if(id && si!==i) usedElsewhere[id]=(usedElsewhere[id]||0)+1; });
   document.getElementById("pickItemList").innerHTML = owned.length
-    ? owned.sort((a,b)=>itemOf(b).r-itemOf(a).r).map(id=>
-        `<button type="button" class="itm" data-i="${id}">${itemSVG(id,44)}
-          <b>${esc(itemOf(id).name)}</b><em>×${S.items[id]}</em></button>`).join("")
+    ? owned.sort((a,b)=>itemOf(b).r-itemOf(a).r).map(id=>{
+        const remain=(S.items[id]||0)-(usedElsewhere[id]||0), dis=remain<=0;
+        return `<button type="button" class="itm${dis?" disabled":""}" data-i="${id}"${dis?" disabled":""}>${itemSVG(id,44)}
+          <b>${esc(itemOf(id).name)}</b><em>${dis?"品切れ":"×"+remain}</em></button>`;
+      }).join("")
     : `<div class="empty-box" style="padding:20px">まだ おみやげが ありません。<br>
        相棒を 土地へ 送ると 見つけてきます。</div>`;
-  document.querySelectorAll("#pickItemList .itm").forEach(b=>b.onclick=()=>{
-    forgeSel[forgeIdx]=b.dataset.i;
-    document.getElementById("pickItemDlg").close(); renderEquipTab(); SFX.tap();
+  document.querySelectorAll("#pickItemList .itm").forEach(b=>{
+    if(b.hasAttribute("disabled")) return;
+    b.onclick=()=>{
+      forgeSel[forgeIdx]=b.dataset.i;
+      document.getElementById("pickItemDlg").close(); renderEquipTab(); SFX.tap();
+    };
   });
   document.getElementById("pickItemDlg").showModal();
 }
