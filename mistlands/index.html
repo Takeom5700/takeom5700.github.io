@@ -456,9 +456,9 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 
 /* ---------- 相棒ページの配置 ---------- */
 .buddy-grid{display:grid; gap:16px; grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  grid-template-areas:"axis anc" "axis land" "title title"}
+  grid-template-areas:"axis land" "axis anc" "title title"}
 @media (max-width:820px){
-  .buddy-grid{grid-template-columns:1fr; grid-template-areas:"axis" "anc" "land" "title"}
+  .buddy-grid{grid-template-columns:1fr; grid-template-areas:"axis" "land" "anc" "title"}
 }
 .titlebig{font-family:var(--f-disp); font-weight:800; font-size:clamp(26px,5vw,38px);
   letter-spacing:.05em; line-height:1.3; text-wrap:balance}
@@ -675,7 +675,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
 
   <section class="view on" id="v-map">
     <div class="filterbar">
-      <span class="flabel">大陸</span>
+      <span class="flabel">エリア</span>
       <div class="contnav" id="contNav"></div>
       <span class="flabel" style="margin-left:6px">表示</span>
       <div class="contnav" id="kindNav">
@@ -686,7 +686,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       </div>
     </div>
     <div class="mapbox" id="mapbox">
-      <svg id="map" role="img" aria-label="霧の大陸。読み進めるほど霧が減り、地面の色が戻る"></svg>
+      <svg id="map" role="img" aria-label="霧のエリア地図。読み進めるほど霧が減り、地面の色が戻る"></svg>
       <div class="flashwrap"></div>
     </div>
     <div class="mapfoot">
@@ -1430,12 +1430,18 @@ const EPITHET_D=["ページを速く進める","理解度を高くつける","�
                  "会社の推薦図書を読む","自分で選んだ本を読む","冊数を積む","相棒をなでる"];
 const EPI_ACC=["scarf","glasses","halo2","compass","medal","cape","bell","crown"];
 
-/* 個人の種。同じ本を読む同僚でも、名前・世代・読みはじめた時刻・冊数が違えば別の値になる */
-function seedOf(){
+/* 個人の種。同じ本を読む同僚でも、名前・世代・読みはじめた時刻・冊数が違えば別の値になる。
+   ただし かたちが決まったあとは固定する。名前を変えただけで姿が変わってはいけない */
+function calcSeed(){
   let first=0, cnt=0, sum=0;
   books().forEach(b=>{ const r=st(b.id); if(r.at){ first=first?Math.min(first,r.at):r.at; cnt++;
     sum+=(r.at%100000)+(r.comp||0)*7; } });
   return hash((S.name||"")+"|"+genNo()+"|"+first+"|"+cnt+"|"+sum);
+}
+function seedOf(){
+  const e=(S.evo&&S.evo["g"+genNo()])||null;
+  if(e && e.seed!==undefined) return e.seed;
+  return calcSeed();
 }
 /* 候補の中から重みつきで1つ選ぶ。重みは読書量、引きは個人の種。
    「強い傾向のうちどれが表に出るかは人による」という考え方 */
@@ -1499,6 +1505,8 @@ function evoLock(){
   S.evo=S.evo||{};
   const e=S.evo[key]=S.evo[key]||{};
   let dirty=false;
+  /* かたちが出はじめる段階で 種を凍結する。以後 名前を変えても姿は変わらない */
+  if(si>=2 && e.seed===undefined){ e.seed=calcSeed(); dirty=true; }
   if(si>=2 && e.dom===undefined){ e.dom=domAxis(p); dirty=true; }
   if(si>=3 && e.arch===undefined){ e.arch=archIndex(p,e); dirty=true; }
   if(si>=4 && e.elem===undefined){ e.elem=elemIndex(p,e); dirty=true; }
@@ -2228,11 +2236,42 @@ function drawMap(){
 
   VC.forEach(C=>{
     const open=contOpen(C);
+    /* 陸つづきの地面。となりあう区画は地つづきにして、離れたものだけ島として残す。
+       ぜんぶ島だと単調なので、つながっている場所のほうが多くなるようにしている */
+    if(open){
+      let baseP="";
+      C.regions.forEach(R=>{
+        if(!rgnOpen(R)) return;
+        baseP+=`<polygon points="${pstr(R.poly.map(q=>[R.cx+(q[0]-R.cx)*1.13, R.cy+(q[1]-R.cy)*1.13]))}"/>`;
+      });
+      C.regions.forEach(R=>{
+        if(!rgnOpen(R)) return;
+        R.adj.forEach(o=>{
+          if(o.i<=R.i || !rgnOpen(o)) return;
+          const d=Math.hypot(o.cx-R.cx,o.cy-R.cy);
+          if(d>(R.rad+o.rad)*1.22) return;          /* 離れすぎているものは島のまま */
+          const wd=Math.min(R.rad,o.rad)*0.78;
+          const a=Math.atan2(o.cy-R.cy,o.cx-R.cx);
+          const nx=-Math.sin(a)*wd, ny=Math.cos(a)*wd;
+          baseP+=`<polygon points="${(R.cx+nx).toFixed(1)},${(R.cy+ny).toFixed(1)} `
+            +`${(o.cx+nx).toFixed(1)},${(o.cy+ny).toFixed(1)} `
+            +`${(o.cx-nx).toFixed(1)},${(o.cy-ny).toFixed(1)} `
+            +`${(R.cx-nx).toFixed(1)},${(R.cy-ny).toFixed(1)}"/>`;
+        });
+      });
+      if(baseP){
+        /* 影 → 外枠 → 塗り の順に重ねると、内側の線が消えて一枚の陸地に見える */
+        const sh=E("g",{fill:"var(--ink)", opacity:".18",
+          transform:"translate(5,7)"}); sh.innerHTML=baseP; gLand.appendChild(sh);
+        const ot=E("g",{fill:"none", stroke:"var(--ink)", "stroke-width":"6",
+          "stroke-linejoin":"round"}); ot.innerHTML=baseP; gLand.appendChild(ot);
+        const fl=E("g",{fill:"#E8D9BC", stroke:"none"}); fl.innerHTML=baseP; gLand.appendChild(fl);
+      }
+    }
     C.regions.forEach(R=>{
       const s=regionStat(R), ro=open&&rgnOpen(R);
       /* 地面。霧が濃いほど色が抜ける */
-      const sh=E("polygon",{points:pstr(R.poly.map(([x,y])=>[x+5,y+7])), class:"rgn-shade"});
-      gLand.appendChild(sh);
+      if(!open) gLand.appendChild(E("polygon",{points:pstr(R.poly.map(q=>[q[0]+5,q[1]+7])), class:"rgn-shade"}));
       const land=E("polygon",{points:pstr(R.poly), class:"rgn-body"});
       land.setAttribute("fill", ro? R.hue : "#9E927F");
       land.style.opacity = ro? (0.42+0.58*s.ratio).toFixed(2) : "0.5";
@@ -2357,7 +2396,7 @@ function drawMap(){
     });
   }));
 
-  /* 大陸名 */
+  /* エリア名 */
   VC.forEach(C=>{
     if(!C.regions.length) return;
     const ty=Math.min(...C.regions.map(R=>R.cy-R.rad))-22;
@@ -2580,9 +2619,14 @@ function bandAt(i){
   return {i, p, n:t[0], d:t[1], fx:t[2], c:z.c};
 }
 function skySeed(){
-  const e=(S.evo&&S.evo["g"+genNo()])||{};
-  const dom=(e.dom!==undefined)? e.dom : profile().dom;
-  return (S.name||"")+"|"+dom+"|"+((S.ancestors||[]).length);
+  /* 塔は世代をまたいで積み上がるので、いちど決めた並びを持ち続ける */
+  if(S.skySeed===undefined){
+    const e=(S.evo&&S.evo["g"+genNo()])||{};
+    const dom=(e.dom!==undefined)? e.dom : profile().dom;
+    S.skySeed=(S.name||"")+"|"+dom+"|"+hash(String(Date.now()))%9973;
+    save();
+  }
+  return S.skySeed;
 }
 function bandsUpTo(pages,extra){
   const out=[]; let i=1;
