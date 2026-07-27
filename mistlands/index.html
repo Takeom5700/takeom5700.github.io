@@ -536,16 +536,6 @@ html.plain-mode .wearbar{display:none !important}
 .land .lbar i{display:block; height:100%}
 
 /* ---------- 遠征 ---------- */
-.slots{display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:11px}
-.slot{border:2.5px solid var(--line); border-radius:var(--r); padding:12px 13px; background:var(--paper);
-  display:flex; flex-direction:column; gap:9px; overflow:hidden; min-width:0;
-  font:inherit; color:inherit; text-align:left; cursor:pointer; width:100%}
-.slot.on{border-color:var(--ink); background:var(--card)}
-.slot:hover{border-color:var(--sun)}
-.slot:focus-visible{outline:3px solid var(--sun); outline-offset:2px}
-.slot-h{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
-.slot-h b{font-family:var(--f-disp); font-size:14.5px; overflow-wrap:anywhere}
-.slot-h em{font-style:normal; font-size:11px; color:var(--ink-sub)}
 .slot-u{display:block; min-width:0}
 .slot-t{min-width:0; margin-top:7px}
 .slot-u b{font-family:var(--f-disp); font-size:13px; display:block;
@@ -758,14 +748,11 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
     <div class="spot empty" id="spot">地図の建物や木、または地域の土地・地域名をタップすると、詳しいことが出ます。</div>
 
     <div class="panel" style="margin-top:16px">
-      <h3>探検する</h3>
-      <p>地図の土地または地域名（<span style="text-decoration:underline;text-decoration-style:dotted">下線つきの文字</span>）をタップすると、
-        すぐ上の欄で相棒を送り出せます。20分に1度たよりが届き、ときどき おみやげも見つけてきます。
-        下の一覧は今の状況のまとめです。タップすると地図でその土地を開きます。</p>
-      <div class="slots" id="expSlots"></div>
-    </div>
-    <div class="panel" style="margin-top:14px">
       <h3>便り</h3>
+      <p>地図の土地または地域名（<span style="text-decoration:underline;text-decoration-style:dotted">下線つきの文字</span>）をタップすると、
+        そのまま相棒を送り出せます。送った子は地図の上を歩いてまわるので、
+        どこで誰が探検中かは地図を見ればひと目で分かります。20分に1度たよりが届き、
+        ときどき おみやげも見つけてきます。</p>
       <div class="loglist" id="expLog"></div>
     </div>
   </section>
@@ -4450,39 +4437,10 @@ function expedLine(R,u,e){
 }
 /* ---------- 遠征タブの描画 ---------- */
 let expPick=null;
-/* 一覧はいまや「状況の一覧・地図への入口」。派遣・交代そのものは地図の地域タップ
-   （renderRegionSpot／openPick）で完結させるので、ここに操作ボタンは置かない */
-function jumpToRegionOnMap(regionName){
-  const R=regionByName(regionName); if(!R) return;
-  mapFocus=R.cont? R.cont.name : mapFocus;
-  pickRegion(regionName);
-  document.getElementById("mapbox").scrollIntoView({block:"start",behavior:"smooth"});
-}
 function renderExped(){
   processExped();
-  const regs=[];
-  (WORLD?WORLD.conts:[]).forEach(C=>{ if(contOpen(C)) C.regions.forEach(R=>{
-    if(rgnOpen(R)) regs.push(R); }); });
-  const units=unitList(), used={};
-  Object.keys(S.exped||{}).forEach(k=>{ if(S.exped[k]) used[S.exped[k].uid]=k; });
-  document.getElementById("expSlots").innerHTML = regs.length? regs.map(R=>{
-    const e=(S.exped||{})[R.name], u=e? unitById(e.uid):null;
-    const iv=hasBoon(R,"風の便り")? ROLL_MS*0.83 : ROLL_MS;
-    const nx=e&&u? Math.max(0,iv-((Date.now()-(e.last||e.since))%iv)) : 0;
-    return `<button type="button" class="slot${u?" on":""}" data-region="${esc(R.name)}">
-      <div class="slot-h"><span class="bdot" style="background:${R.hue}"></span>
-        <b>${esc(R.place||R.name)}</b><em>${esc(R.name)}</em></div>
-      ${u? `<div class="slot-u">${walkScene(u.spec,"happy")}
-            <div class="slot-t"><b>${esc(u.name)}</b>
-            <em class="expmsg">${esc(expedLine(R,u,e))}</em>
-            <em>探索力 ${u.power}${u.axis===regionAxis(R)?" ・ 得意な土地"
-              :(eqFitsHere(u.uid,R)?" ・ そうびで なじむ土地":"")} ／ つぎの便り あと ${Math.ceil(nx/60000)}分</em>
-            </div></div>`
-          : `<div class="slot-empty">まだ誰も いない ・ タップして地図で送り出す</div>`}
-    </button>`;
-  }).join("") : `<div class="empty-box">まだ行ける土地がありません。</div>`;
-  document.querySelectorAll("#expSlots .slot[data-region]").forEach(b=>
-    b.onclick=()=>jumpToRegionOnMap(b.dataset.region));
+  /* 探検の状況(誰がどこにいるか)は地図の上に直接描かれるので、
+     ここでは別リストを作らない（地図と機能が重複していたため統合した） */
   /* 便り */
   const log=(S.expLog||[]).slice(0,40);
   document.getElementById("expLog").innerHTML = log.length? log.map(l=>
