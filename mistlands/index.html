@@ -154,6 +154,36 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
   border:2px solid var(--ink); box-shadow:2px 2px 0 var(--shadow)}
 .pet-title{font-family:var(--f-disp); font-weight:800; font-size:11.5px; letter-spacing:.06em;
   border:2px solid var(--ink); border-radius:var(--r-pill); padding:2px 10px; background:var(--paper)}
+.wearbar{display:flex; align-items:center; gap:8px; margin-top:12px; flex-wrap:wrap; min-width:0}
+.wearbar .wlabel{font-family:var(--f-disp); font-weight:800; font-size:11.5px;
+  letter-spacing:.1em; color:var(--ink-sub); flex:none}
+.wslot{display:flex; align-items:center; gap:7px; padding:5px 10px 5px 6px; min-width:0;
+  border:2.5px dashed var(--line); border-radius:var(--r-pill); background:var(--paper);
+  cursor:pointer; transition:border-color .15s, transform .14s cubic-bezier(.34,1.6,.5,1)}
+.wslot:hover{transform:translateY(-2px); border-color:var(--ink)}
+.wslot.on{border-style:solid; border-color:var(--ink); background:var(--card)}
+.wslot svg{flex:none}
+.wslot b{font-family:var(--f-disp); font-size:11.5px; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; max-width:9.5em}
+.wslot em{font-style:normal; font-size:11px; color:var(--ink-sub)}
+.eqgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:9px;
+  max-height:min(46vh,380px); overflow-y:auto}
+.eq{background:var(--paper); border:2.5px solid var(--line); border-radius:var(--r);
+  padding:9px 6px 7px; display:flex; flex-direction:column; align-items:center; gap:2px;
+  cursor:pointer; text-align:center; transition:transform .14s cubic-bezier(.34,1.6,.5,1)}
+.eq:hover{transform:translateY(-3px); border-color:var(--ink)}
+.eq.r4{border-color:var(--sun)} .eq.r5{border-color:var(--berry); box-shadow:0 0 0 3px color-mix(in srgb,var(--berry) 22%,transparent)}
+.eq b{font-family:var(--f-disp); font-size:10.5px; line-height:1.4}
+.eq em{font-style:normal; font-size:10px; color:var(--ink-sub); font-family:var(--f-num)}
+.forge{display:flex; flex-direction:column; gap:10px}
+.forgepick{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+.fslot{width:58px; height:58px; border:2.5px dashed var(--line); border-radius:var(--r);
+  display:flex; align-items:center; justify-content:center; background:var(--paper); cursor:pointer}
+.fslot.on{border-style:solid; border-color:var(--ink); background:var(--card)}
+.forgeout{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--r);
+  border:2.5px solid var(--ink); background:var(--card2); min-width:0}
+.forgeout b{font-family:var(--f-disp); font-size:13px; display:block}
+.forgeout em{font-style:normal; font-size:11.5px; color:var(--ink-sub); display:block; line-height:1.65}
 .evoline{display:flex; align-items:flex-end; gap:2px; margin-top:12px; flex-wrap:nowrap;
   overflow-x:auto; padding-bottom:2px; max-width:100%;
   -webkit-overflow-scrolling:touch; scrollbar-width:thin}
@@ -649,6 +679,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <div class="evo-lbl"><span id="evoNext">つぎの姿まで</span><span id="evoNum"></span></div>
         <div class="evo-bar"><i id="evoBar"></i></div>
       </div>
+      <div class="wearbar" id="wearBar"></div>
       <div class="evoline" id="evoline"></div>
       <div id="departWrap" class="depart"></div>
     </div>
@@ -669,7 +700,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
     <button role="tab" aria-selected="true" data-v="map">地図</button>
     <button role="tab" aria-selected="false" data-v="shelf">本だな</button>
     <button role="tab" aria-selected="false" data-v="buddy">相棒</button>
-    <button role="tab" aria-selected="false" data-v="items">おみやげ</button>
+    <button role="tab" aria-selected="false" data-v="items">そうび</button>
     <button role="tab" aria-selected="false" data-v="tower">知の塔</button>
   </nav>
 
@@ -748,10 +779,25 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   </section>
 
   <section class="view" id="v-items">
-    <div class="panel">
-      <h3>おみやげ</h3>
-      <div class="kv" id="expCount" style="margin-bottom:12px"></div>
-      <div class="itemgrid" id="expItems"></div>
+    <div class="two">
+      <div class="panel" style="grid-column:1/-1">
+        <h3>そうびを つくる</h3>
+        <p>おみやげを3つ 合わせると そうびに なります。同じ組み合わせからは 同じものが できます。</p>
+        <div class="forge">
+          <div class="forgepick" id="forgePick"></div>
+          <div id="forgeOut"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>もっている そうび</h3>
+        <div class="kv" id="eqCount" style="margin-bottom:10px"></div>
+        <div class="eqgrid" id="eqList"></div>
+      </div>
+      <div class="panel">
+        <h3>おみやげ</h3>
+        <div class="kv" id="expCount" style="margin-bottom:10px"></div>
+        <div class="itemgrid" id="expItems"></div>
+      </div>
     </div>
   </section>
 
@@ -883,6 +929,36 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   <div id="xPrev"></div>
   <div class="dact">
     <button type="button" class="btn quiet" id="xClose">とじる</button>
+  </div>
+</form></dialog>
+
+<dialog id="eqDlg"><form method="dialog" class="din" style="text-align:center">
+  <div id="eqArt" style="display:flex;justify-content:center"></div>
+  <h2 id="eqName">—</h2>
+  <div class="sub" id="eqMeta">—</div>
+  <p id="eqDesc" style="font-size:13px;line-height:1.9;color:var(--ink-sub);margin:0 0 10px"></p>
+  <div class="kv" id="eqHave"></div>
+  <div class="dact" style="justify-content:center">
+    <button type="button" class="btn quiet" id="eqClose">とじる</button>
+  </div>
+</form></dialog>
+
+<dialog id="wearDlg"><form method="dialog" class="din">
+  <h2>そうびを えらぶ</h2>
+  <div class="sub" id="wearWho">—</div>
+  <div class="eqgrid" id="wearList" style="max-height:46vh"></div>
+  <div class="dact">
+    <button type="button" class="btn quiet" id="wearOff">はずす</button>
+    <button type="button" class="btn quiet" id="wearCancel">とじる</button>
+  </div>
+</form></dialog>
+
+<dialog id="pickItemDlg"><form method="dialog" class="din">
+  <h2>おみやげを えらぶ</h2>
+  <div class="sub">合成に つかいます</div>
+  <div class="itemgrid" id="pickItemList" style="max-height:46vh"></div>
+  <div class="dact">
+    <button type="button" class="btn quiet" id="pickItemCancel">とじる</button>
   </div>
 </form></dialog>
 
@@ -1119,8 +1195,9 @@ function load(){
                            if(!b.cat) b.cat="未踏の海"; });
       r.gen=r.gen||1; r.genBase=r.genBase||0; r.ancestors=r.ancestors||[];
       r.exped=r.exped||{}; r.items=r.items||{}; r.expLog=r.expLog||[]; r.star=r.star||{};
+      r.equip=r.equip||{}; r.worn=r.worn||{};
       r.pat=r.pat||0; r.name=r.name||"モヤ"; r.streak=r.streak||0; return r; } }catch(e){}
-  return {rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ", star:{},
+  return {rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ", star:{}, equip:{}, worn:{},
           lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[]};
 }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
@@ -1220,7 +1297,7 @@ function buildWorld(){
   /* 隣接: 距離で判定(規則が汎用なのでカテゴリが増えても効く) */
   conts.forEach(C=>C.regions.forEach(R=>{
     R.adj=C.regions.filter(o=>o!==R &&
-      Math.hypot(o.cx-R.cx,o.cy-R.cy) < (o.rad+R.rad)*1.30);
+      Math.hypot(o.cx-R.cx,o.cy-R.cy) < (o.rad+R.rad)*1.75);
   }));
   WORLD={conts, vb:boundsOf(conts)};
   return WORLD;
@@ -1345,6 +1422,10 @@ function axisScores(){
     const c=st(b.id).comp||0;
     if(c>=4 && ai>=0) v[ai]+=w*0.12*(c-3);
   });
+  /* そうびの補正。いま育てている子に付けたものだけが効く。
+     掛け算だと まだ読んでいない軸（ゼロ）に効かないので、読書量に応じて足す */
+  const tot=v.reduce((a,b)=>a+b,0);
+  if(tot>0) wornOf("me").forEach(id=>{ const q=eqOf(id); v[q.axis]+=tot*q.bonus*0.5; });
   return v;
 }
 function profile(){
@@ -1516,7 +1597,7 @@ function evoLock(){
 }
 function petSpec(){
   const {e,p,si}=evoLock();
-  return {stage:si,
+  return {wear:(typeof wornOf==="function"? wornOf("me"):[]), stage:si,
           arch: e.arch!==undefined? e.arch : archIndex(p,e),
           elem: e.elem!==undefined? e.elem : elemIndex(p,e),
           epi:  e.epi !==undefined? e.epi  : epithetIndex(),
@@ -1971,6 +2052,8 @@ function creatureSVG(sp,size,md){
     g+=F[E.fx]||"";
   }
   /* --- 称号のしるし（究極体） --- */
+  if(sp.wear&&sp.wear.length&&typeof equipArt==="function")
+    sp.wear.forEach(id=>{ if(id) g+=equipArt(id,cx,cy,R,k,bh,ink,skin); });
   if(showEpi){
     const top=cy-R*bh*1.05, acc=EPI_ACC[sp.epi];
     const AC={
@@ -2244,20 +2327,37 @@ function drawMap(){
         if(!rgnOpen(R)) return;
         baseP+=`<polygon points="${pstr(R.poly.map(q=>[R.cx+(q[0]-R.cx)*1.13, R.cy+(q[1]-R.cy)*1.13]))}"/>`;
       });
-      C.regions.forEach(R=>{
-        if(!rgnOpen(R)) return;
-        R.adj.forEach(o=>{
-          if(o.i<=R.i || !rgnOpen(o)) return;
-          const d=Math.hypot(o.cx-R.cx,o.cy-R.cy);
-          if(d>(R.rad+o.rad)*1.22) return;          /* 離れすぎているものは島のまま */
-          const wd=Math.min(R.rad,o.rad)*0.78;
-          const a=Math.atan2(o.cy-R.cy,o.cx-R.cx);
-          const nx=-Math.sin(a)*wd, ny=Math.cos(a)*wd;
-          baseP+=`<polygon points="${(R.cx+nx).toFixed(1)},${(R.cy+ny).toFixed(1)} `
-            +`${(o.cx+nx).toFixed(1)},${(o.cy+ny).toFixed(1)} `
-            +`${(o.cx-nx).toFixed(1)},${(o.cy-ny).toFixed(1)} `
-            +`${(R.cx-nx).toFixed(1)},${(R.cy-ny).toFixed(1)}"/>`;
-        });
+      const opened=C.regions.filter(R=>rgnOpen(R));
+      const bridge=(R,o)=>{
+        const wd=Math.min(R.rad,o.rad)*0.82;
+        const a=Math.atan2(o.cy-R.cy,o.cx-R.cx);
+        const nx=-Math.sin(a)*wd, ny=Math.cos(a)*wd;
+        baseP+=`<polygon points="${(R.cx+nx).toFixed(1)},${(R.cy+ny).toFixed(1)} `
+          +`${(o.cx+nx).toFixed(1)},${(o.cy+ny).toFixed(1)} `
+          +`${(o.cx-nx).toFixed(1)},${(o.cy-ny).toFixed(1)} `
+          +`${(R.cx-nx).toFixed(1)},${(R.cy-ny).toFixed(1)}"/>`;
+      };
+      const done={};
+      /* 近いものどうしは ひろく つなぐ */
+      opened.forEach(R=>opened.forEach(o=>{
+        if(o.i<=R.i) return;
+        if(Math.hypot(o.cx-R.cx,o.cy-R.cy)>(R.rad+o.rad)*1.55) return;
+        done[R.i+"-"+o.i]=1; bridge(R,o);
+      }));
+      /* エリアの中がばらばらに残らないよう、近い順に骨格をつなぐ。
+         ただし極端に遠いものは 島のままにして 地形に変化を残す */
+      const grp={}; opened.forEach(R=>grp[R.i]=R.i);
+      const find=x=>{ while(grp[x]!==x) x=grp[x]=grp[grp[x]]; return x; };
+      Object.keys(done).forEach(k=>{
+        const ab=k.split("-").map(Number); grp[find(ab[0])]=find(ab[1]); });
+      const pairs=[];
+      opened.forEach(R=>opened.forEach(o=>{ if(o.i>R.i)
+        pairs.push([Math.hypot(o.cx-R.cx,o.cy-R.cy),R,o]); }));
+      pairs.sort((a,b)=>a[0]-b[0]).forEach(pr=>{
+        const R=pr[1], o=pr[2];
+        if(find(R.i)===find(o.i)) return;
+        if(pr[0]>(R.rad+o.rad)*2.6) return;        /* 遠すぎるものは つながない */
+        grp[find(R.i)]=find(o.i); bridge(R,o);
       });
       if(baseP){
         /* 影 → 外枠 → 塗り の順に重ねると、内側の線が消えて一枚の陸地に見える */
@@ -3603,6 +3703,166 @@ function applyImport(next,msg){
 }
 
 /* ============================================================
+   9.8 そうび
+   おみやげを3つ合成すると そうびになる。ひとりに2つまで。
+   型20 × 属性8 × 位階6 = 960種類。
+   ・その子の伸びる軸に補正がかかる（進化先を すこし導ける）
+   ・見た目が変わる（見せ合うのが たのしい）
+   ・探検のときに はたらく効果がつく
+   ============================================================ */
+const EQ_FORM=[
+ {n:"とんがり帽子", fx:0}, {n:"兜",       fx:1}, {n:"王冠",     fx:2}, {n:"リボン",   fx:3},
+ {n:"丸めがね",     fx:4}, {n:"襟巻き",   fx:0}, {n:"外套",     fx:1}, {n:"翼飾り",   fx:2},
+ {n:"首飾り",       fx:3}, {n:"鈴",       fx:4}, {n:"角飾り",   fx:0}, {n:"背負い袋", fx:1},
+ {n:"旗",           fx:2}, {n:"傘",       fx:3}, {n:"提灯",     fx:4}, {n:"花冠",     fx:0},
+ {n:"耳飾り",       fx:1}, {n:"足環",     fx:2}, {n:"尾飾り",   fx:3}, {n:"光輪",     fx:4}
+];
+const EQ_RANK=[
+ {n:"ありふれた", w:1.0}, {n:"よい",     w:1.6}, {n:"珍しい",   w:2.4},
+ {n:"秘された",   w:3.4}, {n:"幻の",     w:4.6}, {n:"伝説の",   w:6.0}
+];
+const EQ_FX=[
+ {n:"みちしるべ", d:"探検で なにかを 見つけやすくなる"},
+ {n:"目きき",     d:"見つかる おみやげが よくなりやすい"},
+ {n:"はや足",     d:"たよりが 早く 届く"},
+ {n:"土地なじみ", d:"どの土地でも 得意なように ふるまえる"},
+ {n:"よくばり",   d:"まれに おみやげを ふたつ 持ち帰る"}
+];
+const EQ_TOTAL=EQ_FORM.length*ELEM.length*EQ_RANK.length;
+function eqId(f,e,r){ return "E"+f+"-"+e+"-"+r; }
+function eqOf(id){
+  const m=String(id||"").slice(1).split("-").map(Number);
+  const f=m[0]||0, e=m[1]||0, r=m[2]||0;
+  const F=EQ_FORM[f]||EQ_FORM[0], E=ELEM[e]||ELEM[0], R=EQ_RANK[r]||EQ_RANK[0];
+  const axis=(f*5+e*7+r)%NAX;
+  return {id, f, e, r, form:F, elem:E, rank:R, fx:EQ_FX[F.fx],
+    axis, bonus:0.05*R.w,                 /* 読書量の 5%〜30% ぶんを その軸に足す */
+    power:R.w,
+    name:R.n+E.n+F.n,
+    desc:`読んだ量の ${Math.round(5*R.w)}% ぶんが ${AXES[axis].k}（${AXES[axis].d}）に 加わる。`
+        +`まだ読んでいない分野へも すこし かたむけられる。`
+        +`探検では「${EQ_FX[F.fx].n}」— ${EQ_FX[F.fx].d}。`};
+}
+/* 合成。おみやげ3つの 分野・種別・位階から 決まった そうびが できる */
+function forge(ids){
+  if(!ids || ids.length!==3) return null;
+  const its=ids.map(itemOf);
+  /* 型は「どの種別を混ぜたか」で決まる。並べる順は関係ない */
+  const kinds=its.map(i=>i.k).sort((a,b)=>a-b).join(",");
+  const f=hash("form:"+kinds)%EQ_FORM.length;
+  /* 属性は「どの分野を多く混ぜたか」 */
+  const cnt={}; its.forEach(i=>{ cnt[i.a]=(cnt[i.a]||0)+1; });
+  const dom=+Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||(+a)-(+b))[0];
+  const e=(dom+hash("el:"+its.map(i=>i.a).sort((a,b)=>a-b).join(",")))%ELEM.length;
+  const rs=its.reduce((n,i)=>n+i.r,0);         /* 0〜24 */
+  const r=Math.max(0,Math.min(EQ_RANK.length-1, Math.floor(rs/4.2)));
+  return eqId(f,e,r);
+}
+function wornOf(uid){
+  S.worn=S.worn||{};
+  return (S.worn[uid]||[]).filter(Boolean);
+}
+function equipCount(){ return Object.keys(S.equip||{}).length; }
+/* そのユニットの探検効果 */
+function eqBoost(uid){
+  const b={find:0, rare:0, fast:0, fit:0, twin:0};
+  wornOf(uid).forEach(id=>{
+    const q=eqOf(id);
+    if(q.form.fx===0) b.find+=0.05*q.power;
+    if(q.form.fx===1) b.rare+=0.18*q.power;
+    if(q.form.fx===2) b.fast+=0.045*q.power;
+    if(q.form.fx===3) b.fit+=1;
+    if(q.form.fx===4) b.twin+=0.03*q.power;
+  });
+  b.fast=Math.min(0.45,b.fast);
+  return b;
+}
+
+/* ---------- そうびの絵。相棒に重ねて描く ---------- */
+function equipArt(id,cx,cy,R,k,bh,ink,skin){
+  const q=eqOf(id), c=q.elem.c, w=(2.2*k).toFixed(2);
+  const top=cy-R*bh*1.02, glow=q.r>=4;
+  const A=[
+   ()=>`<path d="M${cx-R*0.62},${top+R*0.08} q${R*0.62},${-R*1.05} ${R*1.24},0 z" fill="${c}"
+      stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>
+      <ellipse cx="${cx}" cy="${top+R*0.08}" rx="${R*0.68}" ry="${R*0.13}" fill="${tint(c,-0.25)}"
+      stroke="${ink}" stroke-width="${w}"/>`,
+   ()=>`<path d="M${cx-R*0.66},${top+R*0.12} a${R*0.66},${R*0.6} 0 0 1 ${R*1.32},0 z" fill="${tint(c,-0.1)}"
+      stroke="${ink}" stroke-width="${w}"/><path d="M${cx},${top-R*0.5} l0,${-R*0.34}"
+      stroke="${c}" stroke-width="${(3*k).toFixed(2)}" stroke-linecap="round"/>`,
+   ()=>`<path d="M${cx-R*0.6},${top+R*0.1} l${R*0.16},${-R*0.52} l${R*0.28},${R*0.26}
+      l${R*0.16},${-R*0.44} l${R*0.16},${R*0.44} l${R*0.28},${-R*0.26} l${R*0.16},${R*0.52} z"
+      fill="${c}" stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>`,
+   ()=>`<g><path d="M${cx-R*0.1},${top+R*0.1} l${-R*0.42},${-R*0.24} l0,${R*0.4} z" fill="${c}"
+      stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>
+      <path d="M${cx+R*0.1},${top+R*0.1} l${R*0.42},${-R*0.24} l0,${R*0.4} z" fill="${c}"
+      stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>
+      <circle cx="${cx}" cy="${top+R*0.18}" r="${R*0.12}" fill="${tint(c,0.3)}" stroke="${ink}" stroke-width="${w}"/></g>`,
+   ()=>`<g fill="none" stroke="${ink}" stroke-width="${w}">
+      <circle cx="${cx-R*0.34}" cy="${cy-R*0.16}" r="${R*0.29}" fill="${c}" opacity=".35"/>
+      <circle cx="${cx+R*0.34}" cy="${cy-R*0.16}" r="${R*0.29}" fill="${c}" opacity=".35"/>
+      <path d="M${cx-R*0.05},${cy-R*0.16} h${R*0.1}"/></g>`,
+   ()=>`<path d="M${cx-R*0.72},${cy+R*0.52} q${R*0.72},${R*0.3} ${R*1.44},0 l0,${R*0.26}
+      q${-R*0.72},${R*0.3} ${-R*1.44},0 z" fill="${c}" stroke="${ink}" stroke-width="${w}"
+      stroke-linejoin="round"/><path d="M${cx+R*0.6},${cy+R*0.66} l${R*0.3},${R*0.5} l${-R*0.26},${R*0.06} z"
+      fill="${tint(c,-0.2)}" stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>`,
+   ()=>`<path d="M${cx-R*0.9},${cy-R*0.35} q${R*0.9},${R*1.7} ${R*1.8},0 l0,${R*0.45}
+      q${-R*0.9},${R*0.55} ${-R*1.8},0 z" fill="${c}" opacity=".8" stroke="${ink}" stroke-width="${w}"
+      stroke-linejoin="round"/>`,
+   ()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.78},${cy-R*0.3} q${d*R*0.9},${-R*0.62} ${d*R*1.0},${R*0.16}
+      q${-d*R*0.3},${R*0.34} ${-d*R*1.0},${R*0.02} z" fill="${c}" opacity=".85"
+      stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>`).join(""),
+   ()=>`<g><path d="M${cx-R*0.5},${cy+R*0.36} q${R*0.5},${R*0.28} ${R*1.0},0" fill="none"
+      stroke="${ink}" stroke-width="${w}"/><circle cx="${cx}" cy="${cy+R*0.56}" r="${R*0.15}"
+      fill="${c}" stroke="${ink}" stroke-width="${w}"/></g>`,
+   ()=>`<g><path d="M${cx-R*0.4},${cy+R*0.4} q${R*0.4},${R*0.22} ${R*0.8},0" fill="none"
+      stroke="${ink}" stroke-width="${w}"/><circle cx="${cx}" cy="${cy+R*0.58}" r="${R*0.17}"
+      fill="#FFC12E" stroke="${ink}" stroke-width="${w}"/>
+      <path d="M${cx-R*0.08},${cy+R*0.62} h${R*0.16}" stroke="${ink}" stroke-width="${(1.4*k).toFixed(2)}"/></g>`,
+   ()=>[-1,1].map(d=>`<path d="M${cx+d*R*0.34},${top+R*0.2} q${d*R*0.3},${-R*0.6} ${d*R*0.06},${-R*0.86}"
+      fill="none" stroke="${c}" stroke-width="${(3.4*k).toFixed(2)}" stroke-linecap="round"/>`).join(""),
+   ()=>`<g><rect x="${cx-R*0.34}" y="${cy-R*0.1}" width="${R*0.68}" height="${R*0.62}" rx="${R*0.12}"
+      fill="${c}" stroke="${ink}" stroke-width="${w}"/>
+      <path d="M${cx-R*0.34},${cy+R*0.1} h${R*0.68}" stroke="${ink}" stroke-width="${(1.4*k).toFixed(2)}"/></g>`,
+   ()=>`<g><path d="M${cx+R*0.7},${cy-R*0.2} l0,${-R*0.95}" stroke="${ink}" stroke-width="${w}"
+      stroke-linecap="round"/><path d="M${cx+R*0.72},${cy-R*1.12} q${R*0.5},${R*0.12} ${R*0.86},${-R*0.06}
+      q${-R*0.3},${R*0.26} 0,${R*0.44} q${-R*0.46},${-R*0.1} ${-R*0.86},${R*0.04} z"
+      fill="${c}" stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/></g>`,
+   ()=>`<g><path d="M${cx-R*0.85},${top-R*0.05} a${R*0.85},${R*0.7} 0 0 1 ${R*1.7},0 z" fill="${c}"
+      stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>
+      <path d="M${cx},${top-R*0.05} l0,${R*0.5}" stroke="${ink}" stroke-width="${w}"/></g>`,
+   ()=>`<g><path d="M${cx+R*0.78},${cy-R*0.5} l0,${-R*0.42}" stroke="${ink}" stroke-width="${w}"/>
+      <ellipse cx="${cx+R*0.78}" cy="${cy-R*0.2}" rx="${R*0.24}" ry="${R*0.32}" fill="#FFE9B0"
+      stroke="${ink}" stroke-width="${w}"/>
+      <ellipse cx="${cx+R*0.78}" cy="${cy-R*0.2}" rx="${R*0.1}" ry="${R*0.16}" fill="${c}" opacity=".6"/></g>`,
+   ()=>[-0.5,0,0.5].map((d,i)=>`<circle cx="${cx+d*R*0.62}" cy="${top+R*0.06-Math.abs(d)*R*0.12}"
+      r="${R*0.17}" fill="${i%2?tint(c,0.35):c}" stroke="${ink}" stroke-width="${w}"/>`).join(""),
+   ()=>[-1,1].map(d=>`<circle cx="${cx+d*R*0.8}" cy="${cy-R*0.05}" r="${R*0.13}" fill="${c}"
+      stroke="${ink}" stroke-width="${w}"/>`).join(""),
+   ()=>[-1,1].map(d=>`<ellipse cx="${cx+d*R*0.42}" cy="${cy+R*bh*0.9}" rx="${R*0.27}" ry="${R*0.09}"
+      fill="none" stroke="${c}" stroke-width="${(3*k).toFixed(2)}"/>`).join(""),
+   ()=>`<g><circle cx="${cx+R*1.15}" cy="${cy+R*0.2}" r="${R*0.19}" fill="${c}" stroke="${ink}"
+      stroke-width="${w}"/><circle cx="${cx+R*1.15}" cy="${cy+R*0.2}" r="${R*0.07}" fill="#fff"/></g>`,
+   ()=>`<ellipse cx="${cx}" cy="${top-R*0.42}" rx="${R*0.7}" ry="${R*0.2}" fill="none"
+      stroke="${c}" stroke-width="${(3.4*k).toFixed(2)}"/>`
+  ];
+  let g=A[q.f]();
+  if(glow) g+=`<circle cx="${cx}" cy="${cy}" r="${R*1.5}" fill="${c}" opacity="${q.r>=5?".14":".08"}"/>`;
+  if(q.r>=5) g+=`<path d="M${cx-R*1.4},${cy-R*1.1} l${R*0.09},${R*0.22} l${R*0.22},${R*0.09}
+    l${-R*0.22},${R*0.09} l${-R*0.09},${R*0.22} l${-R*0.09},${-R*0.22} l${-R*0.22},${-R*0.09}
+    l${R*0.22},${-R*0.09} z" fill="${c}"/>`;
+  return g;
+}
+/* 一覧に出す小さな絵 */
+function eqSVG(id,size){
+  const q=eqOf(id), s=size||56, k=s/120, R=s*0.28, cx=s/2, cy=s*0.56;
+  return `<svg viewBox="0 0 ${s} ${s}" width="${s}" height="${s}" aria-hidden="true">`
+    + (q.r>=3? `<circle cx="${cx}" cy="${cy}" r="${s*0.42}" fill="${q.elem.c}" opacity="${(0.06*q.r).toFixed(2)}"/>`:"")
+    + equipArt(id,cx,cy+R*0.55,R,k*2.6,1,"var(--ink)","var(--card)")
+    + `</svg>`;
+}
+
+/* ============================================================
    9.7 遠征とおみやげ
    仲間や守り神を土地に置いておくと、1時間に1度なにかを見つけてくる。
    分野12 × 種別10 × 位階9 = 1,080種のおみやげを集められる。
@@ -3689,7 +3949,8 @@ function unitList(){
     spec:sp, axis:sp.dom, power:2+sp.stage});
   (S.ancestors||[]).forEach((a,i)=>{
     out.push({uid:"a:"+i, kind:"anc", name:a.name+"（第"+a.gen+"代）",
-      spec:a.spec||{stage:5,arch:0,elem:0,epi:0,hue:a.hue,dom:0},
+      spec:Object.assign({},a.spec||{stage:5,arch:0,elem:0,epi:0,hue:a.hue,dom:0},
+        {wear:wornOf("a:"+i)}),
       axis:(a.spec&&a.spec.dom)||0,
       power:5+Math.min(4,Math.floor((a.pages||0)/8000))});
   });
@@ -3713,23 +3974,24 @@ function processExped(){
     const e=S.exped[rn], R=regionByName(rn), u=unitById(e.uid);
     if(!R||!u){ return; }
     e.last=e.last||e.since||now;
-    const iv=hasBoon(R,"風の便り")? ROLL_MS*0.83 : ROLL_MS;   /* 恵みで間隔が縮む */
+    const iv=(hasBoon(R,"風の便り")? ROLL_MS*0.83 : ROLL_MS)*(1-eqBoost(u.uid).fast);
     let rolls=Math.floor((now-e.last)/iv);
     if(rolls<=0) return;
     if(rolls>36) rolls=36;                       /* ためこみは半日ぶんまで */
     e.last=now;
-    const ax=regionAxis(R), fit=(u.axis===ax)?1:0;
+    const eb=eqBoost(u.uid);
+    const ax=regionAxis(R), fit=(u.axis===ax || eb.fit>0)?1:0;
     const lv=landLv(R);
     for(let i=0;i<rolls;i++){
       ev++;
       const seed=hash(rn+"|"+e.uid+"|"+e.last+"|"+i);
       const lore=LORE[ax];
       let line=`${u.name}は ${R.place||R.name}の ${lore.sp[seed%3]}を たずねた。`;
-      const chance=Math.min(0.62, 0.16+u.power*0.035+fit*0.10
-        +lv*0.012+(hasBoon(R,"道しるべ")?0.06:0));
+      const chance=Math.min(0.70, 0.16+u.power*0.035+fit*0.10
+        +lv*0.012+(hasBoon(R,"道しるべ")?0.06:0)+eb.find);
       if(((seed>>>5)%1000)/1000 < chance){
         /* 位階は重みつき。得意分野なら良いものが出やすい */
-        const boost=1+u.power*0.12+fit*0.4+lv*0.05+(hasBoon(R,"実り")?0.6:0);
+        const boost=1+u.power*0.12+fit*0.4+lv*0.05+(hasBoon(R,"実り")?0.6:0)+eb.rare;
         const ws=IRANK.map((r,ri)=>{
           let w=r.w*Math.pow(boost,ri*0.5);
           if(hasBoon(R,"守りの灯")&&ri<2) w*=0.35;     /* つまらないものが減る */
@@ -3742,8 +4004,9 @@ function processExped(){
         const aa=((seed>>>17)%10<(10-other))? ax : (seed>>>19)%NAX;
         const kk=(seed>>>21)%IKIND.length;
         const id=itemId(aa,kk,ri);
-        S.items[id]=(S.items[id]||0)+1;
-        found++;
+        const dbl=(((seed>>>23)%1000)/1000 < eb.twin)? 2 : 1;
+        S.items[id]=(S.items[id]||0)+dbl;
+        found+=dbl;
         line+=`${itemOf(id).name}${IVERB[(seed>>>3)%IVERB.length]}。`;
         S.expLog.unshift({at:e.last-i*ROLL_MS, r:rn, u:u.name, t:line, item:id});
       }else{
@@ -3949,6 +4212,135 @@ function showNews(msg){
     document.querySelector('.tabs button[data-v="map"]').click(); };
 }
 
+/* ---------- そうびの画面 ---------- */
+let wearTarget=null, wearIdx=0, forgeSel=[null,null,null], forgeIdx=0;
+function renderWearBar(){
+  const el=document.getElementById("wearBar"); if(!el) return;
+  const w=wornOf("me");
+  let h=`<span class="wlabel">そうび</span>`;
+  for(let i=0;i<2;i++){
+    const id=w[i];
+    h+=`<button type="button" class="wslot${id?" on":""}" data-i="${i}">`
+      + (id? eqSVG(id,30)+`<b>${esc(eqOf(id).name)}</b>`
+           : `<em>あき ${i+1}</em>`)
+      + `</button>`;
+  }
+  el.innerHTML=h;
+  el.querySelectorAll(".wslot").forEach(b=>b.onclick=()=>openWear("me",+b.dataset.i));
+}
+function openWear(uid,idx){
+  wearTarget=uid; wearIdx=idx;
+  const owned=Object.keys(S.equip||{});
+  const u=(typeof unitById==="function")? unitById(uid) : null;
+  document.getElementById("wearWho").textContent=(u? u.name : "いまの相棒")+" ／ "+(idx+1)+"つ目";
+  document.getElementById("wearList").innerHTML = owned.length
+    ? owned.sort((a,b)=>eqOf(b).r-eqOf(a).r).map(id=>{
+        const q=eqOf(id), on=wornOf(uid).indexOf(id)>=0;
+        return `<button type="button" class="eq r${q.r}${on?" on":""}" data-e="${id}">
+          ${eqSVG(id,44)}<b>${esc(q.name)}</b>
+          <em>${esc(AXES[q.axis].k)}+${Math.round(q.bonus*100)}% ／ ${esc(q.fx.n)}</em></button>`;
+      }).join("")
+    : `<div class="empty-box" style="padding:20px">まだ そうびが ありません。<br>
+       おみやげを3つ 合成すると つくれます。</div>`;
+  document.querySelectorAll("#wearList .eq").forEach(b=>b.onclick=()=>{
+    S.worn=S.worn||{}; const arr=(S.worn[wearTarget]||[]).slice();
+    const other=arr[1-wearIdx];
+    if(other===b.dataset.e) arr[1-wearIdx]=null;      /* 同じものは2つ付けない */
+    arr[wearIdx]=b.dataset.e;
+    S.worn[wearTarget]=arr; save();
+    document.getElementById("wearDlg").close(); renderAll();
+    toast(`${eqOf(b.dataset.e).name} を つけた`);
+  });
+  document.getElementById("wearDlg").showModal();
+}
+function renderEquipTab(){
+  const owned=Object.keys(S.equip||{});
+  const cnt=document.getElementById("eqCount");
+  if(cnt) cnt.textContent=`${owned.length} / ${EQ_TOTAL} 種類`;
+  const list=document.getElementById("eqList");
+  if(list){
+    list.innerHTML = owned.length
+      ? owned.sort((a,b)=>eqOf(b).r-eqOf(a).r).map(id=>{
+          const q=eqOf(id);
+          return `<button type="button" class="eq r${q.r}" data-e="${id}">${eqSVG(id,44)}
+            <b>${esc(q.name)}</b><em>×${S.equip[id]}</em></button>`;
+        }).join("")
+      : `<div class="empty-box" style="padding:20px">まだ ありません。</div>`;
+    list.querySelectorAll(".eq").forEach(b=>b.onclick=()=>showEq(b.dataset.e));
+  }
+  /* 合成 */
+  const pick=document.getElementById("forgePick");
+  if(pick){
+    pick.innerHTML=[0,1,2].map(i=>`<button type="button" class="fslot${forgeSel[i]?" on":""}" data-f="${i}">`
+      + (forgeSel[i]? itemSVG(forgeSel[i],44) : `<span style="color:var(--ink-sub);font-size:22px">＋</span>`)
+      + `</button>`).join("")
+      + `<button type="button" class="btn primary sm" id="forgeGo">つくる</button>`
+      + `<button type="button" class="btn quiet sm" id="forgeClear">えらび直す</button>`;
+    pick.querySelectorAll(".fslot").forEach(b=>b.onclick=()=>openPickItem(+b.dataset.f));
+    document.getElementById("forgeGo").onclick=doForge;
+    document.getElementById("forgeClear").onclick=()=>{ forgeSel=[null,null,null]; renderEquipTab(); };
+  }
+  const out=document.getElementById("forgeOut");
+  if(out){
+    if(forgeSel.every(Boolean)){
+      const id=forge(forgeSel), q=eqOf(id);
+      out.innerHTML=`<div class="forgeout">${eqSVG(id,52)}
+        <div><b>${esc(q.name)}</b>
+          <em>${esc(AXES[q.axis].k)}（${esc(AXES[q.axis].d)}）の伸び +${Math.round(q.bonus*100)}%</em>
+          <em>探検「${esc(q.fx.n)}」— ${esc(q.fx.d)}</em></div></div>`;
+    }else{
+      out.innerHTML=`<div class="kv">おみやげを3つ えらぶと、できるものが 見えます。</div>`;
+    }
+  }
+}
+function openPickItem(i){
+  forgeIdx=i;
+  const owned=Object.keys(S.items||{}).filter(id=>S.items[id]>0);
+  document.getElementById("pickItemList").innerHTML = owned.length
+    ? owned.sort((a,b)=>itemOf(b).r-itemOf(a).r).map(id=>
+        `<button type="button" class="itm" data-i="${id}">${itemSVG(id,44)}
+          <b>${esc(itemOf(id).name)}</b><em>×${S.items[id]}</em></button>`).join("")
+    : `<div class="empty-box" style="padding:20px">まだ おみやげが ありません。<br>
+       相棒を 土地へ 送ると 見つけてきます。</div>`;
+  document.querySelectorAll("#pickItemList .itm").forEach(b=>b.onclick=()=>{
+    forgeSel[forgeIdx]=b.dataset.i;
+    document.getElementById("pickItemDlg").close(); renderEquipTab(); SFX.tap();
+  });
+  document.getElementById("pickItemDlg").showModal();
+}
+function doForge(){
+  if(!forgeSel.every(Boolean)){ toast("おみやげを3つ えらんでください"); SFX.no(); return; }
+  /* 手持ちが足りているか（同じものを重ねて使う場合も見る） */
+  const need={}; forgeSel.forEach(id=>need[id]=(need[id]||0)+1);
+  for(const id in need) if((S.items[id]||0)<need[id]){
+    toast(`${itemOf(id).name} が たりません`); SFX.no(); return; }
+  const id=forge(forgeSel);
+  for(const k in need){ S.items[k]-=need[k]; if(S.items[k]<=0) delete S.items[k]; }
+  S.equip=S.equip||{}; S.equip[id]=(S.equip[id]||0)+1;
+  forgeSel=[null,null,null];
+  save(); renderAll(); SFX.grow();
+  const q=eqOf(id);
+  toast(`${q.name} が できた！`);
+  showEq(id);
+}
+function showEq(id){
+  const q=eqOf(id);
+  document.getElementById("eqArt").innerHTML=eqSVG(id,110);
+  document.getElementById("eqName").textContent=q.name;
+  document.getElementById("eqMeta").textContent=`${q.rank.n}／${q.elem.n}／${q.form.n}`;
+  document.getElementById("eqDesc").textContent=q.desc;
+  document.getElementById("eqHave").textContent=`手持ち ${(S.equip||{})[id]||0} 個`;
+  document.getElementById("eqDlg").showModal();
+}
+document.getElementById("eqClose").onclick=()=>document.getElementById("eqDlg").close();
+document.getElementById("wearCancel").onclick=()=>document.getElementById("wearDlg").close();
+document.getElementById("wearOff").onclick=()=>{
+  if(wearTarget){ S.worn=S.worn||{}; const a=(S.worn[wearTarget]||[]).slice();
+    a[wearIdx]=null; S.worn[wearTarget]=a; save(); }
+  document.getElementById("wearDlg").close(); renderAll(); toast("はずしました");
+};
+document.getElementById("pickItemCancel").onclick=()=>document.getElementById("pickItemDlg").close();
+
 /* ---------- 表示 ---------- */
 function renderKpi(){
   const xp=totalXp(), L=levelOf(xp);
@@ -3961,7 +4353,8 @@ function renderKpi(){
     books().filter(b=>b.origin==="company"&&isDone(b)).length+"<small>冊</small>";
 }
 function renderAll(){ drawMap(); renderKpi(); renderPet(); renderSpot();
-  renderShelf(); renderBuddyTab(); renderTower(); renderExped(); }
+  renderShelf(); renderBuddyTab(); renderTower(); renderExped();
+  renderWearBar(); renderEquipTab(); }
 
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tabs button").forEach(x=>
@@ -4096,7 +4489,8 @@ document.getElementById("growBtn").onclick=()=>{
 document.getElementById("resetBtn").onclick=()=>{
   const nm=S.name;
   S={rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:nm, lastDate:null, streak:0,
-     ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[]}; mapFocus=null;
+     ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[],
+     star:{}, equip:{}, worn:{}}; mapFocus=null;
   save(); selected=null; document.getElementById("newsSlot").innerHTML="";
   renderAll(); toast("きろくを 消しました");
 };
