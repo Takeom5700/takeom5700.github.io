@@ -3725,7 +3725,7 @@ const EQ_FX=[
  {n:"みちしるべ", d:"探検で なにかを 見つけやすくなる"},
  {n:"目きき",     d:"見つかる おみやげが よくなりやすい"},
  {n:"はや足",     d:"たよりが 早く 届く"},
- {n:"土地なじみ", d:"どの土地でも 得意なように ふるまえる"},
+ {n:"土地なじみ", d:"決まった土地で 得意なように ふるまえる"},
  {n:"よくばり",   d:"まれに おみやげを ふたつ 持ち帰る"}
 ];
 const EQ_TOTAL=EQ_FORM.length*ELEM.length*EQ_RANK.length;
@@ -3739,9 +3739,15 @@ function eqOf(id){
     axis, bonus:0.05*R.w,                 /* 読書量の 5%〜30% ぶんを その軸に足す */
     power:R.w,
     name:R.n+E.n+F.n,
+    /* 「土地なじみ」は どこでもではなく、そのそうびの軸にあたる土地だけで はたらく */
+    fxDesc: F.fx===3
+      ? `${AXES[axis].k}（${AXES[axis].d}）の土地で 得意なように ふるまえる`
+      : EQ_FX[F.fx].d,
     desc:`読んだ量の ${Math.round(5*R.w)}% ぶんが ${AXES[axis].k}（${AXES[axis].d}）に 加わる。`
         +`まだ読んでいない分野へも すこし かたむけられる。`
-        +`探検では「${EQ_FX[F.fx].n}」— ${EQ_FX[F.fx].d}。`};
+        +`探検では「${EQ_FX[F.fx].n}」— ${F.fx===3
+            ? AXES[axis].k+"の土地で 得意なように ふるまえる"
+            : EQ_FX[F.fx].d}。`};
 }
 /* 合成。おみやげ3つの 分野・種別・位階から 決まった そうびが できる */
 function forge(ids){
@@ -3765,18 +3771,19 @@ function wornOf(uid){
 function equipCount(){ return Object.keys(S.equip||{}).length; }
 /* そのユニットの探検効果 */
 function eqBoost(uid){
-  const b={find:0, rare:0, fast:0, fit:0, twin:0};
+  const b={find:0, rare:0, fast:0, fitAx:[], twin:0};
   wornOf(uid).forEach(id=>{
     const q=eqOf(id);
     if(q.form.fx===0) b.find+=0.05*q.power;
     if(q.form.fx===1) b.rare+=0.18*q.power;
     if(q.form.fx===2) b.fast+=0.045*q.power;
-    if(q.form.fx===3) b.fit+=1;
+    if(q.form.fx===3) b.fitAx.push(q.axis);   /* その軸の土地だけ 得意になる */
     if(q.form.fx===4) b.twin+=0.03*q.power;
   });
   b.fast=Math.min(0.45,b.fast);
   return b;
 }
+function eqFitsHere(uid,R){ return eqBoost(uid).fitAx.indexOf(regionAxis(R))>=0; }
 
 /* ---------- そうびの絵。相棒に重ねて描く ---------- */
 function equipArt(id,cx,cy,R,k,bh,ink,skin){
@@ -3980,7 +3987,7 @@ function processExped(){
     if(rolls>36) rolls=36;                       /* ためこみは半日ぶんまで */
     e.last=now;
     const eb=eqBoost(u.uid);
-    const ax=regionAxis(R), fit=(u.axis===ax || eb.fit>0)?1:0;
+    const ax=regionAxis(R), fit=(u.axis===ax || eb.fitAx.indexOf(ax)>=0)?1:0;
     const lv=landLv(R);
     for(let i=0;i<rolls;i++){
       ev++;
@@ -4090,7 +4097,8 @@ function renderExped(){
       ${u? `<div class="slot-u">${walkScene(u.spec,"happy")}
             <div class="slot-t"><b>${esc(u.name)}</b>
             <em class="expmsg">${esc(expedLine(R,u,e))}</em>
-            <em>探索力 ${u.power}${u.axis===regionAxis(R)?" ・ 得意な土地":""} ／ つぎの便り あと ${Math.ceil(nx/60000)}分</em>
+            <em>探索力 ${u.power}${u.axis===regionAxis(R)?" ・ 得意な土地"
+              :(eqFitsHere(u.uid,R)?" ・ そうびで なじむ土地":"")} ／ つぎの便り あと ${Math.ceil(nx/60000)}分</em>
             </div></div>`
           : `<div class="slot-empty">まだ誰も いない</div>`}
       <button class="btn quiet sm" data-r="${esc(R.name)}">${u?"交代させる":"探検に出す"}</button>
@@ -4123,7 +4131,8 @@ function openPick(rn){
   document.getElementById("pickList").innerHTML = units.length? units.map(u=>
     `<button class="pickrow${placed[u.uid]&&placed[u.uid]!==rn?" busy":""}" data-u="${esc(u.uid)}">
       ${creatureSVG(u.spec,44,"happy")}
-      <div><b>${esc(u.name)}</b><em>探索力 ${u.power}${u.axis===ax?" ・ この土地が得意":""}
+      <div><b>${esc(u.name)}</b><em>探索力 ${u.power}${u.axis===ax?" ・ この土地が得意"
+        :(eqFitsHere(u.uid,R)?" ・ そうびで この土地に なじむ":"")}
       ${placed[u.uid]&&placed[u.uid]!==rn? " ・ "+esc(placed[u.uid])+"に滞在中":""}</em></div></button>`
     ).join("") : `<div class="empty-box" style="padding:18px">送り出せる子が まだ いません。<br>
       本を読み終えると 土地に子が住みつきます。</div>`;
@@ -4287,7 +4296,7 @@ function renderEquipTab(){
       out.innerHTML=`<div class="forgeout">${eqSVG(id,52)}
         <div><b>${esc(q.name)}</b>
           <em>${esc(AXES[q.axis].k)}（${esc(AXES[q.axis].d)}）の伸び +${Math.round(q.bonus*100)}%</em>
-          <em>探検「${esc(q.fx.n)}」— ${esc(q.fx.d)}</em></div></div>`;
+          <em>探検「${esc(q.fx.n)}」— ${esc(q.fxDesc)}</em></div></div>`;
     }else{
       out.innerHTML=`<div class="kv">おみやげを3つ えらぶと、できるものが 見えます。</div>`;
     }
@@ -4329,7 +4338,16 @@ function showEq(id){
   document.getElementById("eqName").textContent=q.name;
   document.getElementById("eqMeta").textContent=`${q.rank.n}／${q.elem.n}／${q.form.n}`;
   document.getElementById("eqDesc").textContent=q.desc;
-  document.getElementById("eqHave").textContent=`手持ち ${(S.equip||{})[id]||0} 個`;
+  /* どの土地に効くか、いまの地図で示す */
+  let where="";
+  if(q.form.fx===3){
+    const ls=[];
+    (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{
+      if(regionAxis(R)===q.axis) ls.push(R.place||R.name); }));
+    where = ls.length? `<br>なじむ土地：${ls.map(esc).join("、")}`
+                     : `<br>なじむ土地：いまの地図には まだ ありません`;
+  }
+  document.getElementById("eqHave").innerHTML=`手持ち ${(S.equip||{})[id]||0} 個`+where;
   document.getElementById("eqDlg").showModal();
 }
 document.getElementById("eqClose").onclick=()=>document.getElementById("eqDlg").close();
