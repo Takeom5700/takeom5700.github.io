@@ -420,6 +420,22 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
   scrollbar-width:thin; line-height:0}
 .skybox svg{display:block; width:100%; height:auto}
 .btick{font-family:var(--f-num); font-size:8px; fill:#3B2A1E; opacity:.55}
+/* 塔での暮らし。小道具それぞれに ちがうリズムを与えて 生きている感じを出す */
+.homepet{animation:homeBob 3.1s ease-in-out infinite; transform-box:fill-box}
+@keyframes homeBob{0%,100%{transform:translateY(0)} 50%{transform:translateY(-2.5px)}}
+.laundry{animation:sway 2.7s ease-in-out infinite; transform-box:fill-box; transform-origin:50% 0}
+@keyframes sway{0%,100%{transform:rotate(-7deg)} 50%{transform:rotate(7deg)}}
+.homelamp{animation:lampGlow 2.3s ease-in-out infinite}
+@keyframes lampGlow{0%,100%{opacity:.75} 50%{opacity:1}}
+.homeanc{animation:ancBob 3.8s ease-in-out infinite}
+@keyframes ancBob{0%,100%{transform:translateY(0)} 50%{transform:translateY(-1.6px)}}
+.millvane{animation:millspin 7s linear infinite; transform-box:fill-box; transform-origin:center}
+@keyframes millspin{to{transform:rotate(360deg)}}
+.swing{animation:swingArc 3.4s ease-in-out infinite}
+@keyframes swingArc{0%,100%{transform:rotate(-9deg)} 50%{transform:rotate(9deg)}}
+@media (prefers-reduced-motion: reduce){
+  .homepet,.laundry,.homelamp,.homeanc,.millvane,.swing{animation:none !important}
+}
 .tnote{font-family:var(--f-disp); font-weight:800; font-size:11px; fill:#3B2A1E;
   paint-order:stroke; stroke:#FFF6E3; stroke-width:4px; stroke-linejoin:round}
 .tlayer:hover rect:first-child{stroke-width:3.4}
@@ -668,12 +684,23 @@ html.plain-mode .wearbar{display:none !important}
 
 /* ---------- 相棒ページの配置 ---------- */
 .buddy-grid{display:grid; gap:16px; grid-template-columns:minmax(0,360px) minmax(0,1fr);
-  grid-template-areas:"tower twinfo" "tower axis" "tower land" "tower anc" "title title";
+  grid-template-areas:"tower home" "tower axis" "tower land" "tower anc" "title title";
   align-items:start}
 @media (max-width:820px){
   .buddy-grid{grid-template-columns:1fr;
-    grid-template-areas:"tower" "twinfo" "axis" "land" "anc" "title"}
+    grid-template-areas:"tower" "home" "axis" "land" "anc" "title"}
 }
+/* 塔での暮らしぶり。数字ではなく情景として読ませたいので、本文より少し大きく */
+.homelead{font-size:14.5px !important; line-height:2 !important; color:var(--ink) !important;
+  white-space:pre-line; text-wrap:pretty}
+.kitlist{display:flex; flex-wrap:wrap; gap:7px}
+.kit{display:inline-flex; align-items:center; gap:6px; padding:6px 12px 6px 8px;
+  border:2px solid var(--line); border-radius:var(--r-pill); background:var(--paper);
+  font-size:11.5px; font-family:var(--f-disp); font-weight:700; color:var(--ink-sub)}
+.kit.got{border-color:var(--ink); background:var(--card); color:var(--ink)}
+.kit .kdot{width:9px; height:9px; border-radius:50%; background:var(--line); flex:none}
+.kit.got .kdot{background:var(--leaf)}
+.kit em{font-style:normal; font-family:var(--f-num); font-size:10px; color:var(--ink-sub)}
 /* もちものの中の切り替え。上のタブとは別物に見えるよう、丸い横並びにする */
 .subtabs{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px}
 .subtabs .sub{font-family:var(--f-disp); font-weight:800; font-size:12.5px; letter-spacing:.03em;
@@ -893,7 +920,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-v="map">地図</button>
     <button role="tab" aria-selected="false" data-v="shelf">本だな</button>
-    <button role="tab" aria-selected="false" data-v="buddy">相棒と塔</button>
+    <button role="tab" aria-selected="false" data-v="buddy">知の塔</button>
     <button role="tab" aria-selected="false" data-v="items">もちもの</button>
   </nav>
 
@@ -965,11 +992,14 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
     <div class="buddy-grid">
       <div class="skybox" style="grid-area:tower" id="skybox"><svg id="towerSvg" role="img"
         aria-label="読んだページ数だけ空へ伸びる塔。高くなるほど空の景色が変わる"></svg></div>
-      <div class="panel" style="grid-area:twinfo">
-        <h3>知の塔</h3>
-        <p>読み終えた本が下から一層ずつ積み上がります。高くなるほど空の景色が変わります。</p>
+      <div class="panel" style="grid-area:home">
+        <h3>きょうの ようす</h3>
+        <p class="homelead" id="homeLead">—</p>
         <div class="kv" id="towerStat"></div>
-        <h3 style="margin-top:16px">高さでかわる景色</h3>
+        <h3 style="margin-top:18px">塔の しつらえ</h3>
+        <p>読み終えた本が一層ずつ積み上がり、暮らしの道具が ひとつずつ増えていきます。</p>
+        <div class="kitlist" id="homeKit"></div>
+        <h3 style="margin-top:18px">高さでかわる景色</h3>
         <div class="bands" id="bands"></div>
       </div>
       <div class="panel" style="grid-area:axis">
@@ -2240,15 +2270,17 @@ function petLine(md,si){
     if(w && seed%2===0) return `${w} の きり、まだ のこって いる はず。つづき が たべたい`;
     return HUNGRY[seed%HUNGRY.length];
   }
-  /* その本ならではの味 / 主題の言葉 / 分野の味 を混ぜる */
+  /* その本ならではの味 / 主題の言葉 / 分野の味 を混ぜる。
+     本ごとの塩を混ぜて選ぶので、同じ分野の別の本が まったく同じ台詞にならない */
   const bt=bookTaste(b);
   const ax=lastAxis();
   const t=TASTE[(ax<0?0:ax)%TASTE.length];
+  const bseed=hash(b.id+"|"+seed);
   let core;
-  const pick=seed%10;
-  if(w && pick<5)      core=THEME_LINES[(seed>>>3)%THEME_LINES.length](w);
+  const pick=bseed%10;
+  if(w && pick<5)      core=THEME_LINES[(bseed>>>3)%THEME_LINES.length](w);
   else if(bt && pick<8) core=bt;
-  else                  core=t[seed%t.length];
+  else                  core=t[(bseed>>>7)%t.length];
   if(fin && md==="full")
     return (seed%3===0? `『${ttl}』、さいご まで たべた！ ` : `ぜんぶ たべた！ `)+core;
   if(md==="full") return FULL_PRE[(seed>>>6)%FULL_PRE.length]+core;
@@ -3395,6 +3427,144 @@ function drawFx(fx,x,y,sd){
   }
 }
 
+/* ============================================================
+   7.5 塔での暮らし
+   知の塔は「高さの記録」であると同時に、相棒とわたしの本拠地。
+   読み進めるほど 設えが増え、暮らしが賑やかになっていく箱庭にする。
+   ============================================================ */
+const HOME_KIT=[
+ {p:0,     k:"mat",    n:"敷きもの",   d:"ふもとに 敷きものを ひろげた"},
+ {p:150,   k:"lamp",   n:"あかり",     d:"入口に あかりが ともった"},
+ {p:500,   k:"garden", n:"はたけ",     d:"ちいさな はたけを たがやした"},
+ {p:1100,  k:"laundry",n:"ものほし",   d:"洗濯ものが 風に ゆれている"},
+ {p:2000,  k:"bench",  n:"ベンチ",     d:"ひとやすみできる ベンチが できた"},
+ {p:3200,  k:"post",   n:"ポスト",     d:"便りが とどく ポストが 立った"},
+ {p:4800,  k:"swing",  n:"ブランコ",   d:"木に ブランコを つるした"},
+ {p:7000,  k:"scope",  n:"望遠鏡",     d:"バルコニーに 望遠鏡を すえた"},
+ {p:10000, k:"pond",   n:"ちいさな池", d:"池が できて 水が ひかる"},
+ {p:14000, k:"mill",   n:"風車",       d:"風車が まわりはじめた"},
+ {p:19000, k:"bird",   n:"鳥のいえ",   d:"鳥が すみついた"},
+ {p:26000, k:"arch",   n:"花のアーチ", d:"入口に 花の アーチが かかった"}
+];
+function homeHas(k,pages){
+  const it=HOME_KIT.find(x=>x.k===k);
+  return !!it && pages>=it.p;
+}
+function homeGot(pages){ return HOME_KIT.filter(x=>pages>=x.p); }
+function homeNext(pages){ return HOME_KIT.find(x=>pages<x.p)||null; }
+/* いまの暮らしぶりを一文で。時間帯・設え・仲間の数で変わる */
+const HOME_DOING=[
+ "窓辺で ページを めくっている","日なたで ごろりと している","はたけの ようすを 見にいった",
+ "階段を のぼったり おりたり している","洗濯ものの においを かいでいる","ぼんやり 空を ながめている",
+ "ためた おみやげを ならべて にやにやしている","こんどの 探検の したくを している"
+];
+function homeLine(){
+  const pages=books().filter(isDone).reduce((n,b)=>n+b.p,0);
+  const h=new Date().getHours();
+  const when = h<5?"よふけの":h<10?"あさの":h<16?"ひるの":h<19?"夕暮れの":"よるの";
+  const floors=books().filter(isDone).length;
+  const seed=hash(S.name+"|"+floors+"|"+Math.floor(Date.now()/3600000));
+  const doing=HOME_DOING[seed%HOME_DOING.length];
+  const kit=homeGot(pages);
+  let s=`${when}塔。${S.name}は ${doing}。`;
+  if(floors===0) s+=`\nまだ 土台だけだけど、ここが わたしたちの 家。`;
+  else s+=`\n${floors}層 ぶんの 本が、この子の 足もとを ささえている。`;
+  if(kit.length>1) s+=`\n${kit[kit.length-1].d}。`;
+  const anc=(S.ancestors||[]).length;
+  if(anc>0) s+=`\nふもとでは 先代の ${anc}人が 塔を まもっている。`;
+  const nx=homeNext(pages);
+  if(nx) s+=`\nあと ${(nx.p-pages).toLocaleString()}ページで 「${nx.n}」が 増えそう。`;
+  return s;
+}
+function renderHomeKit(){
+  const el=document.getElementById("homeKit"); if(!el) return;
+  const pages=books().filter(isDone).reduce((n,b)=>n+b.p,0);
+  el.innerHTML=HOME_KIT.map(it=>{
+    const got=pages>=it.p;
+    return `<span class="kit${got?" got":""}" title="${esc(it.d)}">
+      <span class="kdot"></span>${esc(it.n)}${got?"":`<em>${it.p.toLocaleString()}p</em>`}</span>`;
+  }).join("");
+}
+/* 箱庭の小道具たち。ふもとに置くもの */
+function homeProps(pages,baseY,W,cx){
+  let g="";
+  const P=(k)=>homeHas(k,pages);
+  if(P("mat")) g+=`<ellipse cx="${cx}" cy="${baseY+14}" rx="52" ry="9" fill="#C9A97E" opacity=".5"/>
+    <ellipse cx="${cx}" cy="${baseY+14}" rx="52" ry="9" fill="none" stroke="#8C6A44" stroke-width="1.4" opacity=".6"/>`;
+  if(P("garden")){
+    for(let i=0;i<4;i++){ const gx=cx+34+i*13, gy=baseY+26;
+      g+=`<g><rect x="${gx-5}" y="${gy}" width="10" height="4" rx="1.5" fill="#7A5A3A"/>
+        <path d="M${gx},${gy} v-7" stroke="#3F7F3C" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="${gx-2.5}" cy="${gy-8}" r="2.6" fill="#E0554F"/>
+        <circle cx="${gx+2.5}" cy="${gy-9}" r="2.2" fill="#4E9B4E"/></g>`; }
+  }
+  if(P("pond")) g+=`<g><ellipse cx="${cx-58}" cy="${baseY+34}" rx="26" ry="9" fill="#5FB6DA"/>
+    <ellipse cx="${cx-58}" cy="${baseY+34}" rx="26" ry="9" fill="none" stroke="#3C7F9C" stroke-width="1.4"/>
+    <path d="M${cx-68},${baseY+32} q5,-2 10,0 M${cx-54},${baseY+36} q5,-2 10,0"
+      stroke="#CFEEFB" stroke-width="1.3" fill="none" stroke-linecap="round"/></g>`;
+  if(P("bench")) g+=`<g><rect x="${cx-96}" y="${baseY+20}" width="30" height="3.4" rx="1.4" fill="#A9793F"/>
+    <rect x="${cx-96}" y="${baseY+14}" width="30" height="3" rx="1.4" fill="#BE8A4C"/>
+    <rect x="${cx-94}" y="${baseY+23}" width="2.6" height="7" fill="#7A5427"/>
+    <rect x="${cx-71}" y="${baseY+23}" width="2.6" height="7" fill="#7A5427"/></g>`;
+  if(P("post")) g+=`<g><rect x="${cx+72}" y="${baseY+8}" width="3" height="20" fill="#6B4A2E"/>
+    <rect x="${cx+66}" y="${baseY+2}" width="15" height="11" rx="2.5" fill="#D2493F" stroke="#3B2A1E" stroke-width="1.4"/>
+    <path d="M${cx+68},${baseY+5} h11" stroke="#FBE0D2" stroke-width="1.4"/></g>`;
+  if(P("mill")) g+=`<g><rect x="${cx-116}" y="${baseY-16}" width="8" height="34" fill="#CBB89A" stroke="#3B2A1E" stroke-width="1.4"/>
+    <g transform="translate(${cx-112},${baseY-18})"><g class="millvane">
+    ${[0,90,180,270].map(a=>`<path d="M0,0 l0,-15 l5,3 z" fill="#E9DCC2" stroke="#3B2A1E"
+      stroke-width="1.1" transform="rotate(${a})"/>`).join("")}
+    <circle r="2" fill="#7A5427"/></g></g></g>`;
+  if(P("arch")) g+=`<g fill="none" stroke="#4E9B4E" stroke-width="3" stroke-linecap="round">
+    <path d="M${cx-30},${baseY+12} q30,-34 60,0"/></g>
+    ${[0,1,2,3,4].map(i=>{ const t=i/4, ax=cx-30+60*t, ay=baseY+12-Math.sin(Math.PI*t)*26;
+      return `<circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="3.2"
+        fill="${["#FF8FB8","#FFD37A","#FFB3D1","#FFE7A6","#FF9EC4"][i]}"/>`; }).join("")}`;
+  return g;
+}
+/* バルコニーで暮らす相棒。塔のてっぺんに家がある、という絵にする */
+function homeTerrace(pages,cx,ty,tw){
+  const bx=cx-tw/2-30, by=ty+16;
+  let g=`<g><rect x="${bx}" y="${by}" width="34" height="4" rx="1.5" fill="#8C7B62"/>
+    <rect x="${bx}" y="${by+4}" width="34" height="2" fill="#6B5A45"/>
+    ${[0,1,2,3,4].map(i=>`<rect x="${bx+2+i*7.5}" y="${by-8}" width="1.8" height="8" fill="#8C7B62"/>`).join("")}
+    <rect x="${bx}" y="${by-9}" width="34" height="2" rx="1" fill="#8C7B62"/>`;
+  /* 洗濯もの。バルコニーから塔へ ひもを渡す */
+  if(homeHas("laundry",pages)){
+    g+=`<path d="M${bx+2},${by-11} q17,7 34,-2" fill="none" stroke="#6B5A45" stroke-width="1"/>`;
+    ["#FFD8E4","#CFE8FF","#FFF0C2"].forEach((c,i)=>{
+      const lx=bx+7+i*10, ly=by-9+i*1.4;
+      g+=`<g class="laundry" style="animation-delay:${(i*0.4).toFixed(1)}s">
+        <rect x="${lx}" y="${ly}" width="7" height="8" rx="1.5" fill="${c}" stroke="#3B2A1E" stroke-width=".8"/></g>`;
+    });
+  }
+  if(homeHas("scope",pages)){
+    g+=`<g transform="translate(${bx+27},${by-4})"><path d="M0,0 l-2,-11" stroke="#5B4A36" stroke-width="2"/>
+      <path d="M-8,-20 l13,-6 l2,4.5 l-13,6 z" fill="#7E6B52" stroke="#3B2A1E" stroke-width="1.2"/>
+      <circle cx="4.5" cy="-25" r="2.4" fill="#BFD9EE" stroke="#3B2A1E" stroke-width="1"/></g>`;
+  }
+  if(homeHas("lamp",pages)){
+    g+=`<g class="homelamp"><circle cx="${bx+33}" cy="${by-13}" r="8" fill="#FFD98A" opacity=".3"/>
+      <circle cx="${bx+33}" cy="${by-13}" r="3.4" fill="#FFE9B0" stroke="#3B2A1E" stroke-width="1.1"/></g>`;
+  }
+  /* 相棒そのもの。ここに住んでいる */
+  const sp=petSpec();
+  g+=`<g class="homepet" transform="translate(${bx+4},${by-30})">`
+    + creatureSVG(sp,30,"happy").replace(/^<svg[^>]*>|<\/svg>$/g,"") + `</g>`;
+  return g+`</g>`;
+}
+/* ふもとで塔を守る先代たち */
+function homeAncestors(baseY,cx){
+  const anc=(S.ancestors||[]).slice(0,4);
+  if(!anc.length) return "";
+  return anc.map((a,i)=>{
+    const ax=cx-84+i*26, ay=baseY+2;
+    const spec=a.spec||{stage:5,arch:0,elem:0,epi:0,hue:a.hue,dom:0};
+    return `<g class="homeanc" style="animation-delay:${(i*0.7).toFixed(1)}s"
+      transform="translate(${ax},${ay-22})" opacity=".92">
+      ${creatureSVG(spec,22,"ok").replace(/^<svg[^>]*>|<\/svg>$/g,"")}</g>`;
+  }).join("");
+}
+
 function renderTower(){
   const svg=document.getElementById("towerSvg"), box=document.getElementById("skybox");
   const done=books().filter(isDone).sort((a,b)=>(st(a.id).at||0)-(st(b.id).at||0));
@@ -3477,13 +3647,29 @@ function renderTower(){
       <ellipse cx="${tx}" cy="${ty-6}" rx="${r}" ry="${r*0.85}" fill="#3B7F3E"/>
       <ellipse cx="${tx-r*0.3}" cy="${ty-r*0.55}" rx="${r*0.62}" ry="${r*0.52}" fill="#4E9B4E"/>
       <ellipse cx="${tx+r*0.28}" cy="${ty-r*0.3}" rx="${r*0.42}" ry="${r*0.36}" fill="#59A857" opacity=".8"/></g>`;
+    /* ブランコ。木にぶら下げる */
+    if(i===1 && homeHas("swing",donePages))
+      g+=`<g><path d="M${tx-6},${ty-4} v12 M${tx+6},${ty-4} v12" stroke="#6B5A45" stroke-width="1.2"/>
+        <g class="swing" style="transform-origin:${tx}px ${ty-4}px">
+        <rect x="${tx-8}" y="${ty+8}" width="16" height="3" rx="1.4" fill="#A9793F" stroke="#3B2A1E" stroke-width="1"/></g></g>`;
+    /* 鳥のいえ */
+    if(i===2 && homeHas("bird",donePages))
+      g+=`<g><rect x="${tx-6}" y="${ty-16}" width="12" height="10" fill="#D9BE92" stroke="#3B2A1E" stroke-width="1.2"/>
+        <path d="M${tx-8},${ty-16} l8,-6 l8,6 z" fill="#B2542E" stroke="#3B2A1E" stroke-width="1.2"/>
+        <circle cx="${tx}" cy="${ty-11}" r="2.4" fill="#3B2A1E"/></g>`;
   });
+  /* 箱庭の設え。読み進めるほど ふもとの暮らしが賑やかになる */
+  g+=homeProps(donePages,baseY,W,cx);
+  g+=homeAncestors(baseY,cx);
 
   if(!done.length){
     g+=`<rect x="${cx-40}" y="${baseY-14}" width="80" height="14" fill="#CFC0A8"
         stroke="#3B2A1E" stroke-width="2.4"/>
-        <text x="${cx}" y="${baseY-30}" text-anchor="middle" class="tnote">
+        <text x="${cx}" y="${baseY-38}" text-anchor="middle" class="tnote">
         まだ土台だけ。1冊読み終えると 最初の層がのります</text>`;
+    /* 塔がまだ無くても、相棒はもうここに住んでいる */
+    g+=`<g class="homepet" transform="translate(${cx-15},${baseY-46})">`
+      + creatureSVG(petSpec(),30,"happy").replace(/^<svg[^>]*>|<\/svg>$/g,"") + `</g>`;
   }else{
     /* 塔 */
     let acc=0;
@@ -3524,6 +3710,8 @@ function renderTower(){
       <path d="M${cx},${ty-38} L${cx},${ty-64}" stroke="#6B5A45" stroke-width="2.2" stroke-linecap="round"/>
       <path d="M${cx+1},${ty-63} q14,3 26,-1 q-9,7 0,13 q-14,-3 -26,1 z" fill="${petHue()}"/>
       <circle cx="${cx}" cy="${ty-65}" r="2.4" fill="#E8C46A"/>`;
+    /* てっぺんのバルコニー。ここが相棒の住まい */
+    g+=homeTerrace(donePages,cx,ty,tw);
     /* 積みあげ中の本は半透明で次の層として見せる */
     if(wipAll.length){
       const b=wipAll[0], s=st(b.id), R=regionOf(b);
@@ -3547,9 +3735,12 @@ function renderTower(){
   box.scrollTop=0;
 
   const cur=bandOf(donePages);
+  const lead=document.getElementById("homeLead");
+  if(lead) lead.textContent=homeLine();
+  renderHomeKit();
   document.getElementById("towerStat").innerHTML=
-    `${done.length} 層 ／ 累計 ${donePages.toLocaleString()} ページ<br>
-     いまは <b>${esc(cur.n)}</b> — ${esc(cur.d)}`;
+    `${done.length} 層 ／ 累計 ${donePages.toLocaleString()} ページ ／ 設え ${homeGot(donePages).length}/${HOME_KIT.length}<br>
+     いまの高さは <b>${esc(cur.n)}</b> — ${esc(cur.d)}`;
   /* 到達ずみは新しい順に、この先は伏せる */
   const passed=bandsUpTo(donePages).slice(-8).reverse();
   const future=[nextBand(donePages)];
