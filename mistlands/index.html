@@ -916,19 +916,65 @@ html.plain-mode .wearbar{display:none !important}
 .itm.disabled{opacity:.35; pointer-events:none}
 /* 自動補充の候補から外したもの。灰色にして ひと目で分かるようにする */
 .itm.noauto{filter:grayscale(1); opacity:.55}
-.autotag{position:absolute; left:50%; bottom:-9px; transform:translateX(-50%); white-space:nowrap;
+/* カードの外に はみ出すと 切れてしまうので、中に ふつうに ならべる */
+.autotag{margin-top:3px; white-space:nowrap;
   font-family:var(--f-disp); font-weight:800; font-size:9px; letter-spacing:.04em;
   border:2px solid var(--ink); border-radius:var(--r-pill); padding:1px 8px; line-height:1.5;
   background:var(--paper); color:var(--ink-sub); cursor:pointer}
 .autotag.on{background:var(--leaf); border-color:var(--ink); color:#fff}
 .autotag:hover{filter:brightness(1.1)}
-.itemgrid .itm{margin-bottom:7px}
+/* ---------- 本だな表示 ----------
+   自分の書斎の棚を ながめている気分にしたいので、
+   背板・側板・棚板のある「家具」として組み、本は背表紙を立てて並べる */
+.bookcase{border:3px solid #4A3722; border-radius:10px; overflow:hidden;
+  background:linear-gradient(180deg,#6B4E30,#5A4028);
+  box-shadow:6px 6px 0 var(--shadow); padding:8px}
+.shelfrow{margin-bottom:8px}
+.shelfrow:last-child{margin-bottom:0}
+.shelf-lbl{display:flex; align-items:baseline; gap:8px; padding:2px 6px 5px;
+  font-family:var(--f-disp); font-weight:800; font-size:12px; color:#F3E3C6;
+  letter-spacing:.05em; text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.shelf-lbl span{font-family:var(--f-num); font-size:10px; color:#C9AE84}
+.shelf-box{position:relative; background:linear-gradient(180deg,#3A2A19,#4A3722 82%);
+  border-radius:5px; padding:9px 9px 0; box-shadow:inset 0 5px 14px rgba(0,0,0,.55)}
+/* 棚板。本の下に 木の板が 通っているように見せる */
+.shelf-box::after{content:""; display:block; height:9px; margin:0 -9px;
+  background:linear-gradient(180deg,#8A6742,#6B4E30 55%,#4A3722);
+  box-shadow:0 -3px 7px rgba(0,0,0,.4)}
+.shelf-books{display:flex; align-items:flex-end; gap:3px; flex-wrap:wrap; min-height:76px}
+.bk{position:relative; width:26px; height:88px; border-radius:2px 3px 3px 2px;
+  border:1.5px solid rgba(0,0,0,.55); cursor:pointer; padding:0;
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  box-shadow:1.5px 0 3px rgba(0,0,0,.4), inset -3px 0 6px rgba(0,0,0,.28),
+    inset 2px 0 3px rgba(255,255,255,.22);
+  transition:transform .16s cubic-bezier(.34,1.6,.5,1), filter .16s}
+.bk:hover{transform:translateY(-9px); filter:brightness(1.14); z-index:2}
+.bk:focus-visible{outline:3px solid var(--sun); outline-offset:2px; z-index:3}
+/* 背表紙の 天地の飾り罫 */
+.bk::before{content:""; position:absolute; left:2px; right:2px; top:6px; height:1.5px;
+  background:rgba(255,255,255,.5)}
+.bk::after{content:""; position:absolute; left:2px; right:2px; bottom:6px; height:1.5px;
+  background:rgba(255,255,255,.5)}
+.bk i{font-style:normal; writing-mode:vertical-rl; text-orientation:upright;
+  font-family:var(--f-disp); font-weight:700; font-size:9.5px; line-height:1.15;
+  letter-spacing:.02em; max-height:66px; overflow:hidden; color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.75)}
+.bk.pale i{color:#2B2118; text-shadow:0 1px 1px rgba(255,255,255,.5)}
+/* 読み終えた本は 背に金の帯が 入る */
+.bk.done{box-shadow:1.5px 0 3px rgba(0,0,0,.4), inset -3px 0 6px rgba(0,0,0,.28),
+  inset 2px 0 3px rgba(255,255,255,.22), 0 0 0 2px #E8C46A}
+/* まだ読んでいない本は すこし引っこんで 色が沈む */
+.bk.untouched{filter:saturate(.55) brightness(.82); height:82px}
+.bk .mark{position:absolute; top:3px; left:50%; transform:translateX(-50%);
+  width:7px; height:7px; border-radius:50%; border:1.5px solid rgba(0,0,0,.5)}
+.bk .prog{position:absolute; left:0; right:0; bottom:0; height:3px; background:rgba(255,255,255,.85)}
+.shelf-empty{color:#C9AE84; font-size:12px; padding:14px 6px 20px}
 /* いま えらんでいるもの。押して切り替えられることが 見て分かるように */
 .itm.on{border-color:var(--ink); background:var(--card); box-shadow:2px 2px 0 var(--shadow)}
-.itm.on::after{content:"えらび中"; position:absolute; top:-9px; right:6px;
+.pickmark{margin-top:3px; white-space:nowrap;
   font-family:var(--f-disp); font-weight:800; font-size:9px; letter-spacing:.06em;
   background:var(--sun); color:#fff; border:2px solid var(--ink); border-radius:var(--r-pill);
-  padding:1px 7px; line-height:1.5}
+  padding:1px 8px; line-height:1.5}
 .itm{position:relative}
 .itm b{font-family:var(--f-disp); font-size:10.5px; line-height:1.4; text-align:center}
 .itm em{font-style:normal; font-size:10px; color:var(--ink-sub); font-family:var(--f-num)}
@@ -1114,6 +1160,13 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       </div>
     </div>
     <div class="bar-row" style="margin-top:6px">
+      <div style="font-size:12px;color:var(--ink-sub)">見え方</div>
+      <div class="grow">
+        <button class="fbtn vbtn" data-v2="shelf" aria-pressed="true">本だな</button>
+        <button class="fbtn vbtn" data-v2="list" aria-pressed="false">リスト</button>
+      </div>
+    </div>
+    <div class="bar-row" style="margin-top:6px" id="sortRow">
       <div style="font-size:12px;color:var(--ink-sub)">並び替え</div>
       <div class="grow">
         <button class="fbtn sbtn" data-s="rank" aria-pressed="true">標準</button>
@@ -1121,6 +1174,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <button class="fbtn sbtn" data-s="fav" aria-pressed="false">お気に入り</button>
       </div>
     </div>
+    <div id="shelfView"></div>
     <div id="idx"></div>
     <div style="margin-top:16px"><button class="btn quiet" id="addBtn">自分の本を足す</button></div>
   </section>
@@ -3255,6 +3309,8 @@ function renderSpot(){
    ============================================================ */
 let filter="all";
 let shelfSort="rank";
+/* 本だな表示（背表紙をならべる）か リスト表示か。はじめは本だな */
+let shelfMode="shelf";
 function shelfRow(b){
   const s=st(b.id), prog=Math.min(1,s.page/b.p), done=prog>=1, Rg=regionOf(b);
   const r=document.createElement("div");
@@ -3275,6 +3331,61 @@ function shelfRow(b){
   r.onkeydown=e=>{ if(e.key==="Enter"){e.preventDefault(); openLog(b.id);} };
   return r;
 }
+/* 背表紙の色。分野の色を土台に、同じ棚でも一冊ずつ濃さと幅が変わるようにする
+   （同じ色・同じ幅で並ぶと、本ではなく模様に見えてしまう） */
+function spineOf(b){
+  const R=regionOf(b), base=R?R.hue:"#8A6A44";
+  const h=hash(b.id);
+  const shade=((h>>>3)%5-2)*0.11;              /* -0.22 〜 +0.22 */
+  const w=22+(h%5)*3;                          /* 22〜34px */
+  const tall=80+((h>>>7)%5)*4;                 /* 80〜96px */
+  const c=tint(base,shade);
+  /* 明るい背表紙には 黒い字を のせる */
+  const n=parseInt(base.slice(1),16);
+  const lum=(((n>>16)&255)*0.299+((n>>8)&255)*0.587+(n&255)*0.114)/255 + shade*0.6;
+  return {c, w, tall, pale:lum>0.62};
+}
+/* 本だな表示。ジャンル（地域）ごとの棚に、背表紙を立てて並べる */
+function renderBookcase(list){
+  const box=document.getElementById("shelfView");
+  if(!box) return;
+  if(shelfMode!=="shelf"){ box.innerHTML=""; box.hidden=true; return; }
+  box.hidden=false;
+  /* 棚は地域（＝ジャンル）ごと。地図の並び順に合わせて 場所を覚えられるようにする */
+  const groups=[], seen={};
+  (WORLD?WORLD.conts:[]).forEach(C=>C.regions.forEach(R=>{
+    const bs=list.filter(b=>regionOf(b)===R);
+    if(bs.length){ groups.push({name:R.place||R.name, sub:R.name, hue:R.hue, books:bs}); seen[R.name]=1; }
+  }));
+  const rest=list.filter(b=>{ const R=regionOf(b); return !R || !seen[R.name]; });
+  if(rest.length) groups.push({name:"そのほか", sub:"", hue:"#8A6A44", books:rest});
+
+  box.innerHTML = groups.length
+    ? `<div class="bookcase">`+groups.map(g=>{
+        const done=g.books.filter(isDone).length;
+        return `<div class="shelfrow">
+          <div class="shelf-lbl">${esc(g.name)}<span>${done}/${g.books.length}冊</span></div>
+          <div class="shelf-box"><div class="shelf-books">`
+          + g.books.map(b=>{
+              const s=st(b.id), sp=spineOf(b), prog=Math.min(1,s.page/b.p);
+              const cls=[isDone(b)?"done":"", s.page===0?"untouched":"", sp.pale?"pale":""]
+                .filter(Boolean).join(" ");
+              const mark=isStar(b)? "var(--sun)" : isFav(b)? "var(--favc)"
+                : isImportant(b)? "var(--imp)" : null;
+              return `<button type="button" class="bk ${cls}" data-b="${esc(b.id)}"
+                style="background:linear-gradient(100deg,${sp.c},${tint(sp.c,-0.22)});
+                  width:${sp.w}px; height:${sp.tall}px"
+                title="${esc(b.t)} ／ ${s.page}/${b.p}ページ">
+                ${mark?`<span class="mark" style="background:${mark}"></span>`:""}
+                <i>${esc(b.t)}</i>
+                ${s.page>0&&!isDone(b)?`<span class="prog" style="width:${(prog*100).toFixed(0)}%"></span>`:""}
+              </button>`;
+            }).join("")
+          + `</div></div></div>`;
+      }).join("")+`</div>`
+    : `<div class="bookcase"><div class="shelf-empty">この条件の本は ありません。</div></div>`;
+  box.querySelectorAll(".bk").forEach(el=>el.onclick=()=>openLog(el.dataset.b));
+}
 function renderShelf(){
   const box=document.getElementById("idx"); box.innerHTML="";
   let list=books();
@@ -3283,6 +3394,12 @@ function renderShelf(){
   if(filter==="done") list=list.filter(isDone);
   if(filter==="reading") list=list.filter(b=>{const s=st(b.id); return s.page>0&&s.page<b.p;});
   if(filter==="todo") list=list.filter(b=>st(b.id).page===0);
+  /* 本だな表示のときは 棚を描いて、リストのほうは出さない */
+  renderBookcase(list);
+  const sortRow=document.getElementById("sortRow");
+  if(sortRow) sortRow.hidden = shelfMode==="shelf";
+  if(shelfMode==="shelf"){ box.hidden=true; return; }
+  box.hidden=false;
 
   if(shelfSort==="important"||shelfSort==="fav"){
     /* 重要・お気に入りは大分類をまたいで一望したいのでグループ分けせずフラットに並べる */
@@ -5773,6 +5890,7 @@ function openFoodPick(uid,idx){
           data-f="${id}"${dis?" disabled":""}>
           ${foodSVG(id,44)}<b>${esc(fo.name)}</b>
           <em>${dis?"のこり なし":"×"+remain} ／ ${esc(fo.fx.n)}</em>
+          ${on?`<span class="pickmark">えらび中</span>`:""}
           <span class="autotag${noauto?"":" on"}" data-auto="${id}"
             title="自動で 補充する候補に するか">${noauto?"補充しない":"補充する"}</span></button>`;
       }).join("")
@@ -5820,10 +5938,12 @@ function renderTitleInto(topId,botId,after){
   const cur=curTitleIdx();
   top.innerHTML=titleTopOwned().map(i=>
     `<button type="button" class="itm${i===cur.top?" on":""}" data-top="${i}">
-      <div class="titlepiece">${esc(TOP_TITLES[i])}</div></button>`).join("");
+      <div class="titlepiece">${esc(TOP_TITLES[i])}</div>
+      ${i===cur.top?`<span class="pickmark">えらび中</span>`:""}</button>`).join("");
   bot.innerHTML=titleBotOwned().map(i=>
     `<button type="button" class="itm${i===cur.bottom?" on":""}" data-bot="${i}">
-      <div class="titlepiece">${esc(BOT_TITLES[i])}</div></button>`).join("");
+      <div class="titlepiece">${esc(BOT_TITLES[i])}</div>
+      ${i===cur.bottom?`<span class="pickmark">えらび中</span>`:""}</button>`).join("");
   top.querySelectorAll(".itm").forEach(b=>b.onclick=()=>{
     S.titleSel=S.titleSel||{top:0,bottom:0}; S.titleSel.top=+b.dataset.top; save();
     renderPet(); if(after) after();
@@ -6254,9 +6374,14 @@ document.querySelectorAll("#kindNav .cbtn").forEach(b=>b.onclick=()=>{
     x.setAttribute("aria-pressed",String(x===b)));
   drawMap();
 });
-document.querySelectorAll(".fbtn:not(.sbtn)").forEach(b=>b.onclick=()=>{
+document.querySelectorAll(".fbtn:not(.sbtn):not(.vbtn)").forEach(b=>b.onclick=()=>{
   filter=b.dataset.f;
-  document.querySelectorAll(".fbtn:not(.sbtn)").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+  document.querySelectorAll(".fbtn:not(.sbtn):not(.vbtn)").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+  renderShelf();
+});
+document.querySelectorAll(".vbtn").forEach(b=>b.onclick=()=>{
+  shelfMode=b.dataset.v2;
+  document.querySelectorAll(".vbtn").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
   renderShelf();
 });
 document.querySelectorAll(".sbtn").forEach(b=>b.onclick=()=>{
