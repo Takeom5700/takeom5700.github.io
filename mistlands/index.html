@@ -264,7 +264,10 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
 .mapwrap{position:relative}
 .mapbox{border:3px solid var(--ink); border-radius:var(--r-lg); background:var(--sea);
   box-shadow:6px 6px 0 var(--shadow); position:relative; overflow:auto;
-  max-height:min(76vh,640px); -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y}
+  max-height:min(76vh,640px); -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y;
+  cursor:grab}
+.mapbox.grabbing{cursor:grabbing}
+.mapbox.grabbing svg{pointer-events:none}   /* 引っぱっている間は 土地を押せないように */
 /* 地図アプリのように、倍率(--mz)を変えて指でずらして見る。
    1.0 のとき横幅ぴったりに収まるので、スマホでも最初から全体が見える */
 .mapbox svg{display:block; width:calc(100% * var(--mz,1)); height:auto; max-height:none;
@@ -636,12 +639,19 @@ label.chk input[type=checkbox]{width:auto; flex:none; margin-top:3px; accent-col
 /* めくれていく1枚1枚。JSで枚数ぶん作る */
 .gb-flip{position:absolute; left:50%; top:0; width:50%; height:100%;
   transform-style:preserve-3d; pointer-events:none}
-.gb-flip i{position:absolute; inset:0; display:block; border-radius:2px 8px 8px 2px;
-  background:linear-gradient(175deg,#FFFDF6,#EFE3C4); border:1.5px solid #4A3D2C;
-  transform-origin:left center; transform:rotateY(0deg); backface-visibility:hidden; opacity:0}
-.gachabook.riffle .gb-flip i{animation:leafTurn .42s cubic-bezier(.4,0,.5,1) forwards}
+/* 1枚の紙は 表と裏を持つ。綴じ目を軸に 右から左へ 倒れて、そのまま左に積もる。
+   （倒れた紙が消えると「右側しか動いていない」ように見えてしまう） */
+.gb-flip i{position:absolute; inset:0; display:block; transform-origin:left center;
+  transform:rotateY(0deg); transform-style:preserve-3d; opacity:0}
+.gb-flip i b,.gb-flip i u{position:absolute; inset:0; display:block;
+  border:1.5px solid #4A3D2C; backface-visibility:hidden;
+  background:linear-gradient(175deg,#FFFDF6,#EFE3C4)}
+.gb-flip i b{border-radius:2px 8px 8px 2px}
+.gb-flip i u{border-radius:8px 2px 2px 8px; transform:rotateY(180deg);
+  background:linear-gradient(185deg,#F7EFDA,#E4D7B4)}
+.gachabook.riffle .gb-flip i{animation:leafTurn .5s cubic-bezier(.45,0,.5,1) forwards}
 @keyframes leafTurn{0%{opacity:1; transform:rotateY(0deg)}
-  85%{opacity:1} 100%{opacity:0; transform:rotateY(-172deg)}}
+  100%{opacity:1; transform:rotateY(-177deg)}}
 /* 綴じ目から出てくる 光の玉 */
 .gb-orb{position:absolute; left:50%; bottom:66px; width:26px; height:26px; margin-left:-13px;
   border-radius:50%; opacity:0; z-index:4; pointer-events:none; mix-blend-mode:screen;
@@ -1267,7 +1277,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
     <div class="g-vig"></div>
     <div class="g-hud">
       <span class="g-count" id="gachaProgress">1 / 1</span>
-      <span class="g-hint" id="gachaHint">画面を おして ひらく</span>
+      <span class="g-hint" id="gachaHint"></span>
     </div>
   </div>
 </form></dialog>
@@ -2788,6 +2798,37 @@ function fitMapZoom(){
   box.addEventListener("gesturestart",e=>{ e.preventDefault(); pinchZ=mapZoom; },{passive:false});
   box.addEventListener("gesturechange",e=>{ e.preventDefault(); setMapZoom(pinchZ*e.scale); },{passive:false});
   box.addEventListener("gestureend",e=>e.preventDefault(),{passive:false});
+  /* つかんで動かす。地図アプリと同じように、押したまま引っぱると 表示が ついてくる */
+  let dragging=false, moved=0, sx=0, sy=0, sl=0, stp=0, pid=null;
+  box.addEventListener("pointerdown",e=>{
+    if(e.button!==undefined && e.button!==0) return;
+    if(e.pointerType==="touch" && e.isPrimary===false) return;
+    dragging=true; moved=0; pid=e.pointerId;
+    sx=e.clientX; sy=e.clientY; sl=box.scrollLeft; stp=box.scrollTop;
+  });
+  box.addEventListener("pointermove",e=>{
+    if(!dragging || e.pointerId!==pid) return;
+    const dx=e.clientX-sx, dy=e.clientY-sy;
+    moved=Math.max(moved, Math.abs(dx)+Math.abs(dy));
+    if(moved>4){
+      box.classList.add("grabbing");
+      box.scrollLeft=sl-dx; box.scrollTop=stp-dy;
+      if(e.cancelable) e.preventDefault();
+    }
+  },{passive:false});
+  const endDrag=()=>{
+    if(!dragging) return;
+    dragging=false; pid=null; box.classList.remove("grabbing");
+    /* 引っぱっただけのときは、指をはなした先の土地を 開かない */
+    if(moved>4){
+      const eat=ev=>{ ev.stopPropagation(); ev.preventDefault(); };
+      box.addEventListener("click",eat,{capture:true,once:true});
+      setTimeout(()=>box.removeEventListener("click",eat,{capture:true}),0);
+    }
+  };
+  box.addEventListener("pointerup",endDrag);
+  box.addEventListener("pointercancel",endDrag);
+  box.addEventListener("pointerleave",endDrag);
   /* パソコンでは Ctrl+ホイール（ふつうのスクロールは邪魔しない） */
   box.addEventListener("wheel",e=>{
     if(!e.ctrlKey) return;
@@ -5145,26 +5186,63 @@ function consumeFood(uid,seed){
    9.10 二つ名
    上の句(TOP)＋下の句(BOTTOM)を組み合わせて自己紹介の二つ名を作る。
    例:【朝方の若者】＝上の句「朝方の」＋下の句「若者」（名前とは別にプレート表示）。
-   それぞれ 800種類ほど。ガチャで少しずつ手に入り、持っているものは自由に組み合わせられる。
+   どちらも「短いひとつの語」にして、組み合わさったときに面白くなるようにする。
    初期状態は 上の句「みならいの」・下の句「読書家」を持ち、それが設定されている。
    ============================================================ */
-const TOP_STEM=["朝方","夜更け","早朝","真夜中","黄昏","雨の日","晴れた日","曇り空","満月の夜","新月の夜",
- "休日","平日","放課後","始業前","終業後","通勤中","通学中","昼休み","夏休み","冬休み",
- "梅雨どき","初雪の日","花見どき","紅葉どき","徹夜明け","寝起き","風呂上がり","布団の中","こたつの中","縁側",
- "喫茶店","図書館","古本屋の片隅","旅先","電車の中","飛行機の中","待合室","三日坊主","三周目","積読"];
-const TOP_MOD=["見習いの","新米の","現役の","熟練の","歴戦の","伝説の","覚醒した","筋金入りの","自称","隠れ",
- "孤高の","流浪の","気まぐれな","うっかりの","本気の","ちょっとした","かくれ","生粋の","令和の","永遠の"];
-const TOP_TITLES=["みならいの"];
-TOP_MOD.forEach(m=>TOP_STEM.forEach(s=>TOP_TITLES.push(m+s+"の")));
-
-const BOT_STEM=["読書家","物語りびと","栞守り","ページの番人","夜更かし読者","積読の主","速読使い","精読の徒","本の虫","活字中毒者",
- "行間を読む者","読了マイスター","愛読家","乱読家","多読家","再読家","飛ばし読み師","線引き魔","付箋魔","文庫派",
- "単行本派","電子書籍派","紙の本派","新刊ハンター","古書ハンター","装丁マニア","奥付マニア","あとがき派","解説から読む派","しおり不要論者",
- "積ん読解消人","並行読書家","一気読み師","味わい読み師","感想メモ魔","読書ノート職人","図書委員","本棚の番人","貸出係","読書会の主"];
-const BOT_RANK=["見習い","半人前の","一人前の","熟練の","達人","名人","師範","賢者","伝説の","選ばれし",
- "覚醒せし","不屈の","孤高の","流浪の","隠れ","知る人ぞ知る","現役の","元祖","令和の","永遠の"];
-const BOT_TITLES=["読書家"];
-BOT_RANK.forEach(r=>BOT_STEM.forEach(s=>BOT_TITLES.push(r+s)));
+/* 上の句・下の句とも「ひとつの概念」だけを持つ短い語にする。
+   語を継ぎ足して作ると「伝説の行間を読む者」のように 片側だけで長くなり、
+   組み合わせる面白さが消えてしまうため、どちらも手で選んだ短い語だけを並べる */
+const TOP_TITLES=[
+ "みならいの","かけだしの","一人前の","熟練の","歴戦の","伝説の","孤高の","無名の","名だたる","うわさの",
+ "幻の","選ばれし","覚醒した","封印された","解き放たれた","転生した","二周目の","元祖","自称","隠れ",
+ "朝型の","夜型の","早起きの","夜ふかしの","徹夜明けの","寝起きの","寝ぼけた","ねぼすけな","早寝の","遅刻ぎみの",
+ "雨の日の","晴れた日の","雪の日の","風の強い日の","霧の中の","星空の下の","月あかりの","夕暮れの","真昼の","真夜中の",
+ "春めいた","夏まっさかりの","秋の夜長の","冬ごもりの","花冷えの","梅雨明けの","木枯らしの","初雪の","朝もやの","陽だまりの",
+ "こたつの","縁側の","窓辺の","布団の中の","ベンチの","木かげの","屋根裏の","地下室の","塔の上の","灯台の",
+ "図書館の","喫茶店の","本屋の","電車の中の","旅先の","待合室の","湯上がりの","台所の","坂の上の","路地裏の",
+ "積読の","速読の","精読の","乱読の","多読の","再読の","遅読の","熟読の","拾い読みの","ながら読みの",
+ "立ち読みの","寝ころびの","一気読みの","少しずつ読む","声に出して読む","二度読む","終いから読む","目次から読む",
+ "文庫派の","単行本派の","新刊好きの","古本好きの","装丁好きの","帯を残す","帯を捨てる","カバーを外す",
+ "付箋だらけの","線を引きまくる","折り目をつける","書きこみだらけの","栞をなくす","栞にこだわる","背表紙をながめる","奥付を読む",
+ "甘党の","辛党の","珈琲党の","紅茶党の","お茶好きの","腹ぺこの","満腹の","つまみ食いの","おやつ持参の","水筒持ちの",
+ "無口な","おしゃべりな","口ベタな","聞き上手な","話し上手な","早口の","ゆっくり話す","声の大きい","声の小さい","うなずきがちの",
+ "まじめな","ふまじめな","律儀な","いい加減な","完璧主義の","おおざっぱな","凝り性の","飽きっぽい","粘り強い","ひたむきな",
+ "のんびりした","せっかちな","慎重な","大胆な","用心深い","無鉄砲な","気の長い","気の短い","おおらかな","神経質な",
+ "元気な","気だるい","眠たげな","上機嫌な","不機嫌な","ごきげんな","ものしずかな","にぎやかな","物憂げな","浮かれた",
+ "やさしい","きびしい","すなおな","ひねくれた","意地っぱりの","照れ屋の","強気な","弱気な","涙もろい","笑い上戸の",
+ "甘えん坊の","しっかり者の","世話焼きの","おせっかいな","気さくな","いばらない","謙虚な","生意気な","誇りたかい","礼儀正しい",
+ "夢見がちな","現実的な","理屈っぽい","感覚派の","好奇心旺盛な","出不精の","旅好きの","ひとり好きの","さびしがりの","人なつこい",
+ "記憶力のいい","忘れっぽい","数字に強い","数字に弱い","字がきれいな","悪筆の","メモ魔の","計算高い","勘のいい","うっかりの",
+ "博識な","物知らずの","勉強家の","サボりぐせの","三日坊主の","やりきる","投げ出さない","こつこつやる",
+ "霧を食べる","霧に迷う","塔に住む","空を目指す","地図を描く","道なき道をゆく","遠まわりする","近道をさがす",
+ "本に埋もれた","本を積む","本を売らない","本を貸さない","本を配る","本に囲まれた","本を抱いて寝る","本で枕をする",
+ "朝日を浴びる","夕日を追う","星を数える","月をながめる","風を読む","雨宿りする","雲を追う","虹を待つ",
+ "まぼろしを見る","夢から覚めた","目をこすった","ため息まじりの","鼻歌まじりの","腕まくりした","背のびした","ひと息ついた",
+ "ふりだしの","折り返しの","大詰めの","はじまりの","終わらない","いつかの","きのうの","あしたの","永遠の","一瞬の"
+];
+const BOT_TITLES=[
+ "読書家","本の虫","活字中毒","物語びと","栞守り","番人","案内人","語り部","記録者","収集家",
+ "愛読家","乱読家","多読家","速読家","精読家","積読家","再読家","音読家","黙読家","拾い読み屋",
+ "図書委員","司書","書店員","古本屋","装丁家","製本屋","校正者","翻訳家","書評家","編集者",
+ "作家","詩人","歌人","随筆家","評論家","研究者","学者","博士","教授","先生",
+ "弟子","見習い","門下生","生徒","学生","新入り","古株","常連","会長","名誉会員",
+ "探検家","冒険者","旅人","放浪者","巡礼者","開拓者","測量士","地図屋","道しるべ","灯台守",
+ "守り神","守護者","番犬","見張り","門番","用心棒","護衛","案山子","留守番","門下の者",
+ "王","女王","王子","姫","皇帝","将軍","大臣","参謀","隊長","使者",
+ "勇者","英雄","剣士","魔法使い","賢者","占い師","錬金術師","召喚士","吟遊詩人","道化",
+ "職人","名工","鍛冶屋","大工","庭師","料理人","パン屋","菓子職人","農夫","漁師",
+ "商人","行商人","両替商","帳簿係","番頭","店主","仲買人","目利き","値切り屋","そろばん屋",
+ "医者","薬師","看護人","治療師","獣医","湯治客",
+ "天文学者","観測者","気象係","星読み","暦師","時計屋","博物学者","標本係",
+ "猫","犬","ふくろう","からす","白鳥","きつね","たぬき","りす","うさぎ","かめ",
+ "竜","鳳凰","麒麟","精霊","妖精","幽霊","影","分身","使い魔","相棒",
+ "夢想家","空想家","現実家","完璧主義者","楽天家","心配性","頑固者","変わり者","天才","まぬけ",
+ "努力家","苦労人","器用貧乏","一発屋","遅咲き","早熟","大器晩成","三日坊主","継続者","立ち直り屋",
+ "語学好き","歴史好き","科学好き","数学好き","哲学好き","芸術好き","音楽好き","詩歌好き","小説好き","雑学王",
+ "夜ふかし","早起き鳥","寝坊助","甘党","辛党","珈琲党","紅茶党","大食い","小食","間食係",
+ "居候","隣人","同居人","道連れ","待ち人","迷子","風来坊","流れ者","客人","主",
+ "読み手","書き手","聞き手","語り手","選び手","積み手","めくり手","見届け人","立会人","証人"
+];
 
 function titleTopOwned(){ return S.titleTop&&S.titleTop.length? S.titleTop : [0]; }
 function titleBotOwned(){ return S.titleBottom&&S.titleBottom.length? S.titleBottom : [0]; }
@@ -5701,14 +5779,8 @@ titlePickDlg.querySelector("form").addEventListener("submit",e=>e.preventDefault
 
 /* ---------- ガチャの画面 ---------- */
 let gachaQueue=[], gachaIdx=0, gachaTotal=0, gachaOpened=false, gachaBusy=false;
-const GACHA_TELL_WORDS=["ページが すこし ゆれている……","青い ひかりが もれてきた……！",
-  "金の ひかりが あふれだす……！！","にじが たった……！！！ なにか すごいものが くる"];
 /* 引く前に出る あおり。段階が上がるほど 派手で、虹は 最上位 確定 */
 const PRE_TELL=["none","feather","butterfly","float","comet","rainbow"];
-const PRE_WORD=["しずかだ。……まあ、こんな日も ある",
- "羽根が ひとひら 落ちた","蝶が 舞っている……！",
- "本が ひとりでに 浮いた……！！","星が よぎった……！！ これは 期待できる",
- "虹が かかった。……これは 確定だ"];
 /* 段階(0〜3)ごとに、どの あおりが 出やすいか */
 const PRE_BY_TIER=[[0,0,0,0,0,0,0,1],[0,1,1,1,2,2],[1,2,2,3,3,4],[3,4,4,5,5,5]];
 /* 見せかけの段階と、ほんとうの段階。ときどき 低く見せておいて あとで上げる */
@@ -5764,7 +5836,7 @@ function applyPreTell(pre,show){
   if(kind==="comet") h+=`<i class="sp-comet"></i>`;
   if(kind==="rainbow") h+=`<i class="sp-rainbow"></i>`;
   sp.innerHTML=h;
-  document.getElementById("gachaHint").textContent=PRE_WORD[pre]||PRE_WORD[0];
+  /* 説明の文は出さない。あおりは 画面の演出だけで 伝える */
 }
 function showGachaCard(){
   gachaOpened=false; gachaBusy=false;
@@ -5777,7 +5849,8 @@ function showGachaCard(){
   document.getElementById("gSpecial").innerHTML="";
   document.getElementById("gFlash").className="g-flash";
   /* めくれるページを用意する */
-  document.getElementById("gbFlip").innerHTML=new Array(9).fill(0).map(()=>"<i></i>").join("");
+  document.getElementById("gbFlip").innerHTML=
+    new Array(9).fill(0).map(()=>"<i><b></b><u></u></i>").join("");
   const p=gachaQueue[gachaIdx]._plan;
   applyPreTell(p.pre, p.show);
 }
@@ -5809,7 +5882,6 @@ function pullGacha(){
   const stage=document.getElementById("gachaStage"), card=document.getElementById("gachaCard");
   const flash=document.getElementById("gFlash");
   card.classList.add("charging");
-  document.getElementById("gachaHint").textContent=GACHA_TELL_WORDS[plan.show];
   SFX.gachaTell(plan.show);
   const buildMs=[700,1200,1800,2500][plan.show];
 
@@ -5821,7 +5893,6 @@ function pullGacha(){
       el.style.animationDelay=(i*0.085).toFixed(3)+"s";
     });
     SFX.riffle();
-    document.getElementById("gachaHint").textContent="ぺら、ぺら、ぺら……";
     setTimeout(orbOut, 9*85+260);
   };
   /* 綴じ目から 光の玉 */
@@ -5830,7 +5901,6 @@ function pullGacha(){
     stage.classList.add("tier-"+r.tier);
     flash.className="g-flash go";
     SFX.gachaOpen();
-    document.getElementById("gachaHint").textContent="ひかりの たまが 出てきた……！";
     setTimeout(burst, 1150);
   };
   /* はじけて 中身に なる */
@@ -5841,10 +5911,8 @@ function pullGacha(){
     card.classList.add("burst");
     spawnBurst(r.tier);
     if(r.tier>=3) flash.className="g-flash big";
-    document.getElementById("gachaHint").textContent=
-      (r.tier>=3?"★★★ 激レア ★★★\n":r.tier===2?"★★ すごい！ ":r.tier===1?"★ おっ！ ":"")
-      +gachaResultName(r)+" を てにいれた"
-      +(gachaIdx<gachaTotal-1? "　／　画面を おして つぎへ":"　／　画面を おして とじる");
+    /* 出したものの名前だけ。操作の案内や あおりの説明は 出さない */
+    document.getElementById("gachaHint").textContent=gachaResultName(r);
     SFX.find(); if(r.tier>=2) SFX.grow(); if(r.tier>=3) SFX.gachaBig();
     gachaBusy=false;
     renderAll();
@@ -5858,7 +5926,6 @@ function pullGacha(){
       stage.classList.add("tell-"+r.tier, "promoted");
       document.getElementById("gSpecial").innerHTML="";
       applyPreTell(PRE_BY_TIER[r.tier][0], r.tier);
-      document.getElementById("gachaHint").textContent="——ピコン！　なにか 変わった……！";
       flash.className="g-flash go";
       SFX.promote();
       card.classList.add("charging");
