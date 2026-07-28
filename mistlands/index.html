@@ -603,27 +603,40 @@ label.chk input[type=checkbox]{width:auto; flex:none; margin-top:3px; accent-col
 .gachastage.tier-3{animation:stageQuake .6s ease-out}
 @keyframes stageQuake{0%,100%{transform:translate(0,0)} 20%{transform:translate(-6px,3px)}
   40%{transform:translate(5px,-4px)} 60%{transform:translate(-4px,-2px)} 80%{transform:translate(3px,3px)}}
-/* まとめ引きの結果。10個を いちどに ならべる */
-.g-many{position:absolute; inset:0; z-index:6; display:none; align-content:center;
-  grid-template-columns:repeat(5,1fr); gap:6px; padding:16px 14px 62px}
+/* まとめ引きの結果。読ませるのが目的なので、背景は沈めて 一覧を主役にする */
+.gachastage.showing-many .g-rays,
+.gachastage.showing-many .g-stars,
+.gachastage.showing-many .g-orbit,
+.gachastage.showing-many .g-ring,
+.gachastage.showing-many .g-special,
+.gachastage.showing-many .gachabook{opacity:0; transition:opacity .35s ease-out}
+.gachastage.showing-many .g-vig{background:rgba(10,7,26,.82)}
+.g-many{position:absolute; inset:0; z-index:8; display:none; align-content:center;
+  grid-template-columns:repeat(2,1fr); gap:7px; padding:14px 14px 56px; overflow-y:auto}
 .g-many.on{display:grid}
-.gcell{display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
-  gap:2px; opacity:0; animation:cellIn .42s cubic-bezier(.2,1.3,.4,1) forwards;
-  border-radius:9px; padding:5px 2px 4px; background:rgba(255,255,255,.07);
-  border:1.5px solid rgba(255,255,255,.18)}
-.gcell em{font-style:normal; font-size:8px; line-height:1.35; color:#fff; text-align:center;
-  overflow-wrap:anywhere; text-shadow:0 1px 5px rgba(0,0,0,.8)}
-.gcell svg{width:34px; height:34px}
-.gcell .titlepiece{font-size:9px; color:#FFEFC4}
-.gcell.t1{border-color:rgba(150,175,255,.75); box-shadow:0 0 10px rgba(150,175,255,.45)}
-.gcell.t2{border-color:rgba(255,178,52,.85); box-shadow:0 0 14px rgba(255,178,52,.6)}
-.gcell.t3{border-color:rgba(255,90,160,.9); box-shadow:0 0 20px 4px rgba(255,120,180,.7);
-  background:rgba(255,220,150,.16)}
-@keyframes cellIn{0%{opacity:0; transform:translateY(14px) scale(.5)}
+.gcell{display:flex; align-items:center; gap:8px; text-align:left; min-width:0;
+  opacity:0; animation:cellIn .4s cubic-bezier(.2,1.3,.4,1) forwards; cursor:pointer;
+  border-radius:11px; padding:7px 9px 7px 7px; background:rgba(255,255,255,.10);
+  border:2px solid rgba(255,255,255,.24); font:inherit; color:#fff}
+.gcell:hover{background:rgba(255,255,255,.18)}
+.gcell:focus-visible{outline:3px solid var(--gA); outline-offset:2px}
+.gc-art{flex:none; display:flex; align-items:center; justify-content:center; width:38px; height:38px}
+.gcell svg{width:38px; height:38px}
+.gc-txt{min-width:0; display:flex; flex-direction:column; gap:1px}
+.gcell b{font-family:var(--f-disp); font-size:11.5px; line-height:1.4; overflow-wrap:anywhere;
+  text-shadow:0 1px 5px rgba(0,0,0,.85)}
+.gcell em{font-style:normal; font-size:9.5px; line-height:1.3; color:rgba(255,255,255,.72)}
+.gcell .titlepiece{font-size:12px; color:#FFEFC4}
+.gcell.t1{border-color:rgba(150,175,255,.85); box-shadow:0 0 10px rgba(150,175,255,.5)}
+.gcell.t2{border-color:rgba(255,178,52,.95); box-shadow:0 0 14px rgba(255,178,52,.65);
+  background:rgba(255,200,110,.14)}
+.gcell.t3{border-color:rgba(255,120,180,1); box-shadow:0 0 22px 5px rgba(255,120,180,.75);
+  background:rgba(255,220,150,.2)}
+@keyframes cellIn{0%{opacity:0; transform:translateY(12px) scale(.7)}
   100%{opacity:1; transform:none}}
-@media (max-width:420px){
-  .g-many{grid-template-columns:repeat(4,1fr); gap:5px; padding:12px 10px 58px}
-  .gcell svg{width:28px; height:28px}
+@media (max-width:400px){
+  .g-many{grid-template-columns:1fr; gap:6px; padding:12px 12px 54px}
+  .gcell b{font-size:12px}
 }
 /* 手前の文字 */
 .g-hud{position:absolute; left:0; right:0; bottom:0; z-index:8; padding:14px 16px 16px;
@@ -1471,6 +1484,17 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   <div class="dact">
     <button type="button" class="btn quiet" id="pickClear">よびもどす</button>
     <button type="button" class="btn quiet" id="pickCancel">とじる</button>
+  </div>
+</form></dialog>
+
+<dialog id="infoDlg"><form method="dialog" class="din" style="text-align:center">
+  <div id="infoArt" style="display:flex;justify-content:center"></div>
+  <h2 id="infoName" style="margin-top:8px">—</h2>
+  <div class="sub" id="infoMeta">—</div>
+  <p id="infoDesc" style="font-size:13.5px;line-height:1.9;color:var(--ink-sub);margin:0 0 10px"></p>
+  <div class="kv" id="infoHave"></div>
+  <div class="dact" style="justify-content:center">
+    <button type="button" class="btn primary" id="infoClose">とじる</button>
   </div>
 </form></dialog>
 
@@ -5815,6 +5839,44 @@ function renderBagTitle(){
   if(now) now.textContent="【"+curTitleText()+"】";
   renderTitleInto("bagTitleTop","bagTitleBot",renderBagTitle);
 }
+/* たべもの・二つ名の くわしい説明。一覧からも ガチャの結果からも ひらく */
+const infoDlg=document.getElementById("infoDlg");
+function showFood(id){
+  SFX.find();
+  const fo=foodOf(id);
+  document.getElementById("infoArt").innerHTML=foodSVG(id,110);
+  document.getElementById("infoName").textContent=fo.name;
+  document.getElementById("infoMeta").textContent=`${fo.rank.n}／${fo.axis.d}／${fo.kind.n}`;
+  document.getElementById("infoDesc").textContent=fo.desc;
+  document.getElementById("infoHave").innerHTML=
+    `手持ち ${(S.food||{})[id]||0} 個`
+    + `<br>効き目：${esc(fo.fx.n)} — ${esc(fo.fx.d)}`
+    + `<br>${autoOk(id)? "自動補充の 候補に なっています" : "自動補充の 候補から 外しています"}`;
+  infoDlg.showModal();
+}
+function showTitlePiece(part,idx){
+  SFX.find();
+  const w=(part==="top"? TOP_TITLES : BOT_TITLES)[idx]||"";
+  const cur=curTitleIdx();
+  const on=(part==="top"? cur.top : cur.bottom)===idx;
+  document.getElementById("infoArt").innerHTML=`<div class="titlepiece" style="font-size:26px">${esc(w)}</div>`;
+  document.getElementById("infoName").textContent=(part==="top"?"上の句":"下の句")+"「"+w+"」";
+  document.getElementById("infoMeta").textContent="二つ名の "+(part==="top"?"上の句":"下の句");
+  document.getElementById("infoDesc").textContent=
+    part==="top"? "名のりの あたまに つく ことば。下の句と 組み合わせて 使います。"
+                : "名のりの おしりに つく ことば。上の句と 組み合わせて 使います。";
+  document.getElementById("infoHave").innerHTML=
+    (on? "いま この句を 名のっています" : "もちものの「二つ名」から えらべます")
+    + `<br>いまの名のり：【${esc(curTitleText())}】`;
+  infoDlg.showModal();
+}
+document.getElementById("infoClose").onclick=()=>infoDlg.close();
+infoDlg.querySelector("form").addEventListener("submit",e=>e.preventDefault());
+/* ガチャの結果ひとつ分の くわしい説明 */
+function showGachaResult(r){
+  if(r.type==="food") showFood(r.id); else showTitlePiece(r.part,r.idx);
+}
+
 /* もちものの「たべもの」欄。持たせるのは相棒の欄からなので、ここは一覧だけ */
 function renderFoodTab(){
   const cnt=document.getElementById("foodCount"), list=document.getElementById("foodList");
@@ -5829,9 +5891,7 @@ function renderFoodTab(){
       <b>${esc(fo.name)}</b><em>×${S.food[id]} ／ ${esc(fo.fx.n)}</em></button>`;
   }).join("") : `<div class="empty-box" style="padding:20px">まだ たべものが ありません。<br>
     探検先で もらえたり、ガチャで 手に入ります。</div>`;
-  list.querySelectorAll(".itm").forEach(b=>b.onclick=()=>{
-    const fo=foodOf(b.dataset.f); toast(`${fo.name}：${fo.desc}`);
-  });
+  list.querySelectorAll(".itm").forEach(b=>b.onclick=()=>showFood(b.dataset.f));
 }
 /* もちものの中の切り替え */
 document.querySelectorAll("#bagTabs .sub").forEach(b=>b.onclick=()=>{
@@ -5941,8 +6001,7 @@ function showGachaCard(){
   document.getElementById("gbFlip").innerHTML=
     new Array(9).fill(0).map(()=>"<i><b></b><u></u></i>").join("");
   const sc=gachaScreens[gachaIdx];
-  document.getElementById("gachaProgress").textContent=
-    (sc.rs.length>1? sc.rs.length+"回ぶん" : (gachaIdx+1)+" / "+gachaTotal);
+  document.getElementById("gachaProgress").textContent=(gachaIdx+1)+" / "+gachaTotal;
   applyPreTell(sc._plan.pre, sc._plan.show);
 }
 /* 火花が飛びちる演出。位階が高いほど数もいろ数も増える */
@@ -6002,12 +6061,22 @@ function pullGacha(){
     spawnBurst(r.tier);
     if(r.tier>=3) flash.className="g-flash big";
     if(sc.rs.length>1){
-      /* まとめ引き。玉がはじけたあと 10個を いちどに ならべる */
+      /* まとめ引き。玉がはじけたあと まとめて ならべる。
+         背景の演出は 暗く沈めて、結果そのものを 読ませる */
       const many=document.getElementById("gMany");
       many.innerHTML=sc.rs.map((x,i)=>
-        `<span class="gcell t${x.tier}" style="animation-delay:${(i*0.055).toFixed(3)}s">
-          ${gachaResultArt(x)}<em>${esc(gachaResultName(x))}</em></span>`).join("");
+        `<button type="button" class="gcell t${x.tier}" data-i="${i}"
+          style="animation-delay:${(i*0.05).toFixed(3)}s">
+          <span class="gc-art">${gachaResultArt(x)}</span>
+          <span class="gc-txt"><b>${esc(gachaResultName(x))}</b>
+          <em>${x.type==="food"? esc(foodOf(x.id).fx.n) : (x.part==="top"?"上の句":"下の句")}</em></span>
+        </button>`).join("");
       many.classList.add("on");
+      stage.classList.add("showing-many");
+      many.querySelectorAll(".gcell").forEach(b=>b.onclick=ev=>{
+        ev.stopPropagation();            /* 画面送りではなく 中身を見る */
+        showGachaResult(sc.rs[+b.dataset.i]);
+      });
       const best=sc.rs.filter(x=>x.tier>=2).length;
       document.getElementById("gachaHint").textContent=
         sc.rs.length+"回ぶん"+(best? "　★"+best : "");
