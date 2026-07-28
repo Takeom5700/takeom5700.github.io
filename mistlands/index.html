@@ -258,10 +258,22 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
 .view.on{display:block}
 
 /* ---------- 地図 ---------- */
+.mapwrap{position:relative}
 .mapbox{border:3px solid var(--ink); border-radius:var(--r-lg); background:var(--sea);
-  box-shadow:6px 6px 0 var(--shadow); position:relative; overflow:hidden}
-/* 冊数が増えて世界が広がっても画面に収める */
-.mapbox svg{display:block; width:100%; height:auto; max-height:76vh}
+  box-shadow:6px 6px 0 var(--shadow); position:relative; overflow:auto;
+  max-height:min(76vh,640px); -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y}
+/* 地図アプリのように、倍率(--mz)を変えて指でずらして見る。
+   1.0 のとき横幅ぴったりに収まるので、スマホでも最初から全体が見える */
+.mapbox svg{display:block; width:calc(100% * var(--mz,1)); height:auto; max-height:none}
+.mapzoom{position:absolute; right:12px; bottom:12px; display:flex; flex-direction:column;
+  gap:6px; z-index:3}
+.mapzoom button{width:38px; height:38px; font-size:17px; line-height:1; font-family:var(--f-disp);
+  border:2.5px solid var(--ink); border-radius:10px; background:var(--card); color:var(--ink);
+  box-shadow:2px 2px 0 var(--shadow); cursor:pointer; display:flex; align-items:center;
+  justify-content:center; padding:0}
+.mapzoom button:hover{background:var(--sun); color:#fff}
+.mapzoom button:active{transform:translate(2px,2px); box-shadow:none}
+.mapzoom button:focus-visible{outline:3px solid var(--sun); outline-offset:2px}
 .filterbar{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px;
   background:color-mix(in srgb,var(--ink) 6%,transparent); border-radius:var(--r);
   padding:8px 12px; margin-bottom:11px}
@@ -454,33 +466,102 @@ label.chk input[type=checkbox]{width:auto; flex:none; margin-top:3px; accent-col
   border:2.5px solid var(--line); border-radius:var(--r); padding:14px 16px; background:var(--paper)}
 .policytext h4{font-family:var(--f-disp); font-size:14px; margin:14px 0 4px}
 .policytext h4:first-child{margin-top:0}
-/* ---------- ガチャ ---------- */
-.gachastage{position:relative; display:flex; flex-direction:column; align-items:center;
-  gap:14px; padding:34px 10px; border-radius:var(--r); background:var(--bg-soft,var(--paper));
-  overflow:hidden; min-height:230px; justify-content:center}
-.gachabg{position:absolute; inset:-25%; pointer-events:none; opacity:0; z-index:0;
-  background:radial-gradient(circle at 50% 42%, rgba(255,210,120,.55), transparent 60%)}
-.gachastage.tell-0 .gachabg{animation:bgPulse0 .85s ease-in-out infinite}
-.gachastage.tell-1 .gachabg{animation:bgPulse1 .5s ease-in-out infinite;
-  background:radial-gradient(circle at 50% 42%, rgba(150,175,255,.55), transparent 60%)}
-.gachastage.tell-2 .gachabg{animation:bgPulse2 .32s ease-in-out infinite;
-  background:radial-gradient(circle at 50% 42%, rgba(255,178,52,.7), transparent 62%)}
-.gachastage.tell-3 .gachabg{animation:bgPulse3 .2s linear infinite;
-  background:conic-gradient(from 0deg,#ff5f9e,#ffd27a,#8fd3ff,#c9ff8f,#ff5f9e)}
-@keyframes bgPulse0{0%,100%{opacity:.14} 50%{opacity:.38}}
-@keyframes bgPulse1{0%,100%{opacity:.24} 50%{opacity:.55}}
-@keyframes bgPulse2{0%,100%{opacity:.35} 50%{opacity:.82}}
-@keyframes bgPulse3{0%{opacity:.5; transform:rotate(0deg) scale(1)}
-  50%{opacity:.88; transform:rotate(180deg) scale(1.18)} 100%{opacity:.5; transform:rotate(360deg) scale(1)}}
-.gachastage.tier-3{animation:stageFlash3 .5s ease-out}
-@keyframes stageFlash3{0%{background:#fff8ee} 100%{background:var(--bg-soft,var(--paper))}}
+/* ---------- ガチャ ----------
+   このアプリの見せ場。夜空にひらく本、という一枚の絵として作る。
+   地は藍、光は金。段階(tell-0〜3)が上がるほど 光の色・回転・脈が激しくなる */
+.gform{padding:0}
+.gachastage{position:relative; overflow:hidden; border-radius:var(--r-lg);
+  min-height:min(74vh,520px); display:flex; align-items:center; justify-content:center;
+  cursor:pointer; user-select:none; isolation:isolate;
+  --gA:#FFC93C; --gB:#FF4D9D; --gC:#5AD4FF}
+.gachastage:focus-visible{outline:3px solid var(--gA); outline-offset:-3px}
+.g-sky{position:absolute; inset:0; z-index:0;
+  background:radial-gradient(ellipse at 50% 44%, #3B2F73 0%, #211a4d 45%, #120E2C 100%)}
+.g-vig{position:absolute; inset:0; z-index:6; pointer-events:none;
+  background:radial-gradient(ellipse at 50% 46%, transparent 40%, rgba(8,5,22,.72) 100%)}
+/* 放射状の光。回転速度が段階で上がる */
+.g-rays{position:absolute; left:50%; top:46%; width:190%; aspect-ratio:1; z-index:1;
+  transform:translate(-50%,-50%); opacity:.3; mix-blend-mode:screen;
+  background:repeating-conic-gradient(from 0deg,
+    color-mix(in srgb,var(--gA) 85%,transparent) 0deg 5deg, transparent 5deg 14deg);
+  -webkit-mask-image:radial-gradient(circle,#000 12%,transparent 68%);
+  mask-image:radial-gradient(circle,#000 12%,transparent 68%);
+  animation:rayspin 26s linear infinite}
+@keyframes rayspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+/* 星。ちいさな点が またたく */
+.g-stars{position:absolute; inset:0; z-index:1; opacity:.9;
+  background-image:
+    radial-gradient(1.6px 1.6px at 12% 18%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 78% 12%, #ffe9b8, transparent),
+    radial-gradient(1.8px 1.8px at 33% 76%, #fff, transparent),
+    radial-gradient(1.3px 1.3px at 88% 62%, #cfe8ff, transparent),
+    radial-gradient(1.5px 1.5px at 58% 30%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 22% 52%, #ffd8ef, transparent),
+    radial-gradient(1.7px 1.7px at 68% 84%, #fff, transparent);
+  animation:twinkle 3.4s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.5} 50%{opacity:1}}
+/* 本をかこむ光の輪 */
+.g-ring{position:absolute; left:50%; top:46%; width:230px; height:230px; z-index:1;
+  transform:translate(-50%,-50%); border-radius:50%; mix-blend-mode:screen;
+  border:2px solid color-mix(in srgb,var(--gA) 70%,transparent);
+  box-shadow:0 0 34px 10px color-mix(in srgb,var(--gA) 32%,transparent),
+    inset 0 0 28px 6px color-mix(in srgb,var(--gA) 22%,transparent);
+  animation:ringPulse 2.6s ease-in-out infinite}
+@keyframes ringPulse{0%,100%{transform:translate(-50%,-50%) scale(.94); opacity:.55}
+  50%{transform:translate(-50%,-50%) scale(1.06); opacity:1}}
+/* まわりを めぐる 文字。読書の世界らしく 活字がめぐる */
+.g-orbit{position:absolute; left:50%; top:46%; width:300px; height:300px; z-index:2;
+  transform:translate(-50%,-50%); pointer-events:none; animation:orbspin 18s linear infinite}
+@keyframes orbspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.g-orbit i{position:absolute; left:50%; top:50%; font-style:normal; font-family:var(--f-disp);
+  font-size:15px; font-weight:800; color:color-mix(in srgb,var(--gC) 80%,#fff);
+  text-shadow:0 0 10px color-mix(in srgb,var(--gC) 70%,transparent); opacity:.75}
+/* 段階ごとの あおり。色そのものを変えて 一目で分かるようにする */
+.gachastage.tell-1{--gA:#8FB4FF; --gB:#5AD4FF; --gC:#C9B6FF}
+.gachastage.tell-2{--gA:#FFB224; --gB:#FF7A3D; --gC:#FFE79A}
+.gachastage.tell-3{--gA:#FF4D9D; --gB:#FFC93C; --gC:#8FD3FF}
+.gachastage.tell-0 .g-rays{animation-duration:9s; opacity:.4}
+.gachastage.tell-1 .g-rays{animation-duration:5s; opacity:.52}
+.gachastage.tell-2 .g-rays{animation-duration:2.4s; opacity:.68}
+.gachastage.tell-3 .g-rays{animation-duration:1s; opacity:.9;
+  background:repeating-conic-gradient(from 0deg,
+    var(--gB) 0deg 4deg, var(--gA) 4deg 8deg, var(--gC) 8deg 12deg, transparent 12deg 20deg)}
+.gachastage.tell-0 .g-ring{animation-duration:1.1s}
+.gachastage.tell-1 .g-ring{animation-duration:.72s}
+.gachastage.tell-2 .g-ring{animation-duration:.42s; border-width:3px}
+.gachastage.tell-3 .g-ring{animation-duration:.24s; border-width:4px}
+.gachastage.tell-2 .g-orbit{animation-duration:5s}
+.gachastage.tell-3 .g-orbit{animation-duration:2s}
+/* 白フラッシュ。開く瞬間と激レアで焚く */
+.g-flash{position:absolute; inset:0; z-index:7; pointer-events:none; opacity:0; background:#fff}
+.g-flash.go{animation:gflash .5s ease-out}
+.g-flash.big{animation:gflashBig .9s ease-out}
+@keyframes gflash{0%{opacity:.92} 100%{opacity:0}}
+@keyframes gflashBig{0%{opacity:1} 30%{opacity:.6} 45%{opacity:.95} 100%{opacity:0}}
+.gachastage.tier-3{animation:stageQuake .6s ease-out}
+@keyframes stageQuake{0%,100%{transform:translate(0,0)} 20%{transform:translate(-6px,3px)}
+  40%{transform:translate(5px,-4px)} 60%{transform:translate(-4px,-2px)} 80%{transform:translate(3px,3px)}}
+/* 手前の文字 */
+.g-hud{position:absolute; left:0; right:0; bottom:0; z-index:8; padding:14px 16px 16px;
+  display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center;
+  pointer-events:none}
+.g-count{font-family:var(--f-num); font-size:11px; color:rgba(255,255,255,.72)}
+.g-hint{font-family:var(--f-disp); font-weight:800; font-size:14px; line-height:1.6;
+  color:#fff; text-shadow:0 2px 12px rgba(0,0,0,.7); overflow-wrap:anywhere;
+  white-space:pre-line}
+.gachastage.tier-2 .g-hint,.gachastage.tier-3 .g-hint{font-size:16px;
+  color:#FFE9A8; text-shadow:0 0 16px rgba(255,190,60,.9)}
 
-.gachabook{position:relative; width:150px; height:190px; z-index:1}
-.gb-cover{position:absolute; inset:0; border:3px solid var(--ink); border-radius:10px 4px 4px 10px;
-  background:linear-gradient(135deg,var(--card),var(--bg-soft,var(--paper)));
-  display:flex; align-items:center; justify-content:center; box-shadow:3px 3px 0 var(--shadow);
+.gachabook{position:relative; width:150px; height:190px; z-index:3}
+.gb-cover{position:absolute; inset:0; border:3px solid #0E0A22; border-radius:10px 4px 4px 10px;
+  background:linear-gradient(150deg,#F6ECD2 0%,#E3D2AA 55%,#CBB183 100%);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,255,255,.35);
   transform-origin:left center; transition:transform .5s ease-in}
-.gb-emblem{font-family:var(--f-disp); font-size:38px; color:var(--ink-sub)}
+.gb-cover::before{content:""; position:absolute; inset:9px; border-radius:6px;
+  border:1.5px solid color-mix(in srgb,var(--gA) 60%,#8A6A32)}
+.gb-emblem{font-family:var(--f-disp); font-size:38px; color:#6B5220;
+  text-shadow:0 0 14px color-mix(in srgb,var(--gA) 60%,transparent)}
 .gb-page{position:absolute; inset:3px; border-radius:6px 3px 3px 6px;
   background:linear-gradient(120deg,#fdf9ee,#f1e8d3); transform-origin:left center;
   transform:rotateY(0deg); backface-visibility:hidden; opacity:0}
@@ -490,9 +571,11 @@ label.chk input[type=checkbox]{width:auto; flex:none; margin-top:3px; accent-col
 .gachabook.opening .p3{animation:pageFlip .3s ease-in .18s forwards}
 .gachabook.opening .gb-cover{transform:rotateY(-150deg)}
 @keyframes pageFlip{0%{transform:rotateY(0deg); opacity:1} 60%{opacity:1} 100%{transform:rotateY(-170deg); opacity:0}}
-.gb-content{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
-  justify-content:center; gap:6px; text-align:center; font-size:11px; opacity:0;
-  transform:scale(.4) translateY(10px)}
+.gb-content{position:absolute; inset:-14px; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:6px; text-align:center; font-size:11px; opacity:0; color:#fff;
+  text-shadow:0 2px 10px rgba(0,0,0,.75); transform:scale(.4) translateY(10px);
+  filter:drop-shadow(0 0 18px color-mix(in srgb,var(--gA) 75%,transparent))}
+.gb-content .titlepiece{color:#FFEFC4}
 .gachabook.popped .gb-content{animation:gachaPopOut .55s cubic-bezier(.2,1.4,.4,1) forwards}
 @keyframes gachaPopOut{0%{opacity:0; transform:scale(.3) translateY(20px) rotate(-12deg)}
   60%{opacity:1; transform:scale(1.2) translateY(-8px) rotate(4deg)}
@@ -505,13 +588,15 @@ label.chk input[type=checkbox]{width:auto; flex:none; margin-top:3px; accent-col
 @keyframes bookShake1{0%,100%{transform:rotate(-2.4deg) scale(1.02)} 50%{transform:rotate(2.4deg) scale(1.02)}}
 @keyframes bookShake2{0%,100%{transform:rotate(-3.6deg) scale(1.05)} 50%{transform:rotate(3.6deg) scale(1.05)}}
 @keyframes bookShake3{0%,100%{transform:rotate(-5.2deg) scale(1.1)} 50%{transform:rotate(5.2deg) scale(1.1)}}
-.gachaburst{position:absolute; inset:0; pointer-events:none; z-index:2}
-.spark{position:absolute; left:50%; top:46%; width:7px; height:7px; border-radius:50%;
-  transform:translate(-50%,-50%); animation:sparkFly .9s ease-out forwards}
+.gachaburst{position:absolute; inset:0; pointer-events:none; z-index:5}
+.spark{position:absolute; left:50%; top:46%; width:8px; height:8px; border-radius:50%;
+  transform:translate(-50%,-50%); mix-blend-mode:screen;
+  animation:sparkFly 1s ease-out forwards}
 @keyframes sparkFly{0%{transform:translate(-50%,-50%) scale(0); opacity:1} 30%{opacity:1}
-  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1); opacity:0}}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.1); opacity:0}}
 @media (prefers-reduced-motion: reduce){
-  .gachabg, .gachabook.charging, .gachabook.opening .gb-page, .gachabook.popped .gb-content,
+  .g-rays,.g-stars,.g-ring,.g-orbit,.g-flash,
+  .gachabook.charging, .gachabook.opening .gb-page, .gachabook.popped .gb-content,
   .spark, .gachastage.tier-3{ animation:none !important }
   .gb-cover{ transition:none !important }
   .gachabook.opening .gb-cover{ transform:rotateY(-150deg) }
@@ -524,8 +609,8 @@ label.chk input[type=checkbox]{width:auto; flex:none; margin-top:3px; accent-col
 html.plain-mode .game-kpi,
 html.plain-mode .tabs button[data-v="buddy"],
 html.plain-mode .tabs button[data-v="items"],
-html.plain-mode .tabs button[data-v="tower"],
 html.plain-mode .buddy-card,
+html.plain-mode .foodslotbar,
 html.plain-mode .wearbar{display:none !important}
 .comp{display:flex; gap:6px}
 .comp button{flex:1; border:2.5px solid var(--line); background:var(--paper); padding:9px 0;
@@ -582,11 +667,27 @@ html.plain-mode .wearbar{display:none !important}
 .hit b{font-family:var(--f-disp)}
 
 /* ---------- 相棒ページの配置 ---------- */
-.buddy-grid{display:grid; gap:16px; grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  grid-template-areas:"axis land" "axis anc" "title title"}
+.buddy-grid{display:grid; gap:16px; grid-template-columns:minmax(0,360px) minmax(0,1fr);
+  grid-template-areas:"tower twinfo" "tower axis" "tower land" "tower anc" "title title";
+  align-items:start}
 @media (max-width:820px){
-  .buddy-grid{grid-template-columns:1fr; grid-template-areas:"axis" "land" "anc" "title"}
+  .buddy-grid{grid-template-columns:1fr;
+    grid-template-areas:"tower" "twinfo" "axis" "land" "anc" "title"}
 }
+/* もちものの中の切り替え。上のタブとは別物に見えるよう、丸い横並びにする */
+.subtabs{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px}
+.subtabs .sub{font-family:var(--f-disp); font-weight:800; font-size:12.5px; letter-spacing:.03em;
+  border:2.5px solid var(--line); border-radius:var(--r-pill); padding:8px 15px;
+  background:var(--paper); color:var(--ink-sub); cursor:pointer; transition:all .15s}
+.subtabs .sub:hover{border-color:var(--ink); color:var(--ink)}
+.subtabs .sub.on{background:var(--ink); border-color:var(--ink); color:var(--card);
+  box-shadow:2px 2px 0 var(--shadow)}
+.subtabs .sub:focus-visible{outline:3px solid var(--sun); outline-offset:2px}
+.bagpane{display:none}
+.bagpane.on{display:block; animation:fadeUp .3s ease-out}
+@keyframes fadeUp{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+.titlenow{font-family:var(--f-disp); font-weight:800; font-size:clamp(18px,3.4vw,25px);
+  letter-spacing:.04em; color:var(--sun); text-wrap:balance}
 .titlebig{font-family:var(--f-disp); font-weight:800; font-size:clamp(26px,5vw,38px);
   letter-spacing:.05em; line-height:1.3; text-wrap:balance}
 .titledesc{margin-top:10px; max-width:54ch}
@@ -717,8 +818,8 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   .spot{grid-template-columns:1fr}
   .spot .btn{width:100%}
   /* 地図は指でなぞって動かす。縮めて字が読めなくなるより、横に送れる方がいい */
-  .mapbox{overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch}
-  .mapbox svg{min-width:780px; max-height:none}
+  /* スマホでは倍率1.0＝画面ぴったり。大きくしたいときは指かボタンで拡大する */
+  .mapbox{max-height:min(62vh,520px)}
   .skybox{height:min(66vh,560px)}
   /* 指で押せる大きさを確保する */
   .btn{min-height:44px; display:inline-flex; align-items:center; justify-content:center}
@@ -792,9 +893,8 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-v="map">地図</button>
     <button role="tab" aria-selected="false" data-v="shelf">本だな</button>
-    <button role="tab" aria-selected="false" data-v="buddy">相棒</button>
-    <button role="tab" aria-selected="false" data-v="items">そうび</button>
-    <button role="tab" aria-selected="false" data-v="tower">知の塔</button>
+    <button role="tab" aria-selected="false" data-v="buddy">相棒と塔</button>
+    <button role="tab" aria-selected="false" data-v="items">もちもの</button>
   </nav>
 
   <section class="view on" id="v-map">
@@ -809,9 +909,16 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <button class="cbtn" data-k="star" aria-pressed="false">最重要</button>
       </div>
     </div>
-    <div class="mapbox" id="mapbox">
-      <svg id="map" role="img" aria-label="霧のエリア地図。読み進めるほど霧が減り、地面の色が戻る"></svg>
-      <div class="flashwrap"></div>
+    <div class="mapwrap">
+      <div class="mapbox" id="mapbox">
+        <svg id="map" role="img" aria-label="霧のエリア地図。読み進めるほど霧が減り、地面の色が戻る"></svg>
+        <div class="flashwrap"></div>
+      </div>
+      <div class="mapzoom">
+        <button type="button" id="mzIn" aria-label="地図を大きくする">＋</button>
+        <button type="button" id="mzOut" aria-label="地図を小さくする">−</button>
+        <button type="button" id="mzFit" aria-label="地図を画面に合わせる">⤢</button>
+      </div>
     </div>
     <div class="mapfoot">
       <span><span class="chip" style="background:var(--sun)"></span>会社推薦の本 ＝ 建物</span>
@@ -856,20 +963,29 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
 
   <section class="view" id="v-buddy">
     <div class="buddy-grid">
-      <div class="panel" style="grid-area:anc">
-        <h3>これまでの相棒</h3>
-        <p>育ち切った相棒は旅立ち、守り神になります。この子たちも土地に探検に行けます。</p>
-        <div class="evolist" id="ancPanel"></div>
+      <div class="skybox" style="grid-area:tower" id="skybox"><svg id="towerSvg" role="img"
+        aria-label="読んだページ数だけ空へ伸びる塔。高くなるほど空の景色が変わる"></svg></div>
+      <div class="panel" style="grid-area:twinfo">
+        <h3>知の塔</h3>
+        <p>読み終えた本が下から一層ずつ積み上がります。高くなるほど空の景色が変わります。</p>
+        <div class="kv" id="towerStat"></div>
+        <h3 style="margin-top:16px">高さでかわる景色</h3>
+        <div class="bands" id="bands"></div>
+      </div>
+      <div class="panel" style="grid-area:axis">
+        <h3>何によって育つか</h3>
+        <p>読んだ本によって伸びる場所が変わります。</p>
+        <div id="axisPanel"></div>
       </div>
       <div class="panel" style="grid-area:land">
         <h3>土地の育ち</h3>
         <p>その土地の本を読むほど土地が深まり、恵みが開きます。</p>
         <div class="lands" id="friends"></div>
       </div>
-      <div class="panel" style="grid-area:axis">
-        <h3>何によって育つか</h3>
-        <p>読んだ本によって伸びる場所が変わります。</p>
-        <div id="axisPanel"></div>
+      <div class="panel" style="grid-area:anc">
+        <h3>これまでの相棒</h3>
+        <p>育ち切った相棒は旅立ち、守り神になります。この子たちも土地に探検に行けます。</p>
+        <div class="evolist" id="ancPanel"></div>
       </div>
       <div class="panel" style="grid-area:title">
         <h3>読み手としての称号</h3>
@@ -879,8 +995,16 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   </section>
 
   <section class="view" id="v-items">
-    <div class="two">
-      <div class="panel" style="grid-column:1/-1">
+    <div class="subtabs" id="bagTabs" role="tablist">
+      <button role="tab" class="sub on" data-b="forge" aria-selected="true">そうびをつくる</button>
+      <button role="tab" class="sub" data-b="equip" aria-selected="false">もっているそうび</button>
+      <button role="tab" class="sub" data-b="omi" aria-selected="false">おみやげ</button>
+      <button role="tab" class="sub" data-b="food" aria-selected="false">たべもの</button>
+      <button role="tab" class="sub" data-b="title" aria-selected="false">二つ名</button>
+    </div>
+
+    <div class="bagpane on" id="b-forge">
+      <div class="panel">
         <h3>そうびを つくる</h3>
         <p>おみやげを3つ 合わせると そうびに なります。同じ組み合わせからは 同じものが できます。</p>
         <div class="forge">
@@ -888,33 +1012,43 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
           <div id="forgeOut"></div>
         </div>
       </div>
+    </div>
+
+    <div class="bagpane" id="b-equip">
       <div class="panel">
         <h3>もっている そうび</h3>
         <div class="kv" id="eqCount" style="margin-bottom:10px"></div>
         <div class="eqgrid" id="eqList"></div>
       </div>
+    </div>
+
+    <div class="bagpane" id="b-omi">
       <div class="panel">
         <h3>おみやげ</h3>
+        <p>探検で見つけてくる かけら。3つ 合わせると そうびに なります。</p>
         <div class="kv" id="expCount" style="margin-bottom:10px"></div>
         <div class="itemgrid" id="expItems"></div>
       </div>
     </div>
-  </section>
 
-  <section class="view" id="v-tower">
-    <div class="two" style="grid-template-columns:minmax(0,380px) 1fr">
-      <div class="skybox" id="skybox"><svg id="towerSvg" role="img"
-        aria-label="読んだページ数だけ空へ伸びる塔。高くなるほど空の景色が変わる"></svg></div>
-      <div>
-        <div class="panel">
-          <h3>空へ積む</h3>
-          <p>読み終えた本が下から一層ずつ積み上がります。高くなるほど空の景色が変わります。</p>
-          <div class="kv" id="towerStat"></div>
-        </div>
-        <div class="panel" style="margin-top:14px">
-          <h3>高さでかわる景色</h3>
-          <div class="bands" id="bands"></div>
-        </div>
+    <div class="bagpane" id="b-food">
+      <div class="panel">
+        <h3>たべもの</h3>
+        <p>探検に ふたつまで 持たせられます。持たせるのは 相棒の欄から。</p>
+        <div class="kv" id="foodCount" style="margin-bottom:10px"></div>
+        <div class="itemgrid" id="foodList"></div>
+      </div>
+    </div>
+
+    <div class="bagpane" id="b-title">
+      <div class="panel">
+        <h3>二つ名</h3>
+        <p>上の句と下の句を 組み合わせて 名のります。ガチャで あたらしい句が 手に入ります。</p>
+        <div class="titlenow" id="bagTitleNow">【みならいの読書家】</div>
+        <label style="margin-top:12px">上の句</label>
+        <div class="itemgrid" id="bagTitleTop"></div>
+        <label style="margin-top:12px">下の句</label>
+        <div class="itemgrid" id="bagTitleBot"></div>
       </div>
     </div>
   </section>
@@ -999,11 +1133,14 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   </div>
 </form></dialog>
 
-<dialog id="gachaDlg"><form method="dialog" class="din">
-  <h2>ガチャ</h2>
-  <div class="sub" id="gachaProgress">1 / 1</div>
-  <div class="gachastage" id="gachaStage">
-    <div class="gachabg"></div>
+<dialog id="gachaDlg" aria-label="ガチャ"><form method="dialog" class="gform">
+  <div class="gachastage" id="gachaStage" role="button" tabindex="0"
+       aria-label="画面を押して すすめる">
+    <div class="g-sky"></div>
+    <div class="g-rays"></div>
+    <div class="g-stars"></div>
+    <div class="g-ring"></div>
+    <div class="g-orbit" id="gOrbit"></div>
     <div class="gachaburst" id="gachaBurst"></div>
     <div class="gachabook" id="gachaCard">
       <div class="gb-cover"><div class="gb-emblem">？</div></div>
@@ -1012,11 +1149,12 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       <div class="gb-page p3"></div>
       <div class="gb-content" id="gcFront"></div>
     </div>
-  </div>
-  <p class="hint" id="gachaHint">扉に 手を かざして……</p>
-  <div class="dact">
-    <button type="button" class="btn primary" id="gachaPullBtn">引く</button>
-    <button type="button" class="btn primary" id="gachaNext" hidden>つぎへ</button>
+    <div class="g-flash" id="gFlash"></div>
+    <div class="g-vig"></div>
+    <div class="g-hud">
+      <span class="g-count" id="gachaProgress">1 / 1</span>
+      <span class="g-hint" id="gachaHint">画面を おして ひらく</span>
+    </div>
   </div>
 </form></dialog>
 
@@ -2466,6 +2604,55 @@ let selected=null;
 let selectedRegion=null; /* 地域そのものをタップしたとき（探検の管理をここで完結させる） */
 
 let mapFocus=null, mapKind="all";
+
+/* ---------- 地図の拡大縮小。地図アプリと同じく 指でつまむ・ボタン・ホイールで ---------- */
+let mapZoom=1;
+const MZ_MIN=1, MZ_MAX=4;
+function setMapZoom(z,ax,ay){
+  const box=document.getElementById("mapbox"); if(!box) return;
+  const prev=mapZoom;
+  mapZoom=Math.max(MZ_MIN,Math.min(MZ_MAX,z));
+  if(mapZoom===prev) return;
+  /* つまんだ位置(ax,ay = 箱の中の座標)が動かないように、ずらし位置も合わせる */
+  const rx=(box.scrollLeft+(ax==null?box.clientWidth/2:ax))/prev;
+  const ry=(box.scrollTop +(ay==null?box.clientHeight/2:ay))/prev;
+  box.style.setProperty("--mz",mapZoom.toFixed(3));
+  requestAnimationFrame(()=>{
+    box.scrollLeft=rx*mapZoom-(ax==null?box.clientWidth/2:ax);
+    box.scrollTop =ry*mapZoom-(ay==null?box.clientHeight/2:ay);
+  });
+}
+(function initMapZoom(){
+  const box=document.getElementById("mapbox"); if(!box) return;
+  box.style.setProperty("--mz","1");
+  const bi=document.getElementById("mzIn"), bo=document.getElementById("mzOut"),
+        bf=document.getElementById("mzFit");
+  if(bi) bi.onclick=()=>setMapZoom(mapZoom*1.5);
+  if(bo) bo.onclick=()=>setMapZoom(mapZoom/1.5);
+  if(bf) bf.onclick=()=>{ setMapZoom(1); box.scrollLeft=0; box.scrollTop=0; };
+  /* 二本指でつまむ */
+  let pinchD=0, pinchZ=1;
+  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+  box.addEventListener("touchstart",e=>{
+    if(e.touches.length===2){ pinchD=dist(e.touches); pinchZ=mapZoom; }
+  },{passive:true});
+  box.addEventListener("touchmove",e=>{
+    if(e.touches.length!==2||!pinchD) return;
+    e.preventDefault();
+    const r=box.getBoundingClientRect();
+    const cx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left;
+    const cy=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;
+    setMapZoom(pinchZ*(dist(e.touches)/pinchD), cx, cy);
+  },{passive:false});
+  box.addEventListener("touchend",()=>{ pinchD=0; },{passive:true});
+  /* パソコンでは Ctrl+ホイール（ふつうのスクロールは邪魔しない） */
+  box.addEventListener("wheel",e=>{
+    if(!e.ctrlKey) return;
+    e.preventDefault();
+    const r=box.getBoundingClientRect();
+    setMapZoom(mapZoom*(e.deltaY<0?1.12:1/1.12), e.clientX-r.left, e.clientY-r.top);
+  },{passive:false});
+})();
 function visibleConts(W){
   if(mapFocus==="all") return W.conts;
   const c=W.conts.find(C=>C.name===mapFocus);
@@ -5040,32 +5227,65 @@ document.getElementById("foodOff").onclick=()=>{
 document.getElementById("foodPickCancel").onclick=()=>foodPickDlg.close();
 foodPickDlg.querySelector("form").addEventListener("submit",e=>e.preventDefault());
 
-/* ---------- 二つ名の画面 ---------- */
-function renderTitlePick(){
+/* ---------- 二つ名の画面。ダイアログと「もちもの」の両方から同じ形で出す ---------- */
+function renderTitleInto(topId,botId,after){
+  const top=document.getElementById(topId), bot=document.getElementById(botId);
+  if(!top||!bot) return;
   const cur=curTitleIdx();
-  document.getElementById("titleTopList").innerHTML=titleTopOwned().map(i=>
+  top.innerHTML=titleTopOwned().map(i=>
     `<button type="button" class="itm${i===cur.top?" on":""}" data-top="${i}">
       <div class="titlepiece">${esc(TOP_TITLES[i])}</div></button>`).join("");
-  document.getElementById("titleBotList").innerHTML=titleBotOwned().map(i=>
+  bot.innerHTML=titleBotOwned().map(i=>
     `<button type="button" class="itm${i===cur.bottom?" on":""}" data-bot="${i}">
       <div class="titlepiece">${esc(BOT_TITLES[i])}</div></button>`).join("");
-  document.querySelectorAll("#titleTopList .itm").forEach(b=>b.onclick=()=>{
+  top.querySelectorAll(".itm").forEach(b=>b.onclick=()=>{
     S.titleSel=S.titleSel||{top:0,bottom:0}; S.titleSel.top=+b.dataset.top; save();
-    renderPet(); renderTitlePick();
+    renderPet(); if(after) after();
   });
-  document.querySelectorAll("#titleBotList .itm").forEach(b=>b.onclick=()=>{
+  bot.querySelectorAll(".itm").forEach(b=>b.onclick=()=>{
     S.titleSel=S.titleSel||{top:0,bottom:0}; S.titleSel.bottom=+b.dataset.bot; save();
-    renderPet(); renderTitlePick();
+    renderPet(); if(after) after();
   });
 }
+function renderTitlePick(){ renderTitleInto("titleTopList","titleBotList",renderTitlePick); }
+function renderBagTitle(){
+  const now=document.getElementById("bagTitleNow");
+  if(now) now.textContent="【"+curTitleText()+"】";
+  renderTitleInto("bagTitleTop","bagTitleBot",renderBagTitle);
+}
+/* もちものの「たべもの」欄。持たせるのは相棒の欄からなので、ここは一覧だけ */
+function renderFoodTab(){
+  const cnt=document.getElementById("foodCount"), list=document.getElementById("foodList");
+  if(!list) return;
+  const owned=Object.keys(S.food||{}).filter(id=>(S.food[id]||0)>0)
+    .sort((a,b)=>foodOf(b).r-foodOf(a).r||foodOf(a).a-foodOf(b).a);
+  const total=Object.values(S.food||{}).reduce((a,b)=>a+b,0);
+  if(cnt) cnt.textContent=`${owned.length} / ${FD_TOTAL} 種類（のべ ${total}）`;
+  list.innerHTML = owned.length? owned.map(id=>{
+    const fo=foodOf(id);
+    return `<button type="button" class="itm" data-f="${id}">${foodSVG(id,44)}
+      <b>${esc(fo.name)}</b><em>×${S.food[id]} ／ ${esc(fo.fx.n)}</em></button>`;
+  }).join("") : `<div class="empty-box" style="padding:20px">まだ たべものが ありません。<br>
+    探検先で もらえたり、ガチャで 手に入ります。</div>`;
+  list.querySelectorAll(".itm").forEach(b=>b.onclick=()=>{
+    const fo=foodOf(b.dataset.f); toast(`${fo.name}：${fo.desc}`);
+  });
+}
+/* もちものの中の切り替え */
+document.querySelectorAll("#bagTabs .sub").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#bagTabs .sub").forEach(x=>{
+    const on=x===b; x.classList.toggle("on",on); x.setAttribute("aria-selected",String(on)); });
+  document.querySelectorAll(".bagpane").forEach(p=>
+    p.classList.toggle("on", p.id==="b-"+b.dataset.b));
+});
 document.getElementById("titlePlateBtn").onclick=()=>{ renderTitlePick(); titlePickDlg.showModal(); };
 document.getElementById("titlePickClose").onclick=()=>titlePickDlg.close();
 titlePickDlg.querySelector("form").addEventListener("submit",e=>e.preventDefault());
 
 /* ---------- ガチャの画面 ---------- */
-let gachaQueue=[], gachaIdx=0, gachaTotal=0, gachaOpened=false;
-const GACHA_TELL_WORDS=["扉が すこし ゆれている……","扉の むこうが 気になる……","扉が ざわめいている……",
-  "扉の むこうから、なにか あふれてくる……"];
+let gachaQueue=[], gachaIdx=0, gachaTotal=0, gachaOpened=false, gachaBusy=false;
+const GACHA_TELL_WORDS=["ページが すこし ゆれている……","青い ひかりが もれてきた……！",
+  "金の ひかりが あふれだす……！！","にじが たった……！！！ なにか すごいものが くる"];
 function queueGacha(n){
   if(n<=0) return;
   S.gachaPending=(S.gachaPending||0)+n; save();
@@ -5077,17 +5297,25 @@ function startGachaFlow(){
   for(let i=0;i<gachaTotal;i++) gachaQueue.push(rollGacha());
   gachaIdx=0; showGachaCard(); gachaDlg.showModal();
 }
+/* まわりをめぐる活字。読書の世界らしい飾り */
+const ORBIT_GLYPHS=["読","知","本","詩","理","史","語","芸"];
+function buildOrbit(){
+  const el=document.getElementById("gOrbit"); if(!el||el.childElementCount) return;
+  el.innerHTML=ORBIT_GLYPHS.map((g,i)=>{
+    const a=(360/ORBIT_GLYPHS.length)*i;
+    return `<i style="transform:rotate(${a}deg) translateY(-142px) rotate(${-a}deg)">${g}</i>`;
+  }).join("");
+}
 function showGachaCard(){
-  gachaOpened=false;
+  gachaOpened=false; gachaBusy=false;
+  buildOrbit();
   document.getElementById("gachaProgress").textContent=`${gachaIdx+1} / ${gachaTotal}`;
   document.getElementById("gachaStage").className="gachastage";
   document.getElementById("gachaCard").className="gachabook";
   document.getElementById("gcFront").innerHTML="";
   document.getElementById("gachaBurst").innerHTML="";
-  document.getElementById("gachaHint").textContent="扉に 手を かざして……";
-  document.getElementById("gachaPullBtn").hidden=false;
-  document.getElementById("gachaPullBtn").disabled=false;
-  document.getElementById("gachaNext").hidden=true;
+  document.getElementById("gFlash").className="g-flash";
+  document.getElementById("gachaHint").textContent="画面を おして ひらく";
 }
 /* 火花が飛びちる演出。位階が高いほど数もいろ数も増える */
 function spawnBurst(tier){
@@ -5111,18 +5339,19 @@ function spawnBurst(tier){
 }
 /* 押すと、位階ごとに違う「たまり」の演出→本がひらいて中身が飛び出す */
 function pullGacha(){
-  if(gachaOpened) return; gachaOpened=true;
-  document.getElementById("gachaPullBtn").disabled=true;
+  if(gachaOpened) return; gachaOpened=true; gachaBusy=true;
   const r=gachaQueue[gachaIdx];
   const stage=document.getElementById("gachaStage"), card=document.getElementById("gachaCard");
+  const flash=document.getElementById("gFlash");
   stage.classList.add("tell-"+r.tier);
   card.classList.add("charging");
   document.getElementById("gachaHint").textContent=GACHA_TELL_WORDS[r.tier];
   SFX.gachaTell(r.tier);
-  const buildMs=[850,1450,2200,3100][r.tier];
+  const buildMs=[900,1600,2400,3400][r.tier];
   setTimeout(()=>{
     card.classList.remove("charging"); card.classList.add("opening");
     stage.classList.add("tier-"+r.tier);
+    flash.className="g-flash "+(r.tier>=3?"big":"go");
     SFX.gachaOpen();
     setTimeout(()=>{
       applyGachaResult(r);
@@ -5131,20 +5360,26 @@ function pullGacha(){
       card.classList.add("popped");
       spawnBurst(r.tier);
       document.getElementById("gachaHint").textContent=
-        (r.tier>=3?"★★★激レア★★★ ":r.tier===2?"★★すごい！ ":r.tier===1?"★おっ！ ":"")
-        +gachaResultName(r)+" を てにいれた";
-      document.getElementById("gachaNext").hidden=false;
-      document.getElementById("gachaNext").textContent = gachaIdx<gachaTotal-1? "つぎへ":"とじる";
+        (r.tier>=3?"★★★ 激レア ★★★\n":r.tier===2?"★★ すごい！ ":r.tier===1?"★ おっ！ ":"")
+        +gachaResultName(r)+" を てにいれた"
+        +(gachaIdx<gachaTotal-1? "　／　画面を おして つぎへ":"　／　画面を おして とじる");
       SFX.find(); if(r.tier>=2) SFX.grow(); if(r.tier>=3) SFX.gachaBig();
+      gachaBusy=false;
       renderAll();
     },620);
   },buildMs);
 }
-document.getElementById("gachaPullBtn").onclick=pullGacha;
-document.getElementById("gachaNext").onclick=()=>{
+/* 画面のどこを押しても すすむ。演出の途中で押されたら 早送りにする */
+function gachaAdvance(){
+  if(!gachaOpened){ pullGacha(); return; }
+  if(gachaBusy) return;
   gachaIdx++;
   if(gachaIdx>=gachaTotal){ gachaDlg.close(); return; }
   showGachaCard();
+}
+document.getElementById("gachaStage").onclick=gachaAdvance;
+document.getElementById("gachaStage").onkeydown=e=>{
+  if(e.key==="Enter"||e.key===" "){ e.preventDefault(); gachaAdvance(); }
 };
 gachaDlg.querySelector("form").addEventListener("submit",e=>e.preventDefault());
 
@@ -5266,7 +5501,8 @@ function renderKpi(){
 }
 function renderAll(){ drawMap(); renderKpi(); renderPet(); renderSpot();
   renderShelf(); renderBuddyTab(); renderTower(); renderExped();
-  renderWearBar(); renderEquipTab(); renderFoodBar(); }
+  renderWearBar(); renderEquipTab(); renderFoodBar();
+  renderFoodTab(); renderBagTitle(); }
 
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tabs button").forEach(x=>
