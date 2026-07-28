@@ -3598,6 +3598,13 @@ const HOME_KIT=[
  {p:19000, k:"bird",   n:"鳥のいえ",   d:"鳥が すみついた"},
  {p:26000, k:"arch",   n:"花のアーチ", d:"入口に 花の アーチが かかった"}
 ];
+/* その子が いま どこかへ 探検に出ているか。出ていれば その土地の名前を返す。
+   出ていない子は 塔で暮らしている、という関係にする */
+function awayAt(uid){
+  const e=S.exped||{};
+  for(const rn in e) if(e[rn] && e[rn].uid===uid) return rn;
+  return null;
+}
 function homeHas(k,pages){
   const it=HOME_KIT.find(x=>x.k===k);
   return !!it && pages>=it.p;
@@ -3618,12 +3625,19 @@ function homeLine(){
   const seed=hash(S.name+"|"+floors+"|"+Math.floor(Date.now()/3600000));
   const doing=HOME_DOING[seed%HOME_DOING.length];
   const kit=homeGot(pages);
-  let s=`${when}塔。${S.name}は ${doing}。`;
+  /* 探検に出しているあいだは 塔に居ない。留守だと ちゃんと伝える */
+  const away=awayAt("me");
+  const R=away? regionByName(away) : null;
+  let s=away
+    ? `${when}塔。${S.name}は いま ${R?(R.place||R.name):away}へ 探検に 出ている。\nるすの 塔で、帰りを 待っている。`
+    : `${when}塔。${S.name}は ${doing}。`;
   if(floors===0) s+=`\nまだ 土台だけだけど、ここが わたしたちの 家。`;
   else s+=`\n${floors}層 ぶんの 本が、この子の 足もとを ささえている。`;
   if(kit.length>1) s+=`\n${kit[kit.length-1].d}。`;
-  const anc=(S.ancestors||[]).length;
-  if(anc>0) s+=`\nふもとでは 先代の ${anc}人が 塔を まもっている。`;
+  const ancHome=(S.ancestors||[]).filter((a,i)=>!awayAt("a:"+i)).length;
+  const ancAway=(S.ancestors||[]).length-ancHome;
+  if(ancHome>0) s+=`\nふもとでは 先代の ${ancHome}人が 塔を まもっている。`;
+  if(ancAway>0) s+=`\n先代の ${ancAway}人は 遠くの土地へ 出ている。`;
   const nx=homeNext(pages);
   if(nx) s+=`\nあと ${(nx.p-pages).toLocaleString()}ページで 「${nx.n}」が 増えそう。`;
   return s;
@@ -3698,20 +3712,23 @@ function homeTerrace(pages,cx,ty,tw){
     g+=`<g class="homelamp"><circle cx="${bx+33}" cy="${by-13}" r="8" fill="#FFD98A" opacity=".3"/>
       <circle cx="${bx+33}" cy="${by-13}" r="3.4" fill="#FFE9B0" stroke="#3B2A1E" stroke-width="1.1"/></g>`;
   }
-  /* 相棒そのもの。ここに住んでいる */
-  const sp=petSpec();
-  g+=`<g class="homepet" transform="translate(${bx+4},${by-30})">`
-    + creatureSVG(sp,30,"happy").replace(/^<svg[^>]*>|<\/svg>$/g,"") + `</g>`;
+  /* 相棒そのもの。探検に出していないときは、ここで暮らしている */
+  if(!awayAt("me")){
+    const sp=petSpec();
+    g+=`<g class="homepet" transform="translate(${bx+4},${by-30})">`
+      + creatureSVG(sp,30,"happy").replace(/^<svg[^>]*>|<\/svg>$/g,"") + `</g>`;
+  }
   return g+`</g>`;
 }
-/* ふもとで塔を守る先代たち */
+/* ふもとで塔を守る先代たち。探検に出ている子は ここには居ない */
 function homeAncestors(baseY,cx){
-  const anc=(S.ancestors||[]).slice(0,4);
-  if(!anc.length) return "";
-  return anc.map((a,i)=>{
-    const ax=cx-84+i*26, ay=baseY+2;
+  const home=(S.ancestors||[]).map((a,i)=>({a,i}))
+    .filter(x=>!awayAt("a:"+x.i)).slice(0,4);
+  if(!home.length) return "";
+  return home.map((x,n)=>{
+    const a=x.a, ax=cx-84+n*26, ay=baseY+2;
     const spec=a.spec||{stage:5,arch:0,elem:0,epi:0,hue:a.hue,dom:0};
-    return `<g class="homeanc" style="animation-delay:${(i*0.7).toFixed(1)}s"
+    return `<g class="homeanc" style="animation-delay:${(n*0.7).toFixed(1)}s"
       transform="translate(${ax},${ay-22})" opacity=".92">
       ${creatureSVG(spec,22,"ok").replace(/^<svg[^>]*>|<\/svg>$/g,"")}</g>`;
   }).join("");
@@ -3819,9 +3836,10 @@ function renderTower(){
         stroke="#3B2A1E" stroke-width="2.4"/>
         <text x="${cx}" y="${baseY-38}" text-anchor="middle" class="tnote">
         まだ土台だけ。1冊読み終えると 最初の層がのります</text>`;
-    /* 塔がまだ無くても、相棒はもうここに住んでいる */
-    g+=`<g class="homepet" transform="translate(${cx-15},${baseY-46})">`
-      + creatureSVG(petSpec(),30,"happy").replace(/^<svg[^>]*>|<\/svg>$/g,"") + `</g>`;
+    /* 塔がまだ無くても、探検に出ていなければ 相棒はここに居る */
+    if(!awayAt("me"))
+      g+=`<g class="homepet" transform="translate(${cx-15},${baseY-46})">`
+        + creatureSVG(petSpec(),30,"happy").replace(/^<svg[^>]*>|<\/svg>$/g,"") + `</g>`;
   }else{
     /* 塔 */
     let acc=0;
@@ -4507,7 +4525,8 @@ document.getElementById("catSave").onclick=()=>{
 document.getElementById("pickCancel").onclick=()=>document.getElementById("pickDlg").close();
 document.getElementById("pickClear").onclick=()=>{
   if(expPick&&S.exped){ delete S.exped[expPick]; save(); }
-  document.getElementById("pickDlg").close(); renderExped();
+  /* 帰ってきた子は 塔の絵にも もどるので、塔ごと描き直す */
+  document.getElementById("pickDlg").close(); renderExped(); renderTower();
   if(selectedRegion===expPick) renderSpot();
   toast("よびもどしました");
 };
@@ -5529,7 +5548,8 @@ function openPick(rn){
     S.exped=S.exped||{};
     Object.keys(S.exped).forEach(k=>{ if(S.exped[k]&&S.exped[k].uid===b.dataset.u) delete S.exped[k]; });
     S.exped[expPick]={uid:b.dataset.u, since:Date.now(), last:Date.now()};
-    save(); document.getElementById("pickDlg").close(); renderExped();
+    /* 出かけた子は 塔の絵から いなくなるので、塔ごと描き直す */
+    save(); document.getElementById("pickDlg").close(); renderExped(); renderTower();
     if(selectedRegion===expPick) renderSpot();
     toast("探検に出発しました");
   });
