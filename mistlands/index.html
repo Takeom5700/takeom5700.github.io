@@ -397,6 +397,10 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
   padding:5px 14px; font-size:12px; font-weight:700; font-family:var(--f-disp); color:var(--ink-sub)}
 .fbtn:hover{border-color:var(--ink); color:var(--ink)}
 .fbtn[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:var(--paper)}
+/* 読書中は 目立つよう 赤で出す */
+.fbtn-reading{color:#C1181B; border-color:#C1181B}
+.fbtn-reading:hover{color:#C1181B; border-color:#C1181B; filter:brightness(1.15)}
+.fbtn-reading[aria-pressed="true"]{background:#C1181B; border-color:#C1181B; color:#fff}
 .grp{font-family:var(--f-disp); font-weight:800; font-size:15px; margin:22px 0 9px;
   display:flex; align-items:center; gap:9px}
 .grp .dot{width:13px; height:13px; border-radius:50%; border:2.5px solid var(--ink)}
@@ -503,6 +507,12 @@ input[type=number]{font-family:var(--f-num)}
 textarea{font-size:13.5px; resize:vertical; min-height:60px}
 input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 /* 右上の設定アイコン。上部のボタンは ここに まとめた */
+/* 右上の ジェム残高。設定アイコンの すぐ左に 常に出す */
+.hdrgem{display:flex; align-items:center; gap:5px; font-family:var(--f-disp); font-weight:800;
+  font-size:13px; border:2.5px solid var(--ink); border-radius:var(--r-pill); padding:6px 12px;
+  background:var(--card); box-shadow:2px 2px 0 var(--shadow)}
+.hdrgem b{font-family:var(--f-num); color:var(--sun); font-size:14px}
+.hdrgem .gemicon{color:#5AD4FF; font-size:12px; text-shadow:0 0 5px rgba(90,212,255,.7)}
 .gearbtn{width:40px; height:40px; border:2.5px solid var(--ink); border-radius:50%;
   background:var(--card); color:var(--ink); cursor:pointer; display:flex; align-items:center;
   justify-content:center; padding:0; box-shadow:2px 2px 0 var(--shadow); transition:all .15s}
@@ -1129,6 +1139,9 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   <header class="top">
     <div class="logo">Mist<i>lands</i><small>ミストランズ — 読書探検記</small></div>
     <div class="sp">
+      <div class="hdrgem" id="hdrGem" title="ジェム。ガチャを引くのに使います">
+        <span class="gemicon">◆</span><b id="hdrGemCount">0</b>
+      </div>
       <button class="gearbtn" id="settingsBtn" aria-label="設定をひらく" title="設定">
         <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
           <path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none"
@@ -1243,9 +1256,9 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       <div style="font-family:var(--f-disp);font-weight:800;font-size:17px">本だな</div>
       <div class="grow">
         <button class="fbtn" data-f="all" aria-pressed="true">ぜんぶ</button>
+        <button class="fbtn fbtn-reading" data-f="reading" aria-pressed="false">読書中</button>
         <button class="fbtn" data-f="company" aria-pressed="false">会社の本</button>
         <button class="fbtn" data-f="personal" aria-pressed="false">自分の本</button>
-        <button class="fbtn" data-f="reading" aria-pressed="false">読書中</button>
         <button class="fbtn" data-f="todo" aria-pressed="false">まだ</button>
         <button class="fbtn" data-f="done" aria-pressed="false">読了</button>
       </div>
@@ -6610,6 +6623,7 @@ function pullFromGems(n){
 }
 function renderGachaTab(){
   const g=document.getElementById("gemCount"); if(g) g.textContent=(S.gems||0).toLocaleString();
+  const hg=document.getElementById("hdrGemCount"); if(hg) hg.textContent=(S.gems||0).toLocaleString();
   const b1=document.getElementById("gachaPull1"), b10=document.getElementById("gachaPull10");
   if(b1) b1.disabled=(S.gems||0)<GACHA_COST;
   if(b10) b10.disabled=(S.gems||0)<GACHA_COST*10;
