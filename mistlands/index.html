@@ -3295,8 +3295,8 @@ function drawMap(){
       <path d="M0,${(-th*1.7).toFixed(1)} q${(tw*0.5).toFixed(1)},${(-tw*0.08).toFixed(1)} ${(tw*0.5).toFixed(1)},${(tw*0.32).toFixed(1)}
         q${(-tw*0.28).toFixed(1)},${(-tw*0.08).toFixed(1)} ${(-tw*0.5).toFixed(1)},0 z" fill="var(--sun)"/>
       <text x="0" y="${(th*0.34).toFixed(1)}" text-anchor="middle" class="rsub twlabel">知の塔</text>`;
-    g.addEventListener("click",()=>switchTab("buddy"));
-    g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault(); switchTab("buddy");} });
+    g.addEventListener("click",()=>switchTab("buddy","skybox"));
+    g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault(); switchTab("buddy","skybox");} });
     svg.appendChild(g);
   }
   const gLand=E("g",{}), gFog=E("g",{}), gRoad=E("g",{}),
@@ -4148,6 +4148,13 @@ function homeHas(k,pages){
 function homeGot(pages){ return HOME_KIT.filter(x=>pages>=x.p); }
 function homeNext(pages){ return HOME_KIT.find(x=>pages<x.p)||null; }
 /* いまの暮らしぶりを一文で。時間帯・設え・仲間の数で変わる */
+/* 育ち具合に あわない ようすを 書かないよう、段階ごとに 別の言葉を持つ。
+   たまごは まだ うごき出していないし、もやも まだ うまく あるけない */
+const HOME_DOING_EGG=["じっと あたたまっている","コトン、と かすかに うごいた",
+ "たまごの なかで なにかが うごいている きがする","しずかに ねむっている",
+ "たまに ぷるん と ふるえる"];
+const HOME_DOING_MOYA=["ふわふわと ただよっている","まだ うまく あるけない みたいで、そのへんを ゆれている",
+ "きみの こえに じっと きき いっている","ゆっくり かたちを さがしている みたい"];
 const HOME_DOING=[
  "窓辺で ページを めくっている","日なたで ごろりと している","はたけの ようすを 見にいった",
  "階段を のぼったり おりたり している","洗濯ものの においを かいでいる","ぼんやり 空を ながめている",
@@ -4159,7 +4166,9 @@ function homeLine(){
   const when = h<5?"よふけの":h<10?"あさの":h<16?"ひるの":h<19?"夕暮れの":"よるの";
   const floors=books().filter(isDone).length;
   const seed=hash(S.name+"|"+floors+"|"+Math.floor(Date.now()/3600000));
-  const doing=HOME_DOING[seed%HOME_DOING.length];
+  const stage=petSpec().stage;
+  const doingPool = stage<=0? HOME_DOING_EGG : stage===1? HOME_DOING_MOYA : HOME_DOING;
+  const doing=doingPool[seed%doingPool.length];
   const kit=homeGot(pages);
   /* 探検に出しているあいだは 塔に居ない。留守だと ちゃんと伝える */
   const away=awayAt("me");
@@ -6944,12 +6953,23 @@ function renderAll(){ drawMap(); renderKpi(); renderPet(); renderSpot();
 
 /* タブの切りかえ。地図の中の「知の塔」「本だな」など、
    ボタン以外の場所(絵の中)からも 同じやり方で 移動できるようにする */
-function switchTab(name){
+function switchTab(name,focusId){
   document.querySelectorAll(".tabs button").forEach(x=>
     x.setAttribute("aria-selected",String(x.dataset.v===name)));
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
   const el=document.getElementById("v-"+name); if(el) el.classList.add("on");
-  window.scrollTo({top:0,behavior:"smooth"});
+  /* ふつうのタブ切りかえは これまでどおり ページの先頭へ。
+     地図の中の「知の塔」など、絵の中からの近道は focusId を渡して、
+     共通のステータス欄より下にある 目的の場所まで直接 動かす
+     （そうしないと、切りかわった瞬間 いつもの画面に見えてしまう） */
+  if(focusId){
+    requestAnimationFrame(()=>{
+      const target=document.getElementById(focusId);
+      if(target) target.scrollIntoView({behavior:"smooth", block:"start"});
+    });
+  }else{
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.v));
 document.querySelectorAll("#kindNav .cbtn").forEach(b=>b.onclick=()=>{
