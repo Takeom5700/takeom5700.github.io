@@ -272,8 +272,19 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
    1.0 のとき横幅ぴったりに収まるので、スマホでも最初から全体が見える */
 .mapbox svg{display:block; width:calc(100% * var(--mz,1)); height:auto; max-height:none;
   margin:0 auto}   /* 縮めたときは まんなかに置く */
-.mapzoom{position:absolute; right:12px; bottom:12px; display:flex; flex-direction:column;
+.mapzoom{position:absolute; right:12px; top:12px; display:flex; flex-direction:column;
   gap:6px; z-index:3}
+/* 右下に、いま探検中の相棒が てくてく歩く。何人いても縦に並ぶ */
+.mapexp{position:absolute; right:10px; bottom:10px; display:flex; flex-direction:column-reverse;
+  gap:6px; z-index:3; pointer-events:none}
+.expmini{pointer-events:auto; width:44px; height:44px; border-radius:50%;
+  border:2.5px solid var(--ink); background:var(--card); cursor:pointer; padding:2px;
+  box-shadow:2px 2px 0 var(--shadow); display:flex; align-items:center; justify-content:center;
+  overflow:hidden; transition:transform .15s}
+.expmini:hover{transform:scale(1.08)}
+.expmini:focus-visible{outline:3px solid var(--sun); outline-offset:2px}
+.expmini svg{width:100%; height:100%}
+.expmini .leg{animation:none}   /* 小さいので 歩き足アニメは止めて 軽くする */
 .mapzoom button{width:38px; height:38px; font-size:17px; line-height:1; font-family:var(--f-disp);
   border:2.5px solid var(--ink); border-radius:10px; background:var(--card); color:var(--ink);
   box-shadow:2px 2px 0 var(--shadow); cursor:pointer; display:flex; align-items:center;
@@ -281,11 +292,13 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
 .mapzoom button:hover{background:var(--sun); color:#fff}
 .mapzoom button:active{transform:translate(2px,2px); box-shadow:none}
 .mapzoom button:focus-visible{outline:3px solid var(--sun); outline-offset:2px}
-.filterbar{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px;
+.filterbar{display:flex; flex-direction:column; gap:7px;
   background:color-mix(in srgb,var(--ink) 6%,transparent); border-radius:var(--r);
   padding:8px 12px; margin-bottom:11px}
+/* エリア・分類・表示を それぞれ 独立した行にする */
+.frow{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px}
 .filterbar .flabel{font-size:11px; letter-spacing:.14em; color:var(--ink-sub);
-  font-family:var(--f-disp); font-weight:700; flex:none}
+  font-family:var(--f-disp); font-weight:700; flex:none; width:34px}
 .contnav{display:flex; flex-wrap:wrap; gap:5px}
 .cbtn{background:transparent; border:1.5px solid var(--line); border-radius:var(--r-pill);
   padding:3px 13px; font-size:12px; font-weight:600; color:var(--ink-sub);
@@ -489,6 +502,19 @@ input:focus,textarea:focus{outline:none; border-color:var(--sun)}
 .gearbtn:hover{background:var(--sun); color:#fff; transform:rotate(35deg)}
 .gearbtn:active{transform:translate(2px,2px) rotate(35deg); box-shadow:none}
 .gearbtn:focus-visible{outline:3px solid var(--sun); outline-offset:3px}
+/* ---------- ガチャ タブ（ジェムを ためて 引く） ---------- */
+.gemrow{display:flex; align-items:center; gap:8px; font-family:var(--f-disp); font-weight:800;
+  font-size:16px; margin:6px 0 4px}
+.gemrow b{font-family:var(--f-num); color:var(--sun); font-size:19px}
+.gemicon{color:#5AD4FF; font-size:15px; text-shadow:0 0 6px rgba(90,212,255,.7)}
+.gmach{border:3px solid var(--ink); border-radius:var(--r-lg); background:var(--card);
+  box-shadow:5px 5px 0 var(--shadow); padding:16px 18px; margin-top:14px}
+.gmach-name{font-family:var(--f-disp); font-weight:800; font-size:16px}
+.gmach-desc{font-size:12px; color:var(--ink-sub); margin-top:3px; line-height:1.7}
+.gact-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap}
+.gact-row .btn em{font-style:normal; font-family:var(--f-num); font-size:11px;
+  margin-left:7px; opacity:.85; border-left:1.5px solid rgba(255,255,255,.5); padding-left:7px}
+.gact-row .btn:disabled{opacity:.4; cursor:not-allowed; box-shadow:none; transform:none}
 .clslist{display:flex; flex-direction:column; gap:7px; max-height:44vh; overflow-y:auto}
 .clsrow{display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:center;
   border:2px solid var(--line); border-radius:var(--r); padding:7px 9px; background:var(--paper)}
@@ -1138,29 +1164,31 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
 
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-v="map">地図</button>
-    <button role="tab" aria-selected="false" data-v="shelf">本だな</button>
     <button role="tab" aria-selected="false" data-v="buddy">知の塔</button>
+    <button role="tab" aria-selected="false" data-v="shelf">本だな</button>
     <button role="tab" aria-selected="false" data-v="items">もちもの</button>
+    <button role="tab" aria-selected="false" data-v="gacha">ガチャ</button>
   </nav>
 
   <section class="view on" id="v-map">
     <div class="filterbar">
-      <span class="flabel">エリア</span>
-      <div class="contnav" id="contNav"></div>
-      <span class="flabel" style="margin-left:6px">分類</span>
-      <div class="contnav" id="mapClsNav"></div>
-      <span class="flabel" style="margin-left:6px">表示</span>
-      <div class="contnav" id="kindNav">
-        <button class="cbtn" data-k="all" aria-pressed="true">すべて</button>
-        <button class="cbtn" data-k="company" aria-pressed="false">会社の本</button>
-        <button class="cbtn" data-k="personal" aria-pressed="false">自分の本</button>
-        <button class="cbtn" data-k="star" aria-pressed="false">最重要</button>
-      </div>
+      <div class="frow"><span class="flabel">エリア</span>
+        <div class="contnav" id="contNav"></div></div>
+      <div class="frow"><span class="flabel">分類</span>
+        <div class="contnav" id="mapClsNav"></div></div>
+      <div class="frow"><span class="flabel">表示</span>
+        <div class="contnav" id="kindNav">
+          <button class="cbtn" data-k="all" aria-pressed="true">すべて</button>
+          <button class="cbtn" data-k="company" aria-pressed="false">会社の本</button>
+          <button class="cbtn" data-k="personal" aria-pressed="false">自分の本</button>
+          <button class="cbtn" data-k="star" aria-pressed="false">最重要</button>
+        </div></div>
     </div>
     <div class="mapwrap">
       <div class="mapbox" id="mapbox">
         <svg id="map" role="img" aria-label="霧のエリア地図。読み進めるほど霧が減り、地面の色が戻る"></svg>
         <div class="flashwrap"></div>
+        <div class="mapexp" id="mapExp"></div>
       </div>
       <div class="mapzoom">
         <button type="button" id="mzIn" aria-label="地図を大きくする">＋</button>
@@ -1315,6 +1343,25 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <div class="itemgrid" id="bagTitleBot"></div>
       </div>
     </div>
+  </section>
+
+  <section class="view" id="v-gacha">
+    <div class="panel">
+      <h3>ガチャ</h3>
+      <div class="gemrow"><span class="gemicon">◆</span>ジェム <b id="gemCount">0</b></div>
+      <p>本を読むと、読んだページの分だけ ジェムが たまります。100ジェムで 1回 引けます。</p>
+    </div>
+    <div class="gmach">
+      <div class="gmach-hd">
+        <div><div class="gmach-name">みならいの本棚</div>
+          <div class="gmach-desc">たべものと 二つ名が 出ます。低位80%・中位10%・高位8%・激レア2%。</div></div>
+      </div>
+      <div class="gact-row">
+        <button type="button" class="btn primary" id="gachaPull1">1回 引く<em>100</em></button>
+        <button type="button" class="btn primary" id="gachaPull10">10回 引く<em>1000</em></button>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:10px">これから ほかのガチャも 増える予定です。</p>
   </section>
 
   <div class="foot">
@@ -1612,6 +1659,19 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
   </div>
 </form></dialog>
 
+<dialog id="expManageDlg"><form method="dialog" class="din">
+  <h2>探検の ようす</h2>
+  <div class="sub" id="emWho">—</div>
+  <div id="emScene"></div>
+  <div class="foodslotbar" id="emFood"></div>
+  <label style="margin-top:14px">ほかの土地へ 行かせる</label>
+  <div class="clslist" id="emMoveList" style="max-height:32vh"></div>
+  <div class="dact">
+    <button type="button" class="btn quiet" id="emRecall">よびもどす</button>
+    <button type="button" class="btn primary" id="emClose">とじる</button>
+  </div>
+</form></dialog>
+
 <dialog id="clsDlg"><form method="dialog" class="din">
   <h2>分類を 編集する</h2>
   <div class="sub">本だなの棚の分け方です。地図の「エリア」は本の内容から自動で決まるので、こちらとは別ものです。</div>
@@ -1868,7 +1928,7 @@ function load(){
       r.notes=r.notes||{};
       r.settings=Object.assign({publicProfile:false, notify:true, plainMode:false, consent:false}, r.settings||{});
       r.food=r.food||{}; r.foodSlot=r.foodSlot||{}; r.foodAuto=r.foodAuto||{}; r.foodNoAuto=r.foodNoAuto||{};
-      r.cls=r.cls||{}; r.clsList=r.clsList||[];
+      r.cls=r.cls||{}; r.clsList=r.clsList||[]; r.gems=r.gems||0;
       r.sound=Object.assign({bgm:0,sfx:r.mute?0:100,voice:0}, r.sound||{});
       r.titleTop=r.titleTop&&r.titleTop.length?r.titleTop:[0];
       r.titleBottom=r.titleBottom&&r.titleBottom.length?r.titleBottom:[0];
@@ -1879,7 +1939,7 @@ function load(){
           lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[],
           important:{}, fav:{}, notes:{},
           settings:{publicProfile:false, notify:true, plainMode:false, consent:false},
-          food:{}, foodSlot:{}, foodAuto:{}, foodNoAuto:{}, cls:{}, clsList:[],
+          food:{}, foodSlot:{}, foodAuto:{}, foodNoAuto:{}, cls:{}, clsList:[], gems:0,
           sound:{bgm:0,sfx:100,voice:0}, titleTop:[0], titleBottom:[0], titleSel:{top:0,bottom:0},
           gachaCount:0, gachaPending:0};
 }
@@ -3060,11 +3120,12 @@ function visibleConts(W){
 function drawContNav(W){
   const nav=document.getElementById("contNav");
   const opts=W.conts.filter(C=>contOpen(C)||C.i===0);
-  nav.innerHTML=opts.map(C=>
+  /* 「すべて」は いちばん前に置く */
+  nav.innerHTML=(opts.length>1? `<button class="cbtn" data-c="all"
+      aria-pressed="${mapFocus==="all"}">すべて</button>`:"")
+    + opts.map(C=>
     `<button class="cbtn" data-c="${esc(C.name)}" aria-pressed="${mapFocus===C.name}">
-      ${esc(C.name)}</button>`).join("")
-    + (opts.length>1? `<button class="cbtn" data-c="all"
-      aria-pressed="${mapFocus==="all"}">ぜんぶ</button>`:"");
+      ${esc(C.name)}</button>`).join("");
   nav.querySelectorAll(".cbtn").forEach(b=>b.onclick=()=>{
     /* エリアを選び直したら、そのエリアの全体が見える倍率に合わせ直す */
     mapFocus=b.dataset.c; drawMap(); fitMapZoom(); });
@@ -3987,7 +4048,8 @@ function homeLine(){
   if(ancHome>0) s+=`\nふもとでは 先代の ${ancHome}人が 塔を まもっている。`;
   if(ancAway>0) s+=`\n先代の ${ancAway}人は 遠くの土地へ 出ている。`;
   const nx=homeNext(pages);
-  if(nx) s+=`\nあと ${(nx.p-pages).toLocaleString()}ページで 「${nx.n}」が 増えそう。`;
+  /* つぎの設えの名前は 出さない。ネタバレになってしまうため */
+  if(nx) s+=`\nあと ${(nx.p-pages).toLocaleString()}ページで、なにかが 増えそう。`;
   return s;
 }
 function renderHomeKit(){
@@ -4335,11 +4397,12 @@ document.getElementById("dSave").onclick=()=>{
     S.streak=S.lastDate===y?(S.streak||0)+1:1; S.lastDate=today;
   }
   S.lastRead={id:curId, at:Date.now()};
-  /* 10ページ読み進めるごとに ガチャが1回。端数は自然に次回へ持ち越される */
-  const pulls=Math.floor(pagesRead()/10)-Math.floor(pagesBefore/10);
+  /* 読んだページの分だけ ジェムが たまる。ガチャを引くかどうかは 自分で決める */
+  const gained=Math.max(0,pagesRead()-pagesBefore);
+  S.gems=(S.gems||0)+gained;
   save(); dlg.close(); eat(); SFX.save(); selected=curId; renderAll();
-  toast(fin? `「${b.t}」よみおわった！ ${S.name}が よろこんでいる` : `${v}ページまで きろくした`);
-  if(pulls>0) setTimeout(()=>queueGacha(pulls),700);
+  toast(fin? `「${b.t}」よみおわった！ ${S.name}が よろこんでいる`
+            : `${v}ページまで きろくした（＋${gained}ジェム）`);
 };
 /* 記録した瞬間、地図が明るくなり相棒が食べる */
 function eat(){
@@ -5025,7 +5088,7 @@ function applyImport(next,msg){
   S=Object.assign({rec:{}, extra:[], synth:[], dayXp:{}, pat:0, name:"モヤ",
     lastDate:null, streak:0, ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[],
     notes:{}, settings:{publicProfile:false, notify:true, plainMode:false, consent:false},
-    food:{}, foodSlot:{}, foodAuto:{}, foodNoAuto:{}, cls:{}, clsList:[],
+    food:{}, foodSlot:{}, foodAuto:{}, foodNoAuto:{}, cls:{}, clsList:[], gems:0,
           sound:{bgm:0,sfx:100,voice:0}, titleTop:[0], titleBottom:[0], titleSel:{top:0,bottom:0},
     gachaCount:0, gachaPending:0}, next);
   save(); selected=null; mapFocus=null; xferDlg.close(); renderAll(); toast(msg);
@@ -5549,8 +5612,15 @@ function cheapestOwnedFood(){
 function consumeFood(uid,seed){
   S.foodSlot=S.foodSlot||{};
   const fs=foodSlotsOf(uid).slice();
-  S.foodSlot[uid]=fs;
   const fa=foodAutoOf(uid);
+  /* すでに尽きている枠は、この回の抽選を待たず すぐ手当てする。
+     （2つの枠に 同じ品を入れていたときなど、片方が尽きても もう片方の
+       枠が同じ品を指したままだと、消費の判定に一度も引っかからず
+       自動補充が いつまでも 発動しない ことがあった） */
+  for(let si=0;si<2;si++){
+    if(fs[si] && !((S.food||{})[fs[si]]>0)) fs[si] = fa[si] ? cheapestOwnedFood() : null;
+  }
+  S.foodSlot[uid]=fs;
   const bonus={find:0,rare:0,twin:0,guard:false};
   for(let si=0;si<2;si++){
     const fid=fs[si];
@@ -5880,8 +5950,62 @@ function expedLine(R,u,e){
 }
 /* ---------- 遠征タブの描画 ---------- */
 let expPick=null;
+/* 右下の「いま探検中」一覧。地図のどこを見ていても すぐ分かるように */
+function renderMapExp(){
+  const el=document.getElementById("mapExp"); if(!el) return;
+  const rows=Object.keys(S.exped||{}).map(rn=>{
+    const e=S.exped[rn], u=e&&unitById(e.uid);
+    return u? {rn,u} : null;
+  }).filter(Boolean);
+  el.innerHTML=rows.map(({rn,u})=>
+    `<button type="button" class="expmini" data-rn="${esc(rn)}" data-u="${esc(u.uid)}"
+      title="${esc(u.name)}（探検中） ／ 押すと 管理できます">
+      ${creatureSVG(u.spec,40,"happy")}</button>`).join("");
+  el.querySelectorAll(".expmini").forEach(b=>b.onclick=()=>openExpManage(b.dataset.u));
+}
+/* 探検の管理ポップアップ。呼び戻す・ほかの土地へ行かせる、をここで完結させる */
+const expManageDlg=document.getElementById("expManageDlg");
+let expManageUid=null, expManageRn=null;
+function openExpManage(uid){
+  const rn=awayAt(uid); if(!rn){ return; }
+  const R=regionByName(rn), e=(S.exped||{})[rn], u=unitById(uid);
+  if(!R||!e||!u){ return; }
+  expManageUid=uid; expManageRn=rn;
+  document.getElementById("emWho").textContent=`${u.name} ／ いま ${R.place||R.name} に います`;
+  document.getElementById("emScene").innerHTML=walkScene(u.spec,"happy");
+  document.getElementById("emScene").insertAdjacentHTML("beforeend",
+    `<p class="hint" style="margin-top:6px">${esc(expedLine(R,u,e))}</p>`);
+  renderFoodBarInto("emFood",uid);
+  /* 移動先の候補。いま行ける土地から、いま居るところを のぞいて出す */
+  const dest=[];
+  (WORLD?WORLD.conts:[]).forEach(C=>{ if(!contOpen(C)) return;
+    C.regions.forEach(r=>{ if(r.name!==rn && rgnOpen(r)) dest.push(r); }); });
+  document.getElementById("emMoveList").innerHTML=dest.length
+    ? dest.map(r=>`<div class="clsrow"><b>${esc(r.place||r.name)}</b><em>${esc(r.name)}</em>
+        <button type="button" data-go="${esc(r.name)}">ここへ 行かせる</button></div>`).join("")
+    : `<div class="empty-box" style="padding:14px">ほかに 行ける土地が ありません。</div>`;
+  document.querySelectorAll("#emMoveList [data-go]").forEach(b=>b.onclick=()=>{
+    const to=b.dataset.go;
+    S.exped=S.exped||{};
+    delete S.exped[rn];
+    Object.keys(S.exped).forEach(k=>{ if(S.exped[k]&&S.exped[k].uid===uid) delete S.exped[k]; });
+    S.exped[to]={uid, since:Date.now(), last:Date.now()};
+    save(); expManageDlg.close(); renderAll(); renderTower();
+    toast(`${u.name}を ${to}へ 送った`);
+  });
+  expManageDlg.showModal();
+}
+document.getElementById("emRecall").onclick=()=>{
+  if(expManageRn && S.exped){ delete S.exped[expManageRn]; save(); }
+  expManageDlg.close(); renderAll(); renderTower();
+  toast("よびもどしました");
+};
+document.getElementById("emClose").onclick=()=>expManageDlg.close();
+expManageDlg.querySelector("form").addEventListener("submit",e=>e.preventDefault());
+
 function renderExped(){
   processExped();
+  renderMapExp();
   /* 探検の状況(誰がどこにいるか)は地図の上に直接描かれるので、
      ここでは別リストを作らない（地図と機能が重複していたため統合した） */
   /* 便り */
@@ -6328,6 +6452,23 @@ function queueGacha(n){
   S.gachaPending=(S.gachaPending||0)+n; save();
   startGachaFlow();
 }
+/* ジェムを 払って 引く。将来 複数のガチャを えらべるよう 費用は ここに集約 */
+const GACHA_COST=100;
+function pullFromGems(n){
+  const cost=GACHA_COST*n;
+  if((S.gems||0)<cost){ toast("ジェムが たりません"); SFX.no(); return; }
+  S.gems-=cost; save();
+  queueGacha(n);
+  renderGachaTab();
+}
+function renderGachaTab(){
+  const g=document.getElementById("gemCount"); if(g) g.textContent=(S.gems||0).toLocaleString();
+  const b1=document.getElementById("gachaPull1"), b10=document.getElementById("gachaPull10");
+  if(b1) b1.disabled=(S.gems||0)<GACHA_COST;
+  if(b10) b10.disabled=(S.gems||0)<GACHA_COST*10;
+}
+document.getElementById("gachaPull1").onclick=()=>pullFromGems(1);
+document.getElementById("gachaPull10").onclick=()=>pullFromGems(10);
 /* 10回ぶん たまっていたら まとめて10回。1画面で 10個ならべて見せる。
    端数は 1回ずつ。あおりは その回の いちばん良い結果に合わせる */
 function startGachaFlow(){
@@ -6371,7 +6512,8 @@ function applyPreTell(pre,show){
   /* 説明の文は出さない。あおりは 画面の演出だけで 伝える */
 }
 function showGachaCard(){
-  gachaOpened=false; gachaBusy=false;
+  gachaOpened=false; gachaBusy=false; gachaFast=false;
+  if(gachaTimer){ clearTimeout(gachaTimer); gachaTimer=null; } gachaNextFn=null;
   buildOrbit();
   document.getElementById("gachaProgress").textContent=`${gachaIdx+1} / ${gachaTotal}`;
   document.getElementById("gachaStage").className="gachastage";
@@ -6411,8 +6553,14 @@ function spawnBurst(tier){
 }
 /* 押すと ページが ぺらぺら めくれ、綴じ目から 光の玉が 出て、はじけて 中身に なる。
    途中で「昇格」が起きることがあり、そこが いちばんの 見せ場 */
+/* 演出の途中でも押せば ぽんぽん先に進める（時短）。
+   直前に予約した「次の一手」を覚えておき、押されたら 待ち時間ぬきで すぐ実行する。
+   その一手の中でも 次を予約するときは gwait を使うので、以後の待ちも 0 になり
+   最後まで 一気に すすむ */
+let gachaTimer=null, gachaNextFn=null, gachaFast=false;
+function gwait(fn,ms){ gachaNextFn=fn; gachaTimer=setTimeout(fn, gachaFast? 0 : ms); }
 function pullGacha(){
-  if(gachaOpened) return; gachaOpened=true; gachaBusy=true;
+  if(gachaOpened) return; gachaOpened=true; gachaBusy=true; gachaFast=false;
   const sc=gachaScreens[gachaIdx], r={tier:sc.tier}, plan=sc._plan;
   const stage=document.getElementById("gachaStage"), card=document.getElementById("gachaCard");
   const flash=document.getElementById("gFlash");
@@ -6425,10 +6573,10 @@ function pullGacha(){
     card.classList.remove("charging");
     card.classList.add("riffle");
     document.getElementById("gbFlip").querySelectorAll("i").forEach((el,i)=>{
-      el.style.animationDelay=(i*0.085).toFixed(3)+"s";
+      el.style.animationDelay=(gachaFast?0:i*0.085).toFixed(3)+"s";
     });
     SFX.riffle();
-    setTimeout(orbOut, 9*85+260);
+    gwait(orbOut, 9*85+260);
   };
   /* 綴じ目から 光の玉 */
   const orbOut=()=>{
@@ -6436,7 +6584,7 @@ function pullGacha(){
     stage.classList.add("tier-"+r.tier);
     flash.className="g-flash go";
     SFX.gachaOpen();
-    setTimeout(burst, 1150);
+    gwait(burst, 1150);
   };
   /* はじけて 中身に なる */
   const burst=()=>{
@@ -6471,13 +6619,13 @@ function pullGacha(){
       document.getElementById("gachaHint").textContent=gachaResultName(sc.rs[0]);
     }
     SFX.find(); if(r.tier>=2) SFX.grow(); if(r.tier>=3) SFX.gachaBig();
-    gachaBusy=false;
+    gachaBusy=false; gachaTimer=null; gachaNextFn=null;
     renderAll();
   };
 
   if(plan.promote){
     /* めくっている最中に 一段 上がる。ここで いちばん 気持ちよくする */
-    setTimeout(()=>{
+    gwait(()=>{
       card.classList.remove("charging");
       stage.classList.remove("tell-"+plan.show, "tell-float");
       stage.classList.add("tell-"+r.tier, "promoted");
@@ -6486,16 +6634,22 @@ function pullGacha(){
       flash.className="g-flash go";
       SFX.promote();
       card.classList.add("charging");
-      setTimeout(riffle, 900);
+      gwait(riffle, 900);
     }, buildMs);
   }else{
-    setTimeout(riffle, buildMs);
+    gwait(riffle, buildMs);
   }
 }
-/* 画面のどこを押しても すすむ。演出の途中で押されたら 早送りにする */
+/* 画面のどこを押しても すすむ。演出の途中で押されたら
+   いま待っている一手を すぐ実行して、以後の待ちも 0 にする（時短） */
 function gachaAdvance(){
   if(!gachaOpened){ pullGacha(); return; }
-  if(gachaBusy) return;
+  if(gachaBusy){
+    gachaFast=true;
+    if(gachaTimer){ clearTimeout(gachaTimer); gachaTimer=null; }
+    if(gachaNextFn){ const f=gachaNextFn; gachaNextFn=null; f(); }
+    return;
+  }
   gachaIdx++;
   if(gachaIdx>=gachaTotal){ gachaDlg.close(); return; }
   showGachaCard();
@@ -6625,7 +6779,7 @@ function renderKpi(){
 function renderAll(){ drawMap(); renderKpi(); renderPet(); renderSpot();
   renderShelf(); renderBuddyTab(); renderTower(); renderExped();
   renderWearBar(); renderEquipTab(); renderFoodBar();
-  renderFoodTab(); renderBagTitle(); }
+  renderFoodTab(); renderBagTitle(); renderGachaTab(); }
 
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tabs button").forEach(x=>
@@ -6788,7 +6942,7 @@ document.getElementById("resetBtn").onclick=()=>{
      ord:{}, gen:1, genBase:0, ancestors:[], exped:{}, items:{}, expLog:[],
      star:{}, equip:{}, worn:{}, important:{}, fav:{}, notes:{},
      settings:{publicProfile:false, notify:true, plainMode:false, consent:false},
-     food:{}, foodSlot:{}, foodAuto:{}, foodNoAuto:{}, cls:{}, clsList:[],
+     food:{}, foodSlot:{}, foodAuto:{}, foodNoAuto:{}, cls:{}, clsList:[], gems:0,
           sound:{bgm:0,sfx:100,voice:0}, titleTop:[0], titleBottom:[0], titleSel:{top:0,bottom:0},
      gachaCount:0, gachaPending:0}; mapFocus=null;
   save(); selected=null; document.getElementById("newsSlot").innerHTML="";
