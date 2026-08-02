@@ -156,7 +156,9 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
 .pet-name h2{font-size:clamp(21px,3.6vw,27px); letter-spacing:.02em}
 .pet-stage-tag{font-family:var(--f-disp); font-weight:800; font-size:11.5px; letter-spacing:.1em;
   background:var(--sun); color:#fff; padding:3px 11px; border-radius:var(--r-pill);
-  border:2px solid var(--ink); box-shadow:2px 2px 0 var(--shadow)}
+  border:2px solid var(--ink); box-shadow:2px 2px 0 var(--shadow); cursor:pointer; transition:all .15s}
+.pet-stage-tag:hover{filter:brightness(1.1)}
+.pet-stage-tag:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 .pet-title{font-family:var(--f-disp); font-weight:800; font-size:11.5px; letter-spacing:.06em;
   border:2px solid var(--ink); border-radius:var(--r-pill); padding:3px 11px; background:var(--paper);
   color:inherit; cursor:pointer; transition:all .15s}
@@ -337,6 +339,11 @@ h1,h2,h3{font-family:var(--f-disp); font-weight:800; text-wrap:balance; margin:0
   paint-order:stroke; stroke:var(--card); stroke-width:4px}
 .clabel{font-family:var(--f-disp); font-weight:800; font-size:19px; fill:var(--ink);
   opacity:.34; letter-spacing:.3em; pointer-events:none}
+/* 地図に立つ 知の塔。押すと 知の塔の画面へ */
+.towerlandmark{cursor:pointer; transition:transform .15s}
+.towerlandmark:hover{transform-box:fill-box; filter:brightness(1.08)}
+.towerlandmark:focus-visible{outline:3px solid var(--sun); outline-offset:3px}
+.twlabel{font-weight:800; fill:var(--ink)}
 .pal{cursor:default}
 
 /* 記録した瞬間、地図全体が明るくなる */
@@ -652,6 +659,23 @@ label.chk input[type=checkbox]{width:auto; flex:none; margin-top:3px; accent-col
 .g-flash.big{animation:gflashBig .9s ease-out}
 @keyframes gflash{0%{opacity:.92} 100%{opacity:0}}
 @keyframes gflashBig{0%{opacity:1} 30%{opacity:.6} 45%{opacity:.95} 100%{opacity:0}}
+/* アニメ演出ふうの きらめき。表紙を すべる光の帯と、当たりの瞬間の スピード線 */
+.gb-shine{position:absolute; inset:0; z-index:3; pointer-events:none; overflow:hidden; border-radius:2px}
+.gb-shine::before{content:""; position:absolute; top:-50%; left:-70%; width:34%; height:200%;
+  background:linear-gradient(100deg, transparent 0%, rgba(255,255,255,.85) 48%, transparent 92%);
+  transform:rotate(16deg) translateX(-60%); opacity:0}
+.gachabook.charging .gb-shine::before{animation:shineSweep 1s ease-in-out infinite}
+@keyframes shineSweep{0%{transform:rotate(16deg) translateX(-80%); opacity:0}
+  18%{opacity:.95} 55%{opacity:.95} 100%{transform:rotate(16deg) translateX(260%); opacity:0}}
+.g-speed{position:absolute; inset:0; z-index:6; pointer-events:none; opacity:0;
+  background:repeating-conic-gradient(from 0deg, rgba(255,255,255,.55) 0deg 1.1deg, transparent 1.1deg 8deg);
+  -webkit-mask-image:radial-gradient(circle,transparent 16%,#000 32%,transparent 60%);
+  mask-image:radial-gradient(circle,transparent 16%,#000 32%,transparent 60%)}
+.gachastage.tier-2 .g-speed,.gachastage.tier-3 .g-speed{animation:speedFlash .55s ease-out}
+@keyframes speedFlash{0%{opacity:0} 25%{opacity:1} 100%{opacity:0}}
+/* 当たりの瞬間だけ すこし彩度を上げて、アニメの発色に近づける */
+.gachabook.burst{filter:saturate(1.18)}
+.gachastage.tier-3 .gachabook.burst{filter:saturate(1.4) brightness(1.07)}
 .gachastage.tier-3{animation:stageQuake .6s ease-out}
 @keyframes stageQuake{0%,100%{transform:translate(0,0)} 20%{transform:translate(-6px,3px)}
   40%{transform:translate(5px,-4px)} 60%{transform:translate(-4px,-2px)} 80%{transform:translate(3px,3px)}}
@@ -786,6 +810,7 @@ label.chk input[type=checkbox]{width:auto; flex:none; margin-top:3px; accent-col
   .gachabook.charging,.gachabook.riffle .gb-flip i,.gachabook.orb .gb-orb,
   .gachabook.burst .gb-orb,.gachabook.burst .gb-content,
   .spark,.gachastage.tier-3,.gachastage.promoted,.gcell,
+  .gachabook.charging .gb-shine::before,.g-speed,
   .gachastage.tell-float .gachabook{ animation:none !important }
   .gcell{ opacity:1 !important }
   .gachabook.riffle .gb-flip i{ opacity:0 !important }
@@ -1129,7 +1154,7 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
       <button type="button" class="titleplate" id="titlePlateBtn">【みならいの読書家】</button>
       <div class="pet-name">
         <h2 id="petName">モヤ</h2>
-        <span class="pet-stage-tag" id="petStage">たまご</span>
+        <button type="button" class="pet-stage-tag" id="petStage" title="姿のことを見る">たまご</button>
         <button type="button" class="pet-title" id="petTitle" title="称号のことを見る">読みはじめ</button>
       </div>
       <p class="pet-say" id="petSay">…</p>
@@ -1483,11 +1508,13 @@ input[type=file]{font-family:var(--f-body); font-size:12.5px; padding:8px 10px;
         <div class="gb-leaf right"></div>
         <div class="gb-flip" id="gbFlip"></div>
         <div class="gb-gutter"></div>
+        <div class="gb-shine"></div>
       </div>
       <div class="gb-orb" id="gbOrb"></div>
       <div class="gb-content" id="gcFront"></div>
     </div>
     <div class="g-many" id="gMany"></div>
+    <div class="g-speed"></div>
     <div class="g-flash" id="gFlash"></div>
     <div class="g-vig"></div>
     <div class="g-hud">
@@ -1807,6 +1834,48 @@ function placeOf(cat){
   return [cat+t[0], t[1]];
 }
 /* 地形の書き込み。地名の種類に応じて山・木・水・建物などを撒く */
+/* 地面そのものの 質感。地形にあわせて 草・岩・砂・水の色を まだらに散らし、
+   ただの単色ぬりに 見えないようにする（terrainArt の大きな地物とは別の、下地の層） */
+function groundTexture(R){
+  const base=R.hue;
+  const KIND={
+    forest:{c1:tint(base,-0.12), c2:tint(base,0.2), shape:"tuft"},
+    hill:{c1:tint(base,-0.24), c2:tint(base,0.1), shape:"rock"},
+    pass:{c1:tint(base,-0.24), c2:tint(base,0.1), shape:"rock"},
+    valley:{c1:tint(base,-0.1), c2:tint(base,0.2), shape:"tuft"},
+    volcano:{c1:tint(base,-0.4), c2:tint(base,-0.05), shape:"rock"},
+    mine:{c1:tint(base,-0.34), c2:tint(base,-0.05), shape:"rock"},
+    fort:{c1:tint(base,-0.3), c2:tint(base,0.02), shape:"rock"},
+    ruin:{c1:tint(base,-0.3), c2:tint(base,0.02), shape:"rock"},
+    lake:{c1:"#6FC3E8", c2:"#CFEFFC", shape:"wave"},
+    spring:{c1:"#6FC3E8", c2:"#CFEFFC", shape:"wave"},
+    cape:{c1:"#E9D8A6", c2:tint(base,0.14), shape:"sand"},
+    port:{c1:"#E9D8A6", c2:tint(base,0.14), shape:"sand"},
+    town:{c1:tint(base,-0.16), c2:tint(base,0.16), shape:"paved"},
+    forge:{c1:tint(base,-0.16), c2:tint(base,0.16), shape:"paved"}
+  }[R.terrain] || {c1:tint(base,-0.14), c2:tint(base,0.18), shape:"tuft"};
+  const n=24; let g="";
+  for(let i=0;i<n;i++){
+    const a=i*GOLD+(R.seed%37)/6, rr=R.rad*0.88*Math.sqrt((i+0.4)/n);
+    const x=R.cx+Math.cos(a)*rr, y=R.cy+Math.sin(a)*rr*0.86;
+    const j=(hash(R.name+"g"+i)%100)/100, c=j<0.5?KIND.c1:KIND.c2, op=(0.16+j*0.22).toFixed(2);
+    if(KIND.shape==="tuft") g+=`<path d="M${x.toFixed(1)},${y.toFixed(1)}
+        q${(1.6+j*1.6).toFixed(1)},${(-4-j*3).toFixed(1)} ${(3.2+j*2).toFixed(1)},0"
+        fill="none" stroke="${c}" stroke-width="${(1.1+j).toFixed(1)}" stroke-linecap="round" opacity="${op}"/>`;
+    else if(KIND.shape==="rock") g+=`<path d="M${(x-2-j*2).toFixed(1)},${(y+2).toFixed(1)}
+        l${(2+j*2).toFixed(1)},${(-4-j*3).toFixed(1)} l${(2+j*2).toFixed(1)},${(4+j*3).toFixed(1)} z"
+        fill="${c}" opacity="${op}"/>`;
+    else if(KIND.shape==="wave") g+=`<path d="M${(x-4-j*3).toFixed(1)},${y.toFixed(1)}
+        q${(2+j*1.5).toFixed(1)},${(-1.6-j).toFixed(1)} ${(4+j*3).toFixed(1)},0"
+        fill="none" stroke="${c}" stroke-width="1.1" opacity="${op}"/>`;
+    else if(KIND.shape==="sand") g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}"
+        r="${(1.4+j*1.8).toFixed(1)}" fill="${c}" opacity="${op}"/>`;
+    else g+=`<rect x="${(x-2.4-j*1.4).toFixed(1)}" y="${(y-1.6).toFixed(1)}"
+        width="${(4.8+j*2.6).toFixed(1)}" height="${(3.2+j*1.4).toFixed(1)}" rx="0.8"
+        fill="${c}" opacity="${op}"/>`;
+  }
+  return g;
+}
 function terrainArt(R){
   const t=R.terrain;
   const n={forest:13,hill:5,pass:5,valley:4,lake:2,spring:2,volcano:1,
@@ -3188,6 +3257,35 @@ function drawMap(){
     });
     gA.innerHTML=ax; svg.appendChild(gA);
   }
+  /* 地図のどこかに、知の塔が そびえている。押すと 知の塔の画面へ */
+  {
+    const cand=[[vx+vw*0.07,vy+vh*0.13],[vx+vw*0.93,vy+vh*0.13],
+                [vx+vw*0.07,vy+vh*0.87],[vx+vw*0.93,vy+vh*0.87]];
+    let tx=cand[0][0], ty=cand[0][1];
+    for(const [cx,cy] of cand){
+      if(!VC.some(C=>C.regions.some(R=>Math.hypot(R.cx-cx,R.cy-cy)<R.rad+40))){ tx=cx; ty=cy; break; }
+    }
+    const th=Math.min(60, vh*0.16), tw=th*0.36;
+    const g=E("g",{class:"towerlandmark", tabindex:"0", role:"button",
+      "aria-label":"知の塔へ すすむ", transform:`translate(${tx.toFixed(1)},${ty.toFixed(1)})`});
+    g.innerHTML=`<ellipse cx="0" cy="${(th*0.06).toFixed(1)}" rx="${(tw*1.5).toFixed(1)}" ry="${(tw*0.4).toFixed(1)}"
+        fill="var(--ink)" opacity=".18"/>
+      <path d="M${(-tw*0.7).toFixed(1)},0 L${(-tw*0.5).toFixed(1)},${(-th).toFixed(1)}
+        L${(tw*0.5).toFixed(1)},${(-th).toFixed(1)} L${(tw*0.7).toFixed(1)},0 Z"
+        fill="#D9C79A" stroke="var(--ink)" stroke-width="2"/>
+      <path d="M${(-tw*0.5).toFixed(1)},${(-th).toFixed(1)} L0,${(-th*1.42).toFixed(1)}
+        L${(tw*0.5).toFixed(1)},${(-th).toFixed(1)} Z" fill="#C1181B" stroke="var(--ink)" stroke-width="2"
+        stroke-linejoin="round"/>
+      <rect x="${(-tw*0.16).toFixed(1)}" y="${(-th*0.42).toFixed(1)}" width="${(tw*0.32).toFixed(1)}"
+        height="${(th*0.3).toFixed(1)}" fill="#FFE9B0" stroke="var(--ink)" stroke-width="1.4"/>
+      <path d="M0,${(-th*1.42).toFixed(1)} L0,${(-th*1.7).toFixed(1)}" stroke="var(--ink)" stroke-width="1.8"/>
+      <path d="M0,${(-th*1.7).toFixed(1)} q${(tw*0.5).toFixed(1)},${(-tw*0.08).toFixed(1)} ${(tw*0.5).toFixed(1)},${(tw*0.32).toFixed(1)}
+        q${(-tw*0.28).toFixed(1)},${(-tw*0.08).toFixed(1)} ${(-tw*0.5).toFixed(1)},0 z" fill="var(--sun)"/>
+      <text x="0" y="${(th*0.34).toFixed(1)}" text-anchor="middle" class="rsub twlabel">知の塔</text>`;
+    g.addEventListener("click",()=>switchTab("buddy"));
+    g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault(); switchTab("buddy");} });
+    svg.appendChild(g);
+  }
   const gLand=E("g",{}), gFog=E("g",{}), gRoad=E("g",{}),
         gMark=E("g",{}), gLab=E("g",{});
   [gLand,gFog,gRoad,gMark,gLab].forEach(g=>svg.appendChild(g));
@@ -3203,14 +3301,27 @@ function drawMap(){
         baseP+=`<polygon points="${pstr(R.poly.map(q=>[R.cx+(q[0]-R.cx)*1.13, R.cy+(q[1]-R.cy)*1.13]))}"/>`;
       });
       const opened=C.regions.filter(R=>rgnOpen(R));
+      /* 陸橋。まっすぐな長方形だと不自然なので、中心線を うねらせ、
+         幅も 場所ごとに 変えて、実際の地峡のような 有機的な形にする */
       const bridge=(R,o)=>{
-        const wd=Math.min(R.rad,o.rad)*0.82;
-        const a=Math.atan2(o.cy-R.cy,o.cx-R.cx);
-        const nx=-Math.sin(a)*wd, ny=Math.cos(a)*wd;
-        baseP+=`<polygon points="${(R.cx+nx).toFixed(1)},${(R.cy+ny).toFixed(1)} `
-          +`${(o.cx+nx).toFixed(1)},${(o.cy+ny).toFixed(1)} `
-          +`${(o.cx-nx).toFixed(1)},${(o.cy-ny).toFixed(1)} `
-          +`${(R.cx-nx).toFixed(1)},${(R.cy-ny).toFixed(1)}"/>`;
+        const seed=hash(R.name+"|"+o.name);
+        const p1=(seed%628)/100, p2=((seed>>>7)%628)/100;
+        const wd=Math.min(R.rad,o.rad)*0.86;
+        const dx=o.cx-R.cx, dy=o.cy-R.cy, dist=Math.hypot(dx,dy)||1;
+        const ang=Math.atan2(dy,dx), px=-Math.sin(ang), py=Math.cos(ang);
+        const n=Math.max(4, Math.min(10, Math.round(dist/30)));
+        const top=[], bot=[];
+        for(let i=0;i<=n;i++){
+          const t=i/n, ends=Math.sin(t*Math.PI);          /* 両端でゼロになる包絡線 */
+          /* 中心線を 横に うねらせる（両端の landmass に つながる位置は動かさない） */
+          const wob=(Math.sin(t*6.1+p1)*0.5+Math.sin(t*2.7+p2)*0.5)*wd*0.3*ends;
+          const cx=R.cx+dx*t+px*wob, cy=R.cy+dy*t+py*wob;
+          /* 幅も 場所によって変える。まんなかが少し細い「地峡」らしさを出す */
+          const w=wd*(0.55+0.45*ends)*(0.86+0.14*Math.sin(t*9+p2));
+          top.push([cx+px*w, cy+py*w]);
+          bot.push([cx-px*w, cy-py*w]);
+        }
+        baseP+=`<polygon points="${pstr(top.concat(bot.reverse()))}"/>`;
       };
       const done={};
       /* 近いものどうしは ひろく つなぐ */
@@ -3259,6 +3370,9 @@ function drawMap(){
       gLand.appendChild(land);
       /* 地形の書き込み。未測量の地では描かない */
       if(ro){
+        const gx=E("g",{opacity:(0.55+0.45*s.ratio).toFixed(2)});
+        gx.innerHTML=groundTexture(R);
+        gLand.appendChild(gx);
         const gt=E("g",{opacity:(0.30+0.70*s.ratio).toFixed(2)});
         gt.innerHTML=terrainArt(R);
         gLand.appendChild(gt);
@@ -4210,15 +4324,21 @@ function renderTower(){
     g+=`<path d="M${gx},${gy} q1.8,-6 3.6,0 M${gx+3},${gy} q1.8,-7.5 3.6,0"
       fill="none" stroke="#3F7F3C" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>`;
   }
-  /* はじまりの家。屋根と壁に陰をつける */
+  /* はじまりの家＝書斎。窓ごしに 本棚が見える。押すと 本だなへ */
   const hx=W-78, hy=baseY+20;
-  g+=`<g><ellipse cx="${hx+16}" cy="${hy+26}" rx="23" ry="4" fill="#2E5A2E" opacity=".22"/>
+  g+=`<g class="towershelf" aria-label="本だなへ すすむ">
+    <ellipse cx="${hx+16}" cy="${hy+26}" rx="23" ry="4" fill="#2E5A2E" opacity=".22"/>
     <rect x="${hx}" y="${hy}" width="32" height="24" fill="#F4E6CE"/>
     <rect x="${hx+21}" y="${hy}" width="11" height="24" fill="#DCCAAB"/>
     <path d="M${hx-5},${hy} l21,-15 l21,15 z" fill="#C4623A"/>
     <path d="M${hx+16},${hy-15} l21,15 l-21,0 z" fill="#A54F2D"/>
     <rect x="${hx+13}" y="${hy+11}" width="9" height="13" fill="#6B4A2E"/>
-    <rect x="${hx+4}" y="${hy+5}" width="6" height="6" fill="#FFE8A8"/></g>`;
+    <rect x="${hx+4}" y="${hy+5}" width="6" height="6" fill="#FFE8A8"/>
+    <rect x="${hx+4.3}" y="${hy+5.4}" width="0.9" height="5.2" fill="#C1181B"/>
+    <rect x="${hx+5.2}" y="${hy+5.4}" width="0.7" height="5.2" fill="#3AA5EE"/>
+    <rect x="${hx+5.9}" y="${hy+6.1}" width="0.8" height="4.5" fill="#FBB711"/>
+    <rect x="${hx+6.7}" y="${hy+5.4}" width="0.9" height="5.2" fill="#2FB863"/>
+    <rect x="${hx+4.2}" y="${hy+10.4}" width="3.4" height="0.5" fill="#6B4A2E"/></g>`;
   /* 木。三段のかたまりで丸みを出す */
   [[24,0],[52,-4],[78,3]].forEach((t,i)=>{
     const tx=t[0], ty=baseY+22+t[1], r=9+((i*5)%4);
@@ -4313,6 +4433,13 @@ function renderTower(){
   svg.style.width="100%"; svg.style.height="auto";
   svg.querySelectorAll(".tlayer").forEach(el=>{
     el.style.cursor="pointer"; el.onclick=()=>openLog(el.dataset.id); });
+  const shelfEl=svg.querySelector(".towershelf");
+  if(shelfEl){
+    shelfEl.style.cursor="pointer";
+    shelfEl.setAttribute("tabindex","0"); shelfEl.setAttribute("role","button");
+    shelfEl.onclick=()=>switchTab("shelf");
+    shelfEl.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault(); switchTab("shelf");} };
+  }
   box.scrollTop=0;
 
   const cur=bandOf(donePages);
@@ -6350,6 +6477,26 @@ clsPickDlg.querySelector("form").addEventListener("submit",e=>e.preventDefault()
 
 /* たべもの・二つ名の くわしい説明。一覧からも ガチャの結果からも ひらく */
 const infoDlg=document.getElementById("infoDlg");
+/* 相棒の いまの姿の 説明。段階が上がるほど 決まる要素が増える */
+function showSpecies(){
+  const sp=petSpec(), md=mood();
+  const dom=AXES[sp.dom];
+  const lines=[`いまの姿は「${speciesName(sp)}」。全${BOND.length}段階のうち 第${sp.stage+1}段階。`,
+    `いちばん伸びている軸: ${dom.k}（${dom.d}）`];
+  if(sp.stage>=3) lines.push(`系統: ${ARCH[sp.arch].n} — 読んできた分野の 一番手・二番手の 組み合わせで決まる`);
+  if(sp.stage>=4) lines.push(`属性: ${ELEM[sp.elem].n} — からだの色や飾りに あらわれる`);
+  if(sp.stage>=5) lines.push(`二つ名めいた 呼び名: ${EPITHET[sp.epi]} — 読み方のくせから 決まる`);
+  lines.push(sp.stage<BOND.length-1
+    ? "つぎの姿までは、絆(読んだ量)が たまるほど 近づく。"
+    : "もう最後の姿。これ以上は 姿が変わらない。");
+  document.getElementById("infoArt").innerHTML=creatureSVG(sp,110,md);
+  document.getElementById("infoName").textContent=speciesName(sp);
+  document.getElementById("infoMeta").textContent=`第${sp.stage+1}段階／全${BOND.length}段階`;
+  document.getElementById("infoDesc").textContent="";
+  document.getElementById("infoHave").innerHTML=lines.map(l=>esc(l)).join("<br>");
+  infoDlg.showModal();
+}
+document.getElementById("petStage").onclick=showSpecies;
 function showFood(id){
   SFX.find();
   const fo=foodOf(id);
@@ -6781,12 +6928,16 @@ function renderAll(){ drawMap(); renderKpi(); renderPet(); renderSpot();
   renderWearBar(); renderEquipTab(); renderFoodBar();
   renderFoodTab(); renderBagTitle(); renderGachaTab(); }
 
-document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+/* タブの切りかえ。地図の中の「知の塔」「本だな」など、
+   ボタン以外の場所(絵の中)からも 同じやり方で 移動できるようにする */
+function switchTab(name){
   document.querySelectorAll(".tabs button").forEach(x=>
-    x.setAttribute("aria-selected",String(x===b)));
+    x.setAttribute("aria-selected",String(x.dataset.v===name)));
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
-  document.getElementById("v-"+b.dataset.v).classList.add("on");
-});
+  const el=document.getElementById("v-"+name); if(el) el.classList.add("on");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.v));
 document.querySelectorAll("#kindNav .cbtn").forEach(b=>b.onclick=()=>{
   mapKind=b.dataset.k;
   document.querySelectorAll("#kindNav .cbtn").forEach(x=>
