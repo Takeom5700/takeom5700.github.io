@@ -4459,8 +4459,8 @@ function renderTower(){
   if(shelfEl){
     shelfEl.style.cursor="pointer";
     shelfEl.setAttribute("tabindex","0"); shelfEl.setAttribute("role","button");
-    shelfEl.onclick=()=>switchTab("shelf");
-    shelfEl.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault(); switchTab("shelf");} };
+    shelfEl.onclick=()=>switchTab("shelf","v-shelf");
+    shelfEl.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault(); switchTab("shelf","v-shelf");} };
   }
   box.scrollTop=0;
 
