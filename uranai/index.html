@@ -260,6 +260,56 @@
   .sort-btn:hover { color: var(--text); }
   .sort-btn.active { color: var(--gold-deep); border-color: var(--gold); background: rgba(168, 118, 43, 0.08); }
 
+  /* 絞り込み（種類フィルター） */
+  .filter-controls {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .filter-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .filter-btn {
+    font-family: inherit;
+    font-size: 0.76rem;
+    letter-spacing: 0.04em;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-sub);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .filter-btn:hover { color: var(--text); }
+  .filter-btn.active {
+    color: var(--gold-deep);
+    border-color: var(--gold);
+    background: rgba(168, 118, 43, 0.12);
+    font-weight: 700;
+  }
+  .filter-btn .filter-btn-count {
+    color: var(--text-sub);
+    font-size: 0.7rem;
+    margin-left: 4px;
+  }
+  .filter-btn.active .filter-btn-count { color: var(--gold-deep); }
+  .filter-count { font-size: 0.74rem; color: var(--text-sub); }
+  .filter-empty {
+    color: var(--text-sub);
+    font-size: 0.84rem;
+    grid-column: 1 / -1;
+    padding: 18px 4px;
+  }
+
+  /* 期限切れ・絞り込み対象外のチップは隠す */
+  .color-chip.is-expired,
+  .color-chip.is-filtered-out { display: none; }
+
   .color-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -597,6 +647,11 @@
     <button class="sort-btn active" data-sort="type">種類順</button>
     <button class="sort-btn" data-sort="source">ソース順</button>
   </div>
+  <div class="filter-controls">
+    <span class="sort-label">絞り込み：</span>
+    <div id="filter-btns" class="filter-btns"></div>
+    <span id="filter-count" class="filter-count"></span>
+  </div>
   <div class="color-grid">
     <!-- ═══════════ 本日 9/4（金）対象（十二支別 9/2-4＝本日最終日 uFXqFkFsCas・9月予言 7qD4q2p3bng）＋しいたけ週8/31-9/6・四柱/中国式/山田/六龍法 ／ 12星座別は9/1-3で期間終了・次回配信待ち ═══════════ -->
     <div class="color-chip">
@@ -712,10 +767,10 @@
       <div><div class="chip-label">中国式占い 辛亥（本日 辛巳日）ラッキー数字/方位🔢 ★</div><div class="chip-value">数字4・9（金）・1・6（水）／方位 西（金）・北（水）／開運アイテム 水晶・シルバーアクセ・白い花。比肩＝対等な協力者との連携、正官＝評価・信用が動く日 ★</div></div>
     </div>
     <!-- ─── 年間・固定（2026年） ─── -->
+    <div class="color-chip">
+      <div class="color-dot" style="background:#e0dff5;border:1px solid #9080c0;"></div>
       <div><div class="chip-label">四柱推命 開運行動（2026年）✨</div><div class="chip-value">重要人物への積極アプローチ・丙辛合を活かす</div></div>
     </div>
-    <div class="color-chip">
-      <div class="color-dot" style="background:#c8e6ff;border:1px solid #6090c0;"></div>
     <!-- ═══════════ 月運・下半期（継続中） ═══════════ -->
     <!-- ★★★ 下半期 九星別・五黄土星（本人の九星）＝8/27配信 OQClwiCHcSg ★最新★★★ -->
     <div class="color-chip">
@@ -1195,72 +1250,20 @@
   }
 })();
 
-// ラッキーカラーソート
+// ラッキーカラー：期限切れ判定 → 種類フィルター → 並び替え → 鮮度チェック
 (function() {
-  const TYPE_ORDER = ['color', 'food', 'number', 'direction', 'other'];
-  const SOURCE_ORDER = ['しいたけ占い', 'Loveちゃん', '山田ありす', '六星占術', '六龍法占い', '四柱推命', '中国式占い', 'その他'];
-  const COLOR_WORDS = /赤|青|白|黒|緑|黄|金|銀|シルバー|ゴールド|エメラルド|紫|オレンジ|ピンク|クリーム|ベージュ|水色|ターコイズ|グリーン|ブルー|レッド/;
+  const grid = document.querySelector('.color-grid');
+  if (!grid) return;
+  const chips = Array.from(grid.querySelectorAll('.color-chip'));
 
-  function detectType(label, value) {
-    const all = label + ' ' + value;
-    if (/フード|食材|食べ|料理/.test(all)) return 'food';
-    if (/数字|ナンバー/.test(all)) return 'number';
-    if (/方位/.test(all)) return 'direction';
-    if (/カラー/.test(all)) return 'color';
-    if (COLOR_WORDS.test(value)) return 'color';
-    return 'other';
-  }
-
-  function detectSource(label) {
-    if (/^しいたけ/.test(label)) return 'しいたけ占い';
-    if (/^Love/.test(label)) return 'Loveちゃん';
-    if (/^山田ありす/.test(label)) return '山田ありす';
-    if (/^六星占術/.test(label)) return '六星占術';
-    if (/^六龍法/.test(label)) return '六龍法占い';
-    if (/^四柱推命/.test(label)) return '四柱推命';
-    if (/^中国式/.test(label)) return '中国式占い';
-    return 'その他';
-  }
-
-  function sortChips(mode) {
-    const grid = document.querySelector('.color-grid');
-    if (!grid) return;
-    const chips = Array.from(grid.querySelectorAll('.color-chip'));
-    chips.sort(function(a, b) {
-      const al = (a.querySelector('.chip-label') || {}).textContent || '';
-      const av = (a.querySelector('.chip-value') || {}).textContent || '';
-      const bl = (b.querySelector('.chip-label') || {}).textContent || '';
-      const bv = (b.querySelector('.chip-value') || {}).textContent || '';
-      if (mode === 'type') {
-        return TYPE_ORDER.indexOf(detectType(al, av)) - TYPE_ORDER.indexOf(detectType(bl, bv));
-      } else {
-        return SOURCE_ORDER.indexOf(detectSource(al)) - SOURCE_ORDER.indexOf(detectSource(bl));
-      }
-    });
-    chips.forEach(function(c) { grid.appendChild(c); });
-  }
-
-  // デフォルト: 種類順で初期表示
-  sortChips('type');
-
-  document.querySelectorAll('.sort-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
-      this.classList.add('active');
-      sortChips(this.dataset.sort);
-    });
-  });
-})();
-
-// 期限切れチップを非表示にする ＋ 表示日付の鮮度チェック
-(function() {
-  // JSTの今日
+  /* ============ JSTの今日 ============ */
   const nowJst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const todayYear = nowJst.getUTCFullYear();
   const todayMonth = nowJst.getUTCMonth() + 1;
   const todayDay = nowJst.getUTCDate();
-  const todayYear = nowJst.getUTCFullYear();
   const todayOrd = todayMonth * 100 + todayDay;
 
+  /* ============ 1. 期限切れチップを落とす ============ */
   // 期間を持たない（＝月運・年運・固定属性など）ことが明らかなラベル
   const EVERGREEN = /月運|下半期|上半期|固定属性|年間|通年|次回配信待ち|スペシャルチェックデー/;
 
@@ -1287,19 +1290,155 @@
     return end;
   }
 
-  document.querySelectorAll('.color-chip').forEach(function(chip) {
-    const label = chip.querySelector('.chip-label');
-    if (!label) return;
-    const text = label.textContent || '';
-    if (EVERGREEN.test(text)) return;
-    const end = parseChipEndDate(text);
-    if (end === null) return;
+  function isExpired(labelText) {
+    if (EVERGREEN.test(labelText)) return false;
+    const end = parseChipEndDate(labelText);
+    if (end === null) return false;
     // 半年以上先の日付は「昨年ぶん」とみなす（年またぎ対策）
-    const rolledOver = end - todayOrd > 600;
-    if (rolledOver || end < todayOrd) chip.style.display = 'none';
+    if (end - todayOrd > 600) return true;
+    return end < todayOrd;
+  }
+
+  /* ============ 2. 種類・ソースの判定 ============ */
+  const TYPES = [
+    { key: 'color',   name: '🎨 カラー' },
+    { key: 'food',    name: '🍽 フード' },
+    { key: 'item',    name: '💎 アイテム' },
+    { key: 'number',  name: '🔢 数字・方位' },
+    { key: 'action',  name: '✨ 開運行動' },
+    { key: 'fortune', name: '🔮 運気・テーマ' },
+    { key: 'caution', name: '⚠ 注意' },
+    { key: 'other',   name: '📌 その他' },
+  ];
+  const TYPE_ORDER = TYPES.map(function(t) { return t.key; });
+  const SOURCE_ORDER = ['しいたけ占い', 'Loveちゃん', '山田ありす', '六星占術', '六龍法占い', '四柱推命', '中国式占い', 'その他'];
+  const COLOR_WORDS = /赤|青|白|黒|緑|黄|茶|金|銀|シルバー|ゴールド|エメラルド|紫|オレンジ|ピンク|クリーム|ベージュ|水色|ターコイズ|グリーン|ブルー|レッド|ピスタチオ/;
+
+  // 上から順に判定するので、並び順がそのまま優先度になる
+  function detectType(label, value) {
+    if (/フード|食材|食べ|料理|グルメ/.test(label)) return 'food';
+    if (/カラー|色/.test(label)) return 'color';
+    if (/数字|ナンバー|方位/.test(label)) return 'number';
+    if (/宝石|アイテム|花|グッズ|スポット|持ち物/.test(label)) return 'item';
+    if (/注意|警告|NG/.test(label)) return 'caution';
+    if (/開運|アクション|POWER UP|COOL DOWN|ラッキー|チェックデー|おまじない/.test(label)) return 'action';
+    if (/運気|テーマ|日運|恋愛|金運|仕事|健康|出会い|注目|運勢|心構え|人間関係/.test(label)) return 'fortune';
+    if (COLOR_WORDS.test(value)) return 'color';
+    return 'other';
+  }
+
+  function detectSource(label) {
+    if (/^しいたけ/.test(label)) return 'しいたけ占い';
+    if (/^Love/.test(label)) return 'Loveちゃん';
+    if (/^山田ありす/.test(label)) return '山田ありす';
+    if (/^六星占術/.test(label)) return '六星占術';
+    if (/^六龍法/.test(label)) return '六龍法占い';
+    if (/^四柱推命/.test(label)) return '四柱推命';
+    if (/^中国式/.test(label)) return '中国式占い';
+    return 'その他';
+  }
+
+  // 各チップにメタ情報を付与し、期限切れはここで落とす
+  chips.forEach(function(chip) {
+    const label = (chip.querySelector('.chip-label') || {}).textContent || '';
+    const value = (chip.querySelector('.chip-value') || {}).textContent || '';
+    chip.dataset.type = detectType(label, value);
+    chip.dataset.source = detectSource(label);
+    if (isExpired(label)) chip.classList.add('is-expired');
   });
 
-  // 表示中の日付が今日でなければ警告を出す（自動更新の取りこぼし検知）
+  const liveChips = chips.filter(function(c) { return !c.classList.contains('is-expired'); });
+
+  /* ============ 3. 絞り込みUI（実データから生成） ============ */
+  const btnBox = document.getElementById('filter-btns');
+  const countEl = document.getElementById('filter-count');
+  const selected = new Set();   // 空 = すべて表示
+
+  const emptyMsg = document.createElement('p');
+  emptyMsg.className = 'filter-empty';
+  emptyMsg.textContent = '該当するものがありません。別の種類を選ぶか「すべて」に戻してください。';
+  emptyMsg.hidden = true;
+  grid.appendChild(emptyMsg);
+
+  function applyFilter() {
+    let shown = 0;
+    liveChips.forEach(function(chip) {
+      const hit = selected.size === 0 || selected.has(chip.dataset.type);
+      chip.classList.toggle('is-filtered-out', !hit);
+      if (hit) shown++;
+    });
+    emptyMsg.hidden = shown > 0;
+    countEl.textContent = selected.size === 0
+      ? liveChips.length + '件を表示中'
+      : liveChips.length + '件中 ' + shown + '件を表示中';
+    if (btnBox) {
+      Array.from(btnBox.querySelectorAll('.filter-btn')).forEach(function(b) {
+        const key = b.dataset.type;
+        const on = key === '' ? selected.size === 0 : selected.has(key);
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+    }
+  }
+
+  if (btnBox) {
+    // 「すべて」＋ 実際に1件以上あるカテゴリだけボタンを出す
+    const buttons = [{ key: '', name: 'すべて', count: liveChips.length }];
+    TYPES.forEach(function(t) {
+      const count = liveChips.filter(function(c) { return c.dataset.type === t.key; }).length;
+      if (count > 0) buttons.push({ key: t.key, name: t.name, count: count });
+    });
+
+    buttons.forEach(function(b) {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'filter-btn';
+      el.dataset.type = b.key;
+      el.setAttribute('aria-pressed', 'false');
+      el.innerHTML = '';
+      el.appendChild(document.createTextNode(b.name));
+      const c = document.createElement('span');
+      c.className = 'filter-btn-count';
+      c.textContent = b.count;
+      el.appendChild(c);
+      el.addEventListener('click', function() {
+        if (b.key === '') {
+          selected.clear();                 // 「すべて」でリセット
+        } else if (selected.has(b.key)) {
+          selected.delete(b.key);           // 複数選択トグル
+        } else {
+          selected.add(b.key);
+        }
+        applyFilter();
+      });
+      btnBox.appendChild(el);
+    });
+  }
+
+  /* ============ 4. 並び替え ============ */
+  function sortChips(mode) {
+    const ordered = chips.slice().sort(function(a, b) {
+      if (mode === 'type') {
+        return TYPE_ORDER.indexOf(a.dataset.type) - TYPE_ORDER.indexOf(b.dataset.type);
+      }
+      return SOURCE_ORDER.indexOf(a.dataset.source) - SOURCE_ORDER.indexOf(b.dataset.source);
+    });
+    ordered.forEach(function(c) { grid.appendChild(c); });
+    grid.appendChild(emptyMsg);   // 「該当なし」は常に末尾
+  }
+
+  sortChips('type');   // デフォルト: 種類順
+  applyFilter();
+
+  document.querySelectorAll('.sort-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
+      this.classList.add('active');
+      sortChips(this.dataset.sort);
+    });
+  });
+
+  /* ============ 5. 表示日付の鮮度チェック ============ */
   (function() {
     const banner = document.getElementById('stale-banner');
     const dateEl = document.querySelector('.date');
