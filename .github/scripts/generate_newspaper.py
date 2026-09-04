@@ -159,3 +159,42 @@ else:
     with open(index_path, 'w', encoding='utf-8') as f:
         f.write(index_html)
     print(f"Updated: {index_path}")
+
+# 古い号の掃除。
+# 毎朝1本ずつ増える一方だったので、リポジトリと索引が無限に育っていた
+# （1日あたり約30KB＝1年で10MB超、索引も全号を列挙し続ける）。
+# 新しい順にKEEP_ISSUES号だけ残し、それより古いものはファイルごと消して
+# 索引からもカードを取り除く。索引にしか無い号・ファイルにしか無い号の
+# どちらも取りこぼさないよう、両方を突き合わせてから判定する。
+KEEP_ISSUES = 90
+
+with open(index_path, 'r', encoding='utf-8') as f:
+    index_html = f.read()
+
+on_disk = {
+    m.group(1)
+    for name in os.listdir('ai-shinbun')
+    for m in [re.fullmatch(r'newspaper_(\d{8})\.html', name)]
+    if m
+}
+in_index = set(re.findall(r'newspaper_(\d{8})\.html', index_html))
+all_issues = sorted(on_disk | in_index, reverse=True)
+
+stale = all_issues[KEEP_ISSUES:]
+if not stale:
+    print(f"No issues to prune ({len(all_issues)} issue(s), keeping newest {KEEP_ISSUES}).")
+else:
+    for d in stale:
+        card_re = re.compile(
+            r'[ \t]*<a class="newspaper-card" href="newspaper_' + d + r'\.html".*?</a>\s*',
+            re.S,
+        )
+        index_html = card_re.sub('', index_html)
+        path = f'ai-shinbun/newspaper_{d}.html'
+        if os.path.exists(path):
+            os.remove(path)
+            print(f"Pruned: {path}")
+
+    with open(index_path, 'w', encoding='utf-8') as f:
+        f.write(index_html)
+    print(f"Pruned {len(stale)} old issue(s); kept newest {KEEP_ISSUES}.")
