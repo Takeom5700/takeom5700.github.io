@@ -26,6 +26,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://takeom5700.github.io/ai-shinbun/</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://takeom5700.github.io/privacy.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

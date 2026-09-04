@@ -944,6 +944,23 @@ header .lede {
 .card:hover .lantern, .card:focus-visible .lantern { box-shadow: 0 0 16px var(--ac), 0 0 4px var(--ac); }
 .card:hover .noren-kanji, .card:focus-visible .noren-kanji { text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3), 0 0 14px color-mix(in srgb, var(--ac) 55%, transparent); }
 
+/* まだ暖簾を出していない屋台。灯りを落とし、押しても何も起きないようにする
+   （リンク先が無いのに押せてしまうと、訪問者を404へ落としてしまうため） */
+.card--soon {
+  cursor: default;
+  /* opacity は使わない。カードの入場アニメーション appear が
+     `to { opacity: 1 }` を forwards で当てるため、ここで opacity を
+     下げてもアニメーション側に上書きされてしまう。
+     appear が触らない filter で灯りを落とす。 */
+  filter: saturate(0.3) brightness(0.62);
+}
+.card--soon:hover, .card--soon:focus-visible {
+  transform: none;
+  border-color: var(--wood);
+  box-shadow: none;
+}
+.chip--soon { color: var(--washi-sub); border-style: dashed; }
+
 /* 一度訪れた屋台には灯りが残る（自分で選んだ順番でよい。強制の道はない） */
 .card--visited {
   border-color: color-mix(in srgb, var(--ac) 65%, var(--wood));
@@ -1060,6 +1077,24 @@ header .lede {
   white-space: nowrap;
 }
 .chip--live { color: var(--kin); border-color: rgba(255, 178, 68, 0.5); }
+
+/* 縁日の隅の立て札 — コラムと規約への細い導線 */
+.colophon-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.4rem;
+  justify-content: center;
+  margin: 0 auto 1.2rem;
+  max-width: 60rem;
+  padding: 0 1rem;
+}
+.colophon-nav a {
+  color: var(--washi-sub);
+  font-size: 0.78rem;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--line);
+}
+.colophon-nav a:hover, .colophon-nav a:focus-visible { color: var(--kin); }
 .chip--live::before {
   content: "";
   width: 6px; height: 6px;
@@ -1198,7 +1233,7 @@ footer .kin { color: var(--kin); }
 <div class="market" id="market">
 
 <main class="grid">
-  <a class="card" href="/tokyo-gakki-bukken/" style="--ac:#ffb244">
+  <span class="card card--soon" style="--ac:#ffb244">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">楽</span></span>
     <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
       <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
@@ -1211,14 +1246,14 @@ footer .kin { color: var(--kin); }
     </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="chip chip--live">LIVE</span>
+      <span class="chip chip--soon">準備中</span>
     </span>
     <span class="card-title">東京楽器可物件検索</span>
     <span class="card-desc">SUUMO・HOME'S・ミュージションを横断し、RC/SRC造の楽器可・防音賃貸を地図でまとめて探せる。毎時自動更新。</span>
     <span class="card-url">takeom5700.github.io/tokyo-gakki-bukken/</span>
-  </a>
+  </span>
 
-  <a class="card" href="/aruite-gourmet/" style="--ac:#e0685a">
+  <span class="card card--soon" style="--ac:#e0685a">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">飯</span></span>
     <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
       <circle cx="10" cy="10" r="6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
@@ -1233,14 +1268,14 @@ footer .kin { color: var(--kin); }
     </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="chip chip--live">LIVE</span>
+      <span class="chip chip--soon">準備中</span>
     </span>
     <span class="card-title">あるいてグルメ</span>
     <span class="card-desc">駅名・住所から徒歩5〜60分圏のレストランを検索。ジャンル・予算・雰囲気で絞り込み、地図で一覧できる。</span>
     <span class="card-url">takeom5700.github.io/aruite-gourmet/</span>
-  </a>
+  </span>
 
-  <a class="card" href="/route-app/" style="--ac:#7fa8e0">
+  <span class="card card--soon" style="--ac:#7fa8e0">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">道</span></span>
     <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
       <g transform="translate(23 26) rotate(-8)">
@@ -1254,12 +1289,12 @@ footer .kin { color: var(--kin); }
     </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="chip chip--live">LIVE</span>
+      <span class="chip chip--soon">準備中</span>
     </span>
     <span class="card-title">Route App</span>
     <span class="card-desc">出発駅と目的駅を入れるだけで、いま一番早い経路と遅延情報をすぐ確認できる。</span>
     <span class="card-url">takeom5700.github.io/route-app/</span>
-  </a>
+  </span>
 
   <a class="card" href="/uranai/" style="--ac:#b48ae0">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">占</span></span>
@@ -1281,7 +1316,7 @@ footer .kin { color: var(--kin); }
     <span class="card-url">takeom5700.github.io/uranai/</span>
   </a>
 
-  <a class="card" href="/bus-coin-navi/" style="--ac:#7cc796">
+  <span class="card card--soon" style="--ac:#7cc796">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">輪</span></span>
     <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
       <circle cx="10" cy="10" r="6" fill="#5c4530" stroke="var(--rope)" stroke-width="2"/>
@@ -1296,12 +1331,12 @@ footer .kin { color: var(--kin); }
     </svg>
     <span class="card-head">
       <span class="lantern" aria-hidden="true"></span>
-      <span class="chip chip--live">LIVE</span>
+      <span class="chip chip--soon">準備中</span>
     </span>
     <span class="card-title">バスコインナビ</span>
     <span class="card-desc">QR読み取りでバス乗車を記録し、運賃とコインを管理する乗車ナビの実験アプリ。</span>
     <span class="card-url">takeom5700.github.io/bus-coin-navi/</span>
-  </a>
+  </span>
 
   <a class="card" href="/ai-shinbun/" style="--ac:#f4ead8">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">報</span></span>
@@ -1346,7 +1381,7 @@ footer .kin { color: var(--kin); }
     <span class="card-url">takeom5700.github.io/mistlands/</span>
   </a>
 
-  <a class="card" href="http://localhost:8791/driver.html" style="--ac:#9a8a80">
+  <span class="card card--soon" style="--ac:#9a8a80">
     <span class="noren" aria-hidden="true"><span class="noren-kanji">運</span></span>
     <svg class="card-critter" aria-hidden="true" viewBox="0 0 46 40">
       <polygon points="10,20 4,6 18,12" fill="var(--washi)" stroke="var(--rope)" stroke-width="2" stroke-linejoin="round"/>
@@ -1364,7 +1399,7 @@ footer .kin { color: var(--kin); }
     <span class="card-title">ドライバーアプリ</span>
     <span class="card-desc">バスコインナビの運転手側画面。ローカル環境でのみ動作する。</span>
     <span class="card-url">localhost:8791/driver.html</span>
-  </a>
+  </span>
 </main>
 
 <div class="shimenawa-wrap">
@@ -1552,6 +1587,13 @@ footer .kin { color: var(--kin); }
   </svg>
   <div class="range-view-mist"></div>
 </section>
+
+<nav class="colophon-nav" aria-label="コラム・その他">
+  <a href="/column-rc.html">RC造・SRC造とは？</a>
+  <a href="/column-tips.html">楽器可物件の内見チェックポイント</a>
+  <a href="/column-areas.html">音楽家が選ぶ東京の住みやすいエリア</a>
+  <a href="/privacy.html">プライバシーポリシー</a>
+</nav>
 
 <footer>© 2026 TAKEOM5700 <span class="kin">◆</span> 宮本さなぎ <span class="kin">◆</span> またおこしください</footer>
 

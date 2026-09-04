@@ -1,0 +1,8 @@
+# 占いダッシュボードは個人の生年月日・命式を載せた私用ページのため
+# 検索結果に出したくない。ただしDisallowにするとクローラがページ自体を
+# 読めず <meta name="robots" content="noindex"> を認識できなくなるので、
+# ここでは通し、noindexで落とす。
+User-agent: *
+Allow: /
+
+Sitemap: https://takeom5700.github.io/sitemap.xml
