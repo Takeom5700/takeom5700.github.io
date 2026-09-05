@@ -1,0 +1,30 @@
+name: Uranai Dashboard Validation
+
+# 占いダッシュボードの日付・日干支・六星日運が
+# uranai/data/daily.json と完全に同期しているかを検証する。
+# セクションを部分的にしか更新できていないコミットはここで落ちる。
+
+on:
+  push:
+    paths:
+      - 'uranai/**'
+      - '.github/scripts/build_uranai.py'
+      - '.github/workflows/uranai-validate.yml'
+  pull_request:
+    paths:
+      - 'uranai/**'
+      - '.github/scripts/build_uranai.py'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate uranai/index.html against daily.json
+        run: python3 .github/scripts/build_uranai.py --check
