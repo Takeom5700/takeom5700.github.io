@@ -35,8 +35,6 @@ SLOT_RE = re.compile(r'(<span data-uranai="([^"]+)"\s*>)(.*?)(</span>)', re.S)
 # <span> スロット以外の場所で使うキー（V1 の未配置チェックから除外する）
 NON_SPAN_SLOTS = {"date.title", "score.tag"}
 BLOCK_RE_TMPL = r'(<!-- uranai:begin {name} -->)(.*?)(<!-- uranai:end {name} -->)'
-ARCHIVE_RE = re.compile(
-    r'<!-- uranai:archive-start -->.*?<!-- uranai:archive-end -->', re.S)
 SCRIPT_STYLE_RE = re.compile(r'<(script|style)\b.*?</\1>', re.S)
 
 
@@ -296,12 +294,14 @@ def render(html: str, data: dict) -> str:
 # --------------------------------------------------------------------------
 # 検証
 # --------------------------------------------------------------------------
-def split_regions(html: str) -> tuple[str, str]:
-    """(live, archive) に分割。live からは script/style も落とす。"""
-    archives = ARCHIVE_RE.findall(html)
-    live = ARCHIVE_RE.sub(" ", html)
-    live = SCRIPT_STYLE_RE.sub(" ", live)
-    return live, "\n".join(archives)
+def visible_text(html: str) -> str:
+    """検証対象の本文。script/style は落とす。
+
+    以前は過去日の記録を置く「アーカイブ領域」を検証から除外していたが、
+    期限切れチップを全て削除したため領域ごと廃止した。
+    いまはページ全体が検証対象＝チェックはより厳しくなっている。
+    """
+    return SCRIPT_STYLE_RE.sub(" ", html)
 
 
 def validate(html: str, data: dict) -> list[str]:
@@ -365,8 +365,6 @@ def validate(html: str, data: dict) -> list[str]:
     for name in BLOCKS:
         if not re.search(BLOCK_RE_TMPL.format(name=re.escape(name)), html, re.S):
             errors.append(f"V2 生成ブロック {name} が見つかりません")
-    if not ARCHIVE_RE.search(html):
-        errors.append("V2 アーカイブ領域のマーカーが見つかりません")
 
     # --- V3: meta / title ---
     m = re.search(r'<meta name="data-date" content="([^"]*)">', html)
@@ -378,7 +376,7 @@ def validate(html: str, data: dict) -> list[str]:
     if not m or slots["date.title"] not in m.group(1):
         errors.append(f'V3 <title> に {slots["date.title"]} が入っていません')
 
-    live, archive = split_regions(html)
+    live = visible_text(html)
 
     # --- V4: 「本日」と併記された日付が対象日以外に無いか ---
     strays: set[str] = set()
@@ -392,9 +390,6 @@ def validate(html: str, data: dict) -> list[str]:
         errors.append(
             f"V4 対象日({today_md})以外の日付が「本日/現在/時点」と併記されています: "
             + " / ".join(sorted(strays)))
-    if "本日" in archive:
-        errors.append(
-            "V4 アーカイブ領域に「本日」が残っています（過去日の記録に本日と書かないこと）")
 
     # --- V5: 日干支の混在 ---
     allowed_pillars = {calc, calc_next}
@@ -414,7 +409,7 @@ def validate(html: str, data: dict) -> list[str]:
     for name in BLOCKS:
         stripped = re.sub(BLOCK_RE_TMPL.format(name=re.escape(name)), " ",
                           stripped, flags=re.S)
-    stripped, _ = split_regions(stripped)
+    stripped = visible_text(stripped)
     leaked = set()
     for line in stripped.split("\n"):
         # 「六星」「日運」が出てくる行に運気名が生で残っていたら部分更新の疑い。
