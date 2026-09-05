@@ -1,0 +1,5 @@
+# uranai/index.html はスクリプト生成のため改行コードを LF に固定する
+# （CRLF/LF が混在すると差分が全行更新になり、部分更新の検出ができなくなる）
+uranai/*.html text eol=lf
+uranai/*.json text eol=lf
+uranai/*.md text eol=lf
