@@ -19,15 +19,34 @@
 ## 更新手順
 
 ```bash
-# 1. その日のデータを書く
+# 1. 日付を進める（日干支・十神・六星の日運・月柱・天中殺は全部自動計算）
+python3 .github/scripts/build_uranai.py --roll 2026-09-06
+
+# 2. daily.json の "TODO" を全部埋める（総合方針とスコアのコメント）
+#    "_review" に挙がった項目が最新かどうかもここで確認する
 vim uranai/data/daily.json
 
-# 2. 差し込み＋検証＋書き出し（検証に落ちたら index.html は一切書き換わらない）
+# 3. 差し込み＋検証＋書き出し（検証に落ちたら index.html は一切書き換わらない）
 python3 .github/scripts/build_uranai.py
 
-# 3. コミット
-git add uranai/data/daily.json uranai/index.html && git commit
+# 4. コミット
+git add uranai/ && git commit
 ```
+
+`--roll` を使わず日付だけ手で変えるのは不可（日干支と六星がずれる）。
+
+### 自動計算される値
+
+`--roll` が暦から計算するので手で書かない（手で書くと V0 検証で落ちる）。
+
+- 日付表示・週の範囲
+- 日干支と十神（命式は辛亥日主）／翌日の日干支
+- 六星占術の日運（木星人＋ / 金星人・霊合。12日周期）と翌日の日運
+- 月柱（節入り表ベース。境界±1日は警告が出るので暦で確認する）
+- 寅卯天中殺の該当/非該当
+
+計算値はページの過去の記録と照合済み（9/2 己卯・9/4 辛巳・9/5 壬午、
+8/20 丙寅、8/21 丁卯、8/30 丙子、および 8/7 立秋→丙申月・9/7 白露→丁酉月）。
 
 検証だけしたいときは `python3 .github/scripts/build_uranai.py --check`。
 同じものを GitHub Actions（`.github/workflows/uranai-validate.yml`）も push のたびに走らせる。
@@ -36,13 +55,14 @@ git add uranai/data/daily.json uranai/index.html && git commit
 
 | | 内容 |
 |---|---|
-| V0 | `daily.json` の日干支・翌日干支が暦の計算値（JDN基準）と一致するか |
+| V0 | `daily.json` の日干支・翌日干支・月柱・六星日運が暦の計算値と一致するか |
 | V1 | `daily.json` の全スロットが HTML に配置され、HTML 側に未知のスロットが無いか（＝更新漏れセクションの検出） |
 | V2 | 生成ブロックとアーカイブマーカーが揃っているか |
 | V3 | `<meta name="data-date">` と `<title>` が対象日と一致するか |
 | V4 | 「本日 / 現在 / 時点」と併記された日付が対象日以外に無いか。アーカイブに「本日」が無いか |
 | V5 | 対象日・翌日・命式（辛亥）以外の日干支が本文に残っていないか |
 | V6 | 六星の運気名（減退・乱気など）が「六星」「日運」を含む行にベタ書きされていないか |
+| V7 | `daily.json` に埋め忘れ（TODO）が残っていないか |
 | ―  | `--check` では、生成結果とコミット済み `index.html` が完全一致するか（部分更新の検出） |
 
 ## 古さの可視化
