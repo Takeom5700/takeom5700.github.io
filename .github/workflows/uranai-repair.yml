@@ -1,0 +1,67 @@
+name: Uranai Auto Repair
+
+# 占いダッシュボードを「見た日の情報」に保つ。
+#
+# 外部の自動更新スクリプトが uranai/index.html を毎日まるごと上書きしてくる。
+# そのスクリプトは title と六星の日運は直すが、フッターの日付・本文の「本日9/2」・
+# 期限切れチップ・鮮度バナー・絞り込みUI を直さない（消してしまう）。
+# ここで後追いして直す。
+#
+#   push  … 上書き直後に数十秒で修復する
+#   cron  … 誰も更新しなくても日付が変わったら修復する（＝ページが勝手に古くならない）
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'uranai/index.html'
+  schedule:
+    # JST 00:05 と 07:05（UTC 15:05 / 22:05）
+    - cron: '5 15 * * *'
+    - cron: '5 22 * * *'
+  workflow_dispatch:
+
+# 同時に走って push がぶつからないようにする
+concurrency:
+  group: uranai-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    # 自分自身の push で無限ループしないようにする
+    if: "!contains(github.event.head_commit.message, '[uranai-repair]')"
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Repair uranai/index.html for today (Asia/Tokyo)
+        run: python3 .github/scripts/repair_uranai.py
+
+      - name: Verify the result is consistent
+        run: python3 .github/scripts/repair_uranai.py --check
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add uranai/index.html
+          if git diff --staged --quiet; then
+            echo "修復の必要はありませんでした。"
+            exit 0
+          fi
+          git commit -m "占いダッシュボード自動修復 $(TZ=Asia/Tokyo date +%Y-%m-%d) [uranai-repair]"
+          for i in 1 2 3 4; do
+            git pull --rebase origin main && git push origin main && exit 0
+            echo "push に失敗。$((2 ** i)) 秒待って再試行"
+            sleep $((2 ** i))
+          done
+          exit 1

@@ -1,0 +1,34 @@
+  <div class="sort-controls">
+    <div class="filter-row">
+    <span class="sort-label">種類</span>
+    <button class="sort-btn active" data-filter="type" data-value="all">すべて</button>
+    <button class="sort-btn" data-filter="type" data-value="color">🎨カラー</button>
+    <button class="sort-btn" data-filter="type" data-value="food">🍜フード</button>
+    <button class="sort-btn" data-filter="type" data-value="item">💎アイテム</button>
+    <button class="sort-btn" data-filter="type" data-value="number">🔢数字</button>
+    <button class="sort-btn" data-filter="type" data-value="direction">🧭方位</button>
+    <button class="sort-btn" data-filter="type" data-value="fortune">✨開運・運気</button>
+    <button class="sort-btn" data-filter="type" data-value="caution">⚠注意</button>
+    <button class="sort-btn" data-filter="type" data-value="other">📌その他</button>
+    </div>
+    <div class="filter-row">
+    <span class="sort-label">ソース</span>
+    <button class="sort-btn active" data-filter="source" data-value="all">すべて</button>
+    <button class="sort-btn" data-filter="source" data-value="Loveちゃん">Loveちゃん</button>
+    <button class="sort-btn" data-filter="source" data-value="しいたけ占い">しいたけ</button>
+    <button class="sort-btn" data-filter="source" data-value="山田ありす">山田ありす</button>
+    <button class="sort-btn" data-filter="source" data-value="六星占術">六星占術</button>
+    <button class="sort-btn" data-filter="source" data-value="六龍法占い">六龍法</button>
+    <button class="sort-btn" data-filter="source" data-value="四柱推命">四柱推命</button>
+    <button class="sort-btn" data-filter="source" data-value="中国式占い">中国式</button>
+    <button class="sort-btn" data-filter="source" data-value="その他">その他</button>
+    </div>
+    <div class="filter-row">
+    <span class="sort-label">並び替え</span>
+    <button class="sort-btn active" data-sort="type">種類順</button>
+    <button class="sort-btn" data-sort="source">ソース順</button>
+    <button class="sort-btn" data-reset="1">絞り込みを解除</button>
+    <span class="chip-count" id="chip-count"></span>
+    </div>
+  </div>
+  <p class="chip-empty" id="chip-empty" hidden>該当する項目がありません。<br>種類とソースの組み合わせを変えるか、「絞り込みを解除」を押してください。</p>

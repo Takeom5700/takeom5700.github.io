@@ -1,0 +1,68 @@
+  /* ===== データ鮮度バナー（生成日と閲覧日がズレたときだけ表示） ===== */
+  .stale-banner {
+    display: none;
+    background: var(--bad);
+    color: #fff;
+    font-weight: 700;
+    text-align: center;
+    padding: 11px clamp(16px, 4vw, 40px);
+    margin: 0 calc(-1 * clamp(16px, 4vw, 40px)) 18px;
+    line-height: 1.65;
+    letter-spacing: 0.03em;
+    box-shadow: 0 2px 10px rgba(179, 64, 46, 0.35);
+  }
+  .stale-banner.is-visible { display: block; }
+
+  .sort-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  .filter-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .sort-label {
+    font-size: 0.76rem;
+    color: var(--text-sub);
+    letter-spacing: 0.08em;
+    min-width: 3.6em;
+  }
+  .sort-btn {
+    font-family: inherit;
+    font-size: 0.76rem;
+    letter-spacing: 0.06em;
+    padding: 5px 12px;
+    background: var(--bg);
+    color: var(--text-sub);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  }
+  .sort-btn:hover { color: var(--text); }
+  .sort-btn.active { color: var(--gold-deep); border-color: var(--gold); background: rgba(168, 118, 43, 0.08); }
+  /* 該当0件の選択肢は薄く表示して、押しても何も出ないことを事前に伝える */
+  .sort-btn.is-empty { opacity: 0.4; }
+
+  .chip-count {
+    margin-left: auto;
+    font-size: 0.76rem;
+    color: var(--text-sub);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .chip-empty {
+    padding: 24px 8px;
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 0.86rem;
+  }
+  /* 期限切れ・フィルタ対象外はどちらも非表示（両方の条件を独立に扱う） */
+  .color-chip.is-expired,
+  .color-chip.is-filtered-out { display: none; }
