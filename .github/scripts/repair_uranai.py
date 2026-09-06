@@ -113,11 +113,48 @@ def build_texts(d: datetime.date) -> dict:
     }
 
 
+
+# --------------------------------------------------------------------------
+# 「生きた値」ブロック
+#   自動修復が止まっても、ページ側の uranai-live.js が同じ計算で作り直せるよう、
+#   data-uranai-live="キー" を付けて埋め込む部分。
+#   .github/assets/uranai-live.js の buildBlocks() と一字一句同じものを返すこと。
+#   （テストで全日付を突き合わせている）
+# --------------------------------------------------------------------------
+def build_blocks(t: dict) -> dict:
+    return {
+        "lead": (
+            f'{t["date_long"]}｜ 六星占術の日運は<strong>{t["rokusei_today"]}</strong>'
+            f'＝木星人＋：{t["mok_detail"]}／金星人（霊合）：{t["kin_detail"]}。'
+            f'今月の月運は<strong>{t["rokusei_month"]}</strong>、年運は{t["rokusei_year"]}。'
+            f'四柱推命は<strong>{t["shichu_day"]}</strong>＝{t["shichu_detail"]}。'
+            f'今月＝{t["shichu_month"]}（{t["shichu_month_note"]}）。{t["tenchusatsu"]}。'
+            f'{t["rokusei_tomorrow"]}／{t["shichu_tomorrow"]}。'),
+        "alertRokusei": (
+            f'<strong>本日の六星占術 日運：{t["rokusei_today"]}</strong>'
+            f'（木星人＋：{t["mok_detail"]}／金星人（霊合）：{t["kin_detail"]}）'
+            f'／月運は{t["rokusei_month"]}・年運は{t["rokusei_year"]}。'),
+        "alertShichu": (
+            f'四柱推命（辛亥日主）：今月＝{t["shichu_month"]}。本日は'
+            f'<strong>{t["shichu_day"]}</strong>。{t["shichu_detail"]}。{t["tenchusatsu"]}。'),
+        "alertBazi": (
+            f'中国式占い（八字）：<strong>今月＝{t["shichu_month"]}</strong>。本日'
+            f'<strong>{t["shichu_day"]}</strong>。{t["shichu_detail"]}。{t["tenchusatsu"]}。'
+            f'吉方位：西・北。ラッキー数字：4・9（金）・1・6（水）。'),
+        "footerDate": t["date_long"],
+    }
+
+
+def live(key: str, blocks: dict) -> str:
+    return f'<span data-uranai-live="{key}">{blocks[key]}</span>'
+
+
 # --------------------------------------------------------------------------
 # 置き換え（要素まるごと差し替えなので、何度実行しても同じ結果になる）
 # --------------------------------------------------------------------------
-def rewrite_sections(html: str, t: dict) -> tuple[str, list[str]]:
+def rewrite_sections(html: str, t: dict) -> tuple[str, list[str], list[str]]:
     done = []
+    warnings = []
 
     def sub(pattern, repl, name, flags=re.S, required=True):
         nonlocal html
@@ -126,29 +163,21 @@ def rewrite_sections(html: str, t: dict) -> tuple[str, list[str]]:
             html = new
             done.append(f"{name}×{n}")
         elif required:
-            raise RepairError(
-                f"「{name}」の差し替え位置が見つかりません。"
-                "外部スクリプトの出力形式が変わった可能性があります。")
+            # 中断しない。直せたところまでは直し、残りはページ側の
+            # uranai-live.js が閲覧時に計算し直す。ただし必ず警告を出す。
+            warnings.append(
+                f"「{name}」の差し替え位置が見つかりませんでした"
+                "（外部スクリプトの出力形式が変わった可能性）")
+
+    blocks = build_blocks(t)
 
     # 冒頭リード文（丸ごと作り直す。元は数日前の文面が固定で入っている）
     sub(r'<p class="date">.*?</p>',
-        f'<p class="date">{t["date_long"]}｜ 六星占術の日運は<strong>'
-        f'{t["rokusei_today"]}</strong>＝木星人＋：{t["mok_detail"]}／'
-        f'金星人（霊合）：{t["kin_detail"]}。今月の月運は<strong>'
-        f'{t["rokusei_month"]}</strong>、年運は{t["rokusei_year"]}。'
-        f'四柱推命は<strong>{t["shichu_day"]}</strong>＝{t["shichu_detail"]}。'
-        f'今月＝{t["shichu_month"]}（{t["shichu_month_note"]}）。'
-        f'{t["tenchusatsu"]}。{t["rokusei_tomorrow"]}／{t["shichu_tomorrow"]}。</p>',
-        "冒頭リード文")
+        f'<p class="date">{live("lead", blocks)}</p>', "冒頭リード文")
 
-    # 注意欄の先頭行（「本日9/2は…」が固定で残る）
-    sub(r'  🛡 <strong>本日[^<]*</strong>.*?<br>\n',
-        f'  🛡 <strong>本日の六星占術 日運：{t["rokusei_today"]}</strong>'
-        f'（木星人＋：{t["mok_detail"]}／金星人（霊合）：{t["kin_detail"]}）'
-        f'／月運は{t["rokusei_month"]}・年運は{t["rokusei_year"]}。'
-        f'四柱推命は<strong>{t["shichu_day"]}</strong>＝{t["shichu_detail"]}。'
-        f'{t["tenchusatsu"]}。<br>\n',
-        "注意欄の先頭行")
+    # 注意欄の先頭行（行ごと差し替える。行頭の 🛡 はこの1行だけ）
+    sub(r'^  🛡 [^\n]*', f'  🛡 {live("alertRokusei", blocks)}<br>',
+        "注意欄の先頭行", flags=re.M)
 
     # 9月予言の行から「本日M/D」を外す（予言自体は月単位なので残す）
     sub(r'【全体（(\d{1,2})月予言・本日\d{1,2}/\d{1,2}）継続★】',
@@ -189,20 +218,13 @@ def rewrite_sections(html: str, t: dict) -> tuple[str, list[str]]:
     sub(r'→ 翌日[（(]\d{1,2}/\d{1,2}[）)]は木星人＋：[^<]*',
         f'→ {t["rokusei_tomorrow"]}', "六星の翌日行")
 
-    # 注意欄の四柱推命行（行末まで丸ごと差し替える）
-    sub(r'✨ 四柱推命（辛亥日主）：今月＝[^。]*。本日は<strong>[^<]*</strong>。[^\n]*',
-        f'✨ 四柱推命（辛亥日主）：今月＝{t["shichu_month"]}。本日は'
-        f'<strong>{t["shichu_day"]}</strong>。{t["shichu_detail"]}。'
-        f'{t["tenchusatsu"]}。<br>',
-        "注意欄の四柱推命行")
+    # 注意欄の四柱推命行（行ごと差し替える）
+    sub(r'^  ✨ [^\n]*', f'  ✨ {live("alertShichu", blocks)}<br>',
+        "注意欄の四柱推命行", flags=re.M)
 
-    # 注意欄の中国式行
-    sub(r'☯ 中国式占い（八字）：<strong>今月＝[^<]*</strong>。本日<strong>[^<]*</strong>。'
-        r'[^\n]*',
-        f'☯ 中国式占い（八字）：<strong>今月＝{t["shichu_month"]}</strong>。本日'
-        f'<strong>{t["shichu_day"]}</strong>。{t["shichu_detail"]}。'
-        f'{t["tenchusatsu"]}。吉方位：西・北。ラッキー数字：4・9・1・6。',
-        "注意欄の中国式行")
+    # 注意欄の中国式行（行ごと差し替える）
+    sub(r'^  ☯ [^\n]*', f'  ☯ {live("alertBazi", blocks)}',
+        "注意欄の中国式行", flags=re.M)
 
     # 「翌日(M/D)＝XX日：…」の行
     sub(r'→ 翌日[（(]\d{1,2}/\d{1,2}[）)]＝[^<]*<br>',
@@ -215,9 +237,10 @@ def rewrite_sections(html: str, t: dict) -> tuple[str, list[str]]:
     html = re.sub(r'本日\d{1,2}/\d{1,2}は指定日外', '本日は指定日外', html)
 
     # フッターのデータ取得日
-    sub(r'データ取得日: [^<]*<br>', f'データ取得日: {t["date_long"]}<br>', "フッターの日付")
+    sub(r'データ取得日: .*?<br>',
+        f'データ取得日: {live("footerDate", blocks)}<br>', "フッターの日付")
 
-    return html, done
+    return html, done, warnings
 
 
 DAILY_START = "    <!-- uranai:daily-chips ここから（repair_uranai.py が毎回作り直す） -->"
@@ -315,7 +338,7 @@ def inject_enhancements(html: str, t: dict) -> str:
     css = (ASSETS / "uranai-enhance.css").read_text(encoding="utf-8")
     controls = (ASSETS / "uranai-controls.html").read_text(encoding="utf-8")
     filter_js = (ASSETS / "uranai-filter.js").read_text(encoding="utf-8")
-    banner_js = (ASSETS / "uranai-banner.js").read_text(encoding="utf-8")
+    live_js = (ASSETS / "uranai-live.js").read_text(encoding="utf-8")
 
     # meta（データ取得日）
     html = re.sub(r'\n<!-- データ取得日[^\n]*\n<meta name="data-date"[^>]*>', "", html)
@@ -350,19 +373,25 @@ def inject_enhancements(html: str, t: dict) -> str:
             html = re.sub(r'(  <div class="color-grid">)', controls + r'\1', html, count=1)
 
     # JS（末尾に足す）
-    if "ラッキーカラー欄の絞り込み・並び替え" not in html:
+    if "ページ自身が「見た日」を計算する" not in html:
         # 旧・並び替え／期限切れスクリプトは役目が重なるので取り除く
         html = re.sub(r'\(function\(\) \{\n  const TYPE_ORDER.*?\n\}\)\(\);', "",
                       html, flags=re.S)
         html = re.sub(r'// 期限切れチップを非表示にする\n\(function\(\) \{.*?\n\}\)\(\);', "",
                       html, flags=re.S)
         html = html.replace("\n</body>",
-                            f"\n<script>\n{filter_js}\n{banner_js}</script>\n\n</body>", 1)
+                            f"\n<script>\n{filter_js}\n{live_js}</script>\n\n</body>", 1)
     return html
 
 
-def validate(html: str, t: dict, d: datetime.date) -> list[str]:
-    errors = []
+def validate(html: str, t: dict, d: datetime.date) -> tuple[list[str], list[str]]:
+    """(致命的, 警告) を返す。
+
+    致命的 = 直しようがないので書き出しを中止する（構造が壊れている）。
+    警告   = 古い文字列が残っているが、ページ側の uranai-live.js が
+             閲覧時に計算し直すので致命的ではない。
+    """
+    fatal, soft = [], []
     body = re.sub(r'<(script|style)\b.*?</\1>', " ", html, flags=re.S)
     body = re.sub(r'<!--.*?-->', " ", body, flags=re.S)
     md = f"{d.month}/{d.day}"
@@ -372,26 +401,31 @@ def validate(html: str, t: dict, d: datetime.date) -> list[str]:
         if f"{int(m.group(1))}/{int(m.group(2))}" != md:
             strays.add(m.group(0))
     if strays:
-        errors.append("対象日以外の日付が「本日」と併記されています: " + " / ".join(sorted(strays)))
+        soft.append("対象日以外の日付が「本日」と併記されています: " + " / ".join(sorted(strays)))
 
     allowed = {t["info"]["pillar"], t["info"]["next_pillar"], "辛亥"}
     bad = {p for p in re.findall(r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])日', body)
            if p not in allowed}
     if bad:
-        errors.append("対象日/翌日/命式以外の日干支が残っています: "
-                      + " / ".join(sorted(bad)))
+        soft.append("対象日/翌日/命式以外の日干支が残っています: "
+                    + " / ".join(sorted(bad)))
 
-    m = re.search(r'データ取得日: ([^<]*)', body)
+    plain = re.sub(r'<[^>]+>', '', body)
+    m = re.search(r'データ取得日: ([^\n|]*)', plain)
     if not m or m.group(1).strip() != t["date_long"]:
-        errors.append(f'フッターの日付が本日と違います: {m.group(1) if m else "なし"}')
+        soft.append(f'フッターの日付が本日と違います: {m.group(1) if m else "なし"}')
 
     if f'content="{t["iso"]}"' not in html:
-        errors.append("meta data-date が本日になっていません")
+        fatal.append("meta data-date が本日になっていません")
     if 'data-filter="type"' not in html:
-        errors.append("絞り込みUIが入っていません")
+        fatal.append("絞り込みUIが入っていません")
     if 'id="stale-banner"' not in html:
-        errors.append("鮮度バナーが入っていません")
-    return errors
+        fatal.append("鮮度バナーが入っていません")
+    if "uranai-live" not in html and "ページ自身が「見た日」を計算する" not in html:
+        fatal.append("自己計算スクリプト（uranai-live.js）が入っていません")
+    if html.count('data-uranai-live=') < 5:
+        fatal.append("生きた値のタグが足りません（5個必要）")
+    return fatal, soft
 
 
 def main() -> int:
@@ -404,34 +438,40 @@ def main() -> int:
     original = HTML_PATH.read_text(encoding="utf-8")
     t = build_texts(d)
 
-    try:
-        html, done = rewrite_sections(original, t)
-    except RepairError as e:
-        print(f"❌ 修復できません: {e}", file=sys.stderr)
-        print("   HTML は書き換えていません。", file=sys.stderr)
-        return 1
+    html, done, warnings = rewrite_sections(original, t)
 
     html, removed = drop_expired_chips(html, d)
     html = refresh_daily_chips(html, t)
     html = inject_enhancements(html, t)
 
-    errors = validate(html, t, d)
-    if errors:
+    fatal, soft = validate(html, t, d)
+    if fatal:
         print("❌ 修復後の検証に失敗しました（書き出しを中止します）:", file=sys.stderr)
-        for e in errors:
+        for e in fatal:
             print("   - " + e, file=sys.stderr)
         return 1
+    warnings += soft
+
+    def show_warnings():
+        for w in warnings:
+            print("⚠ " + w, file=sys.stderr)
+        if warnings:
+            print("   → 直せなかった部分は、ページを開いたときに "
+                  "uranai-live.js が計算し直します。", file=sys.stderr)
 
     if html == original:
         print(f"✅ 修復の必要はありません（{d.isoformat()} で整合しています）。")
+        show_warnings()
         return 0
 
     if args.check:
+        show_warnings()
         print(f"⚠ 修復が必要です（{d.isoformat()}）。差し替え: "
               + ", ".join(done) + f" / 期限切れチップ {removed} 件")
         return 1
 
     HTML_PATH.write_text(html, encoding="utf-8")
+    show_warnings()
     print(f"🔧 {d.isoformat()} の内容に修復しました。")
     print("   差し替え: " + ", ".join(done))
     print(f"   期限切れチップ削除: {removed} 件")
