@@ -202,7 +202,7 @@ def rewrite_sections(html: str, t: dict) -> tuple[str, list[str], list[str]]:
 
     # 今月の月柱を節入りから計算した値に直す（「辛丑月」など誤った値の上書きも兼ねる）
     PILLAR = r'[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]'
-    sub(rf'今月＝{PILLAR}月（[^）]*）', f'今月＝{t["shichu_month"]}', "今月の月柱",
+    sub(rf'今月＝{PILLAR}月（(?:[^（）]|（[^（）]*）)*）', f'今月＝{t["shichu_month"]}', "今月の月柱",
         required=False)
     html = re.sub(rf'今月＝{PILLAR}月(?!（)', f'今月＝{t["shichu_month"]}', html)
 
@@ -438,11 +438,32 @@ def main() -> int:
     original = HTML_PATH.read_text(encoding="utf-8")
     t = build_texts(d)
 
-    html, done, warnings = rewrite_sections(original, t)
+    def one_pass(src):
+        h, dn, wn = rewrite_sections(src, t)
+        h, rm = drop_expired_chips(h, d)
+        h = refresh_daily_chips(h, t)
+        h = inject_enhancements(h, t)
+        return h, dn, wn, rm
 
-    html, removed = drop_expired_chips(html, d)
-    html = refresh_daily_chips(html, t)
-    html = inject_enhancements(html, t)
+    # 不動点まで回す。1回目の結果を2回目に通しても変わらないことを確かめてから
+    # 書き出す。ここが安定しないまま書き出すと、次の実行でまた変化してしまい
+    # 検証が永久に通らなくなる（2026-09-07 に「偏官（七殺）」のカッコ入れ子で
+    # 実際に起きた。実行のたびに「）」が1つ増えていた）。
+    html, done, warnings, removed = one_pass(original)
+    for _ in range(3):
+        again, _d, _w, _r = one_pass(html)
+        if again == html:
+            break
+        html = again
+    else:
+        print("❌ 修復結果が安定しません（何度直しても変化し続ける）。"
+              "書き出しを中止します。", file=sys.stderr)
+        import difflib
+        diff = list(difflib.unified_diff(html.split("\n"), again.split("\n"),
+                                         lineterm="", n=0))[:12]
+        for line in diff:
+            print("   " + line[:160], file=sys.stderr)
+        return 1
 
     fatal, soft = validate(html, t, d)
     if fatal:

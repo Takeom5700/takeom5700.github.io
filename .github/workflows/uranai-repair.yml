@@ -46,9 +46,12 @@ jobs:
       - name: Repair uranai/index.html for today (Asia/Tokyo)
         run: python3 .github/scripts/repair_uranai.py
 
-      - name: Verify the result is consistent
-        run: python3 .github/scripts/repair_uranai.py --check
-
+      # 先にコミットしてから検証する。
+      # 以前は検証を先にやっていたため、修復自体は成功しているのに
+      # 検証で落ちてコミットに到達せず、ページが直らないまま放置された
+      # （2026-09-07〜08。「偏官（七殺）」のカッコ入れ子で冪等性が崩れたのが原因）。
+      # 直った HTML を公開することを優先し、検証は最後に回して
+      # 失敗したらジョブを赤くして気づけるようにする。
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
@@ -65,3 +68,6 @@ jobs:
             sleep $((2 ** i))
           done
           exit 1
+
+      - name: Verify the published result is consistent
+        run: python3 .github/scripts/repair_uranai.py --check
