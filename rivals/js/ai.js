@@ -35,8 +35,10 @@ export const AI_LEVELS = {
             desc: '良い交換は分かるが、前列後列の使い分けが甘い' },
   hard:   { name: 'むずかしい', beam: 8,  depth: 16, blunder: 0,    shape: true,  foresight: true,
             desc: 'ブロック・ウォールを理解し、返しの打点も数える' },
-  master: { name: 'げきむず',   beam: 12, depth: 24, blunder: 0,    shape: true,  foresight: true,
-            reply: 4, wide: true, desc: '自分のターンを終えたあと、相手が何をするかまで読む' },
+  // wide（全マスを探索）は枝が増えすぎて逆に弱くなったので使わない。
+  // 代わりに「相手の返し」を読む候補数を増やしてある。
+  master: { name: 'げきむず',   beam: 14, depth: 24, blunder: 0,    shape: true,  foresight: true,
+            reply: 6, desc: '自分のターンを終えたあと、相手が何をするかまで読む' },
 };
 
 // ------------------------------------------------------------
@@ -107,6 +109,11 @@ export function evaluate(g, pi, prof, level) {
   s += me.hand.length * w.hand;
   s -= me.mp * w.mana * 1.4;
   s += me.tension * 0.8;
+
+  // 英雄：共闘しているだけで毎ターンの手数が増える。レベルが上がるほど強い。
+  s += heroValue(g, pi) - heroValue(g, 1 - pi) * 0.8;
+  // ダンジョン：踏破に近いほど価値がある。マスを1つ潰している分は差し引く。
+  s += dungeonValue(g, pi) - dungeonValue(g, 1 - pi) * 0.8;
   if (me.weapon) s += me.weapon.atk * me.weapon.dur * 0.35;
   s -= Math.max(0, 6 - me.deck.length) * 1.6;
 
@@ -119,6 +126,22 @@ export function evaluate(g, pi, prof, level) {
     if (op.hp - myReach <= 0) s += 25;
   }
   return s;
+}
+
+function heroValue(g, pi) {
+  const h = g.p(pi).hero;
+  if (!h) return 0;
+  const sk = g.heroSkill(pi);
+  return 4 + h.level * 3 + (sk && !h.usedThisTurn ? 1.5 : 0);
+}
+
+function dungeonValue(g, pi) {
+  let v = 0;
+  for (const d of g.dungeonsOf(pi)) {
+    v += 1.5 + (d.dur / Math.max(1, d.goal)) * 6;   // 踏破が近いほど価値が上がる
+    v -= 2.0;                                        // マスを1つ使っている
+  }
+  return v;
 }
 
 // ------------------------------------------------------------
@@ -135,6 +158,7 @@ function quickScore(g, pi, a) {
     return (kills ? 10 : 2) + (survives ? 4 : 0) + g.atkOf(d) * 0.4;
   }
   if (a.type === 'tension') return 9;
+  if (a.type === 'hero') return 8;
   if (a.type === 'play') {
     const inst = g.p(pi).hand.find(h => h.iid === a.iid);
     return inst ? 6 + CARDS[inst.cardId].cost * 0.4 : 0;

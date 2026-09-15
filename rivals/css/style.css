@@ -171,10 +171,23 @@ img{ max-width:100%; }
   border-radius:6px; padding:1px 6px; white-space:nowrap;
 }
 .ls-deck{ font-size:.68rem; color:var(--washi-sub); white-space:nowrap; }
+.ls-btns{ flex:none; display:flex; flex-direction:column; gap:3px; align-items:stretch; }
 .btn-tension{
   flex:none; border:1px solid var(--kin); background:linear-gradient(180deg,#ffd27a,var(--kin));
-  color:#2a1508; font-weight:700; font-size:.76rem; padding:7px 10px; border-radius:9px; cursor:pointer;
-  animation:tenpulse 1.6s ease-in-out infinite;
+  color:#2a1508; font-weight:700; font-size:.72rem; padding:5px 9px; border-radius:8px; cursor:pointer;
+  white-space:nowrap; animation:tenpulse 1.6s ease-in-out infinite;
+}
+/* 英雄（共闘）— 1ターンに1度のヒーロースキル */
+.btn-hero{
+  flex:none; border:1px solid #7fc8ff; background:linear-gradient(180deg,#bfe4ff,#5aa8e0);
+  color:#0d2233; font-weight:700; font-size:.72rem; padding:4px 9px; border-radius:8px; cursor:pointer;
+  white-space:nowrap; line-height:1.2; display:flex; flex-direction:column; align-items:center;
+}
+.btn-hero small{ font-size:.6rem; font-weight:500; opacity:.8; }
+.btn-hero:disabled{ opacity:.35; filter:grayscale(.7); cursor:default; }
+.ls-hero{
+  font-size:.7rem; color:#9fd8ff; border:1px solid rgba(127,200,255,.45);
+  border-radius:6px; padding:1px 6px; white-space:nowrap; cursor:help;
 }
 @keyframes tenpulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,178,68,.6);} 50%{ box-shadow:0 0 14px 3px rgba(255,178,68,.55);} }
 .btn-tension:disabled{ animation:none; opacity:.35; filter:grayscale(.7); cursor:default; }
@@ -223,6 +236,15 @@ img{ max-width:100%; }
 .unit.is-frozen{ filter:saturate(.35) brightness(.85); }
 .unit.is-frozen::after{ content:""; position:absolute; inset:0; background:linear-gradient(135deg,rgba(150,200,255,.22),transparent 60%); }
 .unit.is-stealth{ opacity:.72; }
+/* ダンジョン：マスは使うが、ユニットではないので攻撃も反撃もしない */
+.unit.is-dungeon{
+  border-style:dashed; border-color:rgba(255,178,68,.5);
+  background:linear-gradient(180deg,rgba(60,40,24,.95),rgba(34,20,16,.95));
+  cursor:help;
+}
+.dg-bar{ width:80%; height:4px; border-radius:2px; background:rgba(244,234,216,.18); overflow:hidden; margin-top:2px; }
+.dg-bar i{ display:block; height:100%; background:linear-gradient(90deg,var(--kin),#ffd89a); transition:width .3s; }
+.dg-num{ font-family:"DotGothic16",monospace; font-size:.72rem; color:var(--kin); }
 .unit.is-dying{ transform:scale(.5) rotate(12deg); opacity:0; }
 .unit.is-hit{ animation:shake .3s; }
 @keyframes shake{ 0%,100%{transform:translateX(0);} 20%{transform:translateX(-5px);} 40%{transform:translateX(5px);} 60%{transform:translateX(-3px);} 80%{transform:translateX(3px);} }
@@ -367,6 +389,10 @@ img{ max-width:100%; }
 }
 .tip b{ color:var(--kin); display:block; margin-bottom:3px; font-size:.86rem; }
 .tip .t-kw{ color:#9fd8ff; }
+.tip .t-sk{ margin-top:3px; padding-left:6px; border-left:2px solid rgba(127,200,255,.4); color:var(--washi-sub); }
+.tip .t-sk.on{ border-left-color:#7fc8ff; color:var(--washi); }
+.tip .t-sk b{ display:inline; color:#9fd8ff; font-size:.8rem; }
+.tip .t-up{ opacity:.7; }
 
 /* ---------- ルール ---------- */
 .rules{ max-width:760px; font-size:.9rem; }

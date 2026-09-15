@@ -35,7 +35,7 @@ export function initBuilder() {
   $('b-cost-chips').innerHTML = ['すべて', '0-1', '2', '3', '4', '5', '6', '7+'].map((t, i) =>
     `<button class="chip ${i === 0 ? 'is-on' : ''}" data-cost="${i === 0 ? '' : t}">${t}</button>`).join('');
   $('b-type-chips').innerHTML = [['', 'すべて'], ['unit', 'ユニット'], ['spell', '特技'], ['weapon', '武器'],
-    ['武術', '武術'], ['道具', '道具'], ['タロット', 'タロット']].map(([v, t], i) =>
+    ['hero', '英雄'], ['dungeon', 'ダンジョン'], ['武術', '武術'], ['道具', '道具'], ['タロット', 'タロット']].map(([v, t], i) =>
     `<button class="chip ${i === 0 ? 'is-on' : ''}" data-type="${v}">${t}</button>`).join('');
   chipRow($('b-cost-chips'), (v) => { filter.cost = v || null; renderPool(); }, 'cost');
   chipRow($('b-type-chips'), (v) => { filter.type = v || null; renderPool(); }, 'type');
@@ -128,7 +128,7 @@ function matchFilter(c) {
     if (!['0-1', '7+'].includes(filter.cost) && n !== Number(filter.cost)) return false;
   }
   if (filter.type) {
-    if (['unit', 'spell', 'weapon'].includes(filter.type)) { if (c.type !== filter.type) return false; }
+    if (['unit', 'spell', 'weapon', 'hero', 'dungeon'].includes(filter.type)) { if (c.type !== filter.type) return false; }
     else if (c.sub !== filter.type) return false;
   }
   return true;

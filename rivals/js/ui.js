@@ -6,7 +6,7 @@
 import { CARDS, CLASSES, TENSION_SKILLS } from './cards.js';
 import { createGame, FRONT, BACK, LEADER_HP } from './engine.js';
 import { createAiController, AI_TYPES, AI_LEVELS } from './ai.js';
-import { cardTint, monogram, kwBadges, subLabel, showTip, hideTip, classColor } from './view.js';
+import { cardTint, monogram, kwBadges, subLabel, showTip, hideTip, classColor, heroSkillLines } from './view.js';
 import { SFX } from './audio.js';
 
 let game = null, myPi = 0, aiPi = 1, ai = null, conf = null;
@@ -85,6 +85,10 @@ function renderStrip(root, pi, isMe) {
   const sk = TENSION_SKILLS[p.cls];
   const dots = [0, 1, 2].map(i => `<span class="ten-dot ${p.tension > i ? 'on' : ''}"></span>`).join('');
   const canTension = isMe && p.tension >= 3 && game.active === myPi && game.s.winner === null;
+  const hero = p.hero ? CARDS[p.hero.cardId] : null;
+  const hsk = game.heroSkill(pi);
+  const canHero = isMe && hsk && !p.hero.usedThisTurn && p.mp >= hsk.cost
+                  && game.active === myPi && game.s.winner === null;
   root.className = 'leader-strip' + (isMe && game.active === myPi ? ' is-me-active' : '');
   root.dataset.pi = pi;
   root.innerHTML = `
@@ -96,14 +100,26 @@ function renderStrip(root, pi, isMe) {
         <span class="mp-pill">MP<b>${p.mp}</b>/${p.maxMp}</span>
         <span class="ten-gauge" title="テンション ${p.tension}/3">${dots}</span>
         ${p.weapon ? `<span class="ls-weapon">${p.weapon.name} ${p.weapon.atk}／耐${p.weapon.dur}</span>` : ''}
+        ${hero ? `<span class="ls-hero" data-hero="${pi}">英雄 ${hero.name}・Lv${p.hero.level + 1}</span>` : ''}
         <span class="ls-deck">山札${p.deck.length}・手札${p.hand.length}</span>
       </div>
     </div>
-    ${isMe ? `<button class="btn-tension" ${canTension ? '' : 'disabled'} title="${sk.name}：${sk.text}">テンション<br>スキル</button>` : ''}`;
+    ${isMe ? `<div class="ls-btns">
+      <button class="btn-tension" ${canTension ? '' : 'disabled'} title="${sk.name}：${sk.text}">テンション</button>
+      ${hero ? `<button class="btn-hero" ${canHero ? '' : 'disabled'}
+          title="${hsk.name}（${hsk.cost}MP）：${hsk.text}">${hsk.name}<small>${hsk.cost}MP</small></button>` : ''}
+    </div>` : ''}`;
   if (isMe) {
     const b = root.querySelector('.btn-tension');
     if (b) b.onclick = (e) => { e.stopPropagation(); selectTension(); };
-    root.onmouseenter = null;
+    const h = root.querySelector('.btn-hero');
+    if (h) h.onclick = (e) => { e.stopPropagation(); selectHero(); };
+  }
+  const hb = root.querySelector('.ls-hero');
+  if (hb && hero) {
+    hb.onmouseenter = (ev) => showTip(hero, ev.clientX, ev.currentTarget.getBoundingClientRect().top,
+      `<div style="margin-top:4px">${heroSkillLines(hero, p.hero.level)}</div>`);
+    hb.onmouseleave = hideTip;
   }
   root.onclick = (e) => { e.stopPropagation(); onLeaderClick(pi); };
 }
@@ -116,12 +132,30 @@ function renderField(root, pi) {
       const slot = document.createElement('div');
       slot.className = 'slot';
       slot.dataset.pi = pi; slot.dataset.lane = lane; slot.dataset.col = colIdx;
-      const u = game.slotUnit(pi, lane, colIdx);
-      if (u) slot.appendChild(unitEl(u));
+      const u = game.slotOccupant(pi, lane, colIdx);
+      if (u) slot.appendChild(u.isDungeon ? dungeonEl(u) : unitEl(u));
       slot.onclick = (e) => { e.stopPropagation(); onSlotClick(pi, lane, colIdx, u); };
       row.appendChild(slot);
     }
   }
+}
+
+function dungeonEl(d) {
+  const c = CARDS[d.cardId];
+  const el2 = document.createElement('div');
+  el2.className = 'unit is-dungeon';
+  el2.dataset.uid = d.uid;
+  el2.style.setProperty('--uc', cardTint(c.cls));
+  const pct = Math.min(100, Math.round(d.dur / d.goal * 100));
+  el2.innerHTML = `
+    <div class="u-mon">${monogram(c)}</div>
+    <div class="u-name">${c.name}</div>
+    <div class="dg-bar"><i style="width:${pct}%"></i></div>
+    <div class="u-stat"><span class="dg-num">${d.dur}/${d.goal}</span></div>`;
+  el2.onmouseenter = (e) => showTip(c, e.clientX, e.currentTarget.getBoundingClientRect().top,
+    `<div style="margin-top:4px;color:#cdb49e">耐久値 ${d.dur}／${d.goal}（踏破すると効果が起きて消える）</div>`);
+  el2.onmouseleave = hideTip;
+  return el2;
 }
 
 function unitEl(u) {
@@ -206,6 +240,7 @@ function candidates() {
   if (sel.type === 'unit') return myActions().filter(a => a.type === 'attack' && a.from.k === 'u' && a.from.uid === sel.uid);
   if (sel.type === 'leader') return myActions().filter(a => a.type === 'attack' && a.from.k === 'l');
   if (sel.type === 'tension') return myActions().filter(a => a.type === 'tension');
+  if (sel.type === 'hero') return myActions().filter(a => a.type === 'hero');
   return [];
 }
 
@@ -278,15 +313,19 @@ function onHandClick(iid) {
   }
   SFX.tap();
   sel = { type: 'hand', iid, choice: null, slot: null };
-  // 必中モードのタロットは、先に①②を選ぶ
-  if (c.divine && game.p(myPi).hitMode) { askDivine(c, (i) => { sel.choice = i; afterHandSelect(c); }); return; }
+  // 「選択」カードと、必中モードのタロットは、先に効果を選ぶ
+  if (c.choose) { askChoice(c, c.choose, '選択', (i) => { sel.choice = i; afterHandSelect(c); }); return; }
+  if (c.divine && game.p(myPi).hitMode) { askChoice(c, c.divine, '占い（必中モード）', (i) => { sel.choice = i; afterHandSelect(c); }); return; }
   afterHandSelect(c);
 }
 
 function afterHandSelect(c) {
   const cands = candidates();
   if (!cands.length) { clearSel(); return; }
-  if (c.type === 'unit' && cands.some(a => a.slot)) { hint('置く場所を選んでください'); applyHighlights(); return; }
+  if ((c.type === 'unit' || c.type === 'dungeon') && cands.some(a => a.slot)) {
+    hint(c.type === 'dungeon' ? 'ダンジョンを置くマスを選んでください' : '置く場所を選んでください');
+    applyHighlights(); return;
+  }
   if (cands.some(a => a.target)) { hint('対象を選んでください'); applyHighlights(); return; }
   const plain = cands.find(a => !a.target) || cands[0];
   clearSelKeepBusy(); doApply(plain);
@@ -351,6 +390,17 @@ function tryTarget(ref) {
   return true;
 }
 
+function selectHero() {
+  if (busy || game.active !== myPi) return;
+  const acts = myActions().filter(a => a.type === 'hero');
+  if (!acts.length) return;
+  SFX.tap();
+  if (acts.length === 1 && !acts[0].target) { doApply(acts[0]); return; }
+  sel = { type: 'hero' };
+  hint('ヒーロースキルの対象を選んでください');
+  applyHighlights();
+}
+
 function selectTension() {
   if (busy || game.active !== myPi) return;
   const acts = myActions().filter(a => a.type === 'tension');
@@ -362,12 +412,12 @@ function selectTension() {
   applyHighlights();
 }
 
-// タロットの①②選択
-function askDivine(card, cb) {
-  el.overlayBox.innerHTML = `<h3>占い</h3><p>${card.name}（必中モード）— 効果を選べます</p>
+// 効果を選ばせる（選択カード／必中モードのタロット）
+function askChoice(card, opts, title, cb) {
+  const marks = ['①', '②', '③', '④'];
+  el.overlayBox.innerHTML = `<h3>${title}</h3><p>${card.name} — 効果を選べます</p>
     <div class="choice-list">
-      <button data-i="0"><b>①</b>${card.divine[0].text}</button>
-      <button data-i="1"><b>②</b>${card.divine[1].text}</button>
+      ${opts.map((o, i) => `<button data-i="${i}"><b>${marks[i]}</b>${o.text}</button>`).join('')}
     </div>
     <div class="overlay-btns"><button class="btn" data-i="-1">やめる</button></div>`;
   hideTip();
@@ -461,6 +511,11 @@ async function playEvents(evs, before) {
       case 'summon': SFX.summon(); await wait(step * 0.7); break;
       case 'death': SFX.death(); await wait(step * 0.7); break;
       case 'tensionSkill': SFX.tension(); await wait(420); break;
+      case 'heroSkill': SFX.tension(); await wait(340); break;
+      case 'heroLevel': SFX.win(); await wait(520); break;
+      case 'hero': SFX.summon(); await wait(320); break;
+      case 'dungeon': await wait(step * 0.5); break;
+      case 'clear': SFX.tension(); await wait(480); break;
       case 'divine': await wait(360); break;
       case 'turn': SFX.turn(); break;
       case 'freeze': await wait(step * 0.5); break;

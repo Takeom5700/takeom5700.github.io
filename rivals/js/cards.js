@@ -64,7 +64,8 @@ export const KEYWORD_TEXT = {
   '速攻':       '召喚したターンから攻撃できる',
   '２回攻撃':   '1ターンに2回攻撃できる',
   'メタルボディ': '受けるダメージが1になる',
-  'アンチステルス': 'ステルスのユニットを攻撃・対象にできる',
+  'アンチステルス': 'ステルスのユニットも攻撃できる',
+  'テンションリンク': '味方がテンションスキルを使ったときに発動する',
 };
 
 export const CARDS = {};
@@ -83,6 +84,7 @@ const T_ALLY_UNIT  = { side: 'ally',  kind: 'unit' };
 const T_ANY_UNIT   = { side: 'any',   kind: 'unit' };
 const T_ALLY_CHAR  = { side: 'ally',  kind: 'char' };
 const T_ANY_CHAR   = { side: 'any',   kind: 'char' };
+const T_ENEMY_CHAR = { side: 'enemy', kind: 'char' };
 
 // ============================================================
 //  中立ユニット
@@ -660,6 +662,245 @@ C({ id:'f_ryu_gakusha', name:'占星術師', cost:5, type:'unit', cls:F, atk:4, 
 C({ id:'f_minea', name:'ミネア', cost:6, type:'unit', cls:F, atk:5, hp:5, rarity:'LEG',
     text:'味方がタロットを使うたびに+1/+1し、カードを1枚引く',
     onAllySpell(g, self, card){ if (card.sub === 'タロット') { g.buff(g.ref(self), 1, 1); g.draw(self.pi, 1); } } });
+
+// ============================================================
+//  英雄（ヒーローカード）
+//  プレイすると「共闘」状態になり、1ターンに1度ヒーロースキルが使える。
+//  使うほどスキルがレベルアップして強くなる。
+//  skills[i].upTo = そのレベルで何回使えば次に上がるか
+// ============================================================
+const HERO_TEXT = '共闘：1ターンに1度ヒーロースキルを使える。使うほど強くなる';
+
+C({ id:'h_loto', name:'ロトの血を引く者', cost:1, type:'hero', cls:'neutral', rarity:'LEG',
+    opening:true, text:HERO_TEXT + '／デッキに入れていると必ず初手に来る',
+    skills:[
+      { name:'たたかう', cost:1, upTo:1, text:'敵1体に1ダメージを与える', target:T_ENEMY_CHAR,
+        run(g, ctx){ g.dmg(ctx.target, 1, { pi:ctx.pi }); } },
+      { name:'王女救出', cost:2, upTo:3, text:'敵1体に2ダメージを与える', target:T_ENEMY_CHAR,
+        run(g, ctx){ g.dmg(ctx.target, 2, { pi:ctx.pi }); } },
+      { name:'竜王一閃', cost:3, text:'敵1体に4ダメージを与える', target:T_ENEMY_CHAR,
+        run(g, ctx){ g.dmg(ctx.target, 4, { pi:ctx.pi }); } },
+    ]});
+
+C({ id:'h_anlucia', name:'アンルシア', cost:5, type:'hero', cls:'neutral', rarity:'LEG', text:HERO_TEXT,
+    skills:[
+      { name:'勇者の光', cost:1, upTo:2, text:'味方ユニット1体に+1/+1を与える', target:T_ALLY_UNIT,
+        run(g, ctx){ g.buff(ctx.target, 1, 1); } },
+      { name:'聖なる祈り', cost:2, upTo:3, text:'味方ユニット1体に+2/+2を与える', target:T_ALLY_UNIT,
+        run(g, ctx){ g.buff(ctx.target, 2, 2); } },
+      { name:'light（光の波動）', cost:3, text:'味方ユニットすべてに+2/+2を与える',
+        run(g, ctx){ g.allyUnits(ctx.pi).forEach(u => g.buff(g.ref(u), 2, 2)); } },
+    ]});
+
+C({ id:'h_laurasia', name:'ローレシアの王子', cost:3, type:'hero', cls:W, rarity:'LEG', text:HERO_TEXT,
+    skills:[
+      { name:'ちからをためる', cost:1, upTo:2, text:'このターン、味方リーダーは攻撃力+2を得る',
+        run(g, ctx){ g.leaderAtkBuff(ctx.pi, 2); } },
+      { name:'せいけんづき', cost:2, upTo:3, text:'敵ユニット1体に3ダメージを与える', target:T_ENEMY_UNIT,
+        run(g, ctx){ g.dmg(ctx.target, 3, { pi:ctx.pi }); } },
+      { name:'ギガブレイク', cost:3, text:'敵ユニット1体に6ダメージを与える', target:T_ENEMY_UNIT,
+        run(g, ctx){ g.dmg(ctx.target, 6, { pi:ctx.pi }); } },
+    ]});
+
+C({ id:'h_samaltria', name:'サマルトリアの王子', cost:3, type:'hero', cls:P, rarity:'LEG', text:HERO_TEXT,
+    skills:[
+      { name:'ホイミ', cost:1, upTo:2, text:'味方キャラ1体のHPを3回復する', target:T_ALLY_CHAR,
+        run(g, ctx){ g.heal(ctx.target, 3); } },
+      { name:'ベホイミ', cost:2, upTo:3, text:'味方キャラ1体のHPを6回復する', target:T_ALLY_CHAR,
+        run(g, ctx){ g.heal(ctx.target, 6); } },
+      { name:'ベホマ', cost:3, text:'味方キャラ1体のHPを全回復し、カードを1枚引く', target:T_ALLY_CHAR,
+        run(g, ctx){ g.heal(ctx.target, 99); g.draw(ctx.pi, 1); } },
+    ]});
+
+C({ id:'h_moonbrooke', name:'ムーンブルクの王女', cost:3, type:'hero', cls:M, rarity:'LEG', text:HERO_TEXT,
+    skills:[
+      { name:'メラ', cost:1, upTo:2, text:'敵1体に2ダメージを与える', target:T_ENEMY_CHAR,
+        run(g, ctx){ g.dmg(ctx.target, 2, { spell:true, pi:ctx.pi }); } },
+      { name:'メラミ', cost:2, upTo:3, text:'敵1体に3ダメージを与える', target:T_ENEMY_CHAR,
+        run(g, ctx){ g.dmg(ctx.target, 3, { spell:true, pi:ctx.pi }); } },
+      { name:'メラゾーマ', cost:3, text:'敵1体に5ダメージを与える', target:T_ENEMY_CHAR,
+        run(g, ctx){ g.dmg(ctx.target, 5, { spell:true, pi:ctx.pi }); } },
+    ]});
+
+C({ id:'h_rex', name:'レックス', cost:3, type:'hero', cls:A, rarity:'LEG', text:HERO_TEXT,
+    skills:[
+      { name:'タイガークロー', cost:1, upTo:2, text:'敵ユニット1体に2ダメージを与える', target:T_ENEMY_UNIT,
+        run(g, ctx){ g.dmg(ctx.target, 2, { pi:ctx.pi }); } },
+      { name:'ばくれつけん', cost:2, upTo:3, text:'ランダムな敵ユニットに2ダメージを2回与える',
+        run(g, ctx){ for (let i=0;i<2;i++){ const t=g.randEnemyUnit(ctx.pi); if(t) g.dmg(t,2,{pi:ctx.pi}); } } },
+      { name:'しんくうげり', cost:3, text:'敵ユニットすべてに3ダメージを与える',
+        run(g, ctx){ g.enemyUnits(ctx.pi).forEach(u => g.dmg(g.ref(u), 3, { pi:ctx.pi })); } },
+    ]});
+
+C({ id:'h_yangus', name:'ヤンガス', cost:3, type:'hero', cls:R, rarity:'LEG', text:HERO_TEXT,
+    skills:[
+      { name:'どうぐ探し', cost:1, upTo:2, text:'道具カードを1枚手札に加える',
+        run(g, ctx){ g.addRandomFromPool(ctx.pi, c => c.sub === '道具', 1); } },
+      { name:'大あばれ', cost:2, upTo:3, text:'敵ユニット1体に3ダメージを与える', target:T_ENEMY_UNIT,
+        run(g, ctx){ g.dmg(ctx.target, 3, { pi:ctx.pi }); } },
+      { name:'一発ギャグ', cost:3, text:'道具カードを2枚加え、味方ユニットすべてに+1/+1を与える',
+        run(g, ctx){ g.addRandomFromPool(ctx.pi, c => c.sub === '道具', 2);
+                     g.allyUnits(ctx.pi).forEach(u => g.buff(g.ref(u), 1, 1)); } },
+    ]});
+
+C({ id:'h_rosalie', name:'ロザリー', cost:3, type:'hero', cls:D, rarity:'LEG', text:HERO_TEXT,
+    skills:[
+      { name:'いのり', cost:1, upTo:2, text:'このターンのMPを1増やす',
+        run(g, ctx){ g.gainMp(ctx.pi, 1); } },
+      { name:'魔族の加護', cost:2, upTo:3, text:'味方ユニット1体に+2/+2を与える', target:T_ALLY_UNIT,
+        run(g, ctx){ g.buff(ctx.target, 2, 2); } },
+      { name:'進化の秘法', cost:3, text:'味方ユニットすべてに+2/+2と貫通を与える',
+        run(g, ctx){ g.allyUnits(ctx.pi).forEach(u => { const r=g.ref(u); g.buff(r,2,2); g.grantKw(r,'貫通'); }); } },
+    ]});
+
+C({ id:'h_manya', name:'マーニャ', cost:3, type:'hero', cls:F, rarity:'LEG', text:HERO_TEXT,
+    skills:[
+      { name:'火炎の舞', cost:1, upTo:2, text:'敵ユニット1体に2ダメージを与える', target:T_ENEMY_UNIT,
+        run(g, ctx){ g.dmg(ctx.target, 2, { spell:true, pi:ctx.pi }); } },
+      { name:'タロット占い', cost:2, upTo:3, text:'タロットカードを1枚手札に加える',
+        run(g, ctx){ g.addRandomFromPool(ctx.pi, c => c.sub === 'タロット', 1); } },
+      { name:'マジックバーン', cost:3, text:'敵リーダーに4ダメージを与える',
+        run(g, ctx){ g.dmg(g.leaderRef(1-ctx.pi), 4, { spell:true, pi:ctx.pi }); } },
+    ]});
+
+// ============================================================
+//  ダンジョン
+//  マスを占有し、条件を満たすたび耐久値がたまる。
+//  踏破するとその場所で効果が起き、ダンジョンは消える。
+//  ユニットではないので攻撃も反撃もせず、ブロック・ウォールにも数えない。
+// ============================================================
+C({ id:'box_shiawase', name:'しあわせの箱', cost:5, type:'unit', atk:4, hp:4, token:true,
+    text:'死亡時：カードを2枚引く', death(g, self){ g.draw(self.pi, 2); } });
+
+C({ id:'dg_fushigi', name:'不思議のダンジョン', cost:3, type:'dungeon', cls:'neutral', goal:5, rarity:'R',
+    text:'ダンジョン（耐久値5）：味方ユニットが場に出るたび耐久値+1。踏破：その場所にしあわせの箱（4/4）を出す',
+    onAllySummon(g, self){ g.dungeonProgress(self, 1); },
+    clear(g, spot){ g.summon(spot.pi, 'box_shiawase', { lane:spot.lane, col:spot.col }); } });
+
+C({ id:'dg_ouke', name:'王家の墓', cost:3, type:'dungeon', cls:W, goal:3, rarity:'R',
+    text:'ダンジョン（耐久値3）：味方ユニットが倒れるたび耐久値+1。踏破：4/2のあらくれを2体召喚し、味方ユニットすべてに+1/+0',
+    onAllyDeath(g, self){ g.dungeonProgress(self, 1); },
+    clear(g, spot){ g.summon(spot.pi, 'arakure', { lane:spot.lane, col:spot.col }); g.summon(spot.pi, 'arakure');
+                    g.allyUnits(spot.pi).forEach(u => g.buff(g.ref(u), 1, 0)); } });
+
+C({ id:'dg_meikyu', name:'魔法の迷宮', cost:3, type:'dungeon', cls:M, goal:4, rarity:'R',
+    text:'ダンジョン（耐久値4）：味方が特技を使うたび耐久値+1。踏破：敵ユニットすべてに4ダメージ',
+    onAllySpell(g, self){ g.dungeonProgress(self, 1); },
+    clear(g, spot){ g.enemyUnits(spot.pi).forEach(u => g.dmg(g.ref(u), 4, { spell:true, pi:spot.pi })); } });
+
+C({ id:'dg_tenku', name:'天空の城', cost:4, type:'dungeon', cls:P, goal:4, rarity:'SR',
+    text:'ダンジョン（耐久値4）：味方キャラが回復するたび耐久値+1。踏破：味方キャラすべてを全回復し、味方ユニットすべてに+0/+3',
+    onAllyHeal(g, self){ g.dungeonProgress(self, 1); },
+    clear(g, spot){ g.allyChars(spot.pi).forEach(r => g.heal(r, 99));
+                    g.allyUnits(spot.pi).forEach(u => g.buff(g.ref(u), 0, 3)); } });
+
+C({ id:'dg_shugyo', name:'修行の間', cost:3, type:'dungeon', cls:A, goal:4, rarity:'R',
+    text:'ダンジョン（耐久値4）：味方が武術カードを使うたび耐久値+1。踏破：味方ユニットすべてに+2/+2と速攻',
+    onAllySpell(g, self, card){ if (card.sub === '武術') g.dungeonProgress(self, 1); },
+    clear(g, spot){ g.allyUnits(spot.pi).forEach(u => { const r=g.ref(u); g.buff(r,2,2); g.grantKw(r,'速攻'); }); } });
+
+C({ id:'dg_suiro', name:'地下水路', cost:2, type:'dungeon', cls:R, goal:4, rarity:'R',
+    text:'ダンジョン（耐久値4）：味方が道具カードを使うたび耐久値+1。踏破：道具カードを3枚手札に加え、味方ユニットすべてに+1/+1',
+    onAllySpell(g, self, card){ if (card.sub === '道具') g.dungeonProgress(self, 1); },
+    clear(g, spot){ g.addRandomFromPool(spot.pi, c => c.sub === '道具', 3);
+                    g.allyUnits(spot.pi).forEach(u => g.buff(g.ref(u), 1, 1)); } });
+
+C({ id:'dg_ryuuou', name:'竜王の城', cost:5, type:'dungeon', cls:D, goal:4, rarity:'SR',
+    text:'ダンジョン（耐久値4）：自分のターン終了時に耐久値+1。踏破：その場所に竜王（8/8・貫通）を出す',
+    turnEnd(g, self){ g.dungeonProgress(self, 1); },
+    clear(g, spot){ g.summon(spot.pi, 'ryuuou_true', { lane:spot.lane, col:spot.col }); } });
+
+C({ id:'dg_honoo', name:'炎のほこら', cost:3, type:'dungeon', cls:F, goal:4, rarity:'R',
+    text:'ダンジョン（耐久値4）：味方がタロットを使うたび耐久値+1。踏破：タロットを3枚手札に加え、必中モードになる',
+    onAllySpell(g, self, card){ if (card.sub === 'タロット') g.dungeonProgress(self, 1); },
+    clear(g, spot){ g.addRandomFromPool(spot.pi, c => c.sub === 'タロット', 3); g.setHitMode(spot.pi, true); } });
+
+// ============================================================
+//  選択カード（占いと違い、必ず自分で選ぶ）
+// ============================================================
+C({ id:'n_sakusen', name:'さくせん', cost:2, type:'spell', cls:'neutral',
+    text:'選択：①味方ユニット1体に+2/+2 ②敵ユニット1体に3ダメージ',
+    choose:[
+      { text:'味方ユニット1体に+2/+2を与える', target:T_ALLY_UNIT, run(g, ctx){ g.buff(ctx.target, 2, 2); } },
+      { text:'敵ユニット1体に3ダメージを与える', target:T_ENEMY_UNIT,
+        run(g, ctx){ g.dmg(ctx.target, 3, { spell:true, pi:ctx.pi }); } },
+    ]});
+C({ id:'n_ruura', name:'ルーラ', cost:2, type:'spell', cls:'neutral',
+    text:'選択：①味方ユニット1体を手札に戻す ②カードを1枚引き、このターンのMPを1増やす',
+    choose:[
+      { text:'味方ユニット1体を手札に戻す', target:T_ALLY_UNIT, run(g, ctx){ g.bounce(ctx.target); } },
+      { text:'カードを1枚引き、このターンのMPを1増やす', run(g, ctx){ g.draw(ctx.pi, 1); g.gainMp(ctx.pi, 1); } },
+    ]});
+C({ id:'w_yuusha_sentaku', name:'勇者の決断', cost:4, type:'spell', cls:W, rarity:'R',
+    text:'選択：①敵ユニット1体を破壊する ②味方ユニットすべてに+2/+1',
+    choose:[
+      { text:'敵ユニット1体を破壊する', target:T_ENEMY_UNIT, run(g, ctx){ g.destroy(ctx.target); } },
+      { text:'味方ユニットすべてに+2/+1を与える',
+        run(g, ctx){ g.allyUnits(ctx.pi).forEach(u => g.buff(g.ref(u), 2, 1)); } },
+    ]});
+C({ id:'p_seirei_michibiki', name:'精霊の導き', cost:3, type:'spell', cls:P, rarity:'R',
+    text:'選択：①味方キャラ1体を8回復 ②味方ユニットすべてに+0/+2とにおうだち',
+    choose:[
+      { text:'味方キャラ1体のHPを8回復する', target:T_ALLY_CHAR, run(g, ctx){ g.heal(ctx.target, 8); } },
+      { text:'味方ユニットすべてに+0/+2とにおうだちを与える',
+        run(g, ctx){ g.allyUnits(ctx.pi).forEach(u => { const r=g.ref(u); g.buff(r,0,2); g.grantKw(r,'におうだち'); }); } },
+    ]});
+C({ id:'m_maryoku_sentaku', name:'魔力の選択', cost:3, type:'spell', cls:M, rarity:'R',
+    text:'選択：①敵ユニット1体に5ダメージ ②敵ユニットすべてに2ダメージ',
+    choose:[
+      { text:'敵ユニット1体に5ダメージを与える', target:T_ENEMY_UNIT,
+        run(g, ctx){ g.dmg(ctx.target, 5, { spell:true, pi:ctx.pi }); } },
+      { text:'敵ユニットすべてに2ダメージを与える',
+        run(g, ctx){ g.enemyUnits(ctx.pi).forEach(u => g.dmg(g.ref(u), 2, { spell:true, pi:ctx.pi })); } },
+    ]});
+C({ id:'r_shoukon', name:'商魂', cost:3, type:'spell', cls:R,
+    text:'選択：①道具カードを2枚手札に加える ②カードを2枚引く',
+    choose:[
+      { text:'道具カードを2枚手札に加える', run(g, ctx){ g.addRandomFromPool(ctx.pi, c => c.sub === '道具', 2); } },
+      { text:'カードを2枚引く', run(g, ctx){ g.draw(ctx.pi, 2); } },
+    ]});
+C({ id:'d_ankoku_keiyaku', name:'暗黒の契約', cost:3, type:'spell', cls:D, rarity:'R',
+    text:'選択：①MPの上限を2増やす ②敵ユニット1体に5ダメージを与え、味方リーダーに2ダメージ',
+    choose:[
+      { text:'MPの上限を2増やす', run(g, ctx){ g.gainMaxMp(ctx.pi, 2); } },
+      { text:'敵ユニット1体に5ダメージを与え、味方リーダーに2ダメージ', target:T_ENEMY_UNIT,
+        run(g, ctx){ g.dmg(ctx.target, 5, { spell:true, pi:ctx.pi });
+                     g.dmg(g.leaderRef(ctx.pi), 2, { pi:ctx.pi, noTrigger:true }); } },
+    ]});
+C({ id:'f_hoshiyomi', name:'星読み', cost:2, type:'spell', cls:F,
+    text:'選択：①タロットカードを1枚加える ②必中モードになり、カードを1枚引く',
+    choose:[
+      { text:'タロットカードを1枚手札に加える', run(g, ctx){ g.addRandomFromPool(ctx.pi, c => c.sub === 'タロット', 1); } },
+      { text:'必中モードになり、カードを1枚引く', run(g, ctx){ g.setHitMode(ctx.pi, true); g.draw(ctx.pi, 1); } },
+    ]});
+C({ id:'a_kiaidame', name:'気合ため', cost:2, type:'spell', sub:'武術', cls:A,
+    text:'選択：①テンションを2段階上げる ②武術カードを2枚引く',
+    choose:[
+      { text:'テンションを2段階上げる', run(g, ctx){ g.tension(ctx.pi, 2); } },
+      { text:'武術カードを2枚引く',
+        run(g, ctx){ g.drawFiltered(ctx.pi, c => c.sub === '武術'); g.drawFiltered(ctx.pi, c => c.sub === '武術'); } },
+    ]});
+
+// ============================================================
+//  テンションリンク（テンションスキルを使うと発動する）／アンチステルス
+// ============================================================
+C({ id:'n_mamono_tsukai', name:'まもの使い', cost:3, type:'unit', atk:2, hp:4, kw:['テンションリンク'],
+    text:'テンションリンク：ランダムな敵ユニット1体に2ダメージを与える',
+    onTensionSkill(g, self){ const t = g.randEnemyUnit(self.pi); if (t) g.dmg(t, 2, { pi:self.pi }); } });
+C({ id:'n_dragon_rider', name:'ドラゴンライダー', cost:5, type:'unit', atk:4, hp:4, kw:['テンションリンク'],
+    rarity:'R', text:'テンションリンク：+2/+2を得る',
+    onTensionSkill(g, self){ g.buff(g.ref(self), 2, 2); } });
+C({ id:'n_mihari_dracky', name:'みはりドラキー', cost:2, type:'unit', atk:1, hp:3, kw:['アンチステルス'],
+    text:'アンチステルス' });
+C({ id:'w_battle_master', name:'バトルマスター', cost:5, type:'unit', cls:W, atk:4, hp:5, kw:['テンションリンク'],
+    rarity:'R', text:'テンションリンク：このターン、味方リーダーは攻撃力+2を得る',
+    onTensionSkill(g, self){ g.leaderAtkBuff(self.pi, 2); } });
+C({ id:'p_hagoromo', name:'天使のはごろも', cost:4, type:'unit', cls:P, atk:3, hp:4, kw:['テンションリンク'],
+    text:'テンションリンク：味方キャラすべてのHPを2回復する',
+    onTensionSkill(g, self){ g.allyChars(self.pi).forEach(r => g.heal(r, 2)); } });
+C({ id:'m_kenja', name:'大賢者', cost:4, type:'unit', cls:M, atk:3, hp:4, kw:['テンションリンク'],
+    rarity:'R', text:'テンションリンク：ランダムな敵ユニット1体に3ダメージを与える',
+    onTensionSkill(g, self){ const t = g.randEnemyUnit(self.pi); if (t) g.dmg(t, 3, { spell:true, pi:self.pi }); } });
 
 // ============================================================
 //  特殊カード

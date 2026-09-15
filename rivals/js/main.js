@@ -1,7 +1,7 @@
 // ============================================================
 //  画面の切り替えと設定。ここがアプリの入口。
 // ============================================================
-import { CARDS, CLASSES, PLAYABLE_CLASSES, TENSION_SKILLS, KEYWORD_TEXT } from './cards.js';
+import { CARDS, COLLECTIBLE, CLASSES, PLAYABLE_CLASSES, TENSION_SKILLS, KEYWORD_TEXT } from './cards.js';
 import { PRESET_DECKS, decksForClass } from './decks.js';
 import { AI_TYPES, AI_LEVELS } from './ai.js';
 import { startBattle, abortBattle } from './ui.js';
@@ -172,6 +172,12 @@ function renderRules() {
   if (rulesReady) return; rulesReady = true;
   const cell = (on, t) => `<div class="dcell ${on ? 'on' : ''}">${t || ''}</div>`;
   const kwRows = Object.entries(KEYWORD_TEXT).map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('');
+  const heroRows = COLLECTIBLE.map(id => CARDS[id]).filter(c => c.type === 'hero')
+    .map(c => `<tr><th>${c.name}<br><small style="color:var(--washi-sub)">${CLASSES[c.cls].name}・${c.cost}コスト</small></th>
+      <td>${c.skills.map((sk, i) => `<b style="color:#9fd8ff">Lv${i + 1} ${sk.name}</b>（${sk.cost}MP）${sk.text}`).join('<br>')}</td></tr>`).join('');
+  const dungeonRows = COLLECTIBLE.map(id => CARDS[id]).filter(c => c.type === 'dungeon')
+    .map(c => `<tr><th>${c.name}<br><small style="color:var(--washi-sub)">${CLASSES[c.cls].name}・${c.cost}コスト</small></th>
+      <td>${c.text}</td></tr>`).join('');
   const skRows = PLAYABLE_CLASSES.map(c => {
     const s = TENSION_SKILLS[c];
     return `<tr><th>${CLASSES[c].name}<br><small style="color:var(--washi-sub)">${CLASSES[c].leader}</small></th>
@@ -216,6 +222,31 @@ function renderRules() {
        使うとゲージは0に戻ります。MPは消費しません。</p>
     <table>${skRows}</table>
 
+    <h3>英雄（ヒーローカード）</h3>
+    <p>英雄カードを使うと、そのターンから<b>共闘</b>が始まります。共闘中は
+       <b>1ターンに1度だけヒーロースキル</b>が使えます（MPを消費します）。
+       スキルは<b>使うほどレベルが上がって強くなります</b>。
+       リーダー帯の青いボタンがヒーロースキルです。</p>
+    <table>${heroRows}</table>
+    <p>「ロトの血を引く者」は、デッキに入れておくと<b>必ず初手に来ます</b>。</p>
+
+    <h3>ダンジョン</h3>
+    <p>ダンジョンは場のマスを1つ使って置かれます。決まった条件を満たすたびに<b>耐久値</b>がたまり、
+       目標に届くと<b>踏破</b>して効果が起き、そのまま消えます。</p>
+    <ul>
+      <li>ユニットではないので、<b>攻撃もしないし攻撃もされません</b>。</li>
+      <li>ブロックにもウォールにも数えません。マスを1つ使う代わりに、後で大きな見返りがあります。</li>
+    </ul>
+    <table>${dungeonRows}</table>
+
+    <h3>選択</h3>
+    <p>「選択」と書かれたカードは、使うときに<b>2つの効果から自分で1つ選びます</b>。
+       占い師のタロットがランダムなのに対して、こちらは必ず選べます。</p>
+
+    <h3>テンションリンク</h3>
+    <p>「テンションリンク」を持つユニットは、<b>味方がテンションスキルを使ったとき</b>に追加の効果を出します。
+       テンションをためる意味が増えます。</p>
+
     <h3>操作</h3>
     <ul>
       <li>手札を押す → ユニットは置くマス、特技は対象を選びます。</li>
@@ -226,7 +257,9 @@ function renderRules() {
     </ul>
 
     <h3>このゲームについて</h3>
-    <p>2017年から2020年まで遊べたカードゲームのルールを、公開されている情報と記憶をもとに再現したものです。
+    <p>2017年11月から2021年7月5日まで遊べたカードゲーム（後期は『ドラゴンクエストライバルズ エース』）の
+       ルールを、公開されている情報と記憶をもとに再現したものです。
+       英雄・ダンジョン・選択は、サービス終了時点の版にあった仕組みです。
        カードの数値や効果は原作と完全には一致しません。画像・音声は一切使っておらず、
        すべてブラウザの中だけで動きます。通信対戦はありません。</p>`;
 }

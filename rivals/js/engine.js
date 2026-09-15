@@ -33,6 +33,7 @@ function newPlayer(pi, conf) {
     tension: 0,
     deck: [], hand: [], grave: [], field: new Array(LANES * 2).fill(null),
     weapon: null,
+    hero: null,            // {cardId, level, uses, usedThisTurn} 英雄と共闘中の状態
     leaderBuffAtk: 0, leaderKw: [], leaderAttacksLeft: 0, leaderAttacksMax: 1,
     spellPower: 0, hitMode: false, fatigue: 0,
     stats: { played: 0, damageDealt: 0 },
@@ -59,6 +60,8 @@ export function createGame(conf) {
   const first = state.active;
   g.drawSilent(first, 3);
   g.drawSilent(1 - first, 4);
+  // 「デッキに入れていると必ず初手に来る」カード（ロトの血を引く者など）
+  for (let i = 0; i < 2; i++) g.pullOpeningCards(i);
   // 後攻ボーナス：テンションゲージ2段階＋まほうのせいすい
   state.players[1 - first].tension = 2;
   state.players[1 - first].hand.push(g.mkInst('sp_seisui'));
@@ -101,15 +104,29 @@ export class Game {
     return null;
   }
   unitOf(ref) { return ref && ref.k === 'u' ? this.unitByUid(ref.uid) : null; }
-  slotUnit(pi, lane, col) { return this.p(pi).field[slotIndex(lane, col)]; }
-  unitsOf(pi) { return this.p(pi).field.filter(Boolean); }
+  // ダンジョンはマスを占有するが「ユニット」ではない。
+  // ブロック・ウォール・攻撃の判定はユニットだけを見る。
+  slotOccupant(pi, lane, col) { return this.p(pi).field[slotIndex(lane, col)]; }
+  slotUnit(pi, lane, col) {
+    const o = this.p(pi).field[slotIndex(lane, col)];
+    return o && !o.isDungeon ? o : null;
+  }
+  occupantsOf(pi) { return this.p(pi).field.filter(Boolean); }
+  dungeonsOf(pi) { return this.p(pi).field.filter(o => o && o.isDungeon); }
+  unitsOf(pi) { return this.p(pi).field.filter(o => o && !o.isDungeon); }
   allyUnits(pi) { return this.unitsOf(pi); }
   enemyUnits(pi) { return this.unitsOf(1 - pi); }
   allUnits() { return [...this.unitsOf(0), ...this.unitsOf(1)]; }
+  heroOf(pi) { const h = this.p(pi).hero; return h ? CARDS[h.cardId] : null; }
+  heroSkill(pi) {
+    const h = this.p(pi).hero; if (!h) return null;
+    const c = CARDS[h.cardId];
+    return c.skills[Math.min(h.level, c.skills.length - 1)];
+  }
   rowUnits(pi, col) { return [0, 1, 2].map(l => this.slotUnit(pi, l, col)).filter(Boolean); }
   emptySlots(pi) {
     const out = [];
-    for (let l = 0; l < LANES; l++) for (let c = 0; c < 2; c++) if (!this.slotUnit(pi, l, c)) out.push({ lane: l, col: c });
+    for (let l = 0; l < LANES; l++) for (let c = 0; c < 2; c++) if (!this.slotOccupant(pi, l, c)) out.push({ lane: l, col: c });
     return out;
   }
   allyChars(pi) { return [this.leaderRef(pi), ...this.unitsOf(pi).map(u => this.ref(u))]; }
@@ -161,6 +178,7 @@ export class Game {
     p.leaderAttacksLeft = p.weapon ? this.weaponAttacks(p) : 0;
     p.spellPower = 0;
     p.hitMode = false;
+    if (p.hero) p.hero.usedThisTurn = false;
     for (const u of this.unitsOf(pi)) {
       if (u.frozen > 0) { u.frozen--; u.attacksLeft = 0; }
       else u.attacksLeft = this.attacksMaxOf(u);
@@ -187,9 +205,9 @@ export class Game {
     this.beginTurn(1 - pi);
   }
 
-  // 自分の場のユニットにトリガを配る
+  // 自分の場のもの（ユニットとダンジョン）にトリガを配る
   broadcast(pi, hook, ...args) {
-    for (const u of this.unitsOf(pi).slice()) {
+    for (const u of this.occupantsOf(pi).slice()) {
       if (u.silenced) continue;
       const c = CARDS[u.cardId];
       if (c[hook] && this.unitByUid(u.uid)) c[hook](this, u, ...args);
@@ -215,6 +233,17 @@ export class Game {
     }
   }
   drawSilent(pi, n) { const p = this.p(pi); for (let i = 0; i < n && p.deck.length; i++) p.hand.push(p.deck.shift()); }
+
+  // 初手に必ず来るカードを山札から手札へ移す
+  pullOpeningCards(pi) {
+    const p = this.p(pi);
+    for (let i = p.deck.length - 1; i >= 0; i--) {
+      if (!CARDS[p.deck[i].cardId].opening) continue;
+      if (p.hand.length >= MAX_HAND) break;
+      if (p.hand.some(h => CARDS[h.cardId].opening)) break;
+      p.hand.push(p.deck.splice(i, 1)[0]);
+    }
+  }
 
   // デッキから条件に合うカードを1枚引く
   drawFiltered(pi, filter, after) {
@@ -386,7 +415,7 @@ export class Game {
       // 空きは前列優先で詰める
       s = empties.sort((a, b) => a.col - b.col || a.lane - b.lane)[0];
     }
-    if (this.slotUnit(pi, s.lane, s.col)) return null;
+    if (this.slotOccupant(pi, s.lane, s.col)) return null;
     const c = CARDS[cardId];
     const u = {
       uid: this.s.uidSeq++, cardId, pi, lane: s.lane, col: s.col,
@@ -398,7 +427,83 @@ export class Game {
     p.field[slotIndex(s.lane, s.col)] = u;
     this.ev({ t: 'summon', uid: u.uid, pi });
     this.say(`${p.name} は ${c.name} を召喚した`);
+    this.broadcast(pi, 'onAllySummon', u);
     return u;
+  }
+
+  // ------------------------------------------------------------
+  //  ダンジョン（マスを占有し、条件で耐久値がたまり、達すると踏破して消える）
+  // ------------------------------------------------------------
+  placeDungeon(pi, cardId, slot) {
+    const c = CARDS[cardId];
+    let s = slot;
+    if (!s) { const e = this.emptySlots(pi); if (!e.length) return null; s = e[0]; }
+    if (this.slotOccupant(pi, s.lane, s.col)) return null;
+    const d = {
+      uid: this.s.uidSeq++, cardId, pi, lane: s.lane, col: s.col,
+      isDungeon: true, dur: 0, goal: c.goal, silenced: false, kw: [],
+      baseAtk: 0, baseHp: 1, buffAtk: 0, buffHp: 0, dmg: 0,
+      attacksLeft: 0, frozen: 0, summonedTurn: this.s.turn,
+    };
+    this.p(pi).field[slotIndex(s.lane, s.col)] = d;
+    this.ev({ t: 'summon', uid: d.uid, pi });
+    this.say(`${this.p(pi).name} は ${c.name} を設置した（踏破まで ${c.goal}）`);
+    return d;
+  }
+
+  // 耐久値をためる。踏破したら効果を出してマスを空ける。
+  dungeonProgress(d, n = 1) {
+    const live = this.unitByUid(d.uid);
+    if (!live || !live.isDungeon) return;
+    live.dur += n;
+    this.ev({ t: 'dungeon', uid: live.uid, dur: live.dur, goal: live.goal });
+    if (live.dur < live.goal) return;
+    const c = CARDS[live.cardId];
+    const spot = { lane: live.lane, col: live.col };
+    this.p(live.pi).field[slotIndex(live.lane, live.col)] = null;
+    this.ev({ t: 'clear', uid: live.uid, pi: live.pi });
+    this.say(`${c.name} を踏破した！`);
+    if (c.clear) c.clear(this, { pi: live.pi, ...spot });
+  }
+
+  // ------------------------------------------------------------
+  //  英雄（共闘するとヒーロースキルが1ターンに1度使える。使うほど強くなる）
+  // ------------------------------------------------------------
+  setHero(pi, cardId) {
+    const p = this.p(pi);
+    p.hero = { cardId, level: 0, uses: 0, usedThisTurn: false };
+    this.ev({ t: 'hero', pi });
+    this.say(`${p.name} は ${CARDS[cardId].name} と共闘を始めた`);
+  }
+
+  useHeroSkill(pi, opts = {}) {
+    if (this.s.winner !== null || this.s.active !== pi) return false;
+    const p = this.p(pi);
+    const sk = this.heroSkill(pi);
+    if (!sk || p.hero.usedThisTurn || p.mp < sk.cost) return false;
+    let target = opts.target || null;
+    if (sk.target) {
+      const legal = this.targetsFor(pi, sk.target);
+      if (!legal.length) return false;
+      if (!target || !legal.some(r => this.sameRef(r, target))) return false;
+    }
+    p.mp -= sk.cost;
+    p.hero.usedThisTurn = true;
+    this.ev({ t: 'heroSkill', pi });
+    this.say(`${p.name} のヒーロースキル『${sk.name}』！`);
+    sk.run(this, { pi, target });
+    // 使うほどレベルが上がる
+    p.hero.uses++;
+    const hc = CARDS[p.hero.cardId];
+    const cur = hc.skills[p.hero.level];
+    if (cur && cur.upTo && p.hero.uses >= cur.upTo && p.hero.level < hc.skills.length - 1) {
+      p.hero.level++; p.hero.uses = 0;
+      const next = hc.skills[p.hero.level];
+      this.ev({ t: 'heroLevel', pi });
+      this.say(`ヒーロースキルがレベルアップ！『${next.name}』が使えるようになった`);
+    }
+    this.cleanup();
+    return true;
   }
 
   resurrect(pi, n) {
@@ -421,7 +526,7 @@ export class Game {
       for (const p of this.s.players) {
         for (let i = 0; i < p.field.length; i++) {
           const u = p.field[i];
-          if (u && this.hpOf(u) <= 0) { p.field[i] = null; dead.push(u); }
+          if (u && !u.isDungeon && this.hpOf(u) <= 0) { p.field[i] = null; dead.push(u); }
         }
       }
       if (!dead.length) break;
@@ -433,6 +538,7 @@ export class Game {
       for (const u of dead) {
         const c = CARDS[u.cardId];
         if (c.death && !u.silenced) c.death(this, u);
+        this.broadcast(u.pi, 'onAllyDeath', u);
       }
     }
     this.checkWin();
@@ -450,9 +556,11 @@ export class Game {
   // ------------------------------------------------------------
   //  攻撃の可否（ブロック・ウォール・におうだち）
   // ------------------------------------------------------------
-  attackTargets(pi) {
+  // attacker を渡すと「アンチステルス」を考慮する（省略時はステルスを見られない）
+  attackTargets(pi, attacker) {
     const opp = 1 - pi;
-    const visible = this.unitsOf(opp).filter(u => !this.hasKw(u, 'ステルス'));
+    const seeStealth = !!(attacker && !attacker.isLeader && this.hasKw(attacker, 'アンチステルス'));
+    const visible = this.unitsOf(opp).filter(u => seeStealth || !this.hasKw(u, 'ステルス'));
     const taunts = visible.filter(u => u.col === FRONT && this.hasKw(u, 'におうだち'));
     if (taunts.length) return taunts.map(u => this.ref(u));
     const out = [];
@@ -483,11 +591,12 @@ export class Game {
   // ------------------------------------------------------------
   performAttack(pi, attackerRef, targetRef) {
     if (this.s.winner !== null) return false;
-    const legal = this.attackTargets(pi);
-    if (!legal.some(r => this.sameRef(r, targetRef))) return false;
-
     const isLeader = attackerRef.k === 'l';
     const a = isLeader ? null : this.unitOf(attackerRef);
+    if (!isLeader && (!a || a.isDungeon)) return false;
+    const legal = this.attackTargets(pi, a);
+    if (!legal.some(r => this.sameRef(r, targetRef))) return false;
+
     if (isLeader ? !this.canLeaderAttack(pi) : !this.canUnitAttack(a)) return false;
 
     const atk = isLeader ? this.leaderAtk(pi) : this.atkOf(a);
@@ -537,6 +646,7 @@ export class Game {
   // ------------------------------------------------------------
   needsTargetFor(pi, inst, choiceIdx) {
     const c = CARDS[inst.cardId];
+    if (c.choose) return choiceIdx != null ? (c.choose[choiceIdx].target || null) : null;
     if (c.divine) {
       const p = this.p(pi);
       if (p.hitMode && choiceIdx != null) return c.divine[choiceIdx].target || null;
@@ -573,9 +683,9 @@ export class Game {
     const cost = this.effectiveCost(pi, inst);
     if (p.mp < cost) return false;
 
-    if (c.type === 'unit') {
+    if (c.type === 'unit' || c.type === 'dungeon') {
       const slot = opts.slot;
-      if (!slot || this.slotUnit(pi, slot.lane, slot.col)) return false;
+      if (!slot || this.slotOccupant(pi, slot.lane, slot.col)) return false;
     }
     const spec = this.needsTargetFor(pi, inst, opts.choice);
     let target = opts.target || null;
@@ -597,14 +707,21 @@ export class Game {
     if (c.type === 'unit') {
       const u = this.summon(pi, c.id, opts.slot);
       if (u && c.summon) c.summon(this, u, ctx);
-      this.broadcast(pi, 'onAllySummon', u);
+    } else if (c.type === 'dungeon') {
+      const d = this.placeDungeon(pi, c.id, opts.slot);
+      if (d && c.summon) c.summon(this, d, ctx);
+    } else if (c.type === 'hero') {
+      this.setHero(pi, c.id);
+      if (c.summon) c.summon(this, null, ctx);
+      p.grave.push(c.id);
     } else if (c.type === 'weapon') {
       p.weapon = { name: c.name, cardId: c.id, atk: c.wAtk, dur: c.wDur, kw: c.wKw || [] };
       p.leaderAttacksLeft = this.weaponAttacks(p);
       this.ev({ t: 'weapon', pi });
       if (c.summon) c.summon(this, null, ctx);
     } else {
-      if (c.divine) this.resolveDivine(pi, c, ctx);
+      if (c.choose) this.resolveChoose(pi, c, ctx);
+      else if (c.divine) this.resolveDivine(pi, c, ctx);
       else if (c.play) c.play(this, ctx);
       if (c.sub === '道具' && target) {
         const tu = this.unitOf(target);
@@ -615,6 +732,18 @@ export class Game {
     }
     this.cleanup();
     return true;
+  }
+
+  // 「選択」：占いと違い、必ず自分で選ぶ
+  resolveChoose(pi, c, ctx) {
+    const idx = ctx.choice != null ? ctx.choice : this.rnd(c.choose.length);
+    const opt = c.choose[idx];
+    this.say(`選択 → ${opt.text}`);
+    this.ev({ t: 'divine', pi, idx });
+    let target = ctx.target;
+    if (opt.target && !target) target = this.pick(this.targetsFor(pi, opt.target));
+    if (opt.target && !target) return;
+    opt.run(this, { ...ctx, target });
   }
 
   resolveDivine(pi, c, ctx) {
@@ -662,14 +791,21 @@ export class Game {
     if (this.s.winner !== null || this.s.active !== pi) return out;
     const p = this.p(pi);
 
-    // 攻撃
-    const atkTargets = this.attackTargets(pi);
+    // 攻撃（アンチステルスがあるかどうかで対象が変わるので、攻撃者ごとに引く）
     for (const u of this.unitsOf(pi)) {
       if (!this.canUnitAttack(u)) continue;
-      for (const t of atkTargets) out.push({ type: 'attack', from: this.ref(u), to: t });
+      for (const t of this.attackTargets(pi, u)) out.push({ type: 'attack', from: this.ref(u), to: t });
     }
     if (this.canLeaderAttack(pi)) {
-      for (const t of atkTargets) out.push({ type: 'attack', from: this.leaderRef(pi), to: t });
+      for (const t of this.attackTargets(pi, null)) out.push({ type: 'attack', from: this.leaderRef(pi), to: t });
+    }
+
+    // 英雄スキル（1ターンに1度）
+    const sk = this.heroSkill(pi);
+    if (sk && !p.hero.usedThisTurn && sk.cost <= p.mp) {
+      if (sk.target) {
+        for (const t of this.targetsFor(pi, sk.target)) out.push({ type: 'hero', target: t });
+      } else out.push({ type: 'hero' });
     }
 
     // テンションスキル
@@ -686,7 +822,7 @@ export class Game {
       const c = CARDS[inst.cardId];
       const cost = this.effectiveCost(pi, inst);
       if (cost > p.mp) continue;
-      if (c.type === 'unit') {
+      if (c.type === 'unit' || c.type === 'dungeon') {
         if (!slots.length) continue;
         const useSlots = opt.compact ? this.compactSlots(pi, slots) : slots;
         const targets = c.target ? this.targetsFor(pi, c.target) : [];
@@ -694,6 +830,12 @@ export class Game {
           if (c.target && targets.length) { for (const t of targets) out.push({ type: 'play', iid: inst.iid, slot: s, target: t }); }
           if (!c.target || !targets.length || c.targetOptional) out.push({ type: 'play', iid: inst.iid, slot: s });
         }
+      } else if (c.choose) {
+        c.choose.forEach((o, i) => {
+          const ts = o.target ? this.targetsFor(pi, o.target) : [];
+          if (o.target && ts.length) ts.forEach(t => out.push({ type: 'play', iid: inst.iid, choice: i, target: t }));
+          else if (!o.target) out.push({ type: 'play', iid: inst.iid, choice: i });
+        });
       } else if (c.divine) {
         if (p.hitMode) {
           c.divine.forEach((opt2, i) => {
@@ -732,6 +874,7 @@ export class Game {
       case 'play':   return this.playCard(pi, a.iid, { slot: a.slot, target: a.target, choice: a.choice });
       case 'attack': return this.performAttack(pi, a.from, a.to);
       case 'tension':return this.useTension(pi, { target: a.target });
+      case 'hero':   return this.useHeroSkill(pi, { target: a.target });
       case 'end':    this.endTurn(pi); return true;
     }
     return false;

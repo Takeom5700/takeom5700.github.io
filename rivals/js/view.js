@@ -1,7 +1,7 @@
 // カードの見た目まわりの共通部品（バトル・図鑑・デッキ編集で共用）
 import { CARDS, CLASSES, KEYWORD_TEXT, maxCopies } from './cards.js';
 
-export const TYPE_LABEL = { unit: 'ユニット', spell: '特技', weapon: '武器' };
+export const TYPE_LABEL = { unit: 'ユニット', spell: '特技', weapon: '武器', hero: '英雄', dungeon: 'ダンジョン' };
 
 export function classColor(cls) { return (CLASSES[cls] || CLASSES.neutral).color; }
 
@@ -37,7 +37,8 @@ export function subLabel(card) {
 export function poolCardHtml(card, count) {
   const isUnit = card.type === 'unit';
   const stat = isUnit ? `<div class="p-stat"><span class="p-atk">${card.atk}</span><span class="p-hp">${card.hp}</span></div>`
-    : card.type === 'weapon' ? `<div class="p-stat"><span class="p-atk">${card.wAtk}</span><span class="p-hp">耐${card.wDur}</span></div>` : '';
+    : card.type === 'weapon' ? `<div class="p-stat"><span class="p-atk">${card.wAtk}</span><span class="p-hp">耐${card.wDur}</span></div>`
+    : card.type === 'dungeon' ? `<div class="p-stat"><span class="p-atk">踏破</span><span class="p-hp">${card.goal}</span></div>` : '';
   const kw = card.kw.length ? `<div class="p-sub">${card.kw.join('／')}</div>` : '';
   return `<div class="pcard" style="--uc:${cardTint(card.cls)}" data-id="${card.id}">
     <div class="p-cost">${card.cost}</div>
@@ -54,10 +55,20 @@ export function poolCardHtml(card, count) {
 
 // 吹き出し（カードの詳細）
 const tipEl = () => document.getElementById('tip');
+export function heroSkillLines(card, level = -1) {
+  if (!card.skills) return '';
+  return card.skills.map((sk, i) => {
+    const on = i === level;
+    return `<div class="${on ? 't-sk on' : 't-sk'}">Lv${i + 1} <b>${sk.name}</b>（${sk.cost}MP）${sk.text}` +
+      (sk.upTo ? `<span class="t-up">／${sk.upTo}回使うと次へ</span>` : '') + '</div>';
+  }).join('');
+}
+
 export function showTip(card, x, y, extra = '') {
   const el = tipEl(); if (!el) return;
   const kwLines = card.kw.filter(k => KEYWORD_TEXT[k])
-    .map(k => `<div class="t-kw">${k}：${KEYWORD_TEXT[k]}</div>`).join('');
+    .map(k => `<div class="t-kw">${k}：${KEYWORD_TEXT[k]}</div>`).join('')
+    + heroSkillLines(card);
   el.innerHTML = `<b>${card.name}</b>
     <div>${card.cost}コスト・${(CLASSES[card.cls] || {}).name || ''}・${subLabel(card)}${card.rarity === 'LEG' ? '・レジェンド（1枚まで）' : ''}</div>
     ${card.text ? `<div style="margin-top:4px">${card.text}</div>` : ''}
