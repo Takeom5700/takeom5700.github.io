@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ライバルズ再現 — カードバトル | タケオの縁日</title>
+<meta name="description" content="ドラゴンクエストライバルズ（エース）のルールを再現した1人用カードバトル。7職業・212枚のカード、英雄・ダンジョン・選択、4段階の難易度と5タイプのコンピューター対戦相手。ブラウザだけで遊べます。">
+<meta name="theme-color" content="#221114">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=RocknRoll+One&family=Shippori+Mincho+B1:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+<!-- ============ タイトル ============ -->
+<section class="screen is-active" id="screen-title">
+  <div class="title-wrap">
+    <div class="title-crest" aria-hidden="true"></div>
+    <p class="title-kicker">タケオの縁日 / 一人用カードバトル</p>
+    <h1 class="title-main"><span>ライバルズ</span><small>再現版</small></h1>
+    <p class="title-lead">
+      3段2列の盤面、ブロックとウォール、におうだち、貫通、テンションスキル、<br>
+      そして英雄との共闘とダンジョン。サービス終了時点のルールを、ブラウザの中にもう一度。
+    </p>
+    <div class="title-menu">
+      <button class="btn btn-primary" data-go="leader">ソロバトル</button>
+      <button class="btn" data-go="builder">デッキ編集</button>
+      <button class="btn" data-go="collection">カード図鑑</button>
+      <button class="btn" data-go="rules">あそびかた</button>
+    </div>
+    <p class="title-record" id="title-record"></p>
+    <p class="title-note">オンライン対戦はありません。対戦相手はすべてコンピューターです。</p>
+  </div>
+</section>
+
+<!-- ============ 自分のリーダー選択 ============ -->
+<section class="screen" id="screen-leader">
+  <header class="bar">
+    <button class="btn btn-ghost" data-go="title">← もどる</button>
+    <h2>じぶんのリーダーを選ぶ</h2>
+    <span></span>
+  </header>
+  <div class="scroll">
+    <div class="leader-grid" id="leader-grid"></div>
+    <h3 class="sect">デッキ</h3>
+    <div class="deck-choice" id="deck-choice"></div>
+    <div class="fixed-foot">
+      <button class="btn btn-primary" id="to-opponent" disabled>対戦相手を選ぶ →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 相手選択 ============ -->
+<section class="screen" id="screen-opponent">
+  <header class="bar">
+    <button class="btn btn-ghost" data-go="leader">← もどる</button>
+    <h2>対戦相手</h2>
+    <span></span>
+  </header>
+  <div class="scroll">
+    <h3 class="sect">難易度</h3>
+    <div class="opt-row" id="level-row"></div>
+    <h3 class="sect">相手のタイプ</h3>
+    <div class="opt-row opt-row--wide" id="type-row"></div>
+    <h3 class="sect">相手のリーダーとデッキ</h3>
+    <div class="opt-row opt-row--wide" id="opp-deck-row"></div>
+    <h3 class="sect">先攻・後攻</h3>
+    <div class="opt-row" id="first-row"></div>
+    <div class="fixed-foot">
+      <button class="btn btn-primary" id="start-battle">バトル開始</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ バトル ============ -->
+<section class="screen" id="screen-battle">
+  <div class="battle">
+    <!-- 相手 -->
+    <div class="side side--enemy">
+      <div class="leader-strip" id="enemy-strip"></div>
+      <div class="field" id="enemy-field">
+        <div class="row row--back"  data-owner="enemy" data-col="1"></div>
+        <div class="row row--front" data-owner="enemy" data-col="0"></div>
+      </div>
+    </div>
+
+    <div class="midline">
+      <span class="midline-txt" id="midline-txt">—</span>
+    </div>
+
+    <!-- 自分 -->
+    <div class="side side--me">
+      <div class="field" id="my-field">
+        <div class="row row--front" data-owner="me" data-col="0"></div>
+        <div class="row row--back"  data-owner="me" data-col="1"></div>
+      </div>
+      <div class="leader-strip" id="my-strip"></div>
+    </div>
+
+    <div class="hand-area">
+      <div class="hand" id="my-hand"></div>
+    </div>
+
+    <div class="battle-ctrl">
+      <button class="btn btn-ghost btn-sm" id="btn-log">ログ</button>
+      <button class="btn btn-ghost btn-sm" id="btn-quit">投了</button>
+      <button class="btn btn-primary" id="btn-end">ターン終了</button>
+    </div>
+
+    <div class="hint" id="hint" hidden></div>
+    <div class="log-panel" id="log-panel" hidden><div class="log-inner" id="log-inner"></div></div>
+  </div>
+
+  <div class="overlay" id="overlay" hidden>
+    <div class="overlay-box" id="overlay-box"></div>
+  </div>
+</section>
+
+<!-- ============ デッキ編集 ============ -->
+<section class="screen" id="screen-builder">
+  <header class="bar">
+    <button class="btn btn-ghost" data-go="title">← もどる</button>
+    <h2>デッキ編集</h2>
+    <span></span>
+  </header>
+  <div class="builder">
+    <div class="builder-side">
+      <div class="builder-head">
+        <select id="b-class"></select>
+        <select id="b-deck"></select>
+      </div>
+      <input id="b-name" class="b-name" placeholder="デッキ名">
+      <div class="b-count"><span id="b-count">0</span> / 30</div>
+      <div class="b-curve" id="b-curve"></div>
+      <div class="b-list" id="b-list"></div>
+      <div class="b-actions">
+        <button class="btn btn-sm" id="b-new">新規</button>
+        <button class="btn btn-sm" id="b-copy">複製</button>
+        <button class="btn btn-sm" id="b-clear">全消去</button>
+        <button class="btn btn-sm btn-danger" id="b-delete">削除</button>
+        <button class="btn btn-sm btn-primary" id="b-save">保存</button>
+      </div>
+      <p class="b-msg" id="b-msg"></p>
+    </div>
+    <div class="builder-pool">
+      <div class="pool-filter">
+        <input id="b-search" placeholder="カード名・効果で検索">
+        <div class="chip-row" id="b-cost-chips"></div>
+        <div class="chip-row" id="b-type-chips"></div>
+      </div>
+      <div class="pool-grid" id="b-pool"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ カード図鑑 ============ -->
+<section class="screen" id="screen-collection">
+  <header class="bar">
+    <button class="btn btn-ghost" data-go="title">← もどる</button>
+    <h2>カード図鑑</h2>
+    <span></span>
+  </header>
+  <div class="scroll">
+    <div class="pool-filter">
+      <input id="c-search" placeholder="カード名・効果で検索">
+      <div class="chip-row" id="c-class-chips"></div>
+    </div>
+    <div class="pool-grid" id="c-pool"></div>
+  </div>
+</section>
+
+<!-- ============ ルール ============ -->
+<section class="screen" id="screen-rules">
+  <header class="bar">
+    <button class="btn btn-ghost" data-go="title">← もどる</button>
+    <h2>あそびかた</h2>
+    <span></span>
+  </header>
+  <div class="scroll rules" id="rules-body"></div>
+</section>
+
+<div class="tip" id="tip" hidden></div>
+
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>
