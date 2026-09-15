@@ -3,7 +3,7 @@
 // ============================================================
 import { CARDS, COLLECTIBLE, CLASSES, PLAYABLE_CLASSES, maxCopies } from './cards.js';
 import { PRESET_DECKS, validateDeck, decksForClass } from './decks.js';
-import { poolCardHtml, showTip, hideTip, cardTint } from './view.js';
+import { poolCardHtml, showTip, hideTip, cardTint, gem } from './view.js';
 import { load, update } from './storage.js';
 import { SFX } from './audio.js';
 
@@ -106,7 +106,7 @@ function renderDeck() {
   $('b-list').innerHTML = uniq.map(id => {
     const c = CARDS[id];
     return `<div class="b-row" data-id="${id}" style="--rc:${cardTint(c.cls)}">
-      <span class="r-cost">${c.cost}</span><span class="r-name">${c.name}</span><span class="r-n">×${countOf(id)}</span></div>`;
+      ${gem('mp', c.cost)}<span class="r-name">${c.name}</span><span class="r-n">×${countOf(id)}</span></div>`;
   }).join('') || '<p style="font-size:.78rem;color:var(--washi-sub);padding:8px">右からカードを選んで追加してください</p>';
   $('b-list').querySelectorAll('.b-row').forEach(r => {
     r.onclick = () => removeCard(r.dataset.id);

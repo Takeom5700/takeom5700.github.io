@@ -1,5 +1,6 @@
 // カードの見た目まわりの共通部品（バトル・図鑑・デッキ編集で共用）
 import { CARDS, CLASSES, KEYWORD_TEXT, maxCopies } from './cards.js';
+import { artSvg } from './art.js';
 
 export const TYPE_LABEL = { unit: 'ユニット', spell: '特技', weapon: '武器', hero: '英雄', dungeon: 'ダンジョン' };
 
@@ -23,9 +24,15 @@ export function monogram(card) {
 
 export function kwBadges(kws) {
   const map = { 'におうだち': 'taunt', 'ステルス': 'stealth', '貫通': 'pierce', '速攻': 'rush',
-                'メタルボディ': 'metal', '２回攻撃': 'rush' };
-  const short = { 'におうだち': '壁', 'ステルス': '隠', '貫通': '貫', '速攻': '速', 'メタルボディ': '鉄', '２回攻撃': '２' };
+                'メタルボディ': 'metal', '２回攻撃': 'rush', 'テンションリンク': 'link', 'アンチステルス': 'link' };
+  const short = { 'におうだち': '壁', 'ステルス': '隠', '貫通': '貫', '速攻': '速', 'メタルボディ': '鉄',
+                  '２回攻撃': '２', 'テンションリンク': 'テ', 'アンチステルス': '見' };
   return kws.filter(k => map[k]).map(k => `<span class="kwb ${map[k]}" title="${k}">${short[k]}</span>`).join('');
+}
+
+// 攻撃力・HPなどの宝石
+export function gem(kind, value, cls = '') {
+  return `<span class="gem gem-${kind} ${cls}">${value}</span>`;
 }
 
 export function subLabel(card) {
@@ -35,20 +42,20 @@ export function subLabel(card) {
 
 // 図鑑・デッキ編集で使う大きめのカード
 export function poolCardHtml(card, count) {
-  const isUnit = card.type === 'unit';
-  const stat = isUnit ? `<div class="p-stat"><span class="p-atk">${card.atk}</span><span class="p-hp">${card.hp}</span></div>`
-    : card.type === 'weapon' ? `<div class="p-stat"><span class="p-atk">${card.wAtk}</span><span class="p-hp">耐${card.wDur}</span></div>`
-    : card.type === 'dungeon' ? `<div class="p-stat"><span class="p-atk">踏破</span><span class="p-hp">${card.goal}</span></div>` : '';
+  let stats = '';
+  if (card.type === 'unit') stats = gem('atk', card.atk) + gem('hp', card.hp);
+  else if (card.type === 'weapon') stats = gem('atk', card.wAtk) + gem('hp', card.wDur);
+  else if (card.type === 'dungeon') stats = `<span></span>` + gem('atk', card.goal);
   const kw = card.kw.length ? `<div class="p-sub">${card.kw.join('／')}</div>` : '';
   return `<div class="pcard" style="--uc:${cardTint(card.cls)}" data-id="${card.id}">
-    <div class="p-cost">${card.cost}</div>
+    <div class="gem gem-mp p-cost">${card.cost}</div>
     <div class="p-rar ${card.rarity}">${card.rarity}</div>
-    <div class="p-mon">${monogram(card)}</div>
-    <div class="p-name">${card.name}</div>
+    <div class="p-art">${artSvg(card)}</div>
+    <div class="p-plate">${card.name}</div>
     <div class="p-sub">${(CLASSES[card.cls] || {}).name || ''}・${subLabel(card)}</div>
     ${kw}
     <div class="p-text">${card.text || '—'}</div>
-    ${stat}
+    ${stats ? `<div class="p-stats">${stats}</div>` : ''}
     ${count ? `<div class="p-have">×${count}</div>` : ''}
   </div>`;
 }

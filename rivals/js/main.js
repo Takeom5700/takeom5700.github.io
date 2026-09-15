@@ -7,7 +7,8 @@ import { AI_TYPES, AI_LEVELS } from './ai.js';
 import { startBattle, abortBattle } from './ui.js';
 import { initBuilder, initCollection } from './builder.js';
 import { load, update } from './storage.js';
-import { classColor, hideTip } from './view.js';
+import { hideTip } from './view.js';
+import { leaderSvg, artSvg } from './art.js';
 import { setSound, SFX } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -47,7 +48,13 @@ window.addEventListener('scroll', hideTip, true);
 // ------------------------------------------------------------
 //  タイトル
 // ------------------------------------------------------------
+let crestDone = false;
 function renderTitle() {
+  if (!crestDone) {
+    crestDone = true;
+    const host = document.querySelector('.title-crest');
+    if (host) host.innerHTML = artSvg(CARDS.slime);
+  }
   const d = load();
   const r = d.records;
   const total = r.win + r.lose + r.draw;
@@ -69,7 +76,7 @@ function renderLeaders() {
   $('leader-grid').innerHTML = PLAYABLE_CLASSES.map(c => {
     const sk = TENSION_SKILLS[c];
     return `<div class="leader-card ${c === pick.myClass ? 'is-on' : ''}" data-cls="${c}">
-      <div class="lc-emblem" style="background:linear-gradient(180deg,${classColor(c)},#1a0f11);color:#fff">${CLASSES[c].leader[0]}</div>
+      <div class="lc-portrait">${leaderSvg(c)}</div>
       <div class="lc-cls">${CLASSES[c].name}</div>
       <div class="lc-name">${CLASSES[c].leader}</div>
       <div class="lc-skill"><b>${sk.name}</b>${sk.text}</div>

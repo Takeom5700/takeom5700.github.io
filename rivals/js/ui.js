@@ -6,7 +6,8 @@
 import { CARDS, CLASSES, TENSION_SKILLS } from './cards.js';
 import { createGame, FRONT, BACK, LEADER_HP } from './engine.js';
 import { createAiController, AI_TYPES, AI_LEVELS } from './ai.js';
-import { cardTint, monogram, kwBadges, subLabel, showTip, hideTip, classColor, heroSkillLines } from './view.js';
+import { cardTint, kwBadges, subLabel, showTip, hideTip, gem, heroSkillLines } from './view.js';
+import { artSvg, leaderSvg } from './art.js';
 import { SFX } from './audio.js';
 
 let game = null, myPi = 0, aiPi = 1, ai = null, conf = null;
@@ -81,7 +82,6 @@ function render() {
 
 function renderStrip(root, pi, isMe) {
   const p = game.p(pi);
-  const col = classColor(p.cls);
   const sk = TENSION_SKILLS[p.cls];
   const dots = [0, 1, 2].map(i => `<span class="ten-dot ${p.tension > i ? 'on' : ''}"></span>`).join('');
   const canTension = isMe && p.tension >= 3 && game.active === myPi && game.s.winner === null;
@@ -91,14 +91,24 @@ function renderStrip(root, pi, isMe) {
                   && game.active === myPi && game.s.winner === null;
   root.className = 'leader-strip' + (isMe && game.active === myPi ? ' is-me-active' : '');
   root.dataset.pi = pi;
+  const C = 2 * Math.PI * 23;
+  const frac = Math.min(1, p.tension / 3);
+  const mpMax = Math.max(p.maxMp, p.mp);
+  let crystals = '';
+  for (let i = 0; i < Math.min(10, Math.max(1, mpMax)); i++) crystals += `<i class="mp-c ${i < p.mp ? 'on' : ''}"></i>`;
   root.innerHTML = `
-    <div class="ls-face" style="background:linear-gradient(180deg,${col},#1a0f11)">${p.leaderName[0]}</div>
+    <div class="ls-portrait">
+      <svg class="ten-ring ${p.tension >= 3 ? 'full' : ''}" viewBox="0 0 52 52" aria-hidden="true">
+        <circle class="ten-bg" cx="26" cy="26" r="23"/>
+        <circle class="ten-fg" cx="26" cy="26" r="23" stroke-dasharray="${(frac * C).toFixed(1)} ${C.toFixed(1)}"/>
+      </svg>
+      <div class="ls-face" title="テンション ${p.tension}/3">${leaderSvg(p.cls)}</div>
+    </div>
     <div class="ls-body">
       <div class="ls-name">${p.name}<span style="font-weight:400;color:var(--washi-sub)">（${CLASSES[p.cls].name}）</span>${!isMe && conf.oppTag ? `<span class="ls-tag">${conf.oppTag}</span>` : ''}</div>
       <div class="ls-meta">
-        <span class="hp-pill">HP<b>${Math.max(0, p.hp)}</b>/${p.maxHp}</span>
-        <span class="mp-pill">MP<b>${p.mp}</b>/${p.maxMp}</span>
-        <span class="ten-gauge" title="テンション ${p.tension}/3">${dots}</span>
+        <span class="ls-hp">${gem('hp', Math.max(0, p.hp))}<i>/${p.maxHp}</i></span>
+        <span class="mp-row" title="MP ${p.mp}/${p.maxMp}">${crystals}<span class="mp-num">${p.mp}/${p.maxMp}</span></span>
         ${p.weapon ? `<span class="ls-weapon">${p.weapon.name} ${p.weapon.atk}／耐${p.weapon.dur}</span>` : ''}
         ${hero ? `<span class="ls-hero" data-hero="${pi}">英雄 ${hero.name}・Lv${p.hero.level + 1}</span>` : ''}
         <span class="ls-deck">山札${p.deck.length}・手札${p.hand.length}</span>
@@ -148,10 +158,10 @@ function dungeonEl(d) {
   el2.style.setProperty('--uc', cardTint(c.cls));
   const pct = Math.min(100, Math.round(d.dur / d.goal * 100));
   el2.innerHTML = `
-    <div class="u-mon">${monogram(c)}</div>
+    <div class="u-art">${artSvg(c)}</div>
     <div class="u-name">${c.name}</div>
     <div class="dg-bar"><i style="width:${pct}%"></i></div>
-    <div class="u-stat"><span class="dg-num">${d.dur}/${d.goal}</span></div>`;
+    <div class="dg-num">${d.dur}/${d.goal}</div>`;
   el2.onmouseenter = (e) => showTip(c, e.clientX, e.currentTarget.getBoundingClientRect().top,
     `<div style="margin-top:4px;color:#cdb49e">耐久値 ${d.dur}／${d.goal}（踏破すると効果が起きて消える）</div>`);
   el2.onmouseleave = hideTip;
@@ -167,9 +177,9 @@ function unitEl(u) {
   d.style.setProperty('--uc', cardTint(c.cls));
   d.innerHTML = `
     <div class="u-kw">${kwBadges(u.silenced ? [] : u.kw)}</div>
-    <div class="u-mon">${monogram(c)}</div>
+    <div class="u-art">${artSvg(c)}</div>
     <div class="u-name">${c.name}</div>
-    <div class="u-stat"><span class="u-atk">${game.atkOf(u)}</span><span class="u-hp ${hp < maxHp ? 'hurt' : ''}">${hp}</span></div>`;
+    <div class="u-stats">${gem('atk', game.atkOf(u))}${gem('hp', hp, hp < maxHp ? 'hurt' : '')}</div>`;
   d.onmouseenter = (e) => showTip(c, e.clientX, e.currentTarget.getBoundingClientRect().top, unitExtra(u));
   d.onmouseleave = hideTip;
   return d;
@@ -193,14 +203,17 @@ function renderHand() {
     d.className = 'hcard' + (playable ? '' : ' cant');
     d.dataset.iid = inst.iid;
     d.style.setProperty('--uc', cardTint(c.cls));
-    const stat = c.type === 'unit' ? `<div class="h-stat"><span class="h-atk">${c.atk}</span><span class="h-hp">${c.hp}</span></div>`
-      : c.type === 'weapon' ? `<div class="h-stat"><span class="h-atk">${c.wAtk}</span><span class="h-hp">耐${c.wDur}</span></div>` : '<div class="h-stat"></div>';
+    let stats = '';
+    if (c.type === 'unit') stats = gem('atk', c.atk) + gem('hp', c.hp);
+    else if (c.type === 'weapon') stats = gem('atk', c.wAtk) + gem('hp', c.wDur);
+    else if (c.type === 'dungeon') stats = '<span></span>' + gem('atk', c.goal);
+    const badge = c.type === 'hero' ? '英雄' : c.type === 'dungeon' ? '迷宮' : c.sub || '';
     d.innerHTML = `
-      <div class="h-cost ${cost < c.cost ? 'cheap' : ''}">${cost}</div>
-      <div class="h-mon">${monogram(c)}</div>
+      <div class="gem gem-mp h-cost ${cost < c.cost ? 'gem-cheap' : ''}">${cost}</div>
+      ${badge ? `<span class="h-badge">${badge}</span>` : ''}
+      <div class="h-art">${artSvg(c)}</div>
       <div class="h-name">${c.name}</div>
-      <div class="h-type">${subLabel(c)}</div>
-      ${stat}`;
+      <div class="h-stats">${stats}</div>`;
     d.onclick = (e) => { e.stopPropagation(); onHandClick(inst.iid); };
     d.onmouseenter = (e) => showTip(c, e.currentTarget.getBoundingClientRect().left + 42, e.currentTarget.getBoundingClientRect().top);
     d.onmouseleave = hideTip;
@@ -483,6 +496,34 @@ function float(text, cls, pos) {
   document.body.appendChild(d);
   setTimeout(() => d.remove(), 1000);
 }
+function slashAt(pos) {
+  if (!pos) return;
+  const d = document.createElement('div');
+  d.className = 'slash';
+  d.innerHTML = `<svg viewBox="0 0 100 100">
+    <path d="M12 74 C34 58 62 40 88 22" stroke="rgba(255,255,255,.95)" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M12 74 C34 58 62 40 88 22" stroke="rgba(255,210,140,.85)" stroke-width="15" fill="none" stroke-linecap="round" opacity=".5"/>
+    <path d="M22 30 C40 46 60 62 80 78" stroke="rgba(255,255,255,.7)" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </svg>`;
+  d.style.left = pos.x + 'px'; d.style.top = pos.y + 'px';
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 460);
+}
+function burstAt(pos) {
+  if (!pos) return;
+  const d = document.createElement('div');
+  d.className = 'burst';
+  d.style.left = pos.x + 'px'; d.style.top = pos.y + 'px';
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 540);
+}
+function screenFlash() {
+  const d = document.createElement('div');
+  d.className = 'flash';
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 600);
+}
+
 function shake(ref) {
   if (ref.k === 'l') { (ref.pi === myPi ? el.myStrip : el.enemyStrip).animate(
       [{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }],
@@ -497,7 +538,7 @@ async function playEvents(evs, before) {
   const step = heavy.length > 12 ? 60 : heavy.length > 6 ? 110 : 170;
   for (const e of evs) {
     switch (e.t) {
-      case 'attack': SFX.attack(); await wait(step * 0.6); break;
+      case 'attack': SFX.attack(); slashAt(posOf(e.to, before)); await wait(step * 0.75); break;
       case 'dmg':
         float('-' + e.amount, 'dmg', posOf(e.ref, before)); shake(e.ref); SFX.hit();
         await wait(step); break;
@@ -510,15 +551,23 @@ async function playEvents(evs, before) {
       }
       case 'summon': SFX.summon(); await wait(step * 0.7); break;
       case 'death': SFX.death(); await wait(step * 0.7); break;
-      case 'tensionSkill': SFX.tension(); await wait(420); break;
+      case 'tensionSkill': SFX.tension(); screenFlash(); await wait(440); break;
       case 'heroSkill': SFX.tension(); await wait(340); break;
-      case 'heroLevel': SFX.win(); await wait(520); break;
+      case 'heroLevel': SFX.win(); screenFlash(); await wait(540); break;
       case 'hero': SFX.summon(); await wait(320); break;
       case 'dungeon': await wait(step * 0.5); break;
-      case 'clear': SFX.tension(); await wait(480); break;
+      case 'clear': SFX.tension(); screenFlash(); await wait(500); break;
       case 'divine': await wait(360); break;
       case 'turn': SFX.turn(); break;
       case 'freeze': await wait(step * 0.5); break;
+      case 'play': {
+        const card = CARDS[e.cardId];
+        if (card && card.type === 'spell') {
+          const r = el.myStrip.getBoundingClientRect();
+          burstAt({ x: innerWidth / 2, y: innerHeight * 0.45 });
+        }
+        SFX.play(); break;
+      }
     }
   }
 }
