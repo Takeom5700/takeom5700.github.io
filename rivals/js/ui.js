@@ -1,0 +1,537 @@
+// ============================================================
+//  バトル画面
+//  操作の可否はすべて engine.legalActions() から引くので、
+//  画面とルールがずれることがない。
+// ============================================================
+import { CARDS, CLASSES, TENSION_SKILLS } from './cards.js';
+import { createGame, FRONT, BACK, LEADER_HP } from './engine.js';
+import { createAiController, AI_TYPES, AI_LEVELS } from './ai.js';
+import { cardTint, monogram, kwBadges, subLabel, showTip, hideTip, classColor } from './view.js';
+import { SFX } from './audio.js';
+
+let game = null, myPi = 0, aiPi = 1, ai = null, conf = null;
+let sel = null;            // 選択中のもの
+let busy = false;          // 演出・AI思考中は操作を止める
+let onFinish = null;       // 決着時に呼ぶ（main.js が戦績を記録する）
+
+const $ = (id) => document.getElementById(id);
+const el = {};
+function cacheEls() {
+  el.enemyStrip = $('enemy-strip'); el.myStrip = $('my-strip');
+  el.enemyField = $('enemy-field'); el.myField = $('my-field');
+  el.hand = $('my-hand'); el.hint = $('hint'); el.mid = $('midline-txt');
+  el.overlay = $('overlay'); el.overlayBox = $('overlay-box');
+  el.logPanel = $('log-panel'); el.logInner = $('log-inner');
+}
+
+// ------------------------------------------------------------
+//  開始
+// ------------------------------------------------------------
+export function startBattle(config, finishCb) {
+  cacheEls();
+  conf = config; onFinish = finishCb;
+  myPi = config.playerFirst ? 0 : 1;
+  aiPi = 1 - myPi;
+  game = createGame({
+    seed: (Math.random() * 1e9) >>> 0,
+    first: 0,
+    players: myPi === 0
+      ? [{ name: 'あなた', cls: config.myClass, deck: [...config.myDeck] },
+         { name: config.oppName, cls: config.oppClass, deck: [...config.oppDeck] }]
+      : [{ name: config.oppName, cls: config.oppClass, deck: [...config.oppDeck] },
+         { name: 'あなた', cls: config.myClass, deck: [...config.myDeck] }],
+  });
+  ai = createAiController(config.aiType, config.aiLevel);
+  sel = null; busy = false;
+  el.overlay.hidden = true;
+  el.logPanel.hidden = true;
+  bindOnce();
+  game.drainEvents();
+  render();
+  if (game.active === aiPi) runAiTurn();
+}
+
+let bound = false;
+function bindOnce() {
+  if (bound) return; bound = true;
+  $('btn-end').onclick = () => { if (!busy && game.active === myPi) { clearSel(); doApply({ type: 'end' }); } };
+  $('btn-log').onclick = () => { el.logPanel.hidden = !el.logPanel.hidden; renderLog(); };
+  $('btn-quit').onclick = () => { if (!busy) confirmQuit(); };
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.unit,.slot,.hcard,.leader-strip,.btn-tension,.overlay')) clearSel();
+  });
+}
+
+// ------------------------------------------------------------
+//  描画
+// ------------------------------------------------------------
+function render() {
+  if (!game) return;
+  hideTip();
+  renderStrip(el.enemyStrip, aiPi, false);
+  renderStrip(el.myStrip, myPi, true);
+  renderField(el.enemyField, aiPi);
+  renderField(el.myField, myPi);
+  renderHand();
+  const mine = game.active === myPi;
+  el.mid.textContent = game.s.winner !== null ? '決着' : (mine ? `あなたのターン（${game.s.turn}）` : `${conf.oppName}のターン（${game.s.turn}）`);
+  $('btn-end').disabled = !mine || busy;
+  applyHighlights();
+}
+
+function renderStrip(root, pi, isMe) {
+  const p = game.p(pi);
+  const col = classColor(p.cls);
+  const sk = TENSION_SKILLS[p.cls];
+  const dots = [0, 1, 2].map(i => `<span class="ten-dot ${p.tension > i ? 'on' : ''}"></span>`).join('');
+  const canTension = isMe && p.tension >= 3 && game.active === myPi && game.s.winner === null;
+  root.className = 'leader-strip' + (isMe && game.active === myPi ? ' is-me-active' : '');
+  root.dataset.pi = pi;
+  root.innerHTML = `
+    <div class="ls-face" style="background:linear-gradient(180deg,${col},#1a0f11)">${p.leaderName[0]}</div>
+    <div class="ls-body">
+      <div class="ls-name">${p.name}<span style="font-weight:400;color:var(--washi-sub)">（${CLASSES[p.cls].name}）</span>${!isMe && conf.oppTag ? `<span class="ls-tag">${conf.oppTag}</span>` : ''}</div>
+      <div class="ls-meta">
+        <span class="hp-pill">HP<b>${Math.max(0, p.hp)}</b>/${p.maxHp}</span>
+        <span class="mp-pill">MP<b>${p.mp}</b>/${p.maxMp}</span>
+        <span class="ten-gauge" title="テンション ${p.tension}/3">${dots}</span>
+        ${p.weapon ? `<span class="ls-weapon">${p.weapon.name} ${p.weapon.atk}／耐${p.weapon.dur}</span>` : ''}
+        <span class="ls-deck">山札${p.deck.length}・手札${p.hand.length}</span>
+      </div>
+    </div>
+    ${isMe ? `<button class="btn-tension" ${canTension ? '' : 'disabled'} title="${sk.name}：${sk.text}">テンション<br>スキル</button>` : ''}`;
+  if (isMe) {
+    const b = root.querySelector('.btn-tension');
+    if (b) b.onclick = (e) => { e.stopPropagation(); selectTension(); };
+    root.onmouseenter = null;
+  }
+  root.onclick = (e) => { e.stopPropagation(); onLeaderClick(pi); };
+}
+
+function renderField(root, pi) {
+  for (const row of root.querySelectorAll('.row')) {
+    const colIdx = Number(row.dataset.col);
+    row.innerHTML = '';
+    for (let lane = 0; lane < 3; lane++) {
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      slot.dataset.pi = pi; slot.dataset.lane = lane; slot.dataset.col = colIdx;
+      const u = game.slotUnit(pi, lane, colIdx);
+      if (u) slot.appendChild(unitEl(u));
+      slot.onclick = (e) => { e.stopPropagation(); onSlotClick(pi, lane, colIdx, u); };
+      row.appendChild(slot);
+    }
+  }
+}
+
+function unitEl(u) {
+  const c = CARDS[u.cardId];
+  const d = document.createElement('div');
+  const hp = game.hpOf(u), maxHp = game.maxHpOf(u);
+  d.className = 'unit' + (u.frozen > 0 ? ' is-frozen' : '') + (game.hasKw(u, 'ステルス') ? ' is-stealth' : '');
+  d.dataset.uid = u.uid;
+  d.style.setProperty('--uc', cardTint(c.cls));
+  d.innerHTML = `
+    <div class="u-kw">${kwBadges(u.silenced ? [] : u.kw)}</div>
+    <div class="u-mon">${monogram(c)}</div>
+    <div class="u-name">${c.name}</div>
+    <div class="u-stat"><span class="u-atk">${game.atkOf(u)}</span><span class="u-hp ${hp < maxHp ? 'hurt' : ''}">${hp}</span></div>`;
+  d.onmouseenter = (e) => showTip(c, e.clientX, e.currentTarget.getBoundingClientRect().top, unitExtra(u));
+  d.onmouseleave = hideTip;
+  return d;
+}
+function unitExtra(u) {
+  const bits = [];
+  if (u.frozen > 0) bits.push(`行動不能（あと${u.frozen}ターン）`);
+  if (u.attacksLeft > 0 && u.pi === myPi) bits.push(`攻撃できる（残り${u.attacksLeft}回）`);
+  if (u.pi === myPi && u.attacksLeft === 0 && u.frozen === 0) bits.push('このターンはもう攻撃できない');
+  return bits.length ? `<div style="margin-top:4px;color:#cdb49e">${bits.join('<br>')}</div>` : '';
+}
+
+function renderHand() {
+  const p = game.p(myPi);
+  el.hand.innerHTML = '';
+  for (const inst of p.hand) {
+    const c = CARDS[inst.cardId];
+    const cost = game.effectiveCost(myPi, inst);
+    const playable = game.active === myPi && !busy && playActions(inst.iid).length > 0;
+    const d = document.createElement('div');
+    d.className = 'hcard' + (playable ? '' : ' cant');
+    d.dataset.iid = inst.iid;
+    d.style.setProperty('--uc', cardTint(c.cls));
+    const stat = c.type === 'unit' ? `<div class="h-stat"><span class="h-atk">${c.atk}</span><span class="h-hp">${c.hp}</span></div>`
+      : c.type === 'weapon' ? `<div class="h-stat"><span class="h-atk">${c.wAtk}</span><span class="h-hp">耐${c.wDur}</span></div>` : '<div class="h-stat"></div>';
+    d.innerHTML = `
+      <div class="h-cost ${cost < c.cost ? 'cheap' : ''}">${cost}</div>
+      <div class="h-mon">${monogram(c)}</div>
+      <div class="h-name">${c.name}</div>
+      <div class="h-type">${subLabel(c)}</div>
+      ${stat}`;
+    d.onclick = (e) => { e.stopPropagation(); onHandClick(inst.iid); };
+    d.onmouseenter = (e) => showTip(c, e.currentTarget.getBoundingClientRect().left + 42, e.currentTarget.getBoundingClientRect().top);
+    d.onmouseleave = hideTip;
+    el.hand.appendChild(d);
+  }
+}
+
+function renderLog() {
+  if (el.logPanel.hidden) return;
+  el.logInner.innerHTML = game.s.log.slice(-160).map(t =>
+    `<div class="${t.startsWith('—') ? 'lg-turn' : ''}">${t}</div>`).join('');
+  el.logPanel.scrollTop = el.logPanel.scrollHeight;
+}
+
+// ------------------------------------------------------------
+//  選択とハイライト
+// ------------------------------------------------------------
+function myActions() { return game.legalActions(myPi, { compact: false }); }
+function playActions(iid) { return myActions().filter(a => a.type === 'play' && a.iid === iid); }
+
+function clearSel() { sel = null; hint(null); applyHighlights(); }
+
+function hint(text) {
+  if (!text) { el.hint.hidden = true; return; }
+  el.hint.textContent = text; el.hint.hidden = false;
+}
+
+// いま選んでいるものから、実行できる行動の候補を出す
+function candidates() {
+  if (!sel) return [];
+  if (sel.type === 'hand') {
+    let a = playActions(sel.iid);
+    if (sel.choice != null) a = a.filter(x => x.choice === sel.choice);
+    if (sel.slot) a = a.filter(x => x.slot && x.slot.lane === sel.slot.lane && x.slot.col === sel.slot.col);
+    return a;
+  }
+  if (sel.type === 'unit') return myActions().filter(a => a.type === 'attack' && a.from.k === 'u' && a.from.uid === sel.uid);
+  if (sel.type === 'leader') return myActions().filter(a => a.type === 'attack' && a.from.k === 'l');
+  if (sel.type === 'tension') return myActions().filter(a => a.type === 'tension');
+  return [];
+}
+
+function applyHighlights() {
+  document.querySelectorAll('.unit,.slot,.hcard,.leader-strip').forEach(n => {
+    n.classList.remove('is-target', 'is-drop', 'is-sel', 'can-act');
+  });
+  if (game.s.winner !== null) return;
+
+  // 行動できる自分のユニット・リーダー
+  if (game.active === myPi && !busy && !sel) {
+    for (const a of myActions()) {
+      if (a.type !== 'attack') continue;
+      if (a.from.k === 'u') {
+        const n = document.querySelector(`.unit[data-uid="${a.from.uid}"]`);
+        if (n) n.classList.add('can-act');
+      }
+    }
+  }
+  if (!sel) return;
+
+  if (sel.type === 'hand') {
+    const h = document.querySelector(`.hcard[data-iid="${sel.iid}"]`);
+    if (h) h.classList.add('is-sel');
+  } else if (sel.type === 'unit') {
+    const n = document.querySelector(`.unit[data-uid="${sel.uid}"]`);
+    if (n) n.classList.add('is-sel');
+  } else if (sel.type === 'leader') {
+    el.myStrip.classList.add('is-sel');
+  }
+
+  const cands = candidates();
+  const needSlot = sel.type === 'hand' && !sel.slot && cands.some(a => a.slot);
+  if (needSlot) {
+    for (const a of cands) {
+      if (!a.slot) continue;
+      const n = document.querySelector(`.slot[data-pi="${myPi}"][data-lane="${a.slot.lane}"][data-col="${a.slot.col}"]`);
+      if (n) n.classList.add('is-drop');
+    }
+    return;
+  }
+  for (const a of cands) {
+    const t = a.type === 'attack' ? a.to : a.target;
+    if (!t) continue;
+    if (t.k === 'u') {
+      const n = document.querySelector(`.unit[data-uid="${t.uid}"]`);
+      if (n) n.classList.add('is-target');
+    } else {
+      (t.pi === myPi ? el.myStrip : el.enemyStrip).classList.add('is-target');
+    }
+  }
+}
+
+// ------------------------------------------------------------
+//  クリック処理
+// ------------------------------------------------------------
+function onHandClick(iid) {
+  if (busy || game.active !== myPi || game.s.winner !== null) return;
+  if (sel && sel.type === 'hand' && sel.iid === iid) { clearSel(); return; }
+  const acts = playActions(iid);
+  const inst = game.p(myPi).hand.find(h => h.iid === iid);
+  if (!inst) return;
+  const c = CARDS[inst.cardId];
+  if (!acts.length) {
+    const cost = game.effectiveCost(myPi, inst);
+    hint(cost > game.p(myPi).mp ? 'MPが足りません'
+       : c.type === 'unit' && !game.emptySlots(myPi).length ? '場がいっぱいです' : 'いま使える対象がありません');
+    setTimeout(() => { if (!sel) hint(null); }, 1600);
+    return;
+  }
+  SFX.tap();
+  sel = { type: 'hand', iid, choice: null, slot: null };
+  // 必中モードのタロットは、先に①②を選ぶ
+  if (c.divine && game.p(myPi).hitMode) { askDivine(c, (i) => { sel.choice = i; afterHandSelect(c); }); return; }
+  afterHandSelect(c);
+}
+
+function afterHandSelect(c) {
+  const cands = candidates();
+  if (!cands.length) { clearSel(); return; }
+  if (c.type === 'unit' && cands.some(a => a.slot)) { hint('置く場所を選んでください'); applyHighlights(); return; }
+  if (cands.some(a => a.target)) { hint('対象を選んでください'); applyHighlights(); return; }
+  const plain = cands.find(a => !a.target) || cands[0];
+  clearSelKeepBusy(); doApply(plain);
+}
+function clearSelKeepBusy() { sel = null; hint(null); }
+
+function onSlotClick(pi, lane, col, u) {
+  if (busy || game.active !== myPi || game.s.winner !== null) return;
+  // 対象としてクリックされた場合
+  if (u && tryTarget({ k: 'u', uid: u.uid })) return;
+  // 自分のユニットを攻撃者として選ぶ
+  if (u && u.pi === myPi && !sel) {
+    const acts = myActions().filter(a => a.type === 'attack' && a.from.k === 'u' && a.from.uid === u.uid);
+    if (acts.length) { SFX.tap(); sel = { type: 'unit', uid: u.uid }; hint('攻撃する相手を選んでください'); applyHighlights(); return; }
+    if (game.canUnitAttack(u)) { hint('攻撃できる相手がいません'); setTimeout(() => hint(null), 1500); }
+    else if (u.frozen > 0) { hint('このユニットは行動不能です'); setTimeout(() => hint(null), 1500); }
+    else if (u.summonedTurn === game.s.turn) { hint('召喚したターンは攻撃できません（速攻を除く）'); setTimeout(() => hint(null), 2000); }
+    else { hint('このターンはもう攻撃できません'); setTimeout(() => hint(null), 1500); }
+    return;
+  }
+  // ユニットカードの置き場所
+  if (sel && sel.type === 'hand' && !u) {
+    const cands = candidates().filter(a => a.slot && a.slot.lane === lane && a.slot.col === col && pi === myPi);
+    if (!cands.length) { clearSel(); return; }
+    sel.slot = { lane, col };
+    const withTarget = cands.filter(a => a.target);
+    if (withTarget.length) { hint('対象を選んでください（選ばない場合はもう一度マスを押す）'); applyHighlights();
+      const plain = cands.find(a => !a.target);
+      if (plain) sel.skipTargetAction = plain;
+      return; }
+    clearSelKeepBusy(); doApply(cands[0]); return;
+  }
+  // 対象を選ばずに召喚時効果を飛ばす
+  if (sel && sel.type === 'hand' && sel.slot && sel.slot.lane === lane && sel.slot.col === col && sel.skipTargetAction) {
+    const a = sel.skipTargetAction; clearSelKeepBusy(); doApply(a); return;
+  }
+  clearSel();
+}
+
+function onLeaderClick(pi) {
+  if (busy || game.active !== myPi || game.s.winner !== null) return;
+  if (tryTarget({ k: 'l', pi })) return;
+  if (pi === myPi && !sel) {
+    const acts = myActions().filter(a => a.type === 'attack' && a.from.k === 'l');
+    if (acts.length) { SFX.tap(); sel = { type: 'leader' }; hint('攻撃する相手を選んでください'); applyHighlights(); }
+    else if (game.p(myPi).weapon) { hint('攻撃できる相手がいません'); setTimeout(() => hint(null), 1500); }
+    return;
+  }
+  clearSel();
+}
+
+function tryTarget(ref) {
+  if (!sel) return false;
+  const cands = candidates();
+  const hit = cands.find(a => {
+    const t = a.type === 'attack' ? a.to : a.target;
+    return t && t.k === ref.k && (ref.k === 'u' ? t.uid === ref.uid : t.pi === ref.pi);
+  });
+  if (!hit) return false;
+  clearSelKeepBusy();
+  doApply(hit);
+  return true;
+}
+
+function selectTension() {
+  if (busy || game.active !== myPi) return;
+  const acts = myActions().filter(a => a.type === 'tension');
+  if (!acts.length) return;
+  SFX.tap();
+  if (acts.length === 1 && !acts[0].target) { doApply(acts[0]); return; }
+  sel = { type: 'tension' };
+  hint('テンションスキルの対象を選んでください');
+  applyHighlights();
+}
+
+// タロットの①②選択
+function askDivine(card, cb) {
+  el.overlayBox.innerHTML = `<h3>占い</h3><p>${card.name}（必中モード）— 効果を選べます</p>
+    <div class="choice-list">
+      <button data-i="0"><b>①</b>${card.divine[0].text}</button>
+      <button data-i="1"><b>②</b>${card.divine[1].text}</button>
+    </div>
+    <div class="overlay-btns"><button class="btn" data-i="-1">やめる</button></div>`;
+  hideTip();
+  el.overlay.hidden = false;
+  el.overlayBox.querySelectorAll('button').forEach(b => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      el.overlay.hidden = true;
+      const i = Number(b.dataset.i);
+      if (i < 0) { clearSel(); return; }
+      cb(i);
+    };
+  });
+}
+
+// ------------------------------------------------------------
+//  行動の適用と演出
+// ------------------------------------------------------------
+async function doApply(action) {
+  if (busy || !game || game.s.winner !== null) return;
+  busy = true;
+  const before = capturePositions();
+  const ok = game.apply(action);
+  const evs = game.drainEvents();
+  if (!ok) { busy = false; render(); return; }
+  render();
+  await playEvents(evs, before);
+  renderLog();
+  busy = false;
+  render();
+  if (game.s.winner !== null) { finish(); return; }
+  if (game.active === aiPi) runAiTurn();
+}
+
+function capturePositions() {
+  const map = { units: {}, leaders: {} };
+  document.querySelectorAll('.unit[data-uid]').forEach(n => {
+    const r = n.getBoundingClientRect();
+    map.units[n.dataset.uid] = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  [[aiPi, el.enemyStrip], [myPi, el.myStrip]].forEach(([pi, n]) => {
+    const r = n.getBoundingClientRect();
+    map.leaders[pi] = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  return map;
+}
+function posOf(ref, before) {
+  if (ref.k === 'l') {
+    const n = ref.pi === myPi ? el.myStrip : el.enemyStrip;
+    const r = n.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+  const n = document.querySelector(`.unit[data-uid="${ref.uid}"]`);
+  if (n) { const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+  return before.units[ref.uid] || null;
+}
+
+function float(text, cls, pos) {
+  if (!pos) return;
+  const d = document.createElement('div');
+  d.className = 'float ' + cls; d.textContent = text;
+  d.style.left = pos.x + 'px'; d.style.top = pos.y + 'px';
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 1000);
+}
+function shake(ref) {
+  if (ref.k === 'l') { (ref.pi === myPi ? el.myStrip : el.enemyStrip).animate(
+      [{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }],
+      { duration: 260 }); return; }
+  const n = document.querySelector(`.unit[data-uid="${ref.uid}"]`);
+  if (n) { n.classList.remove('is-hit'); void n.offsetWidth; n.classList.add('is-hit'); }
+}
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function playEvents(evs, before) {
+  const heavy = evs.filter(e => ['dmg', 'heal', 'death', 'summon', 'attack', 'tensionSkill', 'divine'].includes(e.t));
+  const step = heavy.length > 12 ? 60 : heavy.length > 6 ? 110 : 170;
+  for (const e of evs) {
+    switch (e.t) {
+      case 'attack': SFX.attack(); await wait(step * 0.6); break;
+      case 'dmg':
+        float('-' + e.amount, 'dmg', posOf(e.ref, before)); shake(e.ref); SFX.hit();
+        await wait(step); break;
+      case 'heal':
+        float('+' + e.amount, 'heal', posOf(e.ref, before)); SFX.heal(); await wait(step * 0.8); break;
+      case 'buff': {
+        const p = posOf(e.ref, before);
+        if (e.atk || e.hp) float(`${e.atk >= 0 ? '+' : ''}${e.atk}/${e.hp >= 0 ? '+' : ''}${e.hp}`, 'buff', p);
+        await wait(step * 0.5); break;
+      }
+      case 'summon': SFX.summon(); await wait(step * 0.7); break;
+      case 'death': SFX.death(); await wait(step * 0.7); break;
+      case 'tensionSkill': SFX.tension(); await wait(420); break;
+      case 'divine': await wait(360); break;
+      case 'turn': SFX.turn(); break;
+      case 'freeze': await wait(step * 0.5); break;
+    }
+  }
+}
+
+// ------------------------------------------------------------
+//  コンピューターのターン
+// ------------------------------------------------------------
+async function runAiTurn() {
+  if (!game || game.s.winner !== null) return;
+  busy = true; render();
+  await wait(520);
+  let guard = 0;
+  while (game.active === aiPi && game.s.winner === null && guard++ < 80) {
+    let action = null;
+    try { action = ai.nextAction(game, aiPi); } catch (err) { console.error(err); action = null; }
+    if (!action) { action = { type: 'end' }; ai.reset(); }
+    const before = capturePositions();
+    const ok = game.apply(action);
+    const evs = game.drainEvents();
+    render();
+    await playEvents(evs, before);
+    renderLog();
+    if (!ok) { game.apply({ type: 'end' }); ai.reset(); render(); break; }
+    if (action.type === 'end') break;
+    await wait(300);
+  }
+  busy = false;
+  render();
+  if (game.s.winner !== null) finish();
+  else { SFX.turn(); hint('あなたのターンです'); setTimeout(() => hint(null), 1200); }
+}
+
+// ------------------------------------------------------------
+//  決着
+// ------------------------------------------------------------
+function confirmQuit() {
+  el.overlayBox.innerHTML = `<h3>投了しますか</h3><p>この対戦は負けとして記録されます。</p>
+    <div class="overlay-btns">
+      <button class="btn" id="q-no">つづける</button>
+      <button class="btn btn-danger" id="q-yes">投了する</button>
+    </div>`;
+  hideTip();
+  el.overlay.hidden = false;
+  $('q-no').onclick = (e) => { e.stopPropagation(); el.overlay.hidden = true; };
+  $('q-yes').onclick = (e) => { e.stopPropagation(); el.overlay.hidden = true; game.s.winner = aiPi; finish(); };
+}
+
+function finish() {
+  const w = game.s.winner;
+  const win = w === myPi, draw = w === 'draw';
+  if (win) SFX.win(); else if (!draw) SFX.lose();
+  const me = game.p(myPi), op = game.p(aiPi);
+  el.overlayBox.innerHTML = `
+    <h3 class="${win ? 'win' : 'lose'}">${draw ? '相打ち' : win ? '勝利！' : '敗北…'}</h3>
+    <p>${game.s.turn}ターンで決着。<br>
+      あなた HP ${Math.max(0, me.hp)} ／ ${conf.oppName} HP ${Math.max(0, op.hp)}<br>
+      <span style="font-size:.8rem">${AI_LEVELS[conf.aiLevel].name}・${AI_TYPES[conf.aiType].name}・${conf.oppDeckName}</span></p>
+    <div class="overlay-btns">
+      <button class="btn btn-primary" id="o-again">もう一度</button>
+      <button class="btn" id="o-change">相手を変える</button>
+      <button class="btn btn-ghost" id="o-title">タイトルへ</button>
+    </div>`;
+  hideTip();
+  el.overlay.hidden = false;
+  if (onFinish) onFinish({ win, draw, turns: game.s.turn, conf });
+  $('o-again').onclick = (e) => { e.stopPropagation(); el.overlay.hidden = true; startBattle(conf, onFinish); };
+  $('o-change').onclick = (e) => { e.stopPropagation(); el.overlay.hidden = true; location.hash = '#opponent'; };
+  $('o-title').onclick = (e) => { e.stopPropagation(); el.overlay.hidden = true; location.hash = '#title'; };
+}
+
+export function abortBattle() { game = null; busy = false; sel = null; }

@@ -1,0 +1,74 @@
+// カードの見た目まわりの共通部品（バトル・図鑑・デッキ編集で共用）
+import { CARDS, CLASSES, KEYWORD_TEXT, maxCopies } from './cards.js';
+
+export const TYPE_LABEL = { unit: 'ユニット', spell: '特技', weapon: '武器' };
+
+export function classColor(cls) { return (CLASSES[cls] || CLASSES.neutral).color; }
+
+// カードの地の色（職業色を夜に沈めたもの）
+export function cardTint(cls) {
+  const hex = classColor(cls);
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  const mix = (v) => Math.round(v * 0.42 + 26);
+  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
+}
+
+// 絵がないので、名前の頭文字を紋として使う
+export function monogram(card) {
+  const n = card.name;
+  const skip = 'のとがをにへでだ・';
+  for (const ch of n) if (!skip.includes(ch)) return ch;
+  return n[0] || '？';
+}
+
+export function kwBadges(kws) {
+  const map = { 'におうだち': 'taunt', 'ステルス': 'stealth', '貫通': 'pierce', '速攻': 'rush',
+                'メタルボディ': 'metal', '２回攻撃': 'rush' };
+  const short = { 'におうだち': '壁', 'ステルス': '隠', '貫通': '貫', '速攻': '速', 'メタルボディ': '鉄', '２回攻撃': '２' };
+  return kws.filter(k => map[k]).map(k => `<span class="kwb ${map[k]}" title="${k}">${short[k]}</span>`).join('');
+}
+
+export function subLabel(card) {
+  const t = TYPE_LABEL[card.type] || '';
+  return card.sub ? `${card.sub}・${t}` : t;
+}
+
+// 図鑑・デッキ編集で使う大きめのカード
+export function poolCardHtml(card, count) {
+  const isUnit = card.type === 'unit';
+  const stat = isUnit ? `<div class="p-stat"><span class="p-atk">${card.atk}</span><span class="p-hp">${card.hp}</span></div>`
+    : card.type === 'weapon' ? `<div class="p-stat"><span class="p-atk">${card.wAtk}</span><span class="p-hp">耐${card.wDur}</span></div>` : '';
+  const kw = card.kw.length ? `<div class="p-sub">${card.kw.join('／')}</div>` : '';
+  return `<div class="pcard" style="--uc:${cardTint(card.cls)}" data-id="${card.id}">
+    <div class="p-cost">${card.cost}</div>
+    <div class="p-rar ${card.rarity}">${card.rarity}</div>
+    <div class="p-mon">${monogram(card)}</div>
+    <div class="p-name">${card.name}</div>
+    <div class="p-sub">${(CLASSES[card.cls] || {}).name || ''}・${subLabel(card)}</div>
+    ${kw}
+    <div class="p-text">${card.text || '—'}</div>
+    ${stat}
+    ${count ? `<div class="p-have">×${count}</div>` : ''}
+  </div>`;
+}
+
+// 吹き出し（カードの詳細）
+const tipEl = () => document.getElementById('tip');
+export function showTip(card, x, y, extra = '') {
+  const el = tipEl(); if (!el) return;
+  const kwLines = card.kw.filter(k => KEYWORD_TEXT[k])
+    .map(k => `<div class="t-kw">${k}：${KEYWORD_TEXT[k]}</div>`).join('');
+  el.innerHTML = `<b>${card.name}</b>
+    <div>${card.cost}コスト・${(CLASSES[card.cls] || {}).name || ''}・${subLabel(card)}${card.rarity === 'LEG' ? '・レジェンド（1枚まで）' : ''}</div>
+    ${card.text ? `<div style="margin-top:4px">${card.text}</div>` : ''}
+    ${kwLines}${extra}`;
+  el.hidden = false;
+  const r = el.getBoundingClientRect();
+  const left = Math.min(Math.max(8, x - r.width / 2), innerWidth - r.width - 8);
+  const top = y - r.height - 14 < 8 ? y + 20 : y - r.height - 14;
+  el.style.left = left + 'px';
+  el.style.top = top + 'px';
+}
+export function hideTip() { const el = tipEl(); if (el) el.hidden = true; }
+
+export { maxCopies };
