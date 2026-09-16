@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import importlib.util
+import json
 import re
 import sys
 from pathlib import Path
@@ -296,6 +297,43 @@ def refresh_daily_chips(html: str, t: dict) -> str:
                         '  <div class="color-grid">\n' + "\n".join(block), 1)
 
 
+def chip_end_date(label: str, d: datetime.date):
+    """チップのラベルから「いつまで有効か」を読み取る。無期限なら None。"""
+    def last_day(mo):
+        return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1]
+    md = _label_end_md(label, last_day)
+    if not md:
+        return None
+    mo, day = md
+    year = d.year
+    # 年をまたぐ指定（12月の項目を1月に見るなど）は前年扱いにしない
+    if mo - d.month > 6:
+        year -= 1
+    elif d.month - mo > 6:
+        year += 1
+    try:
+        return datetime.date(year, mo, day)
+    except ValueError:
+        return None
+
+
+def _label_end_md(label: str, last_day):
+    m = re.search(r'(\d{1,2})/(\d{1,2})\s*[-〜～]\s*(\d{1,2})/(\d{1,2})', label)
+    if m:
+        return (int(m.group(3)), int(m.group(4)))
+    m = re.search(r'(\d{1,2})/(\d{1,2})\s*[-〜～]\s*(\d{1,2})(?!\s*/)', label)
+    if m:
+        return (int(m.group(1)), int(m.group(3)))
+    m = re.search(r'(\d{1,2})月(?!\d)', label)
+    if m:
+        mo = int(m.group(1))
+        return (mo, last_day(mo))
+    m = re.search(r'(?<![\d/])(\d{1,2})/(\d{1,2})(?![\d/-])', label)
+    if m:
+        return (int(m.group(1)), int(m.group(2)))
+    return None
+
+
 def drop_expired_chips(html: str, d: datetime.date) -> tuple[str, int]:
     """期限切れのチップを HTML から取り除く（表示側の非表示とは別に元を断つ）。"""
     def last_day(mo):
@@ -332,6 +370,187 @@ def drop_expired_chips(html: str, d: datetime.date) -> tuple[str, int]:
     html = re.sub(r'\n?    <div class="color-chip">\n.*?\n    </div>', repl, html, flags=re.S)
     return html, removed
 
+
+
+BAND_CLS = {"low": ("s-low", "bar-low"), "mid": ("s-mid", "bar-mid"),
+            "high": ("s-high", "bar-high")}
+
+
+def rebuild_scores(html: str, t: dict, d: datetime.date) -> tuple[str, int]:
+    """スコア欄を六星・四柱から計算し直す。
+
+    外部スクリプトが書く点数は日運と無関係だった（9/9〜9/16 の実測で
+    相関 r=+0.16、好日と最悪日の平均がほぼ同じ）。ここで機械的に出し直す。
+    """
+    scores = B.compute_scores(t["info"], rokusei_month(d))
+    tag = f'【日運：{t["rokusei_today_short"]}】'
+    cards = ["\n"]
+    for sc in scores:
+        num_cls, bar_cls = BAND_CLS[sc["band"]]
+        pct = round(sc["value"] * 10)
+        cards.append(
+            '  <div class="score-card">\n'
+            f'    <div class="label">{sc["label"]}</div>\n'
+            f'    <div class="score-num {num_cls}">{sc["value"]:.1f}</div>\n'
+            f'    <div class="score-bar-bg"><div class="score-bar-fill {bar_cls}" '
+            f'style="width:{pct}%"></div></div>\n'
+            f'    <div class="comment">{tag}{sc["comment"]}</div>\n'
+            '  </div>\n\n')
+    block = "".join(cards)
+    new, n = re.subn(r'(<div class="scores-grid">)(.*?)(\n</div>)',
+                     lambda m: m.group(1) + block + m.group(3), html, count=1, flags=re.S)
+    return new, n
+
+
+def drop_stale_marked_chips(html: str) -> tuple[str, int]:
+    """日付が無いのに「本日」「当日」を名乗るチップを外す。
+
+    中身が数日前の日干支のまま居座るため。本日ぶんは
+    refresh_daily_chips() が毎回作り直している。
+    """
+    removed = 0
+
+    def repl(m):
+        nonlocal removed
+        chunk = m.group(0)
+        lm = re.search(r'<div class="chip-label">(.*?)</div>', chunk, re.S)
+        label = lm.group(1) if lm else ""
+        if re.search(r'★?\s*(本日|当日)', label):
+            removed += 1
+            return ""
+        return chunk
+
+    html = re.sub(r'\n?    <div class="color-chip">\n.*?\n    </div>', repl,
+                  html, flags=re.S)
+    return html, removed
+
+
+SOURCES_PATH = ROOT / "uranai" / "data" / "sources.json"
+CADENCE_LABEL = {"daily": "毎日", "every3days": "3日ごと",
+                 "weekly": "毎週", "monthly": "毎月", "fixed": "期限なし"}
+
+
+def chip_source(label: str) -> str:
+    for pat, name in (("しいたけ", "しいたけ占い"), ("Love", "Loveちゃん"),
+                      ("山田ありす", "山田ありす"), ("六星占術", "六星占術"),
+                      ("六龍法", "六龍法占い"), ("四柱推命", "四柱推命"),
+                      ("中国式", "中国式占い")):
+        if label.startswith(pat):
+            return name
+    return "その他"
+
+
+def chip_kind(label: str) -> str:
+    """チップの粒度を判定する。日替わり／月単位／長期を混同しないため。"""
+    if re.search(r'下半期|年間|新36星座|日主', label):
+        return "long"
+    if re.search(r'\d{1,2}/\d{1,2}', label):
+        return "range"
+    if re.search(r'\d{1,2}月(?!\d)', label):
+        return "month"
+    return "long"
+
+
+def update_source_status(html: str, d: datetime.date) -> dict:
+    """ページ上のチップから各系統の最新期間を読み取り、記録を更新する。
+
+    チップは期限切れになると消えるので、「最後に取りこめたのはいつか」は
+    ここに残さないと分からなくなる。だから新しい方へ単調に寄せる。
+    """
+    data = json.loads(SOURCES_PATH.read_text(encoding="utf-8"))
+    latest: dict[str, datetime.date] = {}
+    present: set[str] = set()
+
+    for m in re.finditer(r'<div class="chip-label">(.*?)</div>', html, re.S):
+        label = re.sub(r"<[^>]+>", "", m.group(1))
+        src = chip_source(label)
+        kind = chip_kind(label)
+        for st in data["streams"]:
+            if st.get("auto") or st.get("source") != src:
+                continue
+            if st.get("kind") not in ("any", kind):
+                continue
+            present.add(st["key"])
+            e = chip_end_date(label, d)
+            if e and (st["key"] not in latest or e > latest[st["key"]]):
+                latest[st["key"]] = e
+            break
+
+    for st in data["streams"]:
+        if st.get("auto"):
+            continue
+        st["has_chip"] = st["key"] in present
+        got = latest.get(st["key"])
+        if got:
+            prev = st.get("last_period_end")
+            if not prev or got.isoformat() > prev:
+                st["last_period_end"] = got.isoformat()
+
+    SOURCES_PATH.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return data
+
+
+def render_source_panel(data: dict, d: datetime.date) -> str:
+    """どの系統が生きていて、どれが止まっているかを正直に出す。"""
+    fresh, stale = [], []
+    for st in data["streams"]:
+        label, cad = st["label"], st.get("cadence", "")
+        head = f'<li><strong>{label}</strong>（{cad}）'
+        if st.get("auto"):
+            fresh.append(head + '<span class="src-ok">自動計算なので常に本日ぶん</span></li>')
+            continue
+        if st.get("fixed"):
+            if st.get("has_chip"):
+                fresh.append(head + '<span class="src-ok">期限のない情報として表示中</span></li>')
+            else:
+                stale.append(head + '<span class="src-ng">表示できる項目がありません</span></li>')
+            continue
+        end = st.get("last_period_end")
+        if not end:
+            # 日付を持たない継続情報（下半期テーマなど）は、チップがあれば有効。
+            if st.get("has_chip"):
+                fresh.append(head + '<span class="src-ok">日付のない継続情報として'
+                                    '表示中</span></li>')
+            else:
+                stale.append(head + '<span class="src-ng">表示できる項目が'
+                                    'ありません</span></li>')
+            continue
+        e = datetime.date.fromisoformat(end)
+        if e >= d:
+            fresh.append(head + f'<span class="src-ok">{e.month}/{e.day} まで有効</span></li>')
+        else:
+            days = (d - e).days
+            stale.append(head + f'<span class="src-ng">最後に届いたのは {e.month}/{e.day} '
+                                f'までの回＝{days}日前。それ以降が来ていません</span></li>')
+
+    out = ['<div class="source-status">',
+           f'  <div class="src-title">📡 ソースの取りこみ状況（{d.month}/{d.day} 時点）</div>']
+    if stale:
+        out.append('  <div class="src-head src-head-ng">⚠ 新しい情報が届いていない系統</div>')
+        out.append("  <ul>" + "".join(stale) + "</ul>")
+        out.append('  <div class="src-note">この系統は本日ぶんの項目がありません。'
+                   '古い内容を本日ぶんとして出さないよう、期限切れは自動で消しています。'
+                   '取りこみを再開するには、その占いの新しい回をページに追加する必要があります。</div>')
+    if fresh:
+        out.append('  <div class="src-head">✓ 有効な系統</div>')
+        out.append("  <ul>" + "".join(fresh) + "</ul>")
+    out.append("</div>")
+    return "\n".join(out)
+
+
+def inject_source_panel(html: str, panel: str) -> str:
+    # 前回入れたパネルを、前後の空行ごと完全に取り除いてから入れ直す。
+    # 取り除き方と入れ方が対称でないと、実行のたびに空行が1行ずつ増えて
+    # 冪等性が崩れる（不動点チェックが止めてくれるが、そもそも作らない）。
+    # 「改行1つ＋パネル＋改行1つ」をちょうど消す。\n* にすると直前の
+    # アラート欄の行末改行まで食べてしまい、HTML が壊れる。
+    html = re.sub(r'\n<div class="source-status">.*?\n</div>\n', "", html,
+                  flags=re.S)
+    m = re.search(r'(<div class="alert-box">.*?\n</div>\n)', html, re.S)
+    if not m:
+        return html
+    return html[:m.end()] + "\n" + panel + "\n" + html[m.end():]
 
 def inject_enhancements(html: str, t: dict) -> str:
     """毎回消される鮮度バナー・絞り込みUIを入れ直す（既にあれば何もしない）。"""
@@ -441,9 +660,15 @@ def main() -> int:
     def one_pass(src):
         h, dn, wn = rewrite_sections(src, t)
         h, rm = drop_expired_chips(h, d)
+        h, rm2 = drop_stale_marked_chips(h)
         h = refresh_daily_chips(h, t)
+        h, ns = rebuild_scores(h, t, d)
+        if not ns:
+            wn.append("スコア欄が見つからず作り直せませんでした")
+        src = update_source_status(h, d)
+        h = inject_source_panel(h, render_source_panel(src, d))
         h = inject_enhancements(h, t)
-        return h, dn, wn, rm
+        return h, dn, wn, rm + rm2
 
     # 不動点まで回す。1回目の結果を2回目に通しても変わらないことを確かめてから
     # 書き出す。ここが安定しないまま書き出すと、次の実行でまた変化してしまい
