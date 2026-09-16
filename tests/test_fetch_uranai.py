@@ -169,9 +169,15 @@ check("空のIDは即 None", F.verify_channel_id(""), None)
 check("None も落ちない", F.verify_channel_id(None), None)
 
 _calls = []
+_no_cookie = []
 def fake_get(url, timeout=30, cookie=None):
     _calls.append(url)
+    if not cookie:
+        _no_cookie.append(url)
     if "feeds/videos.xml" in url:
+        if "UCechoechoechoechoechoec" in url:
+            return ("<feed><title>こだま</title>"
+                    "<yt:channelId>UCechoechoechoechoechoec</yt:channelId></feed>")
         if "UCgoodgoodgoodgoodgoodgo" in url:
             return "<feed><title>Loveちゃん</title><entry><yt:videoId>x</yt:videoId>"\
                    "<title>t</title><published>2026-09-16T00:00:00Z</published></entry></feed>"
@@ -183,6 +189,10 @@ F.get = fake_get
 try:
     check("RSSが引ければチャンネル名を返す",
           F.verify_channel_id("UCgoodgoodgoodgoodgoodgo"), "Loveちゃん")
+    check("裏取りのRSS取得でも Cookie を渡している",
+          all("feeds/videos.xml" not in u for u in _no_cookie), True)
+    check("channelId がこだまするだけでも本物とみなす",
+          F.verify_channel_id("UCechoechoechoechoechoec"), "こだま")
     check("entry が無いRSSは None",
           F.verify_channel_id("UCbadbadbadbadbadbadbadx"), None)
     check("RSSで裏取りするまでIDを採用しない（URL全滅なら例外）",

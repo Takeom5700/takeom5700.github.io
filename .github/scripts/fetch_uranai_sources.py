@@ -253,13 +253,19 @@ def verify_channel_id(cid: str):
     if not re.fullmatch(r"UC[\w-]{22}", cid or ""):
         return None
     try:
-        xml = get(rss_url(cid), timeout=20)
-    except Exception:  # noqa: BLE001
+        # Cookie を渡さないと同意ページが返ってきて中身が空になる。
+        # 2026-09-16 の実走で、ここだけ渡し忘れていて裏取りが全部失敗した。
+        xml = get(rss_url(cid), timeout=20, cookie=YT_COOKIE)
+    except Exception as e:  # noqa: BLE001
+        print(f"    RSS {cid} → {getattr(e, 'code', type(e).__name__)}")
         return None
-    if "<entry>" not in xml:
+    # フィード自身が channelId を返すので、それが一致すれば本物。
+    echoed = f"<yt:channelId>{cid}</yt:channelId>" in xml
+    if not echoed and "<entry>" not in xml:
+        print(f"    RSS {cid} → 中身が空（{len(xml)}文字）")
         return None
     m = re.search(r"<title>(.*?)</title>", xml, re.S)
-    return unescape(m.group(1).strip()) if m else None
+    return unescape(m.group(1).strip()) if m else "(名称不明)"
 
 
 CHANNEL_URL_VARIANTS = (
