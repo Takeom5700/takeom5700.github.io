@@ -10,12 +10,24 @@ import datetime
 import importlib.util
 import sys
 from pathlib import Path
+import pathlib
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
     "f", ROOT / ".github" / "scripts" / "fetch_uranai_sources.py")
 F = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(F)
+
+
+def cid(seed: str) -> str:
+    """検証用のチャンネルIDを作る。UC + 22文字ちょうどでないと形式検査で弾かれる。
+
+    手書きすると長さを間違えるので必ずこれを使うこと（実際に3回間違えた）。
+    """
+    body = (seed * 30)[:22]
+    assert len(body) == 22
+    return "UC" + body
+
 
 TODAY = datetime.date(2026, 9, 17)
 ok = fail = 0
@@ -175,10 +187,10 @@ def fake_get(url, timeout=30, cookie=None):
     if not cookie:
         _no_cookie.append(url)
     if "feeds/videos.xml" in url:
-        if "UCechoechoechoechoechoec" in url:
+        if cid("echo") in url:
             return ("<feed><title>こだま</title>"
-                    "<yt:channelId>UCechoechoechoechoechoec</yt:channelId></feed>")
-        if "UCgoodgoodgoodgoodgoodgo" in url:
+                    f"<yt:channelId>{cid(chr(101)+chr(99)+chr(104)+chr(111))}</yt:channelId></feed>")
+        if cid("good") in url:
             return "<feed><title>Loveちゃん</title><entry><yt:videoId>x</yt:videoId>"\
                    "<title>t</title><published>2026-09-16T00:00:00Z</published></entry></feed>"
         return "<feed><title>空</title></feed>"          # entry が無い＝別物
@@ -188,19 +200,59 @@ _real = F.get
 F.get = fake_get
 try:
     check("RSSが引ければチャンネル名を返す",
-          F.verify_channel_id("UCgoodgoodgoodgoodgoodgo"), "Loveちゃん")
+          F.verify_channel_id(cid("good")), "Loveちゃん")
     check("裏取りのRSS取得でも Cookie を渡している",
           all("feeds/videos.xml" not in u for u in _no_cookie), True)
     check("channelId がこだまするだけでも本物とみなす",
-          F.verify_channel_id("UCechoechoechoechoechoec"), "こだま")
+          F.verify_channel_id(cid("echo")), "こだま")
     check("entry が無いRSSは None",
-          F.verify_channel_id("UCbadbadbadbadbadbadbadx"), None)
+          F.verify_channel_id(cid("bad")), None)
     check("RSSで裏取りするまでIDを採用しない（URL全滅なら例外）",
           _raises(lambda: F.resolve_love_channel_id(None, [])), True)
 finally:
     F.get = _real
 
 check("チャンネルID URL の候補が複数ある", len(F.CHANNEL_URL_VARIANTS) >= 3, True)
+
+# ------------------------------------------------- ID候補の優先順（実害があった所）
+# チャンネルページには関連チャンネルの "channelId" が大量に出る。
+# 本人の ID（RSSリンク / externalId）を先に見ないと他人のIDを掴む。
+# 2026-09-16 の実走でこれを踏み、他人のIDで RSS が 404 になった。
+OWNER, OTHER_A, OTHER_B = cid("owner"), cid("othra"), cid("othrb")
+PAGE = (f'<link rel="alternate" type="application/rss+xml" '
+        f'href="https://www.youtube.com/feeds/videos.xml?channel_id={OWNER}">'
+        f'<script>{{"channelId":"{OTHER_A}","externalId":"{OWNER}",'
+        f'"channelId":"{OTHER_B}"}}</script>')
+cands = F.parse_channel_ids(PAGE)
+check("本人のID（RSSリンク）が先頭", cands[0], OWNER)
+check("他人のIDも候補には含む（総当たり用）", OTHER_A in cands, True)
+check("候補に重複なし", len(cands), len(set(cands)))
+check("候補ゼロなら例外", _raises(lambda: F.parse_channel_id("<html></html>")), True)
+
+# ------------------------------------------------- 統合保存（消さない）
+import json as _json, tempfile, datetime as _dt
+_tmp = pathlib.Path(tempfile.mkdtemp()) / "fetched.json"
+_real_path = F.FETCHED_PATH
+F.FETCHED_PATH = _tmp
+try:
+    _tmp.write_text(_json.dumps({"items": [
+        {"label": "A", "period_end": "2026-09-20", "value": "残る"},
+        {"label": "B", "period_end": "2026-09-30", "value": "古い方"},
+        {"label": "C", "period_end": "2026-09-10", "value": "期限切れ"},
+    ]}, ensure_ascii=False), encoding="utf-8")
+    merged, kept, dropped = F.merge_items(
+        [{"label": "B", "period_end": "2026-09-30", "value": "新しい方"},
+         {"label": "D", "period_end": "2026-09-25", "value": "新規"}], TODAY)
+    labels = sorted(x["label"] for x in merged)
+    check("拾えなかった既存項目が消えない", "A" in labels, True)
+    check("同じラベルは新しい方で置き換わる",
+          [x for x in merged if x["label"] == "B"][0]["value"], "新しい方")
+    check("新規が入る", "D" in labels, True)
+    check("期限切れだけが落ちる", "C" in labels, False)
+    check("引き継ぎ件数", kept, 2)
+    check("整理した件数", dropped, 1)
+finally:
+    F.FETCHED_PATH = _real_path
 
 print(f"\n合計 {ok + fail} 件 / 成功 {ok} / 失敗 {fail}")
 sys.exit(1 if fail else 0)
