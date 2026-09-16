@@ -168,234 +168,284 @@ svg.art{ width:100%; height:100%; display:block; }
 .opt small{ display:block; font-size:.73rem; color:var(--washi-sub); line-height:1.5; margin-top:3px; }
 
 /* ============================================================
-   バトル画面
+   バトル画面（原作と同じ横画面）
+   1280x720 の「ステージ」を作り、画面の大きさに合わせて拡大縮小する。
+   左下が自分のリーダー、右上が相手のリーダー、中央が盤面。
+   盤面は  自後列 │ 自前列 ║ 敵前列 │ 敵後列  の4列×3段。
    ============================================================ */
-.battle{
-  flex:1; display:flex; flex-direction:column; gap:2px;
-  padding:calc(4px + var(--safe-t)) 8px calc(4px + var(--safe-b));
-  max-width:640px; width:100%; margin:0 auto; height:100dvh; overflow:hidden;
-  position:relative;
-}
-/* 戦場の地面（奥行き） */
-.battle::before{
-  content:""; position:absolute; left:0; right:0; top:11%; bottom:21%; z-index:0; pointer-events:none;
+#screen-battle{ overflow:hidden; }
+.stage-wrap{ position:fixed; inset:0; display:block; overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 40%, #241634, #0e0714 75%); }
+.stage{
+  position:absolute; left:50%; top:50%; width:1280px; height:720px;
+  transform-origin:50% 50%; transform:translate(-50%,-50%);
   background:
-    radial-gradient(64% 46% at 50% 50%, rgba(150,110,200,.26), transparent 74%),
-    linear-gradient(180deg, rgba(64,40,78,.6), rgba(28,16,36,.3) 46%, rgba(64,40,78,.6)),
-    repeating-linear-gradient(90deg, rgba(255,255,255,.022) 0 2px, transparent 2px 46px);
-  border-top:1px solid rgba(232,196,106,.14);
-  border-bottom:1px solid rgba(232,196,106,.14);
-  mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
+    radial-gradient(60% 50% at 50% 46%, rgba(150,110,210,.3), transparent 72%),
+    radial-gradient(90% 70% at 20% 90%, rgba(70,40,110,.5), transparent 70%),
+    radial-gradient(90% 70% at 85% 8%, rgba(120,40,70,.35), transparent 70%),
+    linear-gradient(180deg,#2a1a3c,#150c20 60%,#100a18);
+  border-radius:10px; box-shadow:0 0 60px rgba(0,0,0,.8);
+  overflow:hidden; color:var(--washi);
 }
-/* 中央の対峙ライン */
-.battle::after{
-  content:""; position:absolute; left:6%; right:6%; top:50%; height:2px; z-index:0; pointer-events:none;
-  background:linear-gradient(90deg,transparent,rgba(232,196,106,.35),transparent);
-  filter:blur(1px);
+/* 石畳の床 */
+.stage::before{
+  content:""; position:absolute; left:0; right:0; top:120px; height:450px; pointer-events:none;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 2px, transparent 2px 64px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 2px, transparent 2px 76px),
+    linear-gradient(180deg, rgba(60,40,80,.5), rgba(24,14,34,.25) 50%, rgba(60,40,80,.5));
+  mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
 }
-.side{ position:relative; z-index:1; display:flex; flex-direction:column; gap:3px; flex:1 1 0; min-height:0; }
 
-/* ---- リーダー帯 ---- */
-.leader-strip{
-  flex:none; display:flex; align-items:center; gap:9px; padding:5px 9px 6px; border-radius:12px;
-  border:1px solid rgba(232,196,106,.28);
-  background:linear-gradient(180deg,rgba(62,42,74,.95),rgba(34,22,42,.95));
-  box-shadow:0 2px 10px rgba(0,0,0,.45); position:relative;
+.rotate-hint{
+  position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:50;
+  display:flex; gap:10px; align-items:center;
+  background:rgba(20,12,26,.95); border:1px solid var(--gold); color:var(--gold);
+  padding:8px 14px; border-radius:22px; font-size:.82rem; white-space:nowrap;
 }
-.leader-strip.is-target{ cursor:pointer; border-color:var(--shu-br);
-  box-shadow:0 0 0 2px var(--shu-br), 0 0 20px rgba(224,74,60,.55); }
-.leader-strip.is-me-active{ border-color:var(--gold); box-shadow:0 0 0 1px rgba(232,196,106,.4), 0 2px 10px rgba(0,0,0,.45); }
 
-/* 円形の肖像＋テンションの輪 */
-.ls-portrait{ position:relative; width:52px; height:52px; flex:none; }
-.ls-face{
-  position:absolute; inset:5px; border-radius:50%; overflow:hidden;
-  border:2px solid var(--gold); box-shadow:inset 0 0 12px rgba(0,0,0,.6);
+/* ---- 上段 ---- */
+.st-icon{
+  position:absolute; width:40px; height:40px; border-radius:50%; z-index:6;
+  border:1px solid rgba(232,196,106,.4); background:linear-gradient(180deg,#3d2a4a,#241634);
+  color:var(--gold); font-size:1.1rem; cursor:pointer; display:grid; place-items:center;
 }
+.st-icon:hover{ border-color:var(--gold); filter:brightness(1.2); }
+.st-log{ left:14px; top:12px; } .st-quit{ left:62px; top:12px; }
+
+.vs-bar{
+  position:absolute; left:118px; top:12px; width:430px; height:40px; z-index:6;
+  display:flex; align-items:center; gap:8px; padding:0 12px;
+  background:linear-gradient(90deg, rgba(40,80,160,.55), rgba(30,20,50,.5) 48%, rgba(160,40,50,.55));
+  border:1px solid rgba(232,196,106,.35); border-radius:20px; font-size:.82rem;
+}
+.vs-side{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.6; font-weight:700; }
+.vs-side--r{ text-align:right; }
+.vs-side.on{ opacity:1; color:#fff; text-shadow:0 0 10px rgba(255,220,140,.8); }
+.vs-mid{ font-family:"Shippori Mincho B1",serif; color:var(--gold); font-size:.78rem; letter-spacing:.1em; }
+.vs-turn{ position:absolute; left:0; right:0; top:42px; text-align:center; font-size:.7rem; color:var(--gold); }
+
+.st-end{
+  position:absolute; left:576px; top:8px; width:180px; height:46px; z-index:6;
+  border:1px solid #6b4d14; border-radius:23px; cursor:pointer;
+  background:linear-gradient(180deg,#f2d88f,var(--gold) 45%,#a87c28);
+  color:#2a1a06; font-weight:700; font-size:1rem; letter-spacing:.06em;
+  box-shadow:0 3px 0 #6b4d14, 0 8px 20px rgba(0,0,0,.5);
+}
+.st-end:hover:not(:disabled){ filter:brightness(1.08); }
+.st-end:disabled{ opacity:.4; filter:grayscale(.7); cursor:default; box-shadow:none; }
+
+/* ---- リーダー（左下＝自分／右上＝相手） ---- */
+.lead{
+  position:absolute; width:430px; height:112px; z-index:5;
+  display:flex; align-items:center; gap:10px; padding:8px 12px;
+  background:linear-gradient(180deg,rgba(58,38,72,.92),rgba(26,16,34,.92));
+  border:1px solid rgba(232,196,106,.3); border-radius:14px;
+  box-shadow:0 6px 20px rgba(0,0,0,.55);
+}
+.lead--me{ left:12px; bottom:10px; }
+.lead--enemy{ right:12px; top:10px; flex-direction:row-reverse; text-align:right; }
+.lead.is-active{ border-color:var(--gold); box-shadow:0 0 0 1px rgba(232,196,106,.5), 0 6px 24px rgba(0,0,0,.6); }
+.lead.is-target{ cursor:pointer; border-color:var(--shu-br);
+  box-shadow:0 0 0 3px var(--shu-br), 0 0 28px rgba(224,74,60,.7); }
+
+.ld-portrait{ position:relative; width:92px; height:92px; flex:none; }
+.ld-face{ position:absolute; inset:7px; border-radius:50%; overflow:hidden;
+  border:2px solid var(--gold); box-shadow:inset 0 0 16px rgba(0,0,0,.7); }
 .ten-ring{ position:absolute; inset:0; transform:rotate(-90deg); }
-.ten-ring circle{ fill:none; stroke-width:3.4; }
-.ten-bg{ stroke:rgba(255,255,255,.14); }
-.ten-fg{ stroke:var(--gold); stroke-linecap:round; transition:stroke-dasharray .35s; filter:drop-shadow(0 0 4px rgba(255,190,90,.8)); }
+.ten-ring circle{ fill:none; stroke-width:5; }
+.ten-bg{ stroke:rgba(255,255,255,.12); }
+.ten-fg{ stroke:var(--gold); stroke-linecap:round; transition:stroke-dasharray .35s;
+  filter:drop-shadow(0 0 4px rgba(255,190,90,.9)); }
 .ten-ring.full .ten-fg{ stroke:#ffe9a8; animation:tenglow 1.4s ease-in-out infinite; }
-@keyframes tenglow{ 0%,100%{ filter:drop-shadow(0 0 3px rgba(255,220,140,.7)) } 50%{ filter:drop-shadow(0 0 10px rgba(255,220,140,1)) } }
+@keyframes tenglow{ 0%,100%{ filter:drop-shadow(0 0 3px rgba(255,220,140,.7)) }
+  50%{ filter:drop-shadow(0 0 12px rgba(255,220,140,1)) } }
+.ld-ten{ position:absolute; left:0; right:0; bottom:-3px; text-align:center; font-size:.58rem;
+  color:var(--gold); font-family:"DotGothic16",monospace; text-shadow:0 1px 3px #000; }
 
-.ls-body{ flex:1; min-width:0; }
-.ls-name{ font-size:.78rem; font-weight:700; letter-spacing:.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.ls-meta{ display:flex; align-items:center; gap:7px; margin-top:2px; flex-wrap:wrap; }
-.ls-hp{ display:inline-flex; align-items:center; gap:4px; }
-.ls-hp .gem{ width:22px; height:22px; font-size:.78rem; }
-.ls-hp i{ font-style:normal; font-size:.62rem; color:var(--washi-sub); }
-/* MPは数字ではなく結晶を並べる */
-.mp-row{ display:flex; gap:2px; align-items:center; }
-.mp-c{ width:9px; height:12px; border-radius:2px 2px 3px 3px; transform:skewX(-6deg);
-  background:linear-gradient(180deg,#0e2438,#0a1a29); border:1px solid rgba(120,180,240,.3); }
-.mp-c.on{ background:linear-gradient(180deg,#b6e4ff,var(--mp) 45%,var(--mp-d));
-  border-color:#9fd6ff; box-shadow:0 0 5px rgba(74,163,232,.85); }
-.mp-num{ font-family:"DotGothic16",monospace; font-size:.74rem; color:#9fd6ff; margin-left:2px; }
-.ls-weapon{ font-size:.68rem; color:var(--gold); border:1px solid rgba(232,196,106,.4); border-radius:5px; padding:0 5px; white-space:nowrap; }
-.ls-hero{ font-size:.68rem; color:#9fd8ff; border:1px solid rgba(127,200,255,.45); border-radius:5px; padding:0 5px; white-space:nowrap; cursor:help; }
-.ls-tag{ font-size:.64rem; color:var(--washi-sub); border:1px solid var(--line); border-radius:5px; padding:0 5px; margin-left:5px; }
-.ls-deck{ font-size:.66rem; color:var(--washi-sub); white-space:nowrap; }
+.ld-info{ flex:1; min-width:0; }
+.ld-name{ font-size:.86rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ld-name small{ font-weight:400; color:var(--washi-sub); margin-left:5px; font-size:.72rem; }
+.ld-tag{ font-size:.62rem; color:var(--washi-sub); border:1px solid var(--line); border-radius:5px; padding:0 5px; margin-left:5px; }
+/* HPは緑のバー＋数字（原作と同じ） */
+.hp-bar{ position:relative; height:19px; margin:4px 0 3px; border-radius:10px; overflow:hidden;
+  background:linear-gradient(180deg,#25121a,#150a10); border:1px solid rgba(0,0,0,.6);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.8); }
+.hp-bar i{ position:absolute; left:0; top:0; bottom:0; border-radius:10px; transition:width .35s;
+  background:linear-gradient(180deg,#9ff07a,#4ec24a 55%,#2a8a34); box-shadow:0 0 10px rgba(90,220,110,.5); }
+.hp-bar b{ position:absolute; left:0; right:0; top:0; text-align:center; font-size:.76rem;
+  font-family:"DotGothic16",monospace; line-height:19px; color:#fff; text-shadow:0 1px 3px #000,0 0 4px #000; }
+.ld-row{ display:flex; align-items:center; gap:9px; font-size:.7rem; color:var(--washi-sub); flex-wrap:wrap; }
+.lead--enemy .ld-row{ justify-content:flex-end; }
+.ld-mp b{ color:#9fd6ff; font-family:"DotGothic16",monospace; font-size:.86rem; }
+.mp-ico{ display:inline-block; width:9px; height:12px; margin-right:3px; vertical-align:-2px;
+  background:linear-gradient(180deg,#b6e4ff,var(--mp) 45%,var(--mp-d)); border-radius:2px 2px 3px 3px;
+  transform:skewX(-6deg); box-shadow:0 0 5px rgba(74,163,232,.7); }
+.deck-ico{ display:inline-block; width:10px; height:13px; margin-right:3px; vertical-align:-2px;
+  background:linear-gradient(180deg,#d8c79a,#8a6a3c); border:1px solid #5a441f; border-radius:2px; }
+.ld-weapon{ color:var(--gold); border:1px solid rgba(232,196,106,.4); border-radius:5px; padding:0 5px; }
+.ld-hero{ margin-top:3px; font-size:.68rem; color:#9fd8ff; border:1px solid rgba(127,200,255,.45);
+  border-radius:5px; padding:0 5px; display:inline-block; cursor:help; }
 
-.ls-btns{ flex:none; display:flex; flex-direction:column; gap:3px; align-items:stretch; }
-.btn-tension{
-  border:1px solid #8a6620; background:linear-gradient(180deg,#ffe9a8,var(--gold) 50%,#a87c28);
-  color:#2a1a06; font-weight:700; font-size:.7rem; padding:5px 9px; border-radius:8px; cursor:pointer;
-  white-space:nowrap; box-shadow:0 2px 0 #6b4d14; animation:tenpulse 1.6s ease-in-out infinite;
+.ld-btns{ flex:none; display:flex; flex-direction:column; gap:5px; width:92px; }
+.btn-tension,.btn-hero{
+  display:flex; flex-direction:column; align-items:center; line-height:1.15;
+  border-radius:9px; cursor:pointer; padding:5px 4px; font-weight:700; font-size:.72rem; white-space:nowrap;
 }
+.btn-tension small,.btn-hero small{ font-size:.56rem; font-weight:500; opacity:.85;
+  max-width:84px; overflow:hidden; text-overflow:ellipsis; }
+.btn-tension{ border:1px solid #8a6620; background:linear-gradient(180deg,#ffe9a8,var(--gold) 50%,#a87c28);
+  color:#2a1a06; box-shadow:0 2px 0 #6b4d14; animation:tenpulse 1.6s ease-in-out infinite; }
 @keyframes tenpulse{ 0%,100%{ box-shadow:0 2px 0 #6b4d14, 0 0 0 0 rgba(255,200,100,.6) }
-  50%{ box-shadow:0 2px 0 #6b4d14, 0 0 14px 3px rgba(255,200,100,.55) } }
-.btn-tension:disabled{ animation:none; opacity:.3; filter:grayscale(.8); cursor:default; box-shadow:none; }
-.btn-hero{
-  border:1px solid #1f5580; background:linear-gradient(180deg,#cfeaff,#5aa8e0 50%,#2d6fa8);
-  color:#08202f; font-weight:700; font-size:.7rem; padding:4px 9px; border-radius:8px; cursor:pointer;
-  white-space:nowrap; line-height:1.15; display:flex; flex-direction:column; align-items:center;
-  box-shadow:0 2px 0 #174a70;
-}
-.btn-hero small{ font-size:.58rem; font-weight:500; opacity:.85; }
-.btn-hero:disabled{ opacity:.3; filter:grayscale(.8); cursor:default; box-shadow:none; }
+  50%{ box-shadow:0 2px 0 #6b4d14, 0 0 16px 4px rgba(255,200,100,.55) } }
+.btn-tension:disabled{ animation:none; opacity:.28; filter:grayscale(.85); cursor:default; box-shadow:none; }
+.btn-hero{ border:1px solid #1f5580; background:linear-gradient(180deg,#cfeaff,#5aa8e0 50%,#2d6fa8);
+  color:#08202f; box-shadow:0 2px 0 #174a70; }
+.btn-hero:disabled{ opacity:.28; filter:grayscale(.85); cursor:default; box-shadow:none; }
 
-/* ---- 場 ---- */
-.field{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; gap:3px; width:100%; }
-.row{ flex:1 1 0; min-height:0; display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
+/* ---- 盤面 ---- */
+.board{
+  position:absolute; left:0; right:0; top:132px; height:420px; z-index:3;
+  display:flex; align-items:center; justify-content:center; gap:14px;
+  perspective:1500px;
+}
+.bcol, .bdiv{ transform:rotateX(9deg); transform-style:preserve-3d; }
+.bcol{ width:206px; display:flex; flex-direction:column; gap:10px; }
+.bdiv{ width:44px; align-self:stretch; position:relative; }
+.bdiv::before{ content:""; position:absolute; left:50%; top:4%; bottom:4%; width:2px; transform:translateX(-50%);
+  background:linear-gradient(180deg,transparent,rgba(232,196,106,.55),transparent); filter:blur(.6px); }
+
 .slot{
-  position:relative; height:100%; min-height:56px; border-radius:10px;
-  border:1px solid rgba(232,196,106,.1);
-  background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(0,0,0,.18));
-  display:grid; place-items:center; transition:.14s;
+  position:relative; height:136px; border-radius:12px; transition:.14s;
+  border:1px solid rgba(232,196,106,.14);
+  background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(0,0,0,.25));
 }
-/* 前列は一段明るく、境目を分かりやすく */
-.row--front .slot{ border-color:rgba(232,196,106,.2); background:linear-gradient(180deg, rgba(255,214,140,.07), rgba(0,0,0,.2)); }
-/* 空きマスの魔法陣（ユニットが立つと隠れる） */
+.bcol--front .slot{ border-color:rgba(232,196,106,.32);
+  background:linear-gradient(180deg, rgba(255,214,140,.09), rgba(0,0,0,.26)); }
+/* 空きマスの石枠 */
 .slot::before{
-  content:""; position:absolute; left:50%; top:54%; transform:translate(-50%,-50%);
-  width:min(46%,42px); aspect-ratio:1; border-radius:50%; pointer-events:none;
-  border:1px dashed rgba(232,196,106,.18);
-  box-shadow:0 0 0 5px rgba(232,196,106,.05), inset 0 0 12px rgba(232,196,106,.07);
+  content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(45deg);
+  width:74px; height:74px; border-radius:8px; pointer-events:none;
+  border:2px solid rgba(232,196,106,.16); box-shadow:inset 0 0 0 5px rgba(232,196,106,.06);
 }
-.row--front .slot::before{ border-color:rgba(232,196,106,.3); border-style:solid; }
-.slot.is-drop{ border-color:var(--ok); background:rgba(95,184,122,.16); cursor:pointer;
-  box-shadow:0 0 0 1px var(--ok) inset, 0 0 14px rgba(95,184,122,.35); }
-.slot.is-drop::after{ content:"ここに置く"; position:absolute; font-size:.6rem; color:#cfffdc; letter-spacing:.06em; }
+.bcol--front .slot::before{ border-color:rgba(232,196,106,.28); }
+.slot.is-drop{ border-color:var(--ok); background:rgba(95,184,122,.18); cursor:pointer;
+  box-shadow:0 0 0 2px var(--ok) inset, 0 0 20px rgba(95,184,122,.4); }
+.slot.is-drop::after{ content:"ここに置く"; position:absolute; left:0; right:0; top:50%;
+  transform:translateY(-50%); text-align:center; font-size:.68rem; color:#cfffdc; letter-spacing:.06em; }
 
-/* ---- 盤上のユニット ---- */
-.unit{
-  position:absolute; inset:2px; border-radius:9px; display:flex; flex-direction:column;
-  align-items:center; padding:2px; overflow:hidden; cursor:default;
-  background:linear-gradient(180deg, var(--uc,#4a2f36) 0%, rgba(18,10,24,.92) 78%);
-  border:1.5px solid rgba(244,234,216,.28);
-  box-shadow:0 3px 8px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12);
-  transition:transform .13s, box-shadow .13s, opacity .2s;
+/* ---- ユニット（丸いメダル） ---- */
+.unit{ position:absolute; inset:0; display:grid; place-items:center; cursor:default;
+  transition:transform .13s, filter .2s, opacity .2s; }
+.u-medal{
+  position:relative; width:92px; height:92px; border-radius:50%; overflow:hidden;
+  margin-bottom:6px;
+  background:radial-gradient(circle at 50% 30%, var(--uc,#4a2f36), rgba(12,7,18,.96) 78%);
+  border:3px solid rgba(244,234,216,.4);
+  box-shadow:0 5px 14px rgba(0,0,0,.65), inset 0 2px 6px rgba(255,255,255,.14);
 }
-.u-art{ flex:1; min-height:0; width:100%; display:grid; place-items:center;
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
-.u-art svg{ width:86%; height:86%; }
-.u-name{
-  width:100%; text-align:center; font-size:.54rem; line-height:1.2; color:#f6eede;
-  background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.6));
-  border-top:1px solid rgba(232,196,106,.25); padding:1px 2px;
-  overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical;
-}
-.u-stats{ position:absolute; left:0; right:0; bottom:0; display:flex; justify-content:space-between; padding:0 1px 1px; }
-.u-stats .gem{ width:19px; height:19px; font-size:.76rem; }
-.u-kw{ position:absolute; top:2px; left:2px; display:flex; flex-direction:column; gap:1px; z-index:2; }
-.kwb{ font-size:.5rem; line-height:1.3; padding:0 3px; border-radius:3px; background:rgba(0,0,0,.65); border:1px solid; }
+.u-medal svg{ width:86%; height:86%; margin:7%; filter:drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
+.u-atk,.u-hp{ position:absolute; bottom:24px; width:28px; height:28px; font-size:.95rem; z-index:2; }
+.u-atk{ left:calc(50% - 64px); } .u-hp{ left:calc(50% + 36px); }
+.u-name{ position:absolute; left:4px; right:4px; bottom:2px; text-align:center;
+  font-size:.62rem; line-height:1.2; color:#efe4d2; text-shadow:0 1px 3px #000, 0 0 5px #000;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.u-kw{ position:absolute; top:3px; left:3px; display:flex; flex-direction:column; gap:1px; z-index:3; }
+.kwb{ font-size:.52rem; line-height:1.3; padding:0 3px; border-radius:3px; background:rgba(0,0,0,.72); border:1px solid; }
 .kwb.taunt{ color:#9fd8ff; border-color:#4a7fa8; } .kwb.stealth{ color:#c8a8ff; border-color:#7a5aa8; }
 .kwb.pierce{ color:#ffb0a0; border-color:#a85a4a; } .kwb.rush{ color:#ffe08a; border-color:#a8903a; }
 .kwb.metal{ color:#d8e4ee; border-color:#7a8a99; } .kwb.link{ color:#ffd0a0; border-color:#a87a4a; }
 
-.unit.can-act{ box-shadow:0 0 0 2px rgba(255,214,120,.9), 0 0 16px rgba(255,190,90,.45), 0 3px 8px rgba(0,0,0,.5); cursor:pointer; }
-.unit.is-sel{ transform:translateY(-6px) scale(1.06); box-shadow:0 0 0 2px var(--gold), 0 10px 22px rgba(0,0,0,.7); z-index:5; }
-.unit.is-target{ cursor:pointer; box-shadow:0 0 0 2px var(--shu-br), 0 0 18px rgba(224,74,60,.6); }
-.unit.is-target::after{ content:""; position:absolute; inset:0; background:radial-gradient(circle at 50% 45%, rgba(224,74,60,.22), transparent 70%); }
-.unit.is-frozen{ filter:saturate(.3) brightness(.86); }
-.unit.is-frozen::before{ content:""; position:absolute; inset:0; z-index:3;
-  background:linear-gradient(135deg,rgba(160,215,255,.3),transparent 55%,rgba(160,215,255,.18)); }
-.unit.is-stealth{ opacity:.68; }
+/* 行動できるユニットは緑の輪（原作と同じ） */
+.unit.can-act{ cursor:pointer; }
+.unit.can-act .u-medal{ border-color:#7ce87c;
+  box-shadow:0 0 0 3px rgba(110,230,110,.65), 0 0 22px rgba(110,230,110,.55), 0 5px 14px rgba(0,0,0,.6); }
+.unit.is-sel{ transform:translateY(-8px) scale(1.08); z-index:6; }
+.unit.is-sel .u-medal{ border-color:var(--gold); box-shadow:0 0 0 4px var(--gold), 0 12px 26px rgba(0,0,0,.8); }
+.unit.is-target{ cursor:pointer; }
+.unit.is-target .u-medal{ border-color:var(--shu-br);
+  box-shadow:0 0 0 3px var(--shu-br), 0 0 26px rgba(224,74,60,.7), 0 5px 14px rgba(0,0,0,.6); }
+.unit.is-frozen{ filter:saturate(.3) brightness(.85); }
+.unit.is-frozen .u-medal::after{ content:""; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(170,220,255,.38),transparent 55%,rgba(170,220,255,.2)); }
+.unit.is-stealth{ opacity:.62; }
 .unit.is-hit{ animation:shake .3s; }
-@keyframes shake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)}
-  60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
+@keyframes shake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)} 40%{transform:translateX(7px)}
+  60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
 .unit.is-summon{ animation:pop .34s cubic-bezier(.2,1.4,.4,1); }
-@keyframes pop{ from{transform:scale(.4) translateY(10px); opacity:0} to{transform:scale(1) translateY(0); opacity:1} }
+@keyframes pop{ from{transform:scale(.4) translateY(14px); opacity:0} to{transform:scale(1) translateY(0); opacity:1} }
 
 /* ダンジョン：マスは使うがユニットではない */
-.unit.is-dungeon{ border-style:dashed; border-color:rgba(232,196,106,.55); cursor:help;
-  background:linear-gradient(180deg, rgba(70,48,30,.95), rgba(20,12,18,.95)); }
-.dg-bar{ width:78%; height:4px; border-radius:2px; background:rgba(244,234,216,.18); overflow:hidden; margin:1px 0; }
+.unit.is-dungeon{ cursor:help; }
+.unit.is-dungeon .u-medal{ border-style:dashed; border-color:rgba(232,196,106,.6); }
+.dg-bar{ position:absolute; left:50%; transform:translateX(-50%); bottom:19px; width:84px; height:5px;
+  border-radius:3px; background:rgba(244,234,216,.2); overflow:hidden; }
 .dg-bar i{ display:block; height:100%; background:linear-gradient(90deg,var(--gold),#ffe9a8); transition:width .3s; }
-.dg-num{ font-family:"DotGothic16",monospace; font-size:.68rem; color:var(--gold); }
+.dg-num{ position:absolute; left:0; right:0; bottom:-1px; text-align:center;
+  font-family:"DotGothic16",monospace; font-size:.68rem; color:var(--gold); text-shadow:0 1px 3px #000; }
+.unit.is-dungeon .u-name{ bottom:13px; }
 
-.midline{ flex:none; display:flex; align-items:center; gap:10px; padding:0 4px; position:relative; z-index:1; }
-.midline::before,.midline::after{ content:""; flex:1; height:1px;
-  background:linear-gradient(90deg,transparent,rgba(232,196,106,.5),transparent); }
-.midline-txt{ font-size:.66rem; letter-spacing:.14em; color:var(--gold); white-space:nowrap;
-  text-shadow:0 0 8px rgba(255,190,90,.4); }
-
-/* ---- 手札（扇状） ---- */
-.hand-area{ flex:none; padding-top:6px; height:126px; position:relative; z-index:2; }
-.hand{ display:flex; gap:0; justify-content:center; align-items:flex-end; height:118px; padding:0 2px 2px; }
+/* ---- 手札（右下・扇状） ---- */
+.hand{
+  position:absolute; left:452px; right:14px; bottom:4px; height:158px; z-index:7;
+  display:flex; align-items:flex-end; justify-content:center; gap:2px;
+}
 .hcard{
-  position:relative; flex:0 1 74px; max-width:74px; min-width:42px; height:112px;
-  margin:0 1px; border-radius:8px; cursor:pointer; transform-origin:50% 120%;
-  background:linear-gradient(180deg, var(--uc,#4a2f36) 0%, rgba(16,9,22,.96) 72%);
-  border:1.5px solid rgba(232,196,106,.45);
-  box-shadow:0 4px 10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.14);
-  display:flex; flex-direction:column; align-items:center; padding:2px; transition:.16s;
+  position:relative; flex:0 1 106px; max-width:106px; min-width:58px; height:146px;
+  border-radius:9px; cursor:pointer; transform-origin:50% 130%;
+  transform:rotate(var(--rot,0deg)) translateY(var(--lift,0px));
+  background:linear-gradient(180deg, var(--uc,#4a2f36) 0%, rgba(16,9,22,.96) 70%);
+  border:2px solid rgba(232,196,106,.5);
+  box-shadow:0 6px 14px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.16);
+  display:flex; flex-direction:column; align-items:center; padding:3px; transition:.16s;
 }
-.hcard:hover{ transform:translateY(-14px) scale(1.12); z-index:8; border-color:var(--gold); }
-.hcard.is-sel{ transform:translateY(-20px) scale(1.16); z-index:9;
-  box-shadow:0 0 0 2px var(--gold), 0 14px 28px rgba(0,0,0,.75); }
-.hcard.cant{ filter:grayscale(.7) brightness(.55); }
-.h-cost{ position:absolute; top:-6px; left:-6px; width:23px; height:23px; font-size:.86rem; z-index:3; }
-.h-art{ flex:1; min-height:0; width:100%; display:grid; place-items:center; padding-top:3px;
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,.6)); overflow:hidden; }
-.h-art svg{ width:78%; height:100%; }
-.h-name{
-  flex:none; width:100%; text-align:center; font-size:.5rem; line-height:1.25; color:#f6eede; padding:1px;
-  background:linear-gradient(180deg,rgba(0,0,0,.4),rgba(0,0,0,.66));
+.hcard:hover{ transform:rotate(0deg) translateY(-22px) scale(1.14); z-index:12; border-color:var(--gold); }
+.hcard.is-sel{ transform:rotate(0deg) translateY(-30px) scale(1.18); z-index:13;
+  box-shadow:0 0 0 3px var(--gold), 0 18px 34px rgba(0,0,0,.8); }
+.hcard.cant{ filter:grayscale(.72) brightness(.55); }
+.h-cost{ position:absolute; top:-8px; left:-8px; width:30px; height:30px; font-size:1rem; z-index:3; }
+.h-art{ flex:1; min-height:0; width:100%; display:grid; place-items:center; padding-top:5px; overflow:hidden;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
+.h-art svg{ width:80%; height:100%; }
+.h-name{ flex:none; width:100%; text-align:center; font-size:.62rem; line-height:1.3; color:#f6eede; padding:1px;
+  background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.7));
   border-top:1px solid rgba(232,196,106,.3);
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.h-stats{ flex:none; width:100%; height:19px; display:flex; justify-content:space-between; align-items:flex-end; }
-.h-stats .gem{ width:19px; height:19px; font-size:.74rem; }
-.h-badge{ position:absolute; top:1px; right:1px; font-size:.44rem; line-height:1.4; padding:0 2px; border-radius:3px;
-  background:rgba(0,0,0,.72); border:1px solid rgba(232,196,106,.45); color:var(--gold); z-index:2; }
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.h-stats{ flex:none; width:100%; height:25px; display:flex; justify-content:space-between; align-items:flex-end; }
+.h-stats .gem{ width:25px; height:25px; font-size:.9rem; }
+.h-badge{ position:absolute; top:2px; right:2px; font-size:.5rem; line-height:1.4; padding:0 3px; border-radius:3px;
+  background:rgba(0,0,0,.75); border:1px solid rgba(232,196,106,.45); color:var(--gold); z-index:2; }
 
-.battle-ctrl{ flex:none; display:flex; gap:8px; align-items:center; justify-content:flex-end; padding:3px 2px 0; position:relative; z-index:2; }
-.battle-ctrl .btn-primary{ min-width:128px; }
 .hint{
-  position:fixed; left:50%; transform:translateX(-50%); bottom:calc(172px + var(--safe-b)); z-index:30;
+  position:absolute; left:50%; transform:translateX(-50%); bottom:170px; z-index:20;
   background:rgba(20,12,26,.96); border:1px solid var(--gold); color:var(--gold);
-  padding:7px 16px; border-radius:20px; font-size:.8rem; white-space:nowrap; pointer-events:none;
-  box-shadow:0 4px 18px rgba(0,0,0,.6);
+  padding:7px 18px; border-radius:20px; font-size:.86rem; white-space:nowrap; pointer-events:none;
+  box-shadow:0 4px 18px rgba(0,0,0,.7);
 }
 
 /* ---- 演出 ---- */
 .float{
-  position:fixed; z-index:60; pointer-events:none; font-family:"DotGothic16",monospace;
-  font-size:1.6rem; font-weight:700; text-shadow:0 2px 8px #000, 0 0 14px currentColor;
+  position:absolute; z-index:60; pointer-events:none; font-family:"DotGothic16",monospace;
+  font-size:1.8rem; font-weight:700; text-shadow:0 2px 8px #000, 0 0 16px currentColor;
   animation:floatup 1s ease-out forwards;
 }
 .float.dmg{ color:#ff6a5f; } .float.heal{ color:#7ee8a0; } .float.buff{ color:var(--gold); }
 @keyframes floatup{ 0%{ transform:translate(-50%,0) scale(.5); opacity:0 }
-  22%{ transform:translate(-50%,-14px) scale(1.25); opacity:1 }
-  100%{ transform:translate(-50%,-56px) scale(1); opacity:0 } }
-/* 斬撃 */
-.slash{ position:fixed; z-index:59; pointer-events:none; width:120px; height:120px;
+  22%{ transform:translate(-50%,-16px) scale(1.3); opacity:1 }
+  100%{ transform:translate(-50%,-64px) scale(1); opacity:0 } }
+.slash{ position:absolute; z-index:59; pointer-events:none; width:150px; height:150px;
   transform:translate(-50%,-50%); animation:slashfade .42s ease-out forwards; }
 @keyframes slashfade{ 0%{ opacity:0; transform:translate(-50%,-50%) scale(.5) rotate(-24deg) }
   25%{ opacity:1; transform:translate(-50%,-50%) scale(1.05) rotate(0deg) }
   100%{ opacity:0; transform:translate(-50%,-50%) scale(1.3) rotate(12deg) } }
-/* 呪文の輝き */
-.burst{ position:fixed; z-index:58; pointer-events:none; width:180px; height:180px;
+.burst{ position:absolute; z-index:58; pointer-events:none; width:220px; height:220px;
   transform:translate(-50%,-50%); border-radius:50%;
   background:radial-gradient(circle, rgba(255,235,180,.85), rgba(255,170,90,.35) 40%, transparent 70%);
   animation:burstfade .5s ease-out forwards; }
 @keyframes burstfade{ 0%{ opacity:0; transform:translate(-50%,-50%) scale(.2) }
   30%{ opacity:1 } 100%{ opacity:0; transform:translate(-50%,-50%) scale(1.5) } }
-/* 画面フラッシュ（テンション・踏破） */
-.flash{ position:fixed; inset:0; z-index:57; pointer-events:none;
-  background:radial-gradient(circle at 50% 50%, rgba(255,220,140,.4), transparent 65%);
+.flash{ position:absolute; inset:0; z-index:57; pointer-events:none;
+  background:radial-gradient(circle at 50% 50%, rgba(255,220,140,.42), transparent 65%);
   animation:flashfade .55s ease-out forwards; }
 @keyframes flashfade{ 0%{opacity:0} 25%{opacity:1} 100%{opacity:0} }
 
@@ -491,11 +541,11 @@ svg.art{ width:100%; height:100%; display:block; }
   background:rgba(0,0,0,.55); border-radius:8px; padding:0 7px; }
 
 .tip{
-  position:fixed; z-index:90; max-width:262px; background:rgba(16,9,22,.98); border:1px solid var(--gold);
-  border-radius:10px; padding:10px 12px; font-size:.75rem; line-height:1.6; pointer-events:none;
+  position:fixed; z-index:90; max-width:230px; background:rgba(16,9,22,.97); border:1px solid var(--gold);
+  border-radius:10px; padding:8px 10px; font-size:.7rem; line-height:1.55; pointer-events:none;
   box-shadow:0 10px 32px rgba(0,0,0,.75);
 }
-.tip b{ color:var(--gold); display:block; margin-bottom:3px; font-size:.86rem; }
+.tip b{ color:var(--gold); display:block; margin-bottom:2px; font-size:.8rem; }
 .tip .t-kw{ color:#9fd8ff; }
 .tip .t-sk{ margin-top:3px; padding-left:6px; border-left:2px solid rgba(127,200,255,.4); color:var(--washi-sub); }
 .tip .t-sk.on{ border-left-color:#7fc8ff; color:var(--washi); }
@@ -520,7 +570,7 @@ svg.art{ width:100%; height:100%; display:block; }
   display:grid; place-items:center; font-size:.68rem; color:var(--washi-sub); }
 .rules .diagram .dcell.on{ background:rgba(232,196,106,.14); border-style:solid; border-color:var(--gold); color:var(--gold); }
 
-/* ---------- 画面が狭い／低いとき ---------- */
+/* ---------- 画面が狭いとき（バトル画面はステージごと拡大縮小するので対象外） ---------- */
 @media (max-width:820px){
   .builder{ grid-template-columns:1fr; }
   .builder-side{ position:static; }
@@ -528,19 +578,6 @@ svg.art{ width:100%; height:100%; display:block; }
 }
 @media (max-width:560px){
   .pool-grid{ grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); }
-  .battle{ padding-left:5px; padding-right:5px; }
-  .hcard{ margin:0 0; }
-}
-@media (min-width:900px) and (min-height:760px){
-  .hand-area{ height:156px; } .hand{ height:148px; gap:2px; }
-  .hcard{ max-width:96px; height:142px; margin:0 3px; }
-  .h-name{ font-size:.62rem; } .h-stats .gem{ width:22px; height:22px; font-size:.84rem; }
-  .u-name{ font-size:.64rem; } .u-stats .gem{ width:23px; height:23px; font-size:.86rem; }
-}
-@media (max-height:640px){
-  .hand-area{ height:98px; } .hand{ height:92px; } .hcard{ height:88px; max-width:60px; }
-  .ls-portrait{ width:42px; height:42px; } .leader-strip{ padding:3px 8px; }
-  .u-name{ display:none; }
 }
 @media (prefers-reduced-motion:reduce){
   *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }

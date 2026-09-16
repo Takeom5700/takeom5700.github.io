@@ -76,44 +76,46 @@
 </section>
 
 <!-- ============ バトル ============ -->
+<!-- 原作は横画面。1280x720の「ステージ」を作り、画面に合わせて拡大縮小する。 -->
 <section class="screen" id="screen-battle">
-  <div class="battle">
-    <!-- 相手 -->
-    <div class="side side--enemy">
-      <div class="leader-strip" id="enemy-strip"></div>
-      <div class="field" id="enemy-field">
-        <div class="row row--back"  data-owner="enemy" data-col="1"></div>
-        <div class="row row--front" data-owner="enemy" data-col="0"></div>
+  <div class="stage-wrap">
+    <div class="stage" id="stage">
+
+      <!-- 上段：設定・対戦相手表示・ターン終了 -->
+      <button class="st-icon st-log" id="btn-log" title="ログ">≡</button>
+      <button class="st-icon st-quit" id="btn-quit" title="投了">⚑</button>
+      <div class="vs-bar" id="vs-bar"></div>
+      <button class="st-end" id="btn-end">ターン終了</button>
+
+      <!-- 相手（右上） -->
+      <div class="lead lead--enemy" id="enemy-strip"></div>
+
+      <!-- 盤面：自後列・自前列 ║ 敵前列・敵後列 の4列×3段 -->
+      <div class="board" id="board">
+        <div class="bcol" data-owner="me"    data-col="1"></div>
+        <div class="bcol bcol--front" data-owner="me"    data-col="0"></div>
+        <div class="bdiv" aria-hidden="true"></div>
+        <div class="bcol bcol--front" data-owner="enemy" data-col="0"></div>
+        <div class="bcol" data-owner="enemy" data-col="1"></div>
       </div>
-    </div>
 
-    <div class="midline">
-      <span class="midline-txt" id="midline-txt">—</span>
-    </div>
+      <!-- 自分（左下） -->
+      <div class="lead lead--me" id="my-strip"></div>
 
-    <!-- 自分 -->
-    <div class="side side--me">
-      <div class="field" id="my-field">
-        <div class="row row--front" data-owner="me" data-col="0"></div>
-        <div class="row row--back"  data-owner="me" data-col="1"></div>
-      </div>
-      <div class="leader-strip" id="my-strip"></div>
-    </div>
-
-    <div class="hand-area">
+      <!-- 手札 -->
       <div class="hand" id="my-hand"></div>
-    </div>
 
-    <div class="battle-ctrl">
-      <button class="btn btn-ghost btn-sm" id="btn-log">ログ</button>
-      <button class="btn btn-ghost btn-sm" id="btn-quit">投了</button>
-      <button class="btn btn-primary" id="btn-end">ターン終了</button>
+      <div class="hint" id="hint" hidden></div>
     </div>
-
-    <div class="hint" id="hint" hidden></div>
-    <div class="log-panel" id="log-panel" hidden><div class="log-inner" id="log-inner"></div></div>
   </div>
 
+  <div class="rotate-hint" id="rotate-hint" hidden>
+    <span>📱 横向きにすると大きく表示されます</span>
+    <button class="btn btn-sm" id="rot-turn">画面を回す</button>
+    <button class="btn btn-sm" id="rot-ok">このまま</button>
+  </div>
+
+  <div class="log-panel" id="log-panel" hidden><div class="log-inner" id="log-inner"></div></div>
   <div class="overlay" id="overlay" hidden>
     <div class="overlay-box" id="overlay-box"></div>
   </div>
