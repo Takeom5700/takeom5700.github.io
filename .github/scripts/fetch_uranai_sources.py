@@ -306,6 +306,24 @@ CHANNEL_ID_PROMPT = """YouTube のチャンネル「@{handle}」のチャンネ�
 def resolve_love_channel_id(client, notes: list[str]) -> str:
     """Loveちゃんのチャンネル ID を、必ず RSS で裏取りしてから返す。"""
     sources = json.loads(SOURCES_PATH.read_text(encoding="utf-8"))
+
+    # 動画URLが指定されていれば、そこから確実にチャンネルIDを割り出す。
+    # チャンネルページは同意画面が返ることがあり当てにならないが、
+    # 動画ページなら持ち主の ID がはっきり入っている。
+    hint = sources.get("love_video_url_hint")
+    if hint and not sources.get("love_channel_id"):
+        try:
+            for c in parse_channel_ids(get(hint, cookie=YT_COOKIE)):
+                if verify_channel_id(c):
+                    print(f"  動画URLから特定: {c}")
+                    sources["love_channel_id"] = c
+                    SOURCES_PATH.write_text(
+                        json.dumps(sources, ensure_ascii=False, indent=2) + "\n",
+                        encoding="utf-8")
+                    break
+        except Exception as e:  # noqa: BLE001
+            print(f"  動画URLから特定できず: {type(e).__name__}")
+
     cached = sources.get("love_channel_id")
     if cached:
         name = verify_channel_id(cached)
@@ -367,7 +385,10 @@ def gemini_json(client, prompt: str, video_url: str | None = None,
             file_uri=video_url, mime_type="video/*")))
     parts.append(types.Part(text=prompt))
     contents = [types.Content(role="user", parts=parts)]
-    for model in ("gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"):
+    # 2026-09-16 の実走で gemini-2.0-flash が提供終了になっていた
+    # （404 で「models/gemini-3.6-flash を使え」と案内された）。
+    # 混雑（503）や上限（429）で落ちることもあるので順に試す。
+    for model in ("gemini-2.5-flash", "gemini-3.6-flash", "gemini-flash-latest"):
         try:
             resp = client.models.generate_content(
                 model=model, contents=contents,
@@ -442,7 +463,7 @@ def fetch_love(client, today: datetime.date, days: int = 5) -> tuple[list[dict],
               if (today - datetime.date.fromisoformat(v["published"])).days <= days]
     print(f"  直近{days}日の動画: {len(recent)}本 / 全{len(videos)}本")
     items = []
-    for v in recent[:4]:
+    for v in recent[:3]:   # API の上限を使い切らないよう本数を絞る
         print(f"  - {v['published']} {v['title'][:50]}")
         raw = gemini_json(client,
                           LOVE_PROMPT.format(targets=f"{SIGN}、{ETO}、{KYUSEI}、全体"),
