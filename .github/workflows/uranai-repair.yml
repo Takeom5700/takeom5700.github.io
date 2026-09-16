@@ -56,7 +56,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add uranai/index.html
+          git add uranai/index.html uranai/data/sources.json
           if git diff --staged --quiet; then
             echo "修復の必要はありませんでした。"
             exit 0

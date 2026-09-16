@@ -1,0 +1,81 @@
+{
+  "_comment": "占いソースを「系統」ごとに追跡する記録。同じソースでも日替わり・月運・下半期は別扱いにする（Loveちゃんの月運が生きていても日替わりが止まっていることがあるため）。repair_uranai.py が毎日更新し、ページ上部の「ソースの取りこみ状況」欄を作る。チップが期限切れで消えても、最後がいつだったかはここに残る。",
+  "streams": [
+    {
+      "key": "rokusei",
+      "label": "六星占術",
+      "cadence": "毎日",
+      "auto": true,
+      "note": "日運・月運・年運を12周期から毎日計算"
+    },
+    {
+      "key": "shichu",
+      "label": "四柱推命",
+      "cadence": "毎日",
+      "auto": true,
+      "note": "日干支・十神・月柱・天中殺を暦から毎日計算"
+    },
+    {
+      "key": "bazi",
+      "label": "中国式占い",
+      "cadence": "毎日",
+      "auto": true,
+      "note": "四柱と同じ計算から毎日生成"
+    },
+    {
+      "key": "love_daily",
+      "label": "Loveちゃん（十二支別・12星座別）",
+      "cadence": "3日ごと",
+      "source": "Loveちゃん",
+      "kind": "range",
+      "last_period_end": "2026-09-04",
+      "has_chip": false
+    },
+    {
+      "key": "love_month",
+      "label": "Loveちゃん（月運・月の予言）",
+      "cadence": "毎月",
+      "source": "Loveちゃん",
+      "kind": "month",
+      "has_chip": true,
+      "last_period_end": "2026-09-30"
+    },
+    {
+      "key": "love_half",
+      "label": "Loveちゃん（下半期テーマ）",
+      "cadence": "半年",
+      "source": "Loveちゃん",
+      "kind": "long",
+      "has_chip": true
+    },
+    {
+      "key": "shiitake",
+      "label": "しいたけ占い（週間）",
+      "cadence": "毎週",
+      "source": "しいたけ占い",
+      "kind": "any",
+      "last_period_end": "2026-09-06",
+      "has_chip": false
+    },
+    {
+      "key": "yamada",
+      "label": "山田ありす（固定属性・指定日）",
+      "cadence": "期限なし",
+      "source": "山田ありす",
+      "kind": "any",
+      "fixed": true,
+      "has_chip": true,
+      "last_period_end": "2026-12-28"
+    },
+    {
+      "key": "roryu",
+      "label": "六龍法占い（風龍の基調）",
+      "cadence": "継続参照",
+      "source": "六龍法占い",
+      "kind": "any",
+      "fixed": true,
+      "note": "月別テキストは画像/長尺動画のため自動取得できない",
+      "has_chip": true
+    }
+  ]
+}
