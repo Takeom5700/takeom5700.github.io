@@ -18,11 +18,26 @@ let onFinish = null;       // 決着時に呼ぶ（main.js が戦績を記録す
 const $ = (id) => document.getElementById(id);
 const el = {};
 function cacheEls() {
+  el.stage = $('stage'); el.board = $('board'); el.vs = $('vs-bar');
   el.enemyStrip = $('enemy-strip'); el.myStrip = $('my-strip');
-  el.enemyField = $('enemy-field'); el.myField = $('my-field');
-  el.hand = $('my-hand'); el.hint = $('hint'); el.mid = $('midline-txt');
+  el.hand = $('my-hand'); el.hint = $('hint');
   el.overlay = $('overlay'); el.overlayBox = $('overlay-box');
   el.logPanel = $('log-panel'); el.logInner = $('log-inner');
+  el.rotate = $('rotate-hint');
+}
+
+// 原作と同じ横画面。1280x720 のステージを画面に合わせて拡大縮小する。
+const STAGE_W = 1280, STAGE_H = 720;
+let rotateDismissed = false, forceRotate = false;
+function fitStage() {
+  if (!el.stage) return;
+  const w = window.innerWidth, h = window.innerHeight;
+  const portrait = h > w;
+  // 端末の回転がロックされている人向けに、盤面ごと90度回して大きく表示できる
+  const rot = forceRotate && portrait;
+  const s = rot ? Math.min(h / STAGE_W, w / STAGE_H) : Math.min(w / STAGE_W, h / STAGE_H);
+  el.stage.style.transform = `translate(-50%,-50%) rotate(${rot ? 90 : 0}deg) scale(${s})`;
+  if (el.rotate) el.rotate.hidden = !(portrait && w < 820) || rotateDismissed;
 }
 
 // ------------------------------------------------------------
@@ -47,6 +62,7 @@ export function startBattle(config, finishCb) {
   el.overlay.hidden = true;
   el.logPanel.hidden = true;
   bindOnce();
+  fitStage();
   game.drainEvents();
   render();
   if (game.active === aiPi) runAiTurn();
@@ -59,8 +75,14 @@ function bindOnce() {
   $('btn-log').onclick = () => { el.logPanel.hidden = !el.logPanel.hidden; renderLog(); };
   $('btn-quit').onclick = () => { if (!busy) confirmQuit(); };
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.unit,.slot,.hcard,.leader-strip,.btn-tension,.overlay')) clearSel();
+    if (!e.target.closest('.unit,.slot,.hcard,.lead,.btn-tension,.btn-hero,.overlay')) clearSel();
   });
+  const ro = $('rot-ok');
+  if (ro) ro.onclick = (e) => { e.stopPropagation(); rotateDismissed = true; el.rotate.hidden = true; };
+  const rr = $('rot-turn');
+  if (rr) rr.onclick = (e) => { e.stopPropagation(); forceRotate = !forceRotate; fitStage(); };
+  window.addEventListener('resize', fitStage);
+  window.addEventListener('orientationchange', () => setTimeout(fitStage, 120));
 }
 
 // ------------------------------------------------------------
@@ -71,51 +93,61 @@ function render() {
   hideTip();
   renderStrip(el.enemyStrip, aiPi, false);
   renderStrip(el.myStrip, myPi, true);
-  renderField(el.enemyField, aiPi);
-  renderField(el.myField, myPi);
+  renderBoard();
   renderHand();
+  renderVs();
   const mine = game.active === myPi;
-  el.mid.textContent = game.s.winner !== null ? '決着' : (mine ? `あなたのターン（${game.s.turn}）` : `${conf.oppName}のターン（${game.s.turn}）`);
   $('btn-end').disabled = !mine || busy;
   applyHighlights();
+}
+
+function renderVs() {
+  const me = game.p(myPi), op = game.p(aiPi);
+  const mine = game.active === myPi;
+  el.vs.innerHTML = `
+    <span class="vs-side ${mine ? 'on' : ''}">${me.name}</span>
+    <span class="vs-mid">VS</span>
+    <span class="vs-side vs-side--r ${mine ? '' : 'on'}">${op.name}</span>
+    <span class="vs-turn">${game.s.winner !== null ? '決着' : `${mine ? 'あなた' : '相手'}のターン ${game.s.turn}`}</span>`;
 }
 
 function renderStrip(root, pi, isMe) {
   const p = game.p(pi);
   const sk = TENSION_SKILLS[p.cls];
-  const dots = [0, 1, 2].map(i => `<span class="ten-dot ${p.tension > i ? 'on' : ''}"></span>`).join('');
-  const canTension = isMe && p.tension >= 3 && game.active === myPi && game.s.winner === null;
   const hero = p.hero ? CARDS[p.hero.cardId] : null;
   const hsk = game.heroSkill(pi);
+  const canTension = isMe && p.tension >= 3 && game.active === myPi && game.s.winner === null;
   const canHero = isMe && hsk && !p.hero.usedThisTurn && p.mp >= hsk.cost
                   && game.active === myPi && game.s.winner === null;
-  root.className = 'leader-strip' + (isMe && game.active === myPi ? ' is-me-active' : '');
-  root.dataset.pi = pi;
-  const C = 2 * Math.PI * 23;
+  const C = 2 * Math.PI * 46;
   const frac = Math.min(1, p.tension / 3);
-  const mpMax = Math.max(p.maxMp, p.mp);
-  let crystals = '';
-  for (let i = 0; i < Math.min(10, Math.max(1, mpMax)); i++) crystals += `<i class="mp-c ${i < p.mp ? 'on' : ''}"></i>`;
+  const hpPct = Math.max(0, Math.min(100, p.hp / p.maxHp * 100));
+
+  root.className = 'lead ' + (isMe ? 'lead--me' : 'lead--enemy')
+                 + (isMe && game.active === myPi ? ' is-active' : '');
+  root.dataset.pi = pi;
   root.innerHTML = `
-    <div class="ls-portrait">
-      <svg class="ten-ring ${p.tension >= 3 ? 'full' : ''}" viewBox="0 0 52 52" aria-hidden="true">
-        <circle class="ten-bg" cx="26" cy="26" r="23"/>
-        <circle class="ten-fg" cx="26" cy="26" r="23" stroke-dasharray="${(frac * C).toFixed(1)} ${C.toFixed(1)}"/>
+    <div class="ld-portrait" title="テンション ${p.tension}/3">
+      <svg class="ten-ring ${p.tension >= 3 ? 'full' : ''}" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="ten-bg" cx="50" cy="50" r="46"/>
+        <circle class="ten-fg" cx="50" cy="50" r="46" stroke-dasharray="${(frac * C).toFixed(1)} ${C.toFixed(1)}"/>
       </svg>
-      <div class="ls-face" title="テンション ${p.tension}/3">${leaderSvg(p.cls)}</div>
+      <div class="ld-face">${leaderSvg(p.cls)}</div>
+      <div class="ld-ten">${p.tension}/3</div>
     </div>
-    <div class="ls-body">
-      <div class="ls-name">${p.name}<span style="font-weight:400;color:var(--washi-sub)">（${CLASSES[p.cls].name}）</span>${!isMe && conf.oppTag ? `<span class="ls-tag">${conf.oppTag}</span>` : ''}</div>
-      <div class="ls-meta">
-        <span class="ls-hp">${gem('hp', Math.max(0, p.hp))}<i>/${p.maxHp}</i></span>
-        <span class="mp-row" title="MP ${p.mp}/${p.maxMp}">${crystals}<span class="mp-num">${p.mp}/${p.maxMp}</span></span>
-        ${p.weapon ? `<span class="ls-weapon">${p.weapon.name} ${p.weapon.atk}／耐${p.weapon.dur}</span>` : ''}
-        ${hero ? `<span class="ls-hero" data-hero="${pi}">英雄 ${hero.name}・Lv${p.hero.level + 1}</span>` : ''}
-        <span class="ls-deck">山札${p.deck.length}・手札${p.hand.length}</span>
+    <div class="ld-info">
+      <div class="ld-name">${p.name}<small>${CLASSES[p.cls].name}</small>${!isMe && conf.oppTag ? `<span class="ld-tag">${conf.oppTag}</span>` : ''}</div>
+      <div class="hp-bar"><i style="width:${hpPct}%"></i><b>HP ${Math.max(0, p.hp)}</b></div>
+      <div class="ld-row">
+        <span class="ld-mp"><i class="mp-ico"></i>MP <b>${p.mp}</b>/${p.maxMp}</span>
+        <span class="ld-deck"><i class="deck-ico"></i>${p.deck.length}</span>
+        <span class="ld-hand">手札${p.hand.length}</span>
+        ${p.weapon ? `<span class="ld-weapon">${p.weapon.name} ${p.weapon.atk}/${p.weapon.dur}</span>` : ''}
       </div>
+      ${hero ? `<div class="ld-hero" data-hero="${pi}">英雄 ${hero.name}・Lv${p.hero.level + 1}</div>` : ''}
     </div>
-    ${isMe ? `<div class="ls-btns">
-      <button class="btn-tension" ${canTension ? '' : 'disabled'} title="${sk.name}：${sk.text}">テンション</button>
+    ${isMe ? `<div class="ld-btns">
+      <button class="btn-tension" ${canTension ? '' : 'disabled'} title="${sk.name}：${sk.text}">テンション<small>${sk.name}</small></button>
       ${hero ? `<button class="btn-hero" ${canHero ? '' : 'disabled'}
           title="${hsk.name}（${hsk.cost}MP）：${hsk.text}">${hsk.name}<small>${hsk.cost}MP</small></button>` : ''}
     </div>` : ''}`;
@@ -125,7 +157,7 @@ function renderStrip(root, pi, isMe) {
     const h = root.querySelector('.btn-hero');
     if (h) h.onclick = (e) => { e.stopPropagation(); selectHero(); };
   }
-  const hb = root.querySelector('.ls-hero');
+  const hb = root.querySelector('.ld-hero');
   if (hb && hero) {
     hb.onmouseenter = (ev) => showTip(hero, ev.clientX, ev.currentTarget.getBoundingClientRect().top,
       `<div style="margin-top:4px">${heroSkillLines(hero, p.hero.level)}</div>`);
@@ -134,56 +166,60 @@ function renderStrip(root, pi, isMe) {
   root.onclick = (e) => { e.stopPropagation(); onLeaderClick(pi); };
 }
 
-function renderField(root, pi) {
-  for (const row of root.querySelectorAll('.row')) {
-    const colIdx = Number(row.dataset.col);
-    row.innerHTML = '';
+// 盤面：自後列・自前列 ║ 敵前列・敵後列 の4列×3段
+function renderBoard() {
+  for (const colEl of el.board.querySelectorAll('.bcol')) {
+    const pi = colEl.dataset.owner === 'me' ? myPi : aiPi;
+    const col = Number(colEl.dataset.col);
+    colEl.innerHTML = '';
     for (let lane = 0; lane < 3; lane++) {
       const slot = document.createElement('div');
       slot.className = 'slot';
-      slot.dataset.pi = pi; slot.dataset.lane = lane; slot.dataset.col = colIdx;
-      const u = game.slotOccupant(pi, lane, colIdx);
+      slot.dataset.pi = pi; slot.dataset.lane = lane; slot.dataset.col = col;
+      const u = game.slotOccupant(pi, lane, col);
       if (u) slot.appendChild(u.isDungeon ? dungeonEl(u) : unitEl(u));
-      slot.onclick = (e) => { e.stopPropagation(); onSlotClick(pi, lane, colIdx, u); };
-      row.appendChild(slot);
+      slot.onclick = (e) => { e.stopPropagation(); onSlotClick(pi, lane, col, u); };
+      colEl.appendChild(slot);
     }
   }
 }
 
 function dungeonEl(d) {
   const c = CARDS[d.cardId];
-  const el2 = document.createElement('div');
-  el2.className = 'unit is-dungeon';
-  el2.dataset.uid = d.uid;
-  el2.style.setProperty('--uc', cardTint(c.cls));
+  const n = document.createElement('div');
+  n.className = 'unit is-dungeon';
+  n.dataset.uid = d.uid;
   const pct = Math.min(100, Math.round(d.dur / d.goal * 100));
-  el2.innerHTML = `
-    <div class="u-art">${artSvg(c)}</div>
+  n.innerHTML = `
+    <div class="u-medal" style="--uc:${cardTint(c.cls)}">${artSvg(c)}</div>
     <div class="u-name">${c.name}</div>
     <div class="dg-bar"><i style="width:${pct}%"></i></div>
     <div class="dg-num">${d.dur}/${d.goal}</div>`;
-  el2.onmouseenter = (e) => showTip(c, e.clientX, e.currentTarget.getBoundingClientRect().top,
+  n.onmouseenter = (e) => showTip(c, e.clientX, e.currentTarget.getBoundingClientRect().top,
     `<div style="margin-top:4px;color:#cdb49e">耐久値 ${d.dur}／${d.goal}（踏破すると効果が起きて消える）</div>`);
-  el2.onmouseleave = hideTip;
-  return el2;
+  n.onmouseleave = hideTip;
+  return n;
 }
 
 function unitEl(u) {
   const c = CARDS[u.cardId];
-  const d = document.createElement('div');
+  const n = document.createElement('div');
   const hp = game.hpOf(u), maxHp = game.maxHpOf(u);
-  d.className = 'unit' + (u.frozen > 0 ? ' is-frozen' : '') + (game.hasKw(u, 'ステルス') ? ' is-stealth' : '');
-  d.dataset.uid = u.uid;
-  d.style.setProperty('--uc', cardTint(c.cls));
-  d.innerHTML = `
-    <div class="u-kw">${kwBadges(u.silenced ? [] : u.kw)}</div>
-    <div class="u-art">${artSvg(c)}</div>
-    <div class="u-name">${c.name}</div>
-    <div class="u-stats">${gem('atk', game.atkOf(u))}${gem('hp', hp, hp < maxHp ? 'hurt' : '')}</div>`;
-  d.onmouseenter = (e) => showTip(c, e.clientX, e.currentTarget.getBoundingClientRect().top, unitExtra(u));
-  d.onmouseleave = hideTip;
-  return d;
+  n.className = 'unit' + (u.frozen > 0 ? ' is-frozen' : '') + (game.hasKw(u, 'ステルス') ? ' is-stealth' : '');
+  n.dataset.uid = u.uid;
+  n.innerHTML = `
+    <div class="u-medal" style="--uc:${cardTint(c.cls)}">
+      ${artSvg(c)}
+      <span class="u-kw">${kwBadges(u.silenced ? [] : u.kw)}</span>
+    </div>
+    <span class="gem gem-atk u-atk">${game.atkOf(u)}</span>
+    <span class="gem gem-hp u-hp ${hp < maxHp ? 'hurt' : ''}">${hp}</span>
+    <div class="u-name">${c.name}</div>`;
+  n.onmouseenter = (e) => showTip(c, e.clientX, e.currentTarget.getBoundingClientRect().top, unitExtra(u));
+  n.onmouseleave = hideTip;
+  return n;
 }
+
 function unitExtra(u) {
   const bits = [];
   if (u.frozen > 0) bits.push(`行動不能（あと${u.frozen}ターン）`);
@@ -195,7 +231,8 @@ function unitExtra(u) {
 function renderHand() {
   const p = game.p(myPi);
   el.hand.innerHTML = '';
-  for (const inst of p.hand) {
+  const n = p.hand.length;
+  p.hand.forEach((inst, i) => {
     const c = CARDS[inst.cardId];
     const cost = game.effectiveCost(myPi, inst);
     const playable = game.active === myPi && !busy && playActions(inst.iid).length > 0;
@@ -203,6 +240,10 @@ function renderHand() {
     d.className = 'hcard' + (playable ? '' : ' cant');
     d.dataset.iid = inst.iid;
     d.style.setProperty('--uc', cardTint(c.cls));
+    // 扇状に少しずつ傾ける
+    const t = n > 1 ? (i / (n - 1) - 0.5) : 0;
+    d.style.setProperty('--rot', (t * Math.min(14, n * 2)).toFixed(2) + 'deg');
+    d.style.setProperty('--lift', (Math.abs(t) * Math.min(18, n * 2.5)).toFixed(1) + 'px');
     let stats = '';
     if (c.type === 'unit') stats = gem('atk', c.atk) + gem('hp', c.hp);
     else if (c.type === 'weapon') stats = gem('atk', c.wAtk) + gem('hp', c.wDur);
@@ -215,10 +256,10 @@ function renderHand() {
       <div class="h-name">${c.name}</div>
       <div class="h-stats">${stats}</div>`;
     d.onclick = (e) => { e.stopPropagation(); onHandClick(inst.iid); };
-    d.onmouseenter = (e) => showTip(c, e.currentTarget.getBoundingClientRect().left + 42, e.currentTarget.getBoundingClientRect().top);
+    d.onmouseenter = (e) => { const r = e.currentTarget.getBoundingClientRect(); showTip(c, r.left + r.width / 2, r.top); };
     d.onmouseleave = hideTip;
     el.hand.appendChild(d);
-  }
+  });
 }
 
 function renderLog() {
@@ -258,7 +299,7 @@ function candidates() {
 }
 
 function applyHighlights() {
-  document.querySelectorAll('.unit,.slot,.hcard,.leader-strip').forEach(n => {
+  document.querySelectorAll('.unit,.slot,.hcard,.lead').forEach(n => {
     n.classList.remove('is-target', 'is-drop', 'is-sel', 'can-act');
   });
   if (game.s.winner !== null) return;
@@ -465,39 +506,36 @@ async function doApply(action) {
   if (game.active === aiPi) runAiTurn();
 }
 
+// ステージ内の座標（画面座標ではない）。こうしておくと拡大・回転しても演出がズレない。
+function stagePos(node) {
+  let x = 0, y = 0, n = node;
+  while (n && n !== el.stage) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+  return { x: x + node.offsetWidth / 2, y: y + node.offsetHeight / 2 };
+}
 function capturePositions() {
   const map = { units: {}, leaders: {} };
-  document.querySelectorAll('.unit[data-uid]').forEach(n => {
-    const r = n.getBoundingClientRect();
-    map.units[n.dataset.uid] = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  });
-  [[aiPi, el.enemyStrip], [myPi, el.myStrip]].forEach(([pi, n]) => {
-    const r = n.getBoundingClientRect();
-    map.leaders[pi] = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  });
+  document.querySelectorAll('.unit[data-uid]').forEach(n => { map.units[n.dataset.uid] = stagePos(n); });
+  map.leaders[aiPi] = stagePos(el.enemyStrip);
+  map.leaders[myPi] = stagePos(el.myStrip);
   return map;
 }
 function posOf(ref, before) {
-  if (ref.k === 'l') {
-    const n = ref.pi === myPi ? el.myStrip : el.enemyStrip;
-    const r = n.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  }
+  if (ref.k === 'l') return stagePos(ref.pi === myPi ? el.myStrip : el.enemyStrip);
   const n = document.querySelector(`.unit[data-uid="${ref.uid}"]`);
-  if (n) { const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+  if (n) return stagePos(n);
   return before.units[ref.uid] || null;
 }
 
 function float(text, cls, pos) {
-  if (!pos) return;
+  if (!pos || !el.stage) return;
   const d = document.createElement('div');
   d.className = 'float ' + cls; d.textContent = text;
   d.style.left = pos.x + 'px'; d.style.top = pos.y + 'px';
-  document.body.appendChild(d);
+  el.stage.appendChild(d);
   setTimeout(() => d.remove(), 1000);
 }
 function slashAt(pos) {
-  if (!pos) return;
+  if (!pos || !el.stage) return;
   const d = document.createElement('div');
   d.className = 'slash';
   d.innerHTML = `<svg viewBox="0 0 100 100">
@@ -506,21 +544,22 @@ function slashAt(pos) {
     <path d="M22 30 C40 46 60 62 80 78" stroke="rgba(255,255,255,.7)" stroke-width="4" fill="none" stroke-linecap="round"/>
   </svg>`;
   d.style.left = pos.x + 'px'; d.style.top = pos.y + 'px';
-  document.body.appendChild(d);
+  el.stage.appendChild(d);
   setTimeout(() => d.remove(), 460);
 }
 function burstAt(pos) {
-  if (!pos) return;
+  if (!pos || !el.stage) return;
   const d = document.createElement('div');
   d.className = 'burst';
   d.style.left = pos.x + 'px'; d.style.top = pos.y + 'px';
-  document.body.appendChild(d);
+  el.stage.appendChild(d);
   setTimeout(() => d.remove(), 540);
 }
 function screenFlash() {
+  if (!el.stage) return;
   const d = document.createElement('div');
   d.className = 'flash';
-  document.body.appendChild(d);
+  el.stage.appendChild(d);
   setTimeout(() => d.remove(), 600);
 }
 
@@ -562,10 +601,7 @@ async function playEvents(evs, before) {
       case 'freeze': await wait(step * 0.5); break;
       case 'play': {
         const card = CARDS[e.cardId];
-        if (card && card.type === 'spell') {
-          const r = el.myStrip.getBoundingClientRect();
-          burstAt({ x: innerWidth / 2, y: innerHeight * 0.45 });
-        }
+        if (card && card.type === 'spell') burstAt({ x: STAGE_W / 2, y: 330 });
         SFX.play(); break;
       }
     }
