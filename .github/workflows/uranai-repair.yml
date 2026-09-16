@@ -15,6 +15,7 @@ on:
     branches: [main]
     paths:
       - 'uranai/index.html'
+      - 'uranai/data/fetched.json'
   schedule:
     # JST 00:05 と 07:05（UTC 15:05 / 22:05）
     - cron: '5 15 * * *'

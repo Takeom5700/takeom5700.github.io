@@ -552,6 +552,67 @@ def inject_source_panel(html: str, panel: str) -> str:
         return html
     return html[:m.end()] + "\n" + panel + "\n" + html[m.end():]
 
+
+FETCHED_PATH = ROOT / "uranai" / "data" / "fetched.json"
+FETCHED_START = "    <!-- uranai:fetched-chips ここから（取りこんだ回から生成） -->"
+FETCHED_END = "    <!-- uranai:fetched-chips ここまで -->"
+KIND_COLOR = {
+    "color": ("#a8762b", "#7e5a1e"), "food": ("#b5651d", "#8a4a10"),
+    "item": ("#2b8ab0", "#1a6285"), "number": ("#5a6b8c", "#3c4a66"),
+    "direction": ("#1e7a6a", "#125548"), "action": ("#7d3fb0", "#5a2888"),
+    "theme": ("#1e7a48", "#145a34"), "caution": ("#b3402e", "#8a2c1e"),
+}
+
+
+def refresh_fetched_chips(html: str, d: datetime.date) -> tuple[str, int]:
+    """fetch_uranai_sources.py が取りこんだ回をチップとして並べ直す。
+
+    期間が過ぎたものはここで落とす（＝古い回が残り続けない）。
+    ファイルが無い・空なら何も足さない。推測では作らない。
+    """
+    html = re.sub(re.escape(FETCHED_START) + r".*?" + re.escape(FETCHED_END) + r"\n",
+                  "", html, flags=re.S)
+    if not FETCHED_PATH.exists():
+        return html, 0
+    try:
+        data = json.loads(FETCHED_PATH.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return html, 0
+
+    live = []
+    for it in data.get("items", []):
+        try:
+            end = datetime.date.fromisoformat(it["period_end"])
+        except Exception:  # noqa: BLE001
+            continue
+        if end < d:
+            continue
+        live.append(it)
+    if not live:
+        return html, 0
+
+    block = [FETCHED_START]
+    for it in live:
+        color, border = KIND_COLOR.get(it.get("kind", ""), ("#7a6d59", "#5a5142"))
+        block.append(
+            '    <div class="color-chip">\n'
+            f'      <div class="color-dot" style="background:{color};'
+            f'border:1px solid {border};"></div>\n'
+            f'      <div><div class="chip-label">{esc(it["label"])}</div>'
+            f'<div class="chip-value">{esc(it["value"])}</div></div>\n'
+            '    </div>')
+    block.append(FETCHED_END)
+    marker = DAILY_END + "\n"
+    idx = html.find(marker)
+    if idx < 0:
+        return html, 0
+    at = idx + len(marker)
+    return html[:at] + "\n".join(block) + "\n" + html[at:], len(live)
+
+
+def esc(s: str) -> str:
+    return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+
 def inject_enhancements(html: str, t: dict) -> str:
     """毎回消される鮮度バナー・絞り込みUIを入れ直す（既にあれば何もしない）。"""
     css = (ASSETS / "uranai-enhance.css").read_text(encoding="utf-8")
@@ -662,6 +723,7 @@ def main() -> int:
         h, rm = drop_expired_chips(h, d)
         h, rm2 = drop_stale_marked_chips(h)
         h = refresh_daily_chips(h, t)
+        h, nf = refresh_fetched_chips(h, d)
         h, ns = rebuild_scores(h, t, d)
         if not ns:
             wn.append("スコア欄が見つからず作り直せませんでした")
