@@ -70,16 +70,35 @@ class FetchError(Exception):
 # --------------------------------------------------------------------------
 # 純粋関数（オフラインで検証できる部分）
 # --------------------------------------------------------------------------
+# 優先順。"channelId" はページ内に関連チャンネルぶんも大量に出るので最後。
+# 2026-09-16 の実走で、これを最初に見ていたため他人のIDを掴んでいた。
+CHANNEL_ID_PATTERNS = (
+    r'rel="alternate"[^>]*channel_id=(UC[\w-]{22})',   # head の RSS リンク＝本人
+    r'"externalId"\s*:\s*"(UC[\w-]{22})"',            # 本人の外部ID
+    r'rel="canonical"[^>]*/channel/(UC[\w-]{22})',     # 正規URL
+    r'"browseId"\s*:\s*"(UC[\w-]{22})"',              # ページの表示対象
+    r'channel_id=(UC[\w-]{22})',
+    r'/channel/(UC[\w-]{22})',
+    r'"channelId"\s*:\s*"(UC[\w-]{22})"',             # 最後の手段
+)
+
+
+def parse_channel_ids(html: str) -> list[str]:
+    """チャンネルIDの候補を、確からしい順に重複なく返す。"""
+    out: list[str] = []
+    for pat in CHANNEL_ID_PATTERNS:
+        for m in re.finditer(pat, html):
+            cid = m.group(1)
+            if cid not in out:
+                out.append(cid)
+    return out
+
+
 def parse_channel_id(html: str) -> str:
-    """チャンネルページの HTML から UC... の ID を取り出す。"""
-    for pat in (r'"channelId"\s*:\s*"(UC[\w-]{22})"',
-                r'"externalId"\s*:\s*"(UC[\w-]{22})"',
-                r'channel_id=(UC[\w-]{22})',
-                r'/channel/(UC[\w-]{22})'):
-        m = re.search(pat, html)
-        if m:
-            return m.group(1)
-    raise FetchError("チャンネルIDが見つかりません")
+    ids = parse_channel_ids(html)
+    if not ids:
+        raise FetchError("チャンネルIDが見つかりません")
+    return ids[0]
 
 
 def parse_rss(xml: str) -> list[dict]:
@@ -304,17 +323,19 @@ def resolve_love_channel_id(client, notes: list[str]) -> str:
             code = getattr(e, "code", type(e).__name__)
             print(f"  {url} → {code}")
             continue
-        try:
-            cid = parse_channel_id(html)
-        except FetchError:
+        cands = parse_channel_ids(html)
+        if not cands:
             print(f"  {url} → ID を取り出せず")
             continue
-        name = verify_channel_id(cid)
-        if name:
-            print(f"  {url} → {cid}（{name}）")
-            found = cid
+        print(f"  {url} → 候補 {len(cands)} 件")
+        for cid in cands[:8]:
+            name = verify_channel_id(cid)
+            if name:
+                print(f"    ✓ {cid}（{name}）")
+                found = cid
+                break
+        if found:
             break
-        print(f"  {url} → {cid} は RSS で確認できず")
 
     if not found:
         print("  ページから取れないので検索で探します")
@@ -459,6 +480,44 @@ def fetch_shiitake(client, today: datetime.date) -> tuple[list[dict], list[str]]
     return got, notes
 
 
+
+def _items_of(raw: str) -> list[dict]:
+    try:
+        return json.loads(raw).get("items", [])
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def merge_items(new_items: list[dict], today: datetime.date):
+    """取れた分を既存に足しこむ。上書きで消さない。
+
+    1回の取得でたまたま拾えなかった項目まで消えると、前日まで出ていた内容が
+    突然消える（2026-09-16 の実走で、しいたけのラッキーカラーが実際に消えた）。
+    期限内の既存項目は残し、同じラベルなら新しい方で置き換える。
+    期限切れだけをここで落とす。
+    """
+    old = _items_of(FETCHED_PATH.read_text(encoding="utf-8")
+                    if FETCHED_PATH.exists() else "")
+    by_label: dict[str, dict] = {}
+    kept = dropped = 0
+    for it in old:
+        try:
+            end = datetime.date.fromisoformat(it["period_end"])
+        except Exception:  # noqa: BLE001
+            dropped += 1
+            continue
+        if end < today:
+            dropped += 1
+            continue
+        by_label[it.get("label", "")] = it
+        kept += 1
+    for it in new_items:
+        by_label[it["label"]] = it
+    merged = sorted(by_label.values(),
+                    key=lambda x: (x.get("source", ""), x.get("period_end", ""),
+                                   x.get("label", "")))
+    return merged, kept, dropped
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
@@ -509,15 +568,18 @@ def main() -> int:
         print("\n--dry-run のため書き出しません。")
         return 0
 
-    if not items:
-        # 取れなかった。**既存の内容は消さない**し、新しく作りもしない。
-        print("\n⚠ 新しく取りこめた項目がありません。fetched.json は据え置きます。")
-        return 0
+    merged, kept, dropped = merge_items(items, today)
+    print(f"既存から引き継ぎ {kept} 件 / 期限切れを整理 {dropped} 件 "
+          f"→ 合計 {len(merged)} 件")
 
-    FETCHED_PATH.write_text(json.dumps(
-        {"fetched_at": today.isoformat(), "notes": notes, "items": items},
-        ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"\n✅ {FETCHED_PATH.relative_to(ROOT)} に {len(items)} 件を書き出しました。")
+    old_raw = FETCHED_PATH.read_text(encoding="utf-8") if FETCHED_PATH.exists() else ""
+    new_raw = json.dumps({"fetched_at": today.isoformat(), "notes": notes,
+                          "items": merged}, ensure_ascii=False, indent=2) + "\n"
+    if _items_of(old_raw) == merged:
+        print("\n変化なし。fetched.json は据え置きます。")
+        return 0
+    FETCHED_PATH.write_text(new_raw, encoding="utf-8")
+    print(f"\n✅ {FETCHED_PATH.relative_to(ROOT)} を更新しました（{len(merged)} 件）。")
     return 0
 
 
