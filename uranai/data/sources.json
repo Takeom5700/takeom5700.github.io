@@ -78,5 +78,7 @@
       "has_chip": true
     }
   ],
-  "love_channel_id": "UCL6F7R0unHipZwsXJ3hVHzg"
+  "love_channel_id": "UCL6F7R0unHipZwsXJ3hVHzg",
+  "_love_hint_note": "Loveちゃんのチャンネルページは同意画面が返りチャンネルIDを特定できない。love_video_url_hint にそのチャンネルの動画URLを1つ入れるか、love_channel_id に UC で始まるIDを直接入れれば取りこみが始まる。",
+  "love_video_url_hint": ""
 }
