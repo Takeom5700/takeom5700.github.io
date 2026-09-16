@@ -31,6 +31,14 @@ def check(name, got, want):
         print(f"  NG  {name}\n      got  = {got!r}\n      want = {want!r}")
 
 
+def _raises(fn):
+    try:
+        fn()
+        return False
+    except Exception:
+        return True
+
+
 def check_true(name, cond, detail=""):
     check(name, bool(cond), True) if cond else check(name + f" {detail}", cond, True)
 
@@ -154,6 +162,35 @@ for kind, word in (("color", "ラッキーカラー"), ("food", "ラッキーフ
                    ("item", "ラッキーアイテム"), ("caution", "注意")):
     l = F.build_label({**got[0], "kind": kind})
     check(f"ラベルに『{word}』が入る（絞り込み用）", word in l, True)
+
+# ---------------------------------------------------------------- ID の裏取り
+check("不正な形のIDは即 None", F.verify_channel_id("notanid"), None)
+check("空のIDは即 None", F.verify_channel_id(""), None)
+check("None も落ちない", F.verify_channel_id(None), None)
+
+_calls = []
+def fake_get(url, timeout=30, cookie=None):
+    _calls.append(url)
+    if "feeds/videos.xml" in url:
+        if "UCgoodgoodgoodgoodgoodgo" in url:
+            return "<feed><title>Loveちゃん</title><entry><yt:videoId>x</yt:videoId>"\
+                   "<title>t</title><published>2026-09-16T00:00:00Z</published></entry></feed>"
+        return "<feed><title>空</title></feed>"          # entry が無い＝別物
+    raise OSError("network")
+
+_real = F.get
+F.get = fake_get
+try:
+    check("RSSが引ければチャンネル名を返す",
+          F.verify_channel_id("UCgoodgoodgoodgoodgoodgo"), "Loveちゃん")
+    check("entry が無いRSSは None",
+          F.verify_channel_id("UCbadbadbadbadbadbadbadx"), None)
+    check("RSSで裏取りするまでIDを採用しない（URL全滅なら例外）",
+          _raises(lambda: F.resolve_love_channel_id(None, [])), True)
+finally:
+    F.get = _real
+
+check("チャンネルID URL の候補が複数ある", len(F.CHANNEL_URL_VARIANTS) >= 3, True)
 
 print(f"\n合計 {ok + fail} 件 / 成功 {ok} / 失敗 {fail}")
 sys.exit(1 if fail else 0)

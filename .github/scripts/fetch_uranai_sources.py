@@ -226,14 +226,112 @@ def build_label(item: dict) -> str:
 # --------------------------------------------------------------------------
 # 取得（ネットワーク）
 # --------------------------------------------------------------------------
-def get(url: str, timeout: int = 30) -> str:
-    req = urllib.request.Request(url, headers={"User-Agent": UA,
-                                               "Accept-Language": "ja"})
+# YouTube はデータセンターからの素の GET に 404 を返すことがある。
+# 同意 Cookie と言語指定を付けると通ることが多い。
+YT_COOKIE = "CONSENT=YES+cb.20210328-17-p0.ja+FX+888; SOCS=CAISEwgDEgk0ODE3Nzk3MjQaAmphIAEaBgiA_LyaBg"
+
+
+def get(url: str, timeout: int = 30, cookie: str | None = None) -> str:
+    headers = {"User-Agent": UA, "Accept-Language": "ja,en;q=0.8"}
+    if cookie:
+        headers["Cookie"] = cookie
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read().decode("utf-8", "replace")
 
 
-def gemini_json(client, prompt: str, video_url: str | None = None):
+def rss_url(channel_id: str) -> str:
+    return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+
+
+def verify_channel_id(cid: str):
+    """RSS が実際に引けるかで、チャンネルIDが本物かを確かめる。
+
+    検索や推測で出てきた ID をそのまま信じないための関門。
+    引けたらチャンネル名を返し、駄目なら None。
+    """
+    if not re.fullmatch(r"UC[\w-]{22}", cid or ""):
+        return None
+    try:
+        xml = get(rss_url(cid), timeout=20)
+    except Exception:  # noqa: BLE001
+        return None
+    if "<entry>" not in xml:
+        return None
+    m = re.search(r"<title>(.*?)</title>", xml, re.S)
+    return unescape(m.group(1).strip()) if m else None
+
+
+CHANNEL_URL_VARIANTS = (
+    "https://www.youtube.com/@{h}",
+    "https://www.youtube.com/@{h}/videos",
+    "https://m.youtube.com/@{h}",
+    "https://www.youtube.com/c/{h}",
+)
+
+CHANNEL_ID_PROMPT = """YouTube のチャンネル「@{handle}」のチャンネルID
+（UC で始まる24文字）を Google 検索で調べて、次の JSON だけを返してください。
+
+{{"channel_id": "UC..."}}
+
+確信が持てない場合は {{"channel_id": ""}} と返してください。推測で埋めないこと。
+"""
+
+
+def resolve_love_channel_id(client, notes: list[str]) -> str:
+    """Loveちゃんのチャンネル ID を、必ず RSS で裏取りしてから返す。"""
+    sources = json.loads(SOURCES_PATH.read_text(encoding="utf-8"))
+    cached = sources.get("love_channel_id")
+    if cached:
+        name = verify_channel_id(cached)
+        if name:
+            print(f"  記録済みのIDを使用: {cached}（{name}）")
+            return cached
+        notes.append(f"記録済みID {cached} が使えなくなっていたので取り直します")
+
+    found = None
+    for tmpl in CHANNEL_URL_VARIANTS:
+        url = tmpl.format(h=LOVE_HANDLE)
+        try:
+            html = get(url, cookie=YT_COOKIE)
+        except Exception as e:  # noqa: BLE001
+            code = getattr(e, "code", type(e).__name__)
+            print(f"  {url} → {code}")
+            continue
+        try:
+            cid = parse_channel_id(html)
+        except FetchError:
+            print(f"  {url} → ID を取り出せず")
+            continue
+        name = verify_channel_id(cid)
+        if name:
+            print(f"  {url} → {cid}（{name}）")
+            found = cid
+            break
+        print(f"  {url} → {cid} は RSS で確認できず")
+
+    if not found:
+        print("  ページから取れないので検索で探します")
+        raw = gemini_json(client, CHANNEL_ID_PROMPT.format(handle=LOVE_HANDLE),
+                          search=True)
+        for cid in re.findall(r"UC[\w-]{22}", json.dumps(raw or {})):
+            name = verify_channel_id(cid)
+            if name:
+                print(f"  検索結果 {cid}（{name}）を RSS で確認")
+                found = cid
+                break
+
+    if not found:
+        raise FetchError("チャンネルIDを特定できませんでした")
+
+    sources["love_channel_id"] = found
+    SOURCES_PATH.write_text(json.dumps(sources, ensure_ascii=False, indent=2)
+                            + "\n", encoding="utf-8")
+    return found
+
+
+def gemini_json(client, prompt: str, video_url: str | None = None,
+                search: bool = False):
     """Gemini に JSON だけを返させる。失敗したら None（＝何も書かない）。"""
     from google.genai import types
     parts = []
@@ -247,11 +345,18 @@ def gemini_json(client, prompt: str, video_url: str | None = None):
             resp = client.models.generate_content(
                 model=model, contents=contents,
                 config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
+                    **({"tools": [types.Tool(google_search=types.GoogleSearch())]}
+                       if search else
+                       {"response_mime_type": "application/json"}),
                     max_output_tokens=4000, temperature=0.0))
             text = (resp.text or "").strip()
             if not text:
                 continue
+            if search:  # 検索つきだと JSON 以外が混ざるので抜き出す
+                m = re.search(r"\{.*\}", text, re.S)
+                if not m:
+                    continue
+                text = m.group(0)
             print(f"    モデル {model} から応答 ({len(text)}文字)")
             return json.loads(text)
         except Exception as e:  # noqa: BLE001
@@ -303,15 +408,8 @@ POWER UP や COOL DOWN の色は kind を color にする。
 
 def fetch_love(client, today: datetime.date, days: int = 5) -> tuple[list[dict], list[str]]:
     notes = []
-    sources = json.loads(SOURCES_PATH.read_text(encoding="utf-8"))
-    cached = sources.get("love_channel_id")
-    if not cached:
-        cached = parse_channel_id(get(LOVE_CHANNEL_URL))
-        sources["love_channel_id"] = cached
-        SOURCES_PATH.write_text(json.dumps(sources, ensure_ascii=False, indent=2)
-                                + "\n", encoding="utf-8")
-        notes.append(f"チャンネルID を解決: {cached}")
-    rss = get(f"https://www.youtube.com/feeds/videos.xml?channel_id={cached}")
+    cid = resolve_love_channel_id(client, notes)
+    rss = get(rss_url(cid), cookie=YT_COOKIE)
     videos = parse_rss(rss)
     recent = [v for v in videos
               if (today - datetime.date.fromisoformat(v["published"])).days <= days]
