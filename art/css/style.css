@@ -1,0 +1,104 @@
+/* 画面には作品以外を置かない。
+   題も操作も説明も出さない（基軸の「禁」）。
+   出しているのは、始める前の一行と、帰り道だけ。 */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: #000;
+  overflow: hidden;
+  color: #6d6a67;
+  font-family: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+#stage {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  background: #000;
+}
+
+#veil {
+  position: fixed; inset: 0;
+  background: #000;
+  transition: opacity 2.6s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+#hint {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1.7rem;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 2.2s ease;
+  pointer-events: none;
+  text-align: center;
+  padding: 1.5rem;
+}
+#hint.shown { opacity: 1; }
+
+#hint .mark {
+  font-size: clamp(2.2rem, 7vw, 3.6rem);
+  letter-spacing: 0.7em;
+  text-indent: 0.7em;
+  color: #8d867e;
+  font-weight: 600;
+}
+#hint .act {
+  font-size: clamp(0.82rem, 2.4vw, 1rem);
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  color: #6a6560;
+  animation: breathe 6.5s ease-in-out infinite;
+}
+#hint .sub {
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  color: #3e3b38;
+}
+@keyframes breathe { 0%,100% { opacity: 0.45 } 50% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) {
+  #hint .act { animation: none; opacity: 0.85 }
+}
+
+#back {
+  position: fixed; top: 0; left: 0;
+  padding: 1.1rem 1.4rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  color: #46423e;
+  text-decoration: none;
+  z-index: 4;
+  transition: opacity 1.4s ease;
+}
+#back:hover { color: #8d867e; }
+body.idle #back { opacity: 0; pointer-events: none; }
+body.running:not(.idle) #back { opacity: 0.8; }
+
+#hud {
+  position: fixed; bottom: 0; left: 0;
+  padding: 0.7rem 1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: #5a554f;
+  z-index: 4;
+  display: none;
+  white-space: pre;
+}
+#hud.shown { display: block; }
+
+body.running { cursor: none; }
+body.running:not(.idle) { cursor: default; }
+
+.fallback {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem; text-align: center; line-height: 2;
+  color: #7a736c; z-index: 5;
+}
