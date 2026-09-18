@@ -134,13 +134,6 @@ float fine(vec3 p, float mid, float ultra){
   return f;
 }
 
-// 影のための密度。中間の1オクターブだけ足す。
-// 影が滑らかだと、密度に細部があっても面の明るさが滑らかになり、
-// 結局「綿」に見える。細かい自己遮蔽こそが雲を雲に見せている。
-float fineMid(vec3 p, float detail){
-  return (fbm4r(texture(uNoise, p*${MID_MUL}.0 + 0.173), uRidge) - 0.5) * 0.34 * detail;
-}
-
 // 物質が居られる場所。層（slab）と塊（wall）の掛け算だけで決まる。
 // 壁は「面からの減衰」ではなく半空間。こうしないと視点が霧の内側に入って
 // 全部溶ける。半空間を場が削るから、崖の面に襞ができる。
@@ -158,8 +151,6 @@ float riftDist(vec3 wp, vec2 off){
   if (uRiftAxis == 1) return length(vec2(wp.x - uRiftPos.x, wp.z - uRiftPos.y) - off);
   return length(vec2(wp.x - uRiftPos.x, wp.y - uRiftPos.y) - off);
 }
-float riftDist(vec3 wp){ return riftDist(wp, vec2(0.0)); }
-
 // 軸に沿った座標
 float riftAlong(vec3 wp){ return uRiftAxis == 0 ? wp.x : uRiftAxis == 1 ? wp.y : wp.z; }
 
@@ -168,8 +159,11 @@ vec4 riftJitter(vec3 wp){
   return texture(uNoise, vec3(0.31, riftAlong(wp) * uScale * 12.0, 0.73));
 }
 
-// 密度。ここがこの作品のすべて
-float densityAt(vec3 wp, vec3 warp, float mid, float ultra){
+// 密度。ここがこの作品のすべて。
+// 影を見るときは ultra=0 で呼ぶ（粒は影に効かないので引かない）。
+// warp と roff はレイ1歩ぶん共有する。歩ごとに引き直すと
+// フェッチが倍以上になるのに、絵はほとんど変わらない。
+float densityAt(vec3 wp, vec3 warp, vec2 roff, float mid, float ultra){
   float sh = shapeAt(wp);
   if (sh < 0.002) return 0.0;
   vec3 q = wp * uScale + uOffset + uFlow * uTime + warp;
@@ -177,21 +171,13 @@ float densityAt(vec3 wp, vec3 warp, float mid, float ultra){
   // 閾値からじゅうぶん下なら細部を引く意味がない（＝塊の縁だけ細かく見る）
   if (f > uThresh - 0.20 && mid > 0.02) f += fine(q, mid, ultra);
   float d = (f - uThresh) * uDensity * sh;
-  if (uRiftAmp > 0.0) d *= 1.0 - uRiftClear * exp(-riftDist(wp, (riftJitter(wp).xy - 0.5) * uRiftWobble) * uRiftTight * 1.35);
+  // 裂け目の中は物質を払う。こうしないと光が自分の出口を塞ぐ
+  if (uRiftAmp > 0.0) d *= 1.0 - uRiftClear * exp(-riftDist(wp, roff) * uRiftTight * 1.35);
   return max(d, 0.0);
 }
 
-float densityShadow(vec3 wp, vec3 warp, float detail){
-  float sh = shapeAt(wp);
-  if (sh < 0.002) return 0.0;
-  vec3 q = wp * uScale + uOffset + uFlow * uTime + warp;
-  float f = coarse(q);
-  if (detail > 0.0) f += fineMid(q, detail);
-  float d = (f - uThresh) * uDensity * sh;
-  if (uRiftAmp > 0.0) d *= 1.0 - uRiftClear * exp(-riftDist(wp, (riftJitter(wp).xy - 0.5) * uRiftWobble) * uRiftTight * 1.35);
-  return max(d, 0.0);
-}
-
+// 定義域の折り曲げ。ここに uFlow を入れていないのは意図的で、
+// 「渦は空間の側の性質」として静止させてある。物質だけがそこを流れる。
 vec3 warpAt(vec3 wp){
   vec3 q = wp * uScale + uOffset;
   return (texture(uNoise, q * uWarpScale + 0.41).xyz * 2.0 - 1.0) * (uWarp * 0.05);
@@ -259,7 +245,7 @@ void main(){
     }
 
     vec3 warp = warpAt(p);
-    float d = densityAt(p, warp, mid, ultra);
+    float d = densityAt(p, warp, roff, mid, ultra);
 
     if (d > 0.0008){
       vec3 sigma = EXT * d;
@@ -273,7 +259,7 @@ void main(){
         float lt = 6.0;
         for (int k = 0; k < 6; k++){
           float nx = lt * 2.55;
-          od += densityShadow(p + uSunDir * lt, warp, k < 3 ? mid * 0.8 : 0.0) * (nx - lt);
+          od += densityAt(p + uSunDir * lt, warp, roff, k < 3 ? mid * 0.8 : 0.0, 0.0) * (nx - lt);
           lt = nx;
         }
       }
