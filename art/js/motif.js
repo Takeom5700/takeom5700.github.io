@@ -5,9 +5,17 @@
 // 自分で禁じていた。結果、何も名指せない画面になり、依頼者から
 // 「技術のインスタレーション」と言われた。禁を解いて、名前のある形を置く。
 //
-// 置いていいもの: 眼・手・獣・面・群・樹・波・火・雨・輪・裂・衆。
+// 置いていいもの: 群・獣・菌・波・紋・衆・梯・椅・傘・糸・綿・階・管・器。
 // どれも**物語ではない**。筋も台詞も無い。ただ「何かが居る」だけ。
 // 心は、名前の付かないものより、名前の付くものに強く反応する。
+//
+// **眼・面（怖い顔）・裂（稲妻）・火・雨はここから外した。**
+// 依頼者の指摘: 「使い古されたホラー要素、オカルトやフリーメイソンの
+// 都市伝説系でありがちなモチーフ。ああ怖い系やりたいのね、と思われて
+// その時点で冷める。怖くない。意外性がない。短絡的で浅い」——その通りだった。
+// 怖がらせに行くと、観る側は**型を読み当てて安心する。**
+// いま置いているのは、梯子・椅子・傘・壺・階段・管のような、
+// 怖がらせに来ていないのに理由が分からないものへ寄せてある。
 //
 // 各図は (ctx, S, E) だけを受け取る。E は film.js が組む:
 //   E.p    その景の中の位置（0〜1）
@@ -24,71 +32,6 @@ import { nz, nz01, snz, TAU, clamp, mix, wob, brush, path, blob } from './paint.
 const step = (v, n) => Math.round(v * n) / n;
 // 0〜1 を「ためて一気に」変える（グラデーション禁止の担保）
 function snap(p, at, w) { return clamp((p - at) / w, 0, 1) > 0.5 ? 1 : 0; }
-
-// ---- 眼 ---------------------------------------------------------------
-// 最初の景はたいていこれ。人は眼に最も速く反応する。
-function eyeShape(cx, cy, rx, ry, open, seed) {
-  const M = 14, pts = [];
-  for (let j = 0; j <= M; j++) {
-    const u = j / M;
-    pts.push([cx - rx + 2 * rx * u, cy - ry * open * Math.sin(Math.PI * u)]);
-  }
-  for (let j = M; j >= 0; j--) {
-    const u = j / M;
-    pts.push([cx - rx + 2 * rx * u, cy + ry * open * 0.82 * Math.sin(Math.PI * u)]);
-  }
-  return wob(pts, rx * 0.022, seed);
-}
-
-function eye(ctx, S, E) {
-  const { ink, col, sh } = E;
-  const n = sh.n;
-  const cols = n <= 1 ? 1 : n <= 2 ? 2 : n <= 3 ? 3 : n <= 6 ? 3 : 4;
-  const rows = Math.ceil(n / cols);
-  const cw = S.w / cols, ch = S.h / rows;
-  for (let i = 0; i < n; i++) {
-    const r = Math.floor(i / cols), c = i % cols;
-    const cx = n === 1 ? S.w * (0.5 + sh.ox * 0.16) : cw * (c + 0.5) + nz(E.fix + i * 17) * cw * 0.1;
-    const cy = n === 1 ? S.h * (0.5 + sh.oy * 0.14) : ch * (r + 0.5) + nz(E.fix + i * 31) * ch * 0.1;
-    const rx = (n === 1 ? S.w * 0.36 : cw * 0.42) * (0.82 + nz01(E.fix + i * 7) * 0.36);
-    const ry = rx * 0.54;
-
-    // 瞬き。時間の上でばらけさせる。開閉は段で（途中の形を出さない）
-    const bt = nz01(E.fix + i * 53) * 7 + E.p * (4 + sh.k1 * 9);
-    const cyc = bt - Math.floor(bt);
-    const open = cyc < 0.055 ? 0.08 : cyc < 0.085 ? 0.55 : 1;
-
-    const pts = eyeShape(cx, cy, rx, ry, open, E.seed + i * 91);
-    ink.body(() => path(ctx, pts));
-    if (open < 0.5) continue;
-
-    // 虹彩と瞳。瞳は段で開く（じわっと開くと退屈になる）
-    ctx.save();
-    ctx.beginPath(); path(ctx, pts); ctx.clip();
-    const gx = step(snz(E.p * (2 + sh.k2 * 6) + i, E.fix), 3) * rx * 0.34;
-    const gy = step(snz(E.p * 2.3 + i + 9, E.fix), 3) * ry * 0.22;
-    const ir = ry * 0.98;
-    ctx.fillStyle = col.g;
-    ctx.beginPath(); path(ctx, blob(cx + gx, cy + gy, new Array(26).fill(ir), E.seed + i, 0.03)); ctx.fill();
-    ctx.fillStyle = col.a;
-    ctx.beginPath(); path(ctx, blob(cx + gx, cy + gy, new Array(26).fill(ir * 0.86), E.seed + i * 3, 0.05)); ctx.fill();
-    // 虹彩の筋
-    ctx.fillStyle = col.g;
-    for (let k = 0; k < 26; k++) {
-      const a = (k / 26) * TAU + nz(E.fix + i + k) * 0.1;
-      brush(ctx, [
-        [cx + gx + Math.cos(a) * ir * 0.3, cy + gy + Math.sin(a) * ir * 0.3],
-        [cx + gx + Math.cos(a) * ir * 0.9, cy + gy + Math.sin(a) * ir * 0.9],
-      ], E.lw * 0.7, E.seed + k * 17, true);
-    }
-    const dil = 0.22 + 0.5 * snap(E.p, sh.k3, 0.02) * (1 - sh.k1 * 0.4);
-    ctx.fillStyle = col.g;
-    ctx.beginPath(); path(ctx, blob(cx + gx, cy + gy, new Array(20).fill(ir * dil), E.seed + i * 5, 0.06)); ctx.fill();
-    ctx.fillStyle = col.l;
-    ctx.beginPath(); ctx.arc(cx + gx - ir * 0.3, cy + gy - ir * 0.34, ir * 0.13, 0, TAU); ctx.fill();
-    ctx.restore();
-  }
-}
 
 // ---- 群 ---------------------------------------------------------------
 // 数の暴力。1つでは何でもないものが、300 あると意味を持つ。
@@ -129,71 +72,6 @@ function swarm(ctx, S, E) {
     ctx.moveTo(x, y - s * 1.6);
     ctx.lineTo(x + s * 2.2, y + s * 0.9); ctx.lineTo(x, y + s * 0.2); ctx.lineTo(x - s * 2.2, y + s * 0.9);
     ctx.closePath(); ctx.fill();
-  }
-}
-
-// ---- 手 ---------------------------------------------------------------
-// 掌を正面から。指は上の縁から生える。握ると段で一気に折れる。
-function hand(ctx, S, E) {
-  const { ink, col, sh } = E;
-  const cx = S.w * (0.5 + sh.ox * 0.18), cy = S.h * (0.6 + sh.oy * 0.1);
-  const R = S.h * (0.17 + sh.k1 * 0.13);
-  // 握る／開く。途中の形を出さない（段で切り替える）
-  const grip = sh.k2 > 0.5 ? snap(E.p, sh.k3, 0.02) : 1 - snap(E.p, sh.k3, 0.02);
-  const curl = mix(0.04, 0.78, grip);
-
-  const finger = (bx, by, ang, len, w, seed) => {
-    let a = ang, x = bx, y = by;
-    const pts = [[x, y]];
-    for (let j = 0; j < 3; j++) {
-      a += curl * 0.7 + snz(j * 2 + seed * 0.01, seed) * 0.06;
-      x += Math.cos(a) * len / 3; y += Math.sin(a) * len / 3;
-      pts.push([x, y]);
-    }
-    brush(ctx, pts, w, seed, false);
-    ctx.beginPath(); ctx.arc(pts[3][0], pts[3][1], w * 0.48, 0, TAU); ctx.fill();
-    return pts[3];
-  };
-
-  ink.body(() => {
-    // 掌。角の丸い四角
-    const pts = [];
-    const hw = R * 0.66, hh = R * 0.74;
-    for (let i = 0; i < 20; i++) {
-      const a = (i / 20) * TAU;
-      const c = Math.cos(a), si = Math.sin(a);
-      const k = 1 / Math.pow(Math.pow(Math.abs(c), 4) + Math.pow(Math.abs(si), 4), 0.25);
-      pts.push([cx + c * hw * k, cy + si * hh * k]);
-    }
-    path(ctx, wob(pts, R * 0.02, E.seed));
-  });
-
-  ctx.save();
-  ctx.fillStyle = col.i;
-  // 腕（枠の下へ抜ける）
-  brush(ctx, [[cx, cy + R * 0.4], [cx + sh.ox * R * 0.4, S.h + R]], R * 1.05, E.seed + 7, false);
-  // 四本指。長さを変える（同じ長さに並べると櫛になる）
-  const L = [0.92, 1.12, 1.06, 0.84];
-  for (let i = 0; i < 4; i++) {
-    const bx = cx + (i - 1.5) * R * 0.39, by = cy - R * 0.66;
-    finger(bx, by, -Math.PI / 2 + (i - 1.5) * 0.08, R * L[i], R * (0.23 - i * 0.012), E.seed + i * 71);
-  }
-  // 親指
-  finger(cx - R * 0.66, cy + R * 0.16, -Math.PI * 0.82, R * 0.78, R * 0.27, E.seed + 41);
-  ctx.restore();
-
-  // 掌の筋（異＝少しだけ人間くさいもの）
-  if (sh.odd) {
-    ctx.save(); ctx.fillStyle = col.a;
-    for (let i = 0; i < 3; i++) {
-      const pts = [];
-      for (let j = 0; j <= 6; j++) {
-        const u = j / 6;
-        pts.push([cx - R * 0.5 + R * 1.0 * u, cy - R * 0.3 + i * R * 0.3 + Math.sin(u * 3 + i) * R * 0.13]);
-      }
-      brush(ctx, wob(pts, R * 0.015, E.seed + i), R * 0.04, E.seed + i * 9, true);
-    }
-    ctx.restore();
   }
 }
 
@@ -262,108 +140,433 @@ function beast(ctx, S, E) {
   }
 }
 
-// ---- 樹 ---------------------------------------------------------------
-// 伸びる。根・枝・稲妻・血管、向きと太さで別物になる。
-function branch(ctx, S, E) {
+// ---- 菌 ---------------------------------------------------------------
+// 珊瑚・菌糸・根。枝分かれするが、先は丸い。木には見せない
+// （木にすると「自然の風景」になって、読んだ時点で消費される）。
+function coral(ctx, S, E) {
   const { col, sh } = E;
-  const grow = Math.pow(E.p, 0.45);
+  const grow = Math.pow(E.p, 0.4);
   const up = sh.k1 > 0.5 ? -1 : 1;
-  const x0 = S.w * (0.5 + sh.ox * 0.3), y0 = up < 0 ? S.h * 1.02 : -S.h * 0.02;
+  const baseY = up < 0 ? S.h * 1.04 : -S.h * 0.04;
+  const roots = 2 + Math.floor(sh.k2 * 4);
   ctx.fillStyle = col.i;
-  const maxD = 8;
-  const stack = [[x0, y0, up < 0 ? -Math.PI / 2 : Math.PI / 2, S.h * (0.2 + sh.k2 * 0.16), S.h * 0.035, 0]];
+  const maxD = 7;
+  const stack = [];
+  for (let r = 0; r < roots; r++) {
+    const x0 = S.w * ((r + 0.5) / roots + nz(E.fix + r * 17) * 0.22 + sh.ox * 0.1);
+    stack.push([x0, baseY, up < 0 ? -Math.PI / 2 : Math.PI / 2,
+      S.h * (0.13 + sh.k3 * 0.13) * (0.7 + nz01(E.fix + r * 29) * 0.7),
+      S.h * (0.028 + sh.k1 * 0.022) * (0.75 + nz01(E.fix + r * 5) * 0.6), 0, r]);
+  }
   let guard = 0;
-  while (stack.length && guard++ < 3000) {
-    const [x, y, a, len, w, d] = stack.pop();
+  while (stack.length && guard++ < 2600) {
+    const [x, y, a, len, w, d, r] = stack.pop();
     const birth = d / maxD;
     if (birth > grow) continue;
-    const part = clamp((grow - birth) * maxD * 1.6, 0, 1);
+    const part = clamp((grow - birth) * maxD * 1.7, 0, 1);
     const pts = [];
-    const seg = 5;
-    for (let j = 0; j <= seg; j++) {
-      const u = (j / seg) * part;
-      pts.push([x + Math.cos(a) * len * u + snz(u * 3 + d, E.seed + d * 7) * w * 1.4,
-                y + Math.sin(a) * len * u + snz(u * 3 + d + 11, E.seed + d * 7) * w * 1.4]);
+    for (let j = 0; j <= 5; j++) {
+      const u = (j / 5) * part;
+      // 曲げる。まっすぐ伸ばすと枝になってしまう
+      const bend = Math.sin(u * 2.2 + d) * 0.3;
+      pts.push([x + Math.cos(a + bend) * len * u + snz(u * 2 + d, E.seed + d * 7) * w,
+                y + Math.sin(a + bend) * len * u + snz(u * 2 + d + 9, E.seed + d * 7) * w]);
     }
-    if (pts.length > 1) brush(ctx, pts, w, E.seed + d * 31 + Math.floor(x), false);
-    if (d >= maxD || part < 0.99) continue;
+    if (pts.length > 1) brush(ctx, pts, w, E.seed + d * 31 + r * 7, false);
     const ex = pts[pts.length - 1][0], ey = pts[pts.length - 1][1];
-    const kids = 2 + (nz01(E.fix + d * 17 + Math.floor(x * 0.1)) > 0.72 ? 1 : 0);
+    // 先端の玉（これがあると木ではなく生きものに見える）
+    ctx.beginPath(); ctx.arc(ex, ey, w * 0.62, 0, TAU); ctx.fill();
+    if (d >= maxD || part < 0.99) continue;
+    const kids = 2 + (nz01(E.fix + d * 17 + r * 31) > 0.7 ? 1 : 0);
     for (let k = 0; k < kids; k++) {
-      const spread = (0.35 + sh.k3 * 0.75);
-      const na = a + (k - (kids - 1) / 2) * spread + nz(E.fix + d * 13 + k * 7 + Math.floor(x)) * 0.3;
-      stack.push([ex, ey, na, len * (0.68 + nz01(E.fix + d + k) * 0.16), w * 0.68, d + 1]);
+      const na = a + (k - (kids - 1) / 2) * (0.5 + sh.k3 * 0.6) + nz(E.fix + d * 13 + k * 7 + r) * 0.28;
+      stack.push([ex, ey, na, len * (0.72 + nz01(E.fix + d + k + r) * 0.14), w * 0.7, d + 1, r]);
     }
   }
-  // 先端の実（差し色）
+  // 先端が色づく
   if (sh.odd) {
     ctx.fillStyle = col.a;
-    for (let i = 0; i < 40; i++) {
-      const a2 = nz01(E.fix + i * 29) * TAU;
-      const rr = S.h * (0.2 + nz01(E.fix + i * 7) * 0.5) * grow;
+    for (let i = 0; i < 70; i++) {
+      const r = Math.floor(nz01(E.fix + i * 29) * roots);
+      const x0 = S.w * ((r + 0.5) / roots + nz(E.fix + r * 17) * 0.22 + sh.ox * 0.1);
+      const a2 = -Math.PI / 2 + nz(E.fix + i * 7) * 1.5;
+      const rr = S.h * (0.2 + nz01(E.fix + i * 11) * 0.45) * grow;
       ctx.beginPath();
-      ctx.arc(x0 + Math.cos(a2) * rr * 1.3, y0 + Math.sin(a2) * rr * (up < 0 ? 1 : 1) * (up < 0 ? -1 : 1) * -1 * -1, S.h * 0.012, 0, TAU);
+      ctx.arc(x0 + Math.cos(a2) * rr, baseY + Math.sin(a2) * rr * -up * -1, S.h * 0.013, 0, TAU);
       ctx.fill();
     }
   }
 }
 
-// ---- 面 ---------------------------------------------------------------
-// 仮面。左右対称にして、片側だけ刻む（＝法「異」）。
-function mask(ctx, S, E) {
-  const { ink, col, sh } = E;
-  const cx = S.w * (0.5 + sh.ox * 0.1), cy = S.h * (0.5 + sh.oy * 0.08);
-  const R = S.h * (0.3 + sh.k1 * 0.16);
-  ink.body(() => {
-    const rs = [];
-    for (let i = 0; i < 24; i++) {
-      const a = (i / 24) * TAU;
-      rs.push(R * (0.78 + 0.34 * Math.abs(Math.cos(a)) - 0.22 * Math.max(0, Math.sin(a))));
+// ---- 紋 ---------------------------------------------------------------
+// 水面の輪。いくつかの中心から広がり、重なったところで干渉する。
+// **長い景でも止まらない**（外へ広がり続ける）。
+function ripple(ctx, S, E) {
+  const { col, sh } = E;
+  const tq = E.f / E.fps;
+  const k = Math.max(2, Math.min(sh.n, 6));
+  const maxR = S.h * (0.55 + sh.k1 * 0.75);
+  const gap = maxR / (5 + Math.floor(sh.k2 * 5));
+  for (let c = 0; c < k; c++) {
+    const cx = S.w * (0.16 + nz01(E.fix + c * 31) * 0.68 + sh.ox * 0.08);
+    const cy = S.h * (0.16 + nz01(E.fix + c * 17) * 0.68 + sh.oy * 0.08);
+    const sp = gap * (0.24 + nz01(E.fix + c * 7) * 0.3);   // 1秒に進む距離
+    const ph = nz01(E.fix + c * 13);
+    for (let i = 0; i < 14; i++) {
+      const r = ((tq * sp + (i + ph) * gap) % maxR);
+      if (r < gap * 0.12) continue;
+      const fade = 1 - r / maxR;
+      const N = 40, pts = [];
+      for (let j = 0; j <= N; j++) {
+        const a = (j / N) * TAU;
+        pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r * (0.88 + sh.k3 * 0.24)]);
+      }
+      ctx.fillStyle = (c % 2 && sh.odd) ? col.a : col.i;
+      brush(ctx, wob(pts, r * 0.02, E.seed + c * 101 + i), E.lw * (0.4 + fade * 2.4), E.seed + i * 29, false);
     }
-    path(ctx, blob(cx, cy, rs, E.seed, 0.03));
-  });
-  ctx.save();
-  // 眼窩
-  const open = sh.k2;
-  for (const s of [-1, 1]) {
-    const ex = cx + s * R * 0.42, ey = cy - R * 0.16;
-    ctx.fillStyle = col.g;
-    ctx.beginPath(); path(ctx, eyeShape(ex, ey, R * 0.26, R * 0.19, 1, E.seed + s * 11)); ctx.fill();
-    ctx.fillStyle = col.a;
-    ctx.beginPath();
-    ctx.arc(ex + s * R * 0.03, ey, R * 0.085 * (0.6 + open * 0.9), 0, TAU); ctx.fill();
-  }
-  // 鼻梁
-  ctx.fillStyle = col.g;
-  brush(ctx, [[cx, cy - R * 0.1], [cx + R * 0.03, cy + R * 0.24]], R * 0.09, E.seed + 3, true);
-  // 口。段で開く（叫び）
-  const mo = mix(0.04, 0.42, snap(E.p, sh.k3, 0.02));
-  ctx.fillStyle = col.g;
-  const mp = [];
-  for (let i = 0; i < 20; i++) {
-    const a = (i / 20) * TAU;
-    mp.push([cx + Math.cos(a) * R * 0.3, cy + R * 0.46 + Math.sin(a) * R * mo]);
-  }
-  ctx.beginPath(); path(ctx, wob(mp, R * 0.012, E.seed + 5)); ctx.fill();
-  if (mo > 0.2) {
+    // 落ちた点
     ctx.fillStyle = col.l;
-    for (let i = 0; i < 6; i++) {
-      const u = (i + 0.5) / 6;
-      ctx.fillRect(cx - R * 0.26 + R * 0.52 * u - R * 0.03, cy + R * (0.46 - mo * 0.95), R * 0.06, R * mo * 0.4);
+    ctx.beginPath(); ctx.arc(cx, cy, S.h * 0.012, 0, TAU); ctx.fill();
+  }
+}
+
+// ---- 梯 ---------------------------------------------------------------
+// 梯子。どこへも通じていない。見た人が理由を探す形。
+function ladder(ctx, S, E) {
+  const { col, sh } = E;
+  const tq = E.f / E.fps;
+  const n = Math.max(1, Math.min(sh.n, 10));
+  for (let i = 0; i < n; i++) {
+    const u = (i + 0.5) / n;
+    const dep = nz01(E.fix + i * 23);                       // 奥行き
+    const sc = 0.45 + dep * (0.9 + sh.k1 * 0.9);
+    const x = S.w * (u + nz(E.fix + i * 7) * 0.12 + sh.ox * 0.06);
+    const yb = S.h * (0.72 + dep * 0.32 + sh.oy * 0.1);
+    const len = S.h * (0.7 + nz01(E.fix + i * 11) * 0.7) * sc;
+    const w = S.h * 0.085 * sc;
+    const tilt = nz(E.fix + i * 5) * (0.1 + sh.k2 * 0.4) + Math.sin(tq * 0.7 + i) * 0.012;
+    const ca = Math.sin(tilt), sa = -Math.cos(tilt);
+    const lw = S.h * 0.013 * sc;
+    ctx.fillStyle = (sh.odd && i === n - 1) ? col.a : col.i;
+    // 二本の親柱
+    for (const s of [-1, 1]) {
+      const bx = x + s * w * 0.5, by = yb;
+      brush(ctx, [[bx, by], [bx + ca * len, by + sa * len]], lw, E.seed + i * 13 + s, false);
+    }
+    // 踏み桟
+    const rungs = Math.max(3, Math.round(len / (S.h * 0.085 * sc)));
+    for (let r = 1; r < rungs; r++) {
+      const t2 = r / rungs;
+      const px = x + ca * len * t2, py = yb + sa * len * t2;
+      brush(ctx, [[px - w * 0.5, py], [px + w * 0.5, py]], lw * 0.85, E.seed + i * 31 + r, false);
     }
   }
-  // 眉（片方だけ上げる＝異）
-  ctx.fillStyle = col.g;
-  for (const s of [-1, 1]) {
-    const lift = s > 0 && sh.odd ? R * 0.1 : 0;
-    const pts = [];
-    for (let j = 0; j <= 5; j++) {
-      const u = j / 5;
-      pts.push([cx + s * R * (0.16 + u * 0.46), cy - R * 0.44 - lift - Math.sin(u * Math.PI) * R * 0.07]);
-    }
-    brush(ctx, pts, R * 0.07, E.seed + s * 17, true);
+}
+
+// ---- 椅 ---------------------------------------------------------------
+// 椅子。人が居ないことを、いちばん強く言う形。
+function chairOne(ctx, x, y, s, rot, seed, lw) {
+  ctx.save();
+  ctx.translate(x, y); ctx.rotate(rot);
+  const sw = s * 1.2, bh = s * 1.35;
+  // 座面は面で置く（線だけだと骨組みに見えて椅子として読めない）
+  ctx.beginPath();
+  ctx.moveTo(-sw * 0.56, 0); ctx.lineTo(sw * 0.56, 0);
+  ctx.lineTo(sw * 0.5, s * 0.17); ctx.lineTo(-sw * 0.5, s * 0.17);
+  ctx.closePath(); ctx.fill();
+  // 背もたれ：枠＋縦桟
+  brush(ctx, [[-sw * 0.5, 0], [-sw * 0.44, -bh]], lw * 2.0, seed + 1, false);
+  brush(ctx, [[sw * 0.5, 0], [sw * 0.44, -bh]], lw * 2.0, seed + 2, false);
+  brush(ctx, [[-sw * 0.44, -bh], [sw * 0.44, -bh]], lw * 2.4, seed + 3, false);
+  for (let i = 1; i <= 2; i++) {
+    const xx = -sw * 0.44 + (sw * 0.88) * (i / 3);
+    brush(ctx, [[xx, -bh * 0.08], [xx, -bh * 0.96]], lw * 1.5, seed + 10 + i, false);
   }
+  // 脚
+  for (const s2 of [-1, 1]) {
+    brush(ctx, [[s2 * sw * 0.5, s * 0.1], [s2 * sw * 0.54, s * 1.05]], lw * 2.0, seed + 20 + s2, false);
+    brush(ctx, [[s2 * sw * 0.24, s * 0.14], [s2 * sw * 0.2, s * 1.0]], lw * 1.7, seed + 30 + s2, false);
+  }
+  // 貫
+  brush(ctx, [[-sw * 0.52, s * 0.62], [sw * 0.52, s * 0.62]], lw * 1.3, seed + 40, false);
   ctx.restore();
+}
+
+function chair(ctx, S, E) {
+  const { col, sh } = E;
+  const tq = E.f / E.fps;
+  const n = Math.max(1, Math.min(sh.n, 16));
+  const big = n === 1;
+  for (let i = 0; i < n; i++) {
+    const dep = big ? 1 : nz01(E.fix + i * 19);
+    const s = S.h * (big ? 0.3 + sh.k1 * 0.16 : 0.05 + dep * dep * (0.14 + sh.k1 * 0.16));
+    const x = big ? S.w * (0.5 + sh.ox * 0.2)
+      : S.w * (0.06 + nz01(E.fix + i * 7) * 0.88);
+    const y = big ? S.h * (0.72 + sh.oy * 0.1)
+      : S.h * (0.42 + dep * 0.52) + Math.sin(tq * 0.9 + i) * S.h * 0.004;
+    // 1脚だけ倒れている
+    const tipped = sh.odd && i === Math.floor(nz01(E.fix + 3) * n);
+    const rot = tipped ? Math.PI * 0.42 : nz(E.fix + i * 11) * (0.04 + sh.k2 * 0.3);
+    ctx.fillStyle = tipped ? col.a : col.i;
+    chairOne(ctx, x, y, s, rot, E.seed + i * 131, Math.max(S.h * 0.004, s * 0.055));
+  }
+}
+
+// ---- 傘 ---------------------------------------------------------------
+// 傘。開いた扇と、骨の放射。落ちているのか浮いているのか決めない。
+// **縁をぼかすと、きのこにしか見えなくなる**（一度そうなった）。
+// 骨の先を角として立て、柄をまっすぐ長く出すと傘として読める。
+function umbrella(ctx, S, E) {
+  const { col, sh } = E;
+  const tq = E.f / E.fps;
+  const n = Math.max(1, Math.min(sh.n, 14));
+  for (let i = 0; i < n; i++) {
+    const dep = n === 1 ? 1 : nz01(E.fix + i * 23);
+    const R = S.h * (n === 1 ? 0.3 + sh.k1 * 0.12 : 0.07 + dep * (0.1 + sh.k1 * 0.14));
+    const ph = tq * (0.22 + sh.k2 * 0.5) + nz01(E.fix + i * 7) * 6;
+    const open = 0.45 + 0.55 * Math.abs(Math.sin(ph));      // 開閉
+    const drift = ((tq * (0.04 + nz01(E.fix + i * 5) * 0.09) + nz01(E.fix + i * 3)) % 1.25) - 0.12;
+    const x = S.w * (n === 1 ? 0.5 + sh.ox * 0.2 : nz01(E.fix + i * 11) * 1.06 - 0.03);
+    const y = S.h * (n === 1 ? 0.44 + sh.oy * 0.12 : (sh.k3 > 0.5 ? drift : 1.12 - drift));
+    const rot = nz(E.fix + i * 13) * 0.7 + Math.sin(tq * 0.8 + i) * 0.09;
+    const ribs = 7;
+    const c2 = (sh.odd && i === 0) ? col.a : col.i;
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(rot);
+    // 天蓋。骨の先が角になるように、直線で折れた扇にする
+    const rx = R * open, ry = R * 0.62;
+    const tips = [];
+    for (let j = 0; j <= ribs; j++) {
+      const a2 = Math.PI + (j / ribs) * Math.PI;
+      tips.push([Math.cos(a2) * rx, Math.sin(a2) * ry]);
+    }
+    ctx.fillStyle = c2;
+    ctx.beginPath();
+    ctx.moveTo(tips[0][0], tips[0][1]);
+    for (let j = 1; j <= ribs; j++) {
+      // 骨と骨のあいだは布がたわむ
+      const m = [(tips[j - 1][0] + tips[j][0]) / 2, (tips[j - 1][1] + tips[j][1]) / 2];
+      ctx.quadraticCurveTo(m[0] * 1.06, m[1] * 1.16, tips[j][0], tips[j][1]);
+    }
+    ctx.lineTo(rx, 0); ctx.lineTo(-rx, 0);
+    ctx.closePath(); ctx.fill();
+    // 骨
+    ctx.fillStyle = col.g;
+    for (let j = 1; j < ribs; j++) {
+      brush(ctx, [[0, -ry * 0.05], [tips[j][0] * 0.97, tips[j][1] * 0.97]], R * 0.022, E.seed + i * 7 + j, false);
+    }
+    // 柄（まっすぐ長く）と曲がり手
+    ctx.fillStyle = c2;
+    brush(ctx, [[0, -ry * 0.9], [0, R * 1.15]], R * 0.045, E.seed + i, false);
+    const hook = [];
+    for (let j = 0; j <= 6; j++) {
+      const a2 = (j / 6) * Math.PI;
+      hook.push([-Math.sin(a2) * R * 0.17, R * 1.15 + (1 - Math.cos(a2)) * R * 0.17]);
+    }
+    brush(ctx, hook, R * 0.045, E.seed + i + 5, false);
+    // 石突き
+    ctx.beginPath(); ctx.arc(0, -ry * 0.95, R * 0.045, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ---- 糸 ---------------------------------------------------------------
+// 織り。縦糸と横糸。途中でほどける。
+function thread(ctx, S, E) {
+  const { col, sh } = E;
+  const tq = E.f / E.fps;
+  const n = Math.max(8, Math.min(sh.n, 60));
+  const x0 = S.w * 0.08, x1 = S.w * 0.92;
+  const y0 = -S.h * 0.05, y1 = S.h * 1.05;
+  const lw = S.h * (0.004 + sh.k1 * 0.008);
+  // ほどけ始める高さ
+  const un = mix(1.15, 0.28, clamp(E.p * 1.25, 0, 1)) - sh.k2 * 0.15;
+  ctx.fillStyle = col.i;
+  for (let i = 0; i < n; i++) {
+    const u = (i + 0.5) / n;
+    const x = mix(x0, x1, u);
+    const pts = [];
+    for (let j = 0; j <= 16; j++) {
+      const v = j / 16;
+      const y = mix(y0, y1, v);
+      if (v < un) {
+        pts.push([x + Math.sin(v * 40 + i) * lw * 1.2, y]);
+      } else {
+        // ほどけた先は垂れて絡む
+        const t2 = (v - un) / Math.max(0.02, 1 - un);
+        pts.push([x + snz(t2 * 2.4 + i * 0.7 + tq * 0.35, E.fix + i) * S.w * 0.1 * t2,
+                  y + t2 * t2 * S.h * 0.06]);
+      }
+    }
+    brush(ctx, pts, lw, E.seed + i * 13, false);
+  }
+  // 横糸（織れている範囲だけ）
+  const rows = Math.round(un * 26);
+  for (let r = 0; r < rows; r++) {
+    const v = (r + 0.5) / 26;
+    const y = mix(y0, y1, v);
+    const pts = [];
+    for (let j = 0; j <= 20; j++) {
+      const u = j / 20;
+      pts.push([mix(x0, x1, u), y + Math.sin(u * n * Math.PI) * lw * 1.1]);
+    }
+    ctx.fillStyle = (sh.odd && r % 7 === 3) ? col.a : col.i;
+    brush(ctx, pts, lw * 1.1, E.seed + r * 31, false);
+  }
+}
+
+// ---- 綿 ---------------------------------------------------------------
+// 冠毛。飛んでいく種。中心の粒から細い糸が放射する。
+// **横位置を進み具合と結びつけないこと。** 結びつけると、進んだ種が
+// 全部枠の外へ出て、画面がほぼ空になる（実測で図の量 1% になった）。
+function seedDrift(ctx, S, E) {
+  const { col, sh } = E;
+  const tq = E.f / E.fps;
+  // **少なく、大きく。** 小さく沢山置くと綿ではなく紙吹雪になる（実際になった）
+  const n = Math.max(3, Math.min(sh.n, 18));
+  const wind = (sh.k2 * 2 - 1);
+  for (let i = 0; i < n; i++) {
+    const sp = 0.035 + nz01(E.fix + i * 7) * 0.1;
+    const prog = (nz01(E.fix + i * 3) + tq * sp) % 1.2;
+    let u = nz01(E.fix + i * 11) + wind * prog * 0.3;
+    u = ((u % 1.1) + 1.1) % 1.1 - 0.05;                 // 横は巻き戻す
+    const x = S.w * u + snz(tq * 0.5 + i, E.fix) * S.w * 0.04;
+    const y = S.h * (1.08 - prog * 1.2) + snz(tq * 0.6 + i + 7, E.fix) * S.h * 0.04;
+    const r = S.h * (0.1 + nz01(E.fix + i * 13) * 0.13) * (0.7 + sh.k1 * 0.6);
+    const rot = tq * (0.25 + nz01(E.fix + i * 5) * 0.5) + i;
+    ctx.fillStyle = (sh.odd && i % 13 === 0) ? col.a : col.i;
+    const arms = 11;
+    for (let a2 = 0; a2 < arms; a2++) {
+      const th = rot + (a2 / arms) * TAU;
+      brush(ctx, [[x, y], [x + Math.cos(th) * r, y + Math.sin(th) * r]], r * 0.2, E.seed + i * 7 + a2, true);
+      ctx.beginPath(); ctx.arc(x + Math.cos(th) * r, y + Math.sin(th) * r, r * 0.14, 0, TAU); ctx.fill();
+    }
+    brush(ctx, [[x, y], [x, y + r * 1.05]], r * 0.22, E.seed + i, true);
+    ctx.beginPath(); ctx.arc(x, y + r * 1.05, r * 0.16, 0, TAU); ctx.fill();
+  }
+}
+
+// ---- 階 ---------------------------------------------------------------
+// 階段。上がっているのか下りているのか決めない。
+// **面（シルエット）で置くこと。** 段板を線で積むと図面にしか見えない。
+function stairs(ctx, S, E) {
+  const { col, sh } = E;
+  const tq = E.f / E.fps;
+  const flights = Math.max(1, Math.min(sh.n, 4));
+  for (let f = 0; f < flights; f++) {
+    const dir = (nz01(E.fix + f * 41) > 0.5) ? 1 : -1;
+    const steps = 6 + Math.floor(sh.k1 * 10);
+    const w = S.w * (0.3 + nz01(E.fix + f * 17) * 0.4);
+    const hgt = S.h * (0.3 + nz01(E.fix + f * 7) * 0.45);
+    const bx = S.w * (0.08 + nz01(E.fix + f * 11) * 0.7 + sh.ox * 0.06);
+    const by = S.h * (0.42 + nz01(E.fix + f * 23) * 0.5 + sh.oy * 0.08);
+    const sw = w / steps, sh2 = hgt / steps;
+    const grow = clamp(E.p * 1.5 + 0.25, 0, 1);
+    const k = Math.max(2, Math.round(steps * grow));
+    ctx.fillStyle = (sh.odd && f === flights - 1) ? col.a : col.i;
+    // 段を1本の折れ線として作り、下端まで落として閉じる
+    const pts = [[bx, by]];
+    for (let i = 0; i < k; i++) {
+      const y = by - i * sh2 + Math.sin(tq * 0.7 + f + i * 0.3) * S.h * 0.0015;
+      pts.push([bx + dir * i * sw, y]);
+      pts.push([bx + dir * (i + 1) * sw, y]);
+    }
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (const p of pts) ctx.lineTo(p[0], p[1]);
+    const last = pts[pts.length - 1];
+    ctx.lineTo(last[0], last[1] + sh2 * 2.2);
+    ctx.lineTo(bx, by + sh2 * 2.2);
+    ctx.closePath(); ctx.fill();
+    // 踏み面の鼻（段を読ませる）
+    ctx.fillStyle = col.g;
+    for (let i = 1; i < k; i++) {
+      const y = by - i * sh2;
+      brush(ctx, [[bx + dir * (i - 0.05) * sw, y], [bx + dir * (i + 1) * sw, y]], S.h * 0.004, E.seed + f * 13 + i, false);
+    }
+  }
+}
+
+// ---- 管 ---------------------------------------------------------------
+// 管。直角に折れて、継手で繋がる。中身は見えない。
+function pipe(ctx, S, E) {
+  const { col, sh } = E;
+  const tq = E.f / E.fps;
+  const n = Math.max(2, Math.min(sh.n, 10));
+  for (let i = 0; i < n; i++) {
+    const w = S.h * (0.018 + nz01(E.fix + i * 19) * 0.05) * (0.6 + sh.k1);
+    let x = nz01(E.fix + i * 7) < 0.5 ? -S.w * 0.05 : S.w * nz01(E.fix + i * 3);
+    let y = S.h * nz01(E.fix + i * 11);
+    let dir = Math.floor(nz01(E.fix + i * 5) * 4);     // 0右 1下 2左 3上
+    const pts = [[x, y]];
+    const segs = 4 + Math.floor(nz01(E.fix + i * 13) * 5);
+    for (let s = 0; s < segs; s++) {
+      const len = S.h * (0.12 + nz01(E.fix + i * 29 + s * 7) * 0.5);
+      if (dir === 0) x += len; else if (dir === 1) y += len;
+      else if (dir === 2) x -= len; else y -= len;
+      pts.push([x, y]);
+      dir = (dir + (nz01(E.fix + i * 31 + s) > 0.5 ? 1 : 3)) % 4;
+    }
+    ctx.fillStyle = (sh.odd && i === n - 1) ? col.a : col.i;
+    // 本体
+    for (let s = 0; s < pts.length - 1; s++) {
+      brush(ctx, [pts[s], pts[s + 1]], w, E.seed + i * 17 + s, false);
+    }
+    // 継手（角に輪）
+    for (let s = 1; s < pts.length - 1; s++) {
+      ctx.beginPath(); ctx.arc(pts[s][0], pts[s][1], w * 0.78, 0, TAU); ctx.fill();
+    }
+    // 中を通っていくもの
+    ctx.fillStyle = col.l;
+    for (let k = 0; k < 3; k++) {
+      const u = ((tq * (0.1 + sh.k2 * 0.25) + k / 3 + nz01(E.fix + i)) % 1) * (pts.length - 1);
+      const s = Math.min(pts.length - 2, Math.floor(u)), t2 = u - s;
+      ctx.beginPath();
+      ctx.arc(mix(pts[s][0], pts[s + 1][0], t2), mix(pts[s][1], pts[s + 1][1], t2), w * 0.3, 0, TAU);
+      ctx.fill();
+    }
+  }
+}
+
+// ---- 器 ---------------------------------------------------------------
+// 壺。並べただけ。何も入っていないし、何にも使われない。
+function vessel(ctx, S, E) {
+  const { ink, col, sh } = E;
+  const tq = E.f / E.fps;
+  const n = Math.max(1, Math.min(sh.n, 12));
+  const gy = S.h * (0.76 + sh.oy * 0.14);
+  // 棚の線
+  ctx.fillStyle = col.i;
+  {
+    const pts = [];
+    for (let j = 0; j <= 20; j++) pts.push([j / 20 * S.w, gy + snz(j * 0.5, E.fix) * S.h * 0.004]);
+    brush(ctx, pts, S.h * 0.007, E.seed + 3, false);
+  }
+  for (let i = 0; i < n; i++) {
+    const u = (i + 0.5) / n;
+    const H = S.h * (n === 1 ? 0.42 + sh.k1 * 0.2 : 0.1 + nz01(E.fix + i * 7) * (0.18 + sh.k1 * 0.22));
+    const x = S.w * (n === 1 ? 0.5 + sh.ox * 0.2 : u + nz(E.fix + i * 11) * 0.03);
+    const wob2 = Math.sin(tq * 0.9 + i) * S.h * 0.003;
+    // 輪郭は高さの関数。口・肩・胴・高台
+    const neck = 0.16 + nz01(E.fix + i * 13) * 0.3;
+    const belly = 0.3 + nz01(E.fix + i * 17) * 0.36;
+    const pts = [];
+    const M = 22;
+    for (let j = 0; j <= M; j++) {
+      const v = j / M;
+      const r = H * (0.1 + neck * Math.exp(-Math.pow((v - 0.03) * 5, 2))
+        + belly * Math.sin(Math.pow(v, 0.8) * Math.PI) * (0.5 + v * 0.7));
+      pts.push([x - r, gy + wob2 - H * (1 - v)]);
+    }
+    for (let j = M; j >= 0; j--) {
+      const v = j / M;
+      const r = H * (0.1 + neck * Math.exp(-Math.pow((v - 0.03) * 5, 2))
+        + belly * Math.sin(Math.pow(v, 0.8) * Math.PI) * (0.5 + v * 0.7));
+      pts.push([x + r, gy + wob2 - H * (1 - v)]);
+    }
+    const c2 = (sh.odd && i === Math.floor(nz01(E.fix + 5) * n)) ? col.a : col.i;
+    ink.body(() => path(ctx, wob(pts, H * 0.008, E.seed + i * 31)), c2);
+  }
 }
 
 // ---- 波 ---------------------------------------------------------------
@@ -426,187 +629,6 @@ function wave(ctx, S, E) {
   }
 }
 
-// ---- 火 ---------------------------------------------------------------
-function flame(ctx, S, E) {
-  const { col, sh } = E;
-  const tq = E.f / E.fps;
-  const k = sh.n;
-  const base = S.h * (1.02 + sh.oy * 0.1);
-  for (let pass = 0; pass < 2; pass++) {
-    ctx.fillStyle = pass === 0 ? col.i : col.a;
-    for (let i = 0; i < k; i++) {
-      const x = S.w * ((i + 0.5) / k + nz(E.fix + i * 7) * 0.04);
-      const hgt = S.h * (0.55 + nz01(E.fix + i * 11) * 0.75) * (0.68 + 0.32 * Math.sin(tq * 5 + i))
-        * (pass === 0 ? 1 : 0.55) * (0.6 + sh.k1 * 0.7);
-      const w = S.w / k * (pass === 0 ? 0.62 : 0.3);
-      const pts = [];
-      const N = 12;
-      for (let j = 0; j <= N; j++) {
-        const u = j / N;
-        const taper = Math.pow(1 - u, 0.5);
-        pts.push([x - w * 0.5 * taper + snz(u * 3 + tq * 7 + i, E.seed + i) * w * 1.1 * u * (1 - u * 0.75),
-                  base - hgt * u]);
-      }
-      for (let j = N; j >= 0; j--) {
-        const u = j / N;
-        const taper = Math.pow(1 - u, 0.5);
-        pts.push([x + w * 0.5 * taper + snz(u * 3 + tq * 7 + i + 17, E.seed + i) * w * 1.1 * u * (1 - u * 0.75),
-                  base - hgt * u]);
-      }
-      ctx.beginPath(); path(ctx, pts); ctx.fill();
-    }
-  }
-  // 火の粉
-  ctx.fillStyle = col.l;
-  for (let i = 0; i < 90; i++) {
-    const t2 = (tq * 0.35 + nz01(E.fix + i * 13)) % 1;
-    const x = S.w * nz01(E.fix + i * 3) + snz(tq * 2 + i, E.fix) * S.w * 0.06;
-    const y = base - t2 * S.h * 1.15;
-    ctx.beginPath(); ctx.arc(x, y, S.h * 0.004 * (1 - t2) * 2.5, 0, TAU); ctx.fill();
-  }
-}
-
-// ---- 雨 ---------------------------------------------------------------
-function rain(ctx, S, E) {
-  const { col, sh } = E;
-  const tq = E.f / E.fps;
-  // 途中で向きが変わる（予測不可能性）
-  const flip = snap(E.p, sh.k3, 0.02);
-  const ang = mix(-0.28 + sh.k1 * 0.5, 0.9 - sh.k1 * 1.6, flip);
-  const ca = Math.sin(ang), sa = Math.cos(ang);
-  const n = sh.n;
-  const sp = S.h * (1.2 + sh.k2 * 2.6);
-  ctx.fillStyle = col.i;
-  for (let i = 0; i < n; i++) {
-    const len = S.h * (0.05 + nz01(E.fix + i * 7) * 0.18);
-    const off = nz01(E.fix + i * 3) * (S.h * 2);
-    const d = (off + tq * sp * (0.7 + nz01(E.fix + i * 11) * 0.7)) % (S.h * 2.2) - S.h * 0.6;
-    const x0 = nz01(E.fix + i * 5) * S.w * 1.6 - S.w * 0.3 - ca * d;
-    const y0 = -S.h * 0.2 + sa * d;
-    brush(ctx, [[x0, y0], [x0 + ca * len, y0 + sa * len]], E.lw * (0.5 + nz01(E.fix + i) * 1.6), E.seed + i * 7, false);
-  }
-  if (sh.odd) {    // 一本だけ逆向きに落ちる
-    ctx.fillStyle = col.a;
-    const d = (tq * sp * 0.6) % (S.h * 2.2);
-    brush(ctx, [[S.w * 0.5, S.h * 1.2 - d], [S.w * 0.5 - ca * S.h * 0.25, S.h * 1.2 - d - sa * S.h * 0.25]], E.lw * 3, E.seed, false);
-  }
-}
-
-// ---- 輪 ---------------------------------------------------------------
-// 天体。段で回る。一つだけ切れている。
-function rings(ctx, S, E) {
-  const { col, sh } = E;
-  const tq = E.f / E.fps;
-  const cx = S.w * (0.5 + sh.ox * 0.2), cy = S.h * (0.5 + sh.oy * 0.2);
-  const k = sh.n;
-  for (let i = 0; i < k; i++) {
-    const u = (i + 1) / k;
-    const R = S.h * (0.06 + u * (0.42 + sh.k1 * 0.24));
-    const ecc = 1 + nz(E.fix + i * 7) * 0.22;
-    const rot = step(tq * (0.05 + nz01(E.fix + i * 3) * 0.3) * (i % 2 ? -1 : 1), 24) * TAU;
-    const gap = (sh.odd && i === k - 2) ? 0.22 : 0;
-    const N = 60, pts = [];
-    for (let j = 0; j <= N; j++) {
-      const a = rot + (j / N) * TAU * (1 - gap);
-      pts.push([cx + Math.cos(a) * R * ecc, cy + Math.sin(a) * R / ecc]);
-    }
-    ctx.fillStyle = i === k - 1 ? col.a : col.i;
-    brush(ctx, wob(pts, R * 0.012, E.seed + i * 13), E.lw * (0.8 + nz01(E.fix + i) * 2.4), E.seed + i * 29, false);
-    // 軌道上の点
-    const a2 = rot * (1.7 + i) + i;
-    ctx.beginPath();
-    ctx.arc(cx + Math.cos(a2) * R * ecc, cy + Math.sin(a2) * R / ecc, S.h * (0.008 + u * 0.02), 0, TAU);
-    ctx.fillStyle = col.l; ctx.fill();
-  }
-  // 中心の塊
-  ctx.fillStyle = col.a;
-  ctx.beginPath();
-  path(ctx, blob(cx, cy, new Array(20).fill(S.h * (0.03 + sh.k2 * 0.09)), E.seed, 0.08));
-  ctx.fill();
-}
-
-// ---- 裂 ---------------------------------------------------------------
-// 画面を割る。割った向こう側は別の色になる。一番強い「対比」。
-//
-// 折れ線は中点変位で作る（滑らかな雑音で揺らすと、ただの地平線になる。
-// 実際に一度それで「山の稜線」にしか見えなくなった）。
-function fracture(a, b, depth, amp, seed) {
-  let pts = [a, b];
-  for (let d = 0; d < depth; d++) {
-    const next = [pts[0]];
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p = pts[i], q = pts[i + 1];
-      const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2;
-      let dx = q[0] - p[0], dy = q[1] - p[1];
-      const L = Math.hypot(dx, dy) || 1;
-      const off = nz(seed + d * 977 + i * 131) * amp * Math.pow(0.56, d);
-      next.push([mx - dy / L * off, my + dx / L * off], q);
-    }
-    pts = next;
-  }
-  return pts;
-}
-
-function crack(ctx, S, E) {
-  const { col, sh } = E;
-  // 早く割り切る。景の 1/4 で向こう側が出る（割れる瞬間そのものが断になる）
-  const grow = clamp(Math.pow(E.p, 0.22) * 1.4, 0, 1);
-  const vert = sh.k2 > 0.5;
-  // 端は枠の内側に収める。**外に出すと「割った向こう側」が消えて、
-  // 画面が一色になる**（実測で 305秒の景が一色になった）。
-  const a = vert ? [S.w * (0.5 + sh.ox * 0.26), -S.h * 0.05] : [-S.w * 0.05, S.h * (0.5 + sh.oy * 0.26)];
-  const b = vert ? [S.w * (0.5 + sh.oy * 0.26), S.h * 1.05] : [S.w * 1.05, S.h * (0.5 + sh.ox * 0.26)];
-  const all = fracture(a, b, 6, S.h * (0.28 + sh.k1 * 0.3), E.fix);
-  const pts = all.slice(0, Math.max(2, Math.ceil(all.length * grow)));
-
-  // 向こう側を塗る。割れ切った時点で画面の半分が別の色になる（＝断）
-  if (grow > 0.995) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(pts[0][0], pts[0][1]);
-    for (const p of pts) ctx.lineTo(p[0], p[1]);
-    if (vert) { ctx.lineTo(-S.w, S.h * 1.1); ctx.lineTo(-S.w, -S.h * 0.1); }
-    else { ctx.lineTo(S.w * 1.1, -S.h); ctx.lineTo(-S.w * 0.1, -S.h); }
-    ctx.closePath();
-    ctx.fillStyle = col.a; ctx.fill();
-    ctx.restore();
-  }
-  // 割れたあとは**口が開き続ける**。ここを止めると、18秒の景が静止画になる
-  // （実測で 0.57%／0.5秒しか動かず、法「動」に落ちた）。
-  const opening = grow > 0.995 ? (E.p - 0.26) / 0.74 : 0;
-  if (opening > 0) {
-    ctx.fillStyle = col.l;
-    brush(ctx, pts, S.h * (0.012 + opening * 0.14 * (0.4 + sh.k3)), E.seed + 5, false);
-  }
-  ctx.fillStyle = col.i;
-  brush(ctx, pts, S.h * (0.008 + sh.k1 * 0.03), E.seed, false);
-
-  // 枝分かれ
-  const stepN = Math.max(2, Math.floor(pts.length / 14));
-  for (let i = stepN; i < pts.length - 1; i += stepN) {
-    if (nz01(E.fix + i * 17) > 0.62) continue;
-    const dx = pts[i + 1][0] - pts[i - 1][0], dy = pts[i + 1][1] - pts[i - 1][1];
-    const base = Math.atan2(dy, dx);
-    const side = nz01(E.fix + i * 7) > 0.5 ? 1 : -1;
-    const ang = base + side * (0.7 + nz01(E.fix + i * 3) * 0.7);
-    const len = S.h * (0.06 + nz01(E.fix + i * 5) * 0.3) * grow;
-    const sub = fracture(pts[i], [pts[i][0] + Math.cos(ang) * len, pts[i][1] + Math.sin(ang) * len],
-      3, len * 0.22, E.fix + i * 31);
-    brush(ctx, sub, S.h * 0.007, E.seed + i * 13, true);
-  }
-  // 破片が飛ぶ
-  if (sh.odd && grow > 0.5) {
-    ctx.fillStyle = col.l;
-    for (let i = 0; i < 40; i++) {
-      const p = pts[Math.floor(nz01(E.fix + i * 3) * (pts.length - 1))];
-      const d = (E.p - 0.5) * S.h * 0.9;
-      ctx.beginPath();
-      ctx.arc(p[0] + nz(E.fix + i * 11) * S.h * 0.12, p[1] + nz(E.fix + i * 5) * d, S.h * 0.009, 0, TAU);
-      ctx.fill();
-    }
-  }
-}
-
 // ---- 衆 ---------------------------------------------------------------
 // 立ち並ぶ小さな人型。一人だけ違う。尺度の対比を作るための図。
 function crowd(ctx, S, E) {
@@ -643,5 +665,8 @@ function crowd(ctx, S, E) {
 
 // 名前の並びは譜（score.js）と検査（check-axis）が共有する。
 // **この順番を変えると、過去の種の作品が変わる。** 足すのは末尾だけ。
-export const NAMES = ['眼', '群', '手', '獣', '樹', '面', '波', '火', '雨', '輪', '裂', '衆'];
-export const MOTIFS = [eye, swarm, hand, beast, branch, mask, wave, flame, rain, rings, crack, crowd];
+
+// 名前の並びは譜（score.js）と検査（check-axis）が共有する。
+// **この順番を変えると、過去の種の作品が変わる。** 足すのは末尾だけ。
+export const NAMES = ['群', '獣', '菌', '波', '紋', '衆', '梯', '椅', '傘', '糸', '綿', '階', '管', '器'];
+export const MOTIFS = [swarm, beast, coral, wave, ripple, crowd, ladder, chair, umbrella, thread, seedDrift, stairs, pipe, vessel];

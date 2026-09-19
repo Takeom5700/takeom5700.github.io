@@ -61,16 +61,18 @@ for (const s of longs) {
 // ---- 対比（1枚の中） ----------------------------------------------------
 console.log('');
 console.log('対比（1枚の中）  色の幅 区画のばらつき 彩度 図の量');
-let vivid = 0, n = 0;
+let vivid = 0, n = 0, weak = 0;
 for (let i = 0; i < 10; i++) {
   const s = shots[Math.floor((i + 0.5) / 10 * shots.length)];
   const a = analyse(await shoot(s.start + s.dur * 0.5));
   n++;
   if (a.okColor) vivid++;
   const ok = a.okContrast || s.empty;
-  if (!ok) fail++;
+  if (!ok) weak++;
   console.log(`  ${String(Math.round(s.start)).padStart(5)}s ${s.name}  ${a.poster.toFixed(2)}  ${a.tileVar.toFixed(2)}  ${a.chroma.toFixed(2)}  ${a.cover.toFixed(2)}  ${ok ? '○' : '×'}`);
 }
+// 静かな景は法「間」が要求しているので、1〜2割までは通す
+if (weak > Math.max(1, Math.ceil(n * 0.15))) { console.log(`  対比の弱い景が ${weak}/${n}`); fail++; }
 const vs = vivid / n;
 console.log(`  原色の景: ${(vs * 100) | 0}%（${OK.vividShare * 100}% 以上が合格）`);
 if (vs < OK.vividShare) fail++;

@@ -116,15 +116,17 @@ export function posterize(img) {
   const hist = new Map();
   const N = w * h;
   for (let i = 0, p = 0; i < N; i++, p += ch) {
-    const k = ((data[p] >> 4) << 8) | ((data[p + 1] >> 4) << 4) | (data[p + 2] >> 4);
+    // **3bit で量子化する。** 4bit だと、縁の中間色や粒が別の色として散り、
+    // 細かい図（綿など）で「上位の色が1つしか無い」と誤判定した。
+    const k = ((data[p] >> 5) << 6) | ((data[p + 1] >> 5) << 3) | (data[p + 2] >> 5);
     hist.set(k, (hist.get(k) || 0) + 1);
   }
   const ent = [...hist.entries()].sort((a, b) => b[1] - a[1]);
   const flat = ent.slice(0, 3).reduce((a, b) => a + b[1], 0) / N;
   // 0.6% でも拾う。線だけの景では、図が画面の 1% しか占めないことがある
   // （2% で切っていたら、赤地に黒い雨の画面を「一色」と誤判定した）
-  const big = ent.filter((e) => e[1] / N >= 0.006).slice(0, 8)
-    .map((e) => [((e[0] >> 8) & 15) / 15, ((e[0] >> 4) & 15) / 15, (e[0] & 15) / 15]);
+  const big = ent.filter((e) => e[1] / N >= 0.005).slice(0, 10)
+    .map((e) => [((e[0] >> 6) & 7) / 7, ((e[0] >> 3) & 7) / 7, (e[0] & 7) / 7]);
   let poster = 0;
   for (let i = 0; i < big.length; i++) {
     for (let j = i + 1; j < big.length; j++) {

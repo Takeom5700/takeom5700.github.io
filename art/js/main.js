@@ -10,6 +10,7 @@
 import { composeWork, checkWork, shotAt, REST } from './score.js';
 import { createFilm, STAGE } from './film.js';
 import { createSound } from './sound.js';
+import { composeMusic } from './music.js';
 import { NAMES } from './motif.js';
 
 // AudioBuffer を 16bit PCM の WAV にする（外の道具に音声encoderを要らせない）
@@ -64,6 +65,7 @@ function start() {
   const showHud = q.get('hud') === '1';
 
   let work = composeWork(seed);
+  let music = composeMusic(work);
   const bad = checkWork(work);
   if (bad.length) console.error('基軸違反:\n' + bad.join('\n'));
 
@@ -85,26 +87,29 @@ function start() {
 
   function seek(to) {
     t = Math.max(0, Math.min(to, work.total));
-    sndIdx = shotAt(work, t);
     sndT0 = snd ? snd.ctx.currentTime - t : 0;
+    sndIdx = 0;
+    while (sndIdx < music.notes.length && music.notes[sndIdx].t < t) sndIdx++;
   }
   function nextWork() {
     seed += 1;
     work = composeWork(seed);
+    music = composeMusic(work);
     const v = checkWork(work);
     if (v.length) console.error('基軸違反:\n' + v.join('\n'));
     t = 0; sndIdx = 0;
     if (snd) sndT0 = snd.ctx.currentTime;
   }
 
-  // 音は先読みして予約する（断の瞬間に打撃が要るので、鳴らしてからでは遅い）
+  // 音は先読みして予約する。**音符は景ではなく、音の時計で並んでいる**
+  // （だから長い景でも旋律は動き続ける）。
   function pumpSound() {
     if (!snd) return;
-    const horizon = t + 1.2;
-    while (sndIdx < work.shots.length && work.shots[sndIdx].start < horizon) {
-      const sh = work.shots[sndIdx++];
-      const at = sndT0 + sh.start;
-      if (at > snd.ctx.currentTime - 0.05) snd.scheduleShot(sh, at);
+    const horizon = t + 1.5;
+    while (sndIdx < music.notes.length && music.notes[sndIdx].t < horizon) {
+      const n = music.notes[sndIdx++];
+      const at = sndT0 + n.t;
+      if (at > snd.ctx.currentTime - 0.05) snd.play(n, at);
     }
   }
 
@@ -158,6 +163,7 @@ function start() {
           start: +s.start.toFixed(3), dur: +s.dur.toFixed(3), name: NAMES[s.m],
           m: s.m, fps: s.fps, hand: s.hand, pal: s.pal, inv: s.inv ? 1 : 0,
           n: s.n, odd: s.odd ? 1 : 0, empty: s.empty, flash: s.flash, mv: s.mv,
+          sec: s.sec, th: s.th, w: s.w, recall: s.recall ? 1 : 0,
         }));
       },
       async push(to, mime, quality) {
@@ -190,17 +196,11 @@ function start() {
         const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
         if (!OC) return null;
         const oc = new OC(2, Math.ceil(sr * dur), sr);
-        const s = createSound(work.seed, oc);
+        const s = createSound(oc);
         if (!s) return null;
-        for (const sh of work.shots) {
-          const end = sh.start + sh.dur;
-          if (end < from || sh.start > to) continue;
-          // 始まりが範囲の前なら、残りだけを頭から鳴らす
-          const at = Math.max(0, sh.start - from);
-          const cut = Object.assign({}, sh, { dur: Math.min(sh.dur, to - from - at) });
-          if (cut.dur <= 0.02) continue;
-          if (sh.start < from) cut.au = Object.assign({}, sh.au, { hit: 0 });
-          s.scheduleShot(cut, at);
+        for (const n of music.notes) {
+          if (n.t + n.d < from || n.t > to) continue;
+          s.play(n, Math.max(0, n.t - from));
         }
         const buf = await oc.startRendering();
         const bytes = wavBytes(buf);
@@ -249,8 +249,8 @@ function start() {
     veil.style.opacity = '0';
     document.body.classList.add('running');
     try {
-      snd = createSound(work.seed);
-      if (snd) { snd.resume(); sndT0 = snd.ctx.currentTime - t; sndIdx = shotAt(work, t); }
+      snd = createSound();
+      if (snd) { snd.resume(); sndT0 = snd.ctx.currentTime - t; sndIdx = 0; }
     } catch (e) { snd = null; }
     last = performance.now();
     requestAnimationFrame(loop);

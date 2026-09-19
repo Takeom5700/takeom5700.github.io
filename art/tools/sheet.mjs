@@ -17,8 +17,8 @@ const has = (n) => argv.includes('--' + n);
 const SIZE = flag('size', '480x270');
 const [W, H] = SIZE.split('x').map((v) => parseInt(v, 10));
 const OUT = flag('out', 'motifs.png');
-const N = [12, 260, 1, 4, 1, 1, 1, 7, 200, 6, 1, 1];
-const NAMES = ['眼', '群', '手', '獣', '樹', '面', '波', '火', '雨', '輪', '裂', '衆'];
+const N = [260, 4, 1, 1, 4, 1, 6, 9, 9, 30, 120, 3, 6, 7];
+const NAMES = ['群', '獣', '菌', '波', '紋', '衆', '梯', '椅', '傘', '糸', '綿', '階', '管', '器'];
 
 const page = await open(`export=1&seed=0&w=${W}&h=${H}`, { software: has('sw'), size: `${W},${H}` });
 const imgs = [];

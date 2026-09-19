@@ -84,17 +84,19 @@ export function lumOf(h) {
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
 }
 
-// 景（shot）の色。反転（inv）で図と地を入れ替える
+// 景（shot）の色。
+//   inv   … 図と地を入れ替える
+//   shade … 同じ組のまま、どの色を地にするかを替える
+//           （調を変えずに和音だけ替えるのと同じこと。
+//            主題の中で色を保ったまま、画面だけ変えられる）
 export function colorsOf(shot) {
   const p = PALETTES[shot.pal % PALETTES.length];
-  const inv = shot.inv ? 1 : 0;
-  return {
-    name: p.n,
-    g: inv ? p.i : p.g,
-    i: inv ? p.g : p.i,
-    a: p.a, l: p.l,
-    raw: p,
-  };
+  const sh = shot.shade | 0;
+  let g = p.g, i = p.i, a = p.a, l = p.l;
+  if (sh === 1) { g = p.a; i = p.g; a = p.i; }
+  else if (sh === 2) { g = p.l; i = p.g; a = p.i; l = p.a; }
+  if (shot.inv) { const t = g; g = i; i = t; }
+  return { name: p.n, g, i, a, l, raw: p };
 }
 
 // ---- 線と形 -----------------------------------------------------------

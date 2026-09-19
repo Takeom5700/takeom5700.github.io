@@ -40,17 +40,21 @@ let picks = [];
 if (has('open')) {
   picks = shots.filter((s) => s.start < 10).slice(0, N);
 } else {
-  for (let i = 0; i < N; i++) {
-    const t = (i + 0.5) / N * meta.total;
-    let best = shots[0];
-    for (const s of shots) if (s.start <= t) best = s; else break;
-    if (!picks.includes(best)) picks.push(best);
+  // 部ごとに拾う（等間隔で取ると、景の多い展開部ばかり当たる）
+  const per = Math.max(1, Math.round(N / 5));
+  for (let sec = 0; sec < 5; sec++) {
+    const inSec = shots.filter((s) => s.sec === sec);
+    if (!inSec.length) continue;
+    for (let i = 0; i < per; i++) {
+      const s = inSec[Math.floor((i + 0.5) / per * inSec.length)];
+      if (s && !picks.includes(s)) picks.push(s);
+    }
   }
 }
 
-console.log('時刻   図  長さ  コマ 塗 | 色の幅 画面内 彩度 図の量 面 | 細部  構造 | 判定');
+console.log('部 時刻   図  長さ  コマ 塗 | 色の幅 画面内 彩度 図の量 面 | 細部  構造 | 判定');
 const imgs = [];
-let fail = 0, vivid = 0;
+let fail = 0, vivid = 0, weak = 0;
 const shoot = async (t) => {
   let buf = null;
   page.setSink((b) => { buf = b; });
@@ -62,10 +66,10 @@ for (const s of picks) {
   const buf = await shoot(t);
   const a = analyse(buf);
   imgs.push(a.img);
-  if (!(a.okContrast || s.empty)) fail++;
+  if (!(a.okContrast || s.empty)) weak++;
   if (a.okColor) vivid++;
   console.log(
-    `${String(Math.round(s.start)).padStart(4)}s ${s.name}  ${s.dur.toFixed(2).padStart(5)} ` +
+    `${'序提展再終'[s.sec] || '?'} ${String(Math.round(s.start)).padStart(4)}s ${s.name}  ${s.dur.toFixed(2).padStart(5)} ` +
     `${String(s.fps).padStart(3)} ${['塗', '線', '刻', '点'][s.hand]} |` +
     `${a.poster.toFixed(2).padStart(6)} ${a.tileVar.toFixed(2).padStart(6)} ${a.chroma.toFixed(2).padStart(5)} ${a.cover.toFixed(2).padStart(6)} ${a.flat.toFixed(2).padStart(4)} |` +
     `${a.fine.toFixed(4).padStart(7)}${a.coarse.toFixed(4).padStart(7)} | ` +
@@ -95,6 +99,11 @@ page.close();
 fs.writeFileSync(OUT, encode(grid(imgs, 3)));
 console.log('');
 console.log(`${OUT}  ${(fs.statSync(OUT).size / 1e6).toFixed(2)}MB`);
+// **静かな景を1枚も許さないのは間違い。** 法「間」がためを要求している以上、
+// 対比の弱い景は必ず混ざる。全体の1〜2割までは通す（そこを超えたら壁紙）。
+const allow = Math.max(1, Math.ceil(picks.length * 0.15));
+if (weak > allow) { console.log(`対比の弱い景が ${weak}/${picks.length}（${allow} まで）`); fail++; }
+else if (weak) console.log(`対比の弱い景 ${weak}/${picks.length}（${allow} まで許す）`);
 const vs = vivid / Math.max(1, picks.length);
 if (vs < OK.vividShare) { console.log(`彩が足りない（原色の景が ${(vs * 100) | 0}%）`); fail++; }
 else console.log(`彩 原色の景: ${(vs * 100) | 0}%`);

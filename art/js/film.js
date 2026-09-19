@@ -45,7 +45,12 @@ export function createFilm(canvas) {
     const t0 = performance.now();
     const S = STAGE;
     const p = clamp(local / sh.dur, 0, 1);
-    const f = Math.floor(local * sh.fps);
+    // 断片（展開部）— 図の位相のうち p0〜p1 の窓だけを見せる。
+    // 主題を切り刻んで出すための仕掛けで、窓は譜の側が決める。
+    const p0 = sh.p0 === undefined ? 0 : sh.p0, p1 = sh.p1 === undefined ? 1 : sh.p1;
+    const pm = p0 + (p1 - p0) * p;
+    // 窓ごとに時刻をずらす（同じ断片が毎回同じ絵にならないように）
+    const f = Math.floor((local + p0 * 17) * sh.fps);
     const fix = sh.id * 104729 + 11;
     const seed = sh.id * 7919 + (sh.boil ? f * 37 : 0);
 
@@ -80,7 +85,7 @@ export function createFilm(canvas) {
     ctx.translate(-S.w / 2, -S.h / 2);
 
     const E = {
-      p, f, fps: sh.fps, seed, fix, sh, col,
+      p: pm, f, fps: sh.fps, seed, fix, sh, col,
       lw: S.h * 0.0062 * (1 + sh.k1 * 0.8),
       ink: null, S,
     };
