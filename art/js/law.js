@@ -95,104 +95,134 @@ uniform sampler3D uNoise;
 uniform vec3  uCamPos, uCamFwd, uCamRight, uCamUp;
 uniform float uTanHalfFov;
 
-uniform float uScale, uThresh, uDensity, uWarp, uWarpScale, uSlabSoft;
-uniform float uWallMix, uWallTight, uWallX, uWallSide, uDust, uDetailFade, uDustFade;
-uniform vec3  uOffset, uFlow;
-uniform vec2  uSlab;
-uniform vec3  uSunDir, uSunColor, uExt, uAlbedo, uAmbient, uSkyLo, uSkyHi;
-uniform float uShadow, uPhaseG, uPowder, uSunGlow, uRidge, uRidgeMean, uRidgeGain;
-uniform float uRiftAmp, uRiftTight, uRiftClear, uRiftWobble;
-uniform vec3  uRiftColor;
-uniform int   uRiftAxis;
-uniform vec2  uRiftPos;
+// 場
+uniform float uScale, uThresh, uDensity, uRidge, uRidgeMean, uRidgeGain;
+uniform vec3  uOffset;
+uniform float uWarp, uWarpScale, uWarpSpin;
+uniform float uDust, uDetailFade, uDustFade, uRough;
+
+// 場そのものの運動。カメラではなく世界が動く
+uniform float uSpin;    // 全体の回転（rad/秒）
+uniform float uShear;   // 内側ほど速い差動回転（ねじれ）
+uniform float uBoil;    // 場の中身が入れ替わる速さ（沸き）
+
+// 事象の中心。**その楽章に入る時点の視点から打つ**（main.js）。
+// 世界の原点に固定すると、視点が遠くへ行ったあと事象が画面に入らない。
+// 形（閉じ込め）。どれも自然界に対応物が無い
+uniform float uShell, uShellR, uShellV, uShellW;
+uniform float uLattice, uLatticeK, uLatticeW;
+uniform float uTube, uTubeR, uTubeW;
+// 大きな構図。**格子は周期的なので、そのままでは画面が均一な壁紙になる。**
+// 低い周波数の場で格子を切り抜くと、巨大な空隙と塊ができて
+// 図と地（見るものと背景）が生まれる。ここが無いと、どれだけ
+// 細部を作り込んでも「同じ画面がずっと続く」絵になる（実際にそうなった）。
+uniform float uMask, uMaskScale, uMaskT, uMaskW, uMaskDrift;
+
+// 発光。光は外から来ない。物質が自分で光る
+uniform float uEmit, uEmitShell, uEmitW, uScatter;
+uniform vec3  uEmitA, uEmitB, uExt, uVoidTone;
+uniform float uHueLo, uHueHi;
+
+// 衝撃波
+uniform vec3  uEventC, uFrontColor;
+uniform float uFrontV, uFrontPeriod, uFrontW, uFrontAmp;
+uniform float uLocal;   // 楽章に入ってからの秒数。事象の時刻はこれで決まる
+
+// 行程
 uniform float uStep0, uStepMul, uFar;
 uniform int   uSteps;
 
 out vec4 outColor;
 
-const float PI4 = 12.56637061;
-// 減衰の単位。uExt=1.0, 密度1.0 で「100 world unit で光学的厚み1」になる。
-// ここを大きくすると数十unit先が不透明になり、奥行きも細部も出ない。
+// 減衰の単位。uExt=1.0, 密度1.0 で「100 world unit で光学的厚み1」になる
 const float EXT_UNIT = 0.010;
+// 発光の単位。**発光は歩むたびに足されるので、単位を入れないと必ず白飛びする。**
+// uEmit=2.4 の膜（厚さ50unitほど）を通ると最終の色が 2 前後になる値。
+const float EMIT_UNIT = 0.010;
 ${FIELD_PRELUDE}
-// 実測した平均と散らばりで戻す。こうすると ridge を動かしても
-// thresh の意味（どれだけの空間が物質になるか）が変わらない。
+// 実測した平均と散らばりで戻す。ridge と種を変えても thresh の意味が動かない
 float fbm4r(vec4 n, float ridge){
   return (fbm4raw(n, ridge) - uRidgeMean) * uRidgeGain + 0.5;
 }
 
-// --- 場 -----------------------------------------------------------------
-// 返す値はだいたい [0,1]。0.5 付近が「境界」になる
-float coarse(vec3 p){ return fbm4r(texture(uNoise, p), uRidge); }
+float sq(float x){ return x * x; }
+float med3(vec3 v){ return max(min(v.x, v.y), min(max(v.x, v.y), v.z)); }
 
-// 細部は2段。中間（襞）は遠くまで残し、最細（粒）は近くだけ。
-// 最細を遠くまで出すと画素より細かくなって、砂嵐にしか見えなくなる。
-// 近くだけに出すから「近くの粒と遠くの塊が同じ絵に入る」が成立する。
-float fine(vec3 p, float mid, float ultra){
-  float f  = (fbm4r(texture(uNoise, p*${MID_MUL}.0  + 0.173), uRidge) - 0.5) * 0.34 * mid;
-  if (ultra > 0.02) f += (fbm4r(texture(uNoise, p*${ULTRA_MUL}.0 + 0.629), uRidge) - 0.5) * 0.28 * uDust * ultra;
-  return f;
+// --- 場の座標 -----------------------------------------------------------
+// ここに世界の運動が入る。カメラを動かすのではなく場を動かす。
+// 視点が這うだけだと、絵は静止画に見える（実際に見えた）。
+vec3 fieldCoord(vec3 wp){
+  // z軸（＝進む向き）まわりの回転。内側ほど速くすると、ねじれが目に見える。
+  // 管の軸・進行方向・ねじれの軸を全部 z に揃えてあるので、
+  // 筒の中を進むと壁がねじれながら流れていく。
+  float r = length(wp.xy);
+  float a = uTime * (uSpin + uShear / (1.0 + r * 0.004));
+  float ca = cos(a), sa = sin(a);
+  vec3 p = vec3(ca * wp.x - sa * wp.y, sa * wp.x + ca * wp.y, wp.z);
+  vec3 q = p * uScale + uOffset;
+  q.z += uTime * uBoil;
+  return q;
 }
 
-// 物質が居られる場所。層（slab）と塊（wall）の掛け算だけで決まる。
-// 壁は「面からの減衰」ではなく半空間。こうしないと視点が霧の内側に入って
-// 全部溶ける。半空間を場が削るから、崖の面に襞ができる。
-float shapeAt(vec3 wp){
-  float sea = sstep(uSlab.y, uSlab.y - uSlabSoft, wp.y)
-            * sstep(uSlab.x, uSlab.x + uSlabSoft, wp.y);
-  float soft = 1.0 / max(uWallTight, 1e-5);
-  float wall = sstep(uWallX, uWallX + uWallSide * soft, wp.x);
-  return sea * mix(1.0, wall, uWallMix);
+// 折り曲げ。標本を取る座標そのものを時間で回すので、
+// 渦が平行移動するのではなく巻き替わる（＝沸く）。
+vec3 warpAt(vec3 q){
+  float a = uTime * uWarpSpin;
+  float ca = cos(a), sa = sin(a);
+  vec3 wq = vec3(ca * q.x - sa * q.y, sa * q.x + ca * q.y, q.z) * uWarpScale + 0.41;
+  return (texture(uNoise, wq).xyz * 2.0 - 1.0) * (uWarp * 0.05);
 }
 
-// 裂け目までの距離。off は軸に沿った蛇行（真っ直ぐな棒は世界の裂け目に見えない）
-float riftDist(vec3 wp, vec2 off){
-  if (uRiftAxis == 0) return length(vec2(wp.y - uRiftPos.x, wp.z - uRiftPos.y) - off);
-  if (uRiftAxis == 1) return length(vec2(wp.x - uRiftPos.x, wp.z - uRiftPos.y) - off);
-  return length(vec2(wp.x - uRiftPos.x, wp.y - uRiftPos.y) - off);
-}
-// 軸に沿った座標
-float riftAlong(vec3 wp){ return uRiftAxis == 0 ? wp.x : uRiftAxis == 1 ? wp.y : wp.z; }
-
-// 蛇行と明暗。テクスチャ1回で横ずれ(xy)と明るさ(z)を取る
-vec4 riftJitter(vec3 wp){
-  return texture(uNoise, vec3(0.31, riftAlong(wp) * uScale * 12.0, 0.73));
-}
-
-// 密度。ここがこの作品のすべて。
-// 影を見るときは ultra=0 で呼ぶ（粒は影に効かないので引かない）。
-// warp と roff はレイ1歩ぶん共有する。歩ごとに引き直すと
-// フェッチが倍以上になるのに、絵はほとんど変わらない。
-float densityAt(vec3 wp, vec3 warp, vec2 roff, float mid, float ultra){
-  float sh = shapeAt(wp);
-  if (sh < 0.002) return 0.0;
-  vec3 q = wp * uScale + uOffset + uFlow * uTime + warp;
-  float f = coarse(q);
-  // 閾値からじゅうぶん下なら細部を引く意味がない（＝塊の縁だけ細かく見る）
-  if (f > uThresh - 0.20 && mid > 0.02) f += fine(q, mid, ultra);
-  float d = (f - uThresh) * uDensity * sh;
-  // 裂け目の中は物質を払う。こうしないと光が自分の出口を塞ぐ
-  if (uRiftAmp > 0.0) d *= 1.0 - uRiftClear * exp(-riftDist(wp, roff) * uRiftTight * 1.35);
-  return max(d, 0.0);
+// 場の値。**uRough を上げると高い周波数が支配する。**
+// 低域が支配していると、膜が1〜2枚の大きな面になって画面を塞ぐ。
+// 高域を上げると同じ膜が細かいレースに割れて、隙間から黒が見える。
+// 全体の散らばりは norm で一定に保つので、thresh の意味は動かない。
+float fieldAt(vec3 q, float mid, float ultra){
+  float a = 0.34 * uRough * mid;
+  float b = 0.28 * uRough * uDust * ultra;
+  float v = fbm4r(texture(uNoise, q), uRidge) - 0.5;
+  if (a > 0.004) v += (fbm4r(texture(uNoise, q*${MID_MUL}.0  + 0.173), uRidge) - 0.5) * a;
+  if (b > 0.004) v += (fbm4r(texture(uNoise, q*${ULTRA_MUL}.0 + 0.629), uRidge) - 0.5) * b;
+  return 0.5 + v * inversesqrt(1.0 + a * a + b * b);
 }
 
-// 定義域の折り曲げ。ここに uFlow を入れていないのは意図的で、
-// 「渦は空間の側の性質」として静止させてある。物質だけがそこを流れる。
-vec3 warpAt(vec3 wp){
-  vec3 q = wp * uScale + uOffset;
-  return (texture(uNoise, q * uWarpScale + 0.41).xyz * 2.0 - 1.0) * (uWarp * 0.05);
-}
+// --- 物質が居られる場所 --------------------------------------------------
+// 殻・格子・管。層と崖（＝地平線と風景）はもう無い。
+// 重みは譜が溶かすので、格子から殻へ連続に変わる。
+float confine(vec3 wp){
+  float acc = 0.0, w = 0.0;
+  if (uShell > 0.001){
+    // 膨らむ膜。uShellV を入れると、殻そのものが広がっていく
+    float d = abs(length(wp - uEventC) - (uShellR + uShellV * uLocal));
+    acc += uShell * exp(-sq(d / uShellW));
+    w += uShell;
+  }
+  if (uLattice > 0.001){
+    // 格子は世界軸から傾けてある。軸に揃っていると、視線が回廊を
+    // 真っ直ぐ見下ろす形になって中央対称の「消点」構図に固定され、
+    // 画面の真ん中に水平の帯が出る（実際に出た）。
+    // 三方向の周期のうち「2つが格子面に近い」ところ＝立方格子の稜
+    vec3 lp = mat3(0.8138, -0.4698, 0.3420,
+                   0.5000,  0.8660, 0.0000,
+                  -0.2962,  0.1710, 0.9397) * wp;
+    vec3 sn = abs(sin(lp * uLatticeK));
+    acc += uLattice * sstep(1.0 - uLatticeW, 1.0, 1.0 - med3(sn));
+    w += uLattice;
+  }
+  if (uTube > 0.001){
+    // 軸は z（＝進む向き）。横の位置は事象の中心に合わせる。
+    // 世界の原点に固定すると、視点が横へ流れたあと筒の壁の中に埋まる。
+    float d = abs(length(wp.xy - uEventC.xy) - uTubeR);
+    acc += uTube * exp(-sq(d / uTubeW));
+    w += uTube;
+  }
+  float c = acc + max(1.0 - w, 0.0);
 
-float hg(float mu, float g){
-  float g2 = g * g;
-  return (1.0 - g2) / (PI4 * pow(max(1.0 + g2 - 2.0 * g * mu, 1e-4), 1.5));
-}
-
-vec3 skyAt(vec3 rd){
-  float h = clamp(rd.y * 2.2 + 0.34, 0.0, 1.0);
-  vec3 c = mix(uSkyLo, uSkyHi, h);
-  float mu = max(dot(rd, uSunDir), 0.0);
-  c += uSunColor * uSunGlow * (pow(mu, 1400.0) * 0.85 + pow(mu, 26.0) * 0.034 + pow(mu, 5.0) * 0.0020);
+  if (uMask > 0.001){
+    vec3 mq = wp * uMaskScale + vec3(0.77, 0.31, uMaskDrift * uTime);
+    float mf = fbm4r(texture(uNoise, mq), 0.0);
+    c *= mix(1.0, sstep(uMaskT - uMaskW, uMaskT + uMaskW, mf), uMask);
+  }
   return c;
 }
 
@@ -206,82 +236,63 @@ void main(){
   vec3 rd = normalize(uCamFwd + uCamRight * (ndc.x * uTanHalfFov) + uCamUp * (ndc.y * uTanHalfFov));
   vec3 ro = uCamPos;
 
-  vec3 EXT = uExt * EXT_UNIT;
-  float mu = dot(rd, uSunDir);
-  float phase = mix(hg(mu, uPhaseG), hg(mu, -0.28), 0.22);
-  float phaseWide = hg(mu, uPhaseG * 0.28);
-
   vec3 col = vec3(0.0);
   vec3 T = vec3(1.0);
 
   float so = hash12(gl_FragCoord.xy + vec2(uFrame * 7.13, uFrame * 3.71));
   float t = uStep0 * (0.2 + so);
-  // 歩幅は等比で伸ばす。倍率は「歩数がいくつでも uFar に届く」ように
-  // JS が解いてから渡してくる。だから歩数を落としても構図は変わらず、
-  // 遠くだけが粗くなる（近くの細部は歩数に関係なく解ける）。
   float ds = uStep0;
 
   for (int i = 0; i < 256; i++){
     if (i >= uSteps || t > uFar) break;
-    if (T.r + T.g + T.b < 0.012) break;
+    if (T.r + T.g + T.b < 0.010) break;
 
     vec3 p = ro + rd * t;
     float mid = uDetailFade / (uDetailFade + t);
     float ultra = uDustFade / (uDustFade + t);
 
-    // 裂の芯は「物質が無くても見える光」なので、密度の判定より先に足す。
-    // 中に入れると、芯は物質を払ってあるぶん一度も加算されず線が描かれない。
-    float halo = 0.0;
-    vec2 roff = vec2(0.0);
-    if (uRiftAmp > 0.0){
-      vec4 rj = riftJitter(p);
-      roff = (rj.xy - 0.5) * uRiftWobble;
-      float dr = riftDist(p, roff);
-      // 線状の光源なので、照明は指数ではなく距離の逆数で落とす。
-      // 指数だと数十unit先で真っ暗になり、裂が周りの世界を照らさない。
-      halo = 1.0 / (1.0 + dr * uRiftTight * 3.0);
-      float core = exp(-dr * uRiftTight * 5.5) * (0.34 + 1.25 * rj.z);
-      col += T * uRiftColor * uRiftAmp * core * 0.040 * ds;
-    }
+    float conf = confine(p);
+    if (conf > 0.002){
+      vec3 q = fieldCoord(p);
+      float f = fieldAt(q + warpAt(q), mid, ultra);
 
-    vec3 warp = warpAt(p);
-    float d = densityAt(p, warp, roff, mid, ultra);
+      // 発光は「場の値がある層を横切る場所」だけ。塊ではなく膜と繊維になる。
+      // 太陽で照らすと必ず風景に見えるので、光は内側から出す。
+      float dv = (f - uEmitShell) / uEmitW;
+      float shellE = exp(-sq(dv));
+      vec3 hue = mix(uEmitA, uEmitB, sstep(uHueLo, uHueHi, f));
+      // 広がりの項は薄く。ここを厚くすると光が空間全体に溜まって
+      // 膜ではなく乳白色の霧になる（実際にそうなった）。
+      vec3 emit = hue * (shellE + 0.07 * exp(-sq(dv) * 0.30)) * uEmit * conf;
 
-    if (d > 0.0008){
-      vec3 sigma = EXT * d;
-      vec3 stepT = exp(-sigma * ds);
-
-      // 太陽への遮蔽。歩幅を倍々に伸ばして 6歩で 1600unit 先まで見る。
-      // ここが短いと、数百unit の塊でも「全面が明るい綿」になって
-      // 立体に見えない。塊の大きさより長く見ることが要。
-      float od = 0.0;
-      if (uSunColor.r + uSunColor.g + uSunColor.b > 0.25){
-        float lt = 6.0;
-        for (int k = 0; k < 6; k++){
-          float nx = lt * 2.55;
-          od += densityAt(p + uSunDir * lt, warp, roff, k < 3 ? mid * 0.8 : 0.0, 0.0) * (nx - lt);
-          lt = nx;
-        }
+      // 衝撃波。高速で膨らむ球面が世界を走り抜ける。
+      // **物質を照らす形にする。** 衝撃波それ自体が空隙で光ると、
+      // 球面が巨大な立体角を覆って画面が白く潰れる（実際に潰れた）。
+      // 物質に掛けるぶんには、空隙は黒のまま保たれ、
+      // 「明るさの波が格子を走り抜ける」絵になる。
+      // uFrontPeriod ごとに起き直すが、周期は30秒前後なので
+      // 拍としては数えられない（禁「拍を作らない」は守っている）。
+      if (uFrontAmp > 0.0){
+        float ph = uFrontPeriod > 0.0 ? mod(uLocal, uFrontPeriod) : uLocal;
+        float fd = (length(p - uEventC) - ph * uFrontV) / uFrontW;
+        float b = exp(-sq(fd)) * conf;
+        emit = emit * (1.0 + uFrontAmp * b) + uFrontColor * (uFrontAmp * b * 0.30);
       }
-      vec3 sunT = exp(-EXT * od * uShadow);
-      float powder = 1.0 - exp(-d * uPowder);
-      float skyAccess = clamp((p.y - uSlab.x) / max(uSlab.y - uSlab.x, 1.0), 0.0, 1.0);
 
-      vec3 Lin = uSunColor * sunT * phase * powder
-               + uSunColor * pow(sunT, vec3(0.30)) * phaseWide * 0.095
-               + uAmbient * (0.30 + 0.70 * skyAccess);
+      col += T * emit * EMIT_UNIT * ds;
 
-      // 周りの物質を照らすぶん
-      if (uRiftAmp > 0.0) Lin += uRiftColor * uRiftAmp * halo;
-
-      col += T * Lin * uAlbedo * (vec3(1.0) - stepT);
-      T *= stepT;
+      float d = max(f - uThresh, 0.0) * uDensity * conf;
+      if (d > 0.0001){
+        vec3 stepT = exp(-uExt * EXT_UNIT * d * ds);
+        col += T * emit * uScatter * d * EMIT_UNIT * ds;   // 物質が光を拾って散らす
+        T *= stepT;
+      }
     }
     t += ds;
     ds *= uStepMul;
   }
 
-  col += T * skyAt(rd);
+  col += T * uVoidTone;   // 背景は虚無。空も太陽も無い
 
 #ifdef LDR
   col = col / (1.0 + col);
@@ -289,8 +300,6 @@ void main(){
   outColor = vec4(col, 1.0);
 }`;
 
-// 蓄積。視点が遅いからこそ成立する。前のフレームに少しだけ混ぜることで
-// 歩幅の縞と粒が消え、時間が画質になる（基軸「三・間」の副産物）
 export const FRAG_ACCUM = `#version 300 es
 precision highp float;
 uniform sampler2D uCur, uHist;

@@ -20,88 +20,110 @@ export const LAWS = {
   minMorphSec: 10,        // 間：転換の最短（これ未満はカットとみなす）
   maxMorphRatio: 0.45,    // 転換が楽章の半分を超えないこと
   minMovements: 4,
-  maxAmbient: 0.45,       // 闇：環境光の上限（本当の検査は書き出したフレームで行う）
   maxExposure: 1.8,       // 闇：露出の上限
   minScaleRatio: 150,     // 尺：視程 / 一番細かい波長 の比（同じ絵に何桁入るか）
-  maxCamSpeed: 26,        // 間：視点の最大速度（world unit/秒）
-  maxAngRate: 0.02,       // 間：最大旋回速度（rad/秒）≒ 1.1度/秒
+  maxCamSpeed: 90,        // 間：視点の最大速度（world unit/秒）。カットでなければ速くてよい
+  maxAngRate: 0.06,       // 間：最大旋回速度（rad/秒）。視点がぐるぐる回らないため
+  minMotion: 1.6,         // 動：運動源の合計。これ未満だと静止画に見える
+  minColorGap: 0.20,      // 異：同じ絵の中の2色の隔たり（色度のL1距離）
 };
 
 // ---- 場と光のパラメータ（すべて shader の uniform に入る）----------------
 // 数値は1つずつ、vec3 は長さ3の配列。lerp はこの形だけを見て混ぜる。
 const BASE = {
-  // 場（密度場の式）
-  scale:      0.00025,   // world → 場 の周波数。1/scale が場の周期
-  offset:     [0, 0, 0], // 場のどの領域を使うか
-  thresh:     0.52,      // ここを超えた分だけが物質になる
-  density:    2.4,
-  ridge:      0.0,       // 0=丸い塊 1=削られた襞（稜線）
-  warp:       1.9,       // 定義域の折り曲げ量（渦と繊維はここから出る）
-  warpScale:  1.40,      // 折り曲げに使う周波数（塊と同じくらいにすると襞になる）
-  flow:       [0, 0, 0], // 場そのものの流れ（場単位/秒）
-  slab:       [-400, 900], // 物質が居られる高さの帯
-  slabSoft:   420,       // 帯の縁のぼけ
-  wallMix:    0,         // 0=水平の層 1=垂直の壁
-  wallTight:  0.012,     // 塊の縁のぼけ（1/これ = world unit）
-  wallX:      0,         // 塊の縁の位置。視点が塊の中に入らないよう main.js が打つ
-  wallSide:   -1,        // 塊がある側（-1 = x の小さい側）
-  dust:       1.0,       // 近景の微粒子の量（尺のための項）
-  detailFade: 2200,      // 襞（中間octave）が半分になる距離。遠くまで残す
-  dustFade:   170,       // 粒（最細octave）が半分になる距離。近くだけに出す
+  // 場
+  scale:      0.00070,   // world → 場 の周波数。1/scale が場の周期
+  offset:     [0, 0, 0],
+  thresh:     0.630,     // ここを超えた分だけが物質になる
+  density:    26.0,   // 発光する媒質は不透明でないと、奥の光まで足し合わさって白くなる
+  ridge:      0.50,      // 0=丸い塊 1=削られた襞（稜線）
+  warp:       2.0,
+  warpScale:  0.90,
+  warpSpin:   0.055,     // 折り曲げが巻き替わる速さ（rad/秒）＝沸き
 
-  // 光
-  sunDir:     [-0.40, 0.11, -0.91],
-  sunColor:   [4.4, 3.1, 2.2],
-  ext:        [0.90, 1.05, 1.38], // 波長ごとの減衰。影が青く、透過が橙になる源
-  albedo:     [0.93, 0.95, 0.98],
-  ambient:    [0.105, 0.140, 0.205],
-  shadow:     1.0,
-  phaseG:     0.72,      // 前方散乱の強さ
-  powder:     1.6,
-  skyLo:      [0.055, 0.080, 0.140],  // 地平。遠くの塊はここを背にして影になる
-  skyHi:      [0.013, 0.022, 0.052],  // 天頂
-  sunGlow:    1.0,
+  // 世界の運動。**カメラではなく場が動く。**
+  // 視点が這うだけの絵は静止画に見える（実際にそう見えた）。
+  spin:       0.012,     // 全体の回転（rad/秒）
+  shear:      0.055,     // 内側ほど速い差動回転（ねじれ）
+  boil:       0.0035,    // 場の中身が入れ替わる速さ
 
-  // 裂（線状の光源。密度をくり抜いて、そこから光が出る）
-  riftAmp:    0,
-  riftColor:  [6.0, 3.1, 1.5],
-  riftAxis:   1,          // 0=x軸 1=y軸（垂直） 2=z軸（消点へ）
-  riftPos:    [0, 0],
-  riftTight:  0.0075,
-  riftClear:  0.9,        // 裂の中の物質をどれだけ払うか
-  riftWobble: 0,          // 軸に沿った蛇行の幅（world unit）
+  // 形。殻・格子・管。**層と崖（＝地平線と風景）は捨てた。**
+  shell:      0,         // 球の膜
+  shellR:     260,
+  shellV:     0,         // 膜が広がる速さ（world unit/秒）
+  shellW:     110,
+  lattice:    0,         // 立方格子の稜
+  latticeK:   0.013,
+  latticeW:   0.26,
+  tube:       0,         // z軸（進行方向）まわりの筒
+  tubeR:      280,
+  tubeW:      140,
+
+  // 大きな構図。格子を低い周波数の場で切り抜く。
+  // これが無いと画面が均一な壁紙になって、変化しても退屈になる
+  mask:       0.95,
+  maskScale:  0.00075,   // 1/これ が周期。440unit ほどの塊になる
+  maskT:      0.560,     // 切り抜く閾値。高いほど空隙が広い
+  maskW:      0.075,     // 縁のぼけ
+  maskDrift:  0.0016,    // 構図そのものがゆっくり流れる
+
+  // 発光。**光は外から来ない。物質が自分で光る。**
+  // 太陽と空で照らすと、どう作っても風景写真になる。
+  emit:       8.0,
+  emitShell:  0.680,     // 場のこの値のところだけ光る（膜と繊維になる）
+  emitW:      0.022,     // 光る層の厚み。薄いほど膜・繊維になる。厚いと霧になる
+  scatter:    0.35,      // 物質が光を拾って散らす量
+  emitA:      [0.30, 0.85, 1.50],
+  emitB:      [1.45, 0.35, 1.00],
+  hueLo:      0.50,      // 2色の振り分け（場の値で色が変わる）
+  hueHi:      0.74,
+  ext:        [0.95, 1.00, 1.10],
+  voidTone:   [0, 0, 0], // 背景。空も太陽も無い
+
+  // 衝撃波。世界を走り抜ける事象
+  frontColor:  [2.2, 1.5, 0.8],
+  frontV:      0,        // 走る速さ（world unit/秒）
+  frontPeriod: 0,        // 何秒ごとに起き直すか（30秒前後。拍には遅すぎる）
+  frontW:      70,
+  frontAmp:    0,
 
   // 視
   exposure:   1.0,
-  vignette:   0.86,
-  grain:      0.013,
+  vignette:   0.70,
+  grain:      0.012,
 
   // 行程（レイマーチ）
-  step0:      1.9,       // 最初の一歩（world unit）。近景の細かさを決める
-  far:        1800,      // ここまで進んだら空に溶ける
+  step0:      1.6,       // 最初の一歩（world unit）。近景の細かさを決める
+  far:        1200,      // ここまで進んだら虚無に溶ける
+
+  // 尺のための項
+  rough:      1.6,       // 高い周波数の支配。上げると膜がレースに割れる
+  dust:       1.0,
+  detailFade: 900,
+  dustFade:   260,
 };
 
 const BASE_CAM = {
-  speedF:    7.0,     // 前進（world unit/秒）
-  speedS:    0,       // 横滑り
-  yTarget:   40,      // この高さへゆっくり引かれる
-  yPull:     0.010,
+  speedF:    34,
+  speedS:    0,
+  yTarget:   0,
+  yPull:     0.008,
   yawRate:   0,
-  yawWobble: 0.0045,  // 旋回のゆらぎ振幅（rad/秒）
+  yawWobble: 0.0040,
   yawFreq:   0.011,
-  pitchTarget: -0.02,
+  pitchTarget: 0,
   pitchPull: 0.05,
-  yawOffset:  0,      // 視線だけを回す（進む向きは変えない）。構図のためにある
+  yawOffset:  0,
   pitchOffset: 0,
-  rollAmp:   0.018,
-  rollFreq:  0.0061,
-  fov:       62,
+  rollAmp:   0.050,
+  rollFreq:  0.018,
+  fov:       70,
 };
 
 const BASE_AUDIO = {
-  tone:     36.71,  // 基音（Hz）D1
-  spectrum: 0.34,   // 上部倍音の量
-  wind:     420,    // 風（帯域雑音）の中心周波数
+  tone:     36.71,
+  spectrum: 0.34,
+  wind:     420,
   windAmt:  0.17,
   sub:      0.55,
   shimmer:  0,
@@ -110,91 +132,122 @@ const BASE_AUDIO = {
 
 // ---- 楽章の原型 ---------------------------------------------------------
 // 5つとも同じ密度場。違うのはパラメータだけ。
-// 「別の世界」に見えるが、一つの法の別の解でしかない。
+// **どれも「天候」ではなく事象。** 2秒見れば何かが動いていると分かる。
 export const ARCHETYPES = [
   {
-    key: 'jin', name: '塵', dur: 96, morph: 16,
-    note: '希薄な媒質。逆光の前方散乱だけがある。まだ何も形になっていない',
+    key: 'kaku', name: '核', dur: 84, morph: 16,
+    note: '立方格子の稜が発光する。空隙が支配的で、そこを高速で抜ける',
     params: {
-      thresh: 0.620, density: 7.0, warp: 2.4, scale: 0.00026, ridge: 0.36,
-      slab: [-500, 1100], slabSoft: 620, dust: 1.35, detailFade: 2600, dustFade: 300,
-      sunDir: [-0.760, 0.115, -0.640], sunColor: [4.8, 3.4, 2.3],
-      ext: [0.72, 0.88, 1.24], ambient: [0.095, 0.125, 0.190],
-      phaseG: 0.65, sunGlow: 1.25, exposure: 1.05, far: 2600,
-      skyLo: [0.030, 0.042, 0.078], skyHi: [0.006, 0.010, 0.028],
+      lattice: 1.0, latticeK: 0.0115, latticeW: 0.30, rough: 2.6,
+      thresh: 0.600, density: 24.0, ridge: 0.60, warp: 1.6, warpSpin: 0.085,
+      spin: 0.016, shear: 0.030, boil: 0.0060,
+      emit: 7.0, emitShell: 0.648, emitW: 0.034,
+      emitA: [0.22, 0.90, 1.60], emitB: [0.85, 0.30, 1.70],
+      hueLo: 0.52, hueHi: 0.72,
+      ext: [1.05, 1.00, 0.95], far: 1200,
     },
-    cam: { speedF: 7.4, yTarget: 60, yawWobble: 0.0038, fov: 64 },
-    audio: { tone: 36.71, spectrum: 0.22, wind: 520, windAmt: 0.20, sub: 0.45, level: 0.72 },
+    // 粗い格子から細かい格子へ。冷たい色が温度を上げていく
+    drift: {
+      latticeK: 0.0260, latticeW: 0.20, rough: 3.6, thresh: 0.628,
+      emit: 9.0, emitShell: 0.668, emitW: 0.024,
+      emitA: [0.85, 0.30, 1.70], emitB: [1.50, 0.70, 0.25],
+    },
+    cam: { speedF: 52, yawWobble: 0.0035, rollAmp: 0.040, rollFreq: 0.017, fov: 74 },
+    camDrift: { speedF: 24, rollAmp: 0.110 },
+    audio: { tone: 36.71, spectrum: 0.44, wind: 560, windAmt: 0.16, sub: 0.55, level: 0.86 },
   },
   {
-    key: 'heki', name: '壁', dur: 108, morph: 18,
-    note: '垂直の塊。上も下も端も画面に入らない。全体は決して見えない',
+    key: 'nen', name: '捻', dur: 96, morph: 18,
+    note: '同じ格子が差動回転で捻れる。稜が螺旋に千切れながら流れる',
     params: {
-      thresh: 0.630, density: 8.0, warp: 2.60, warpScale: 1.10, scale: 0.00035,
-      wallMix: 0.94, wallTight: 0.020, slab: [-2600, 420], slabSoft: 420,
-      dust: 1.15, detailFade: 2400, dustFade: 420, ridge: 0.60,
-      sunDir: [0.452, 0.300, -0.840], sunColor: [5.6, 4.0, 2.8],
-      ext: [0.95, 1.05, 1.30], ambient: [0.052, 0.070, 0.112],
-      phaseG: 0.62, shadow: 1.25, exposure: 0.95, far: 1700, step0: 1.6,
+      lattice: 1.0, latticeK: 0.0085, latticeW: 0.34, rough: 3.6,
+      thresh: 0.616, density: 34.0, ridge: 0.46, warp: 2.4, warpSpin: 0.105,
+      spin: 0.022, shear: 0.120, boil: 0.0050,
+      emit: 8.5, emitShell: 0.664, emitW: 0.028,
+      emitA: [1.55, 0.50, 0.18], emitB: [0.20, 0.60, 1.65],
+      hueLo: 0.52, hueHi: 0.76,
+      ext: [0.90, 1.00, 1.20], far: 1200,
     },
-    cam: {
-      speedF: 6.2, speedS: 0, yTarget: 120, yPull: 0.006,
-      yawWobble: 0.0026, yawFreq: 0.008, pitchTarget: 0.020, rollAmp: 0.012, fov: 58,
-      yawOffset: -0.78, pitchOffset: 0.040,
+    // 捻れが進んで稜が完全に千切れ、繊維になる
+    drift: {
+      shear: 0.230, spin: 0.040, latticeK: 0.0175, latticeW: 0.22,
+      rough: 5.0, thresh: 0.640, emitW: 0.020, emit: 10.0,
+      emitA: [0.20, 0.60, 1.65], emitB: [1.55, 0.50, 0.18],
     },
-    audio: { tone: 32.70, spectrum: 0.42, wind: 260, windAmt: 0.13, sub: 0.72, level: 0.92 },
+    cam: { speedF: 34, yawWobble: 0.0022, rollAmp: 0.150, rollFreq: 0.013, pitchOffset: 0.22, fov: 78 },
+    camDrift: { speedF: 12, rollAmp: 0.040, pitchOffset: -0.18 },
+    audio: { tone: 32.70, spectrum: 0.38, wind: 300, windAmt: 0.20, sub: 0.70, level: 0.92 },
   },
   {
-    key: 'chou', name: '潮', dur: 96, morph: 16,
-    note: '物質が面を作る。水平線が生まれ、光がそれを横切る',
+    key: 'baku', name: '爆', dur: 108, morph: 20,
+    note: '衝撃波が格子を走り抜ける。31秒ごとに起き直す。全体の頂点',
     params: {
-      thresh: 0.600, density: 8.5, warp: 2.00, scale: 0.00024, ridge: 0.42,
-      slab: [-900, 90], slabSoft: 120, flow: [0.00085, 0, 0.00040],
-      dust: 0.85, detailFade: 2200, dustFade: 260,
-      sunDir: [0.438, 0.061, -0.897], sunColor: [5.6, 3.4, 2.1],
-      ext: [0.80, 1.02, 1.52], ambient: [0.100, 0.130, 0.195],
-      phaseG: 0.78, shadow: 1.1, sunGlow: 1.5, exposure: 0.92, far: 2000,
+      lattice: 0.96, latticeK: 0.0155, latticeW: 0.30, rough: 3.2,
+      thresh: 0.618, density: 30.0, ridge: 0.54, warp: 2.6, warpSpin: 0.130,
+      spin: 0.012, shear: 0.060, boil: 0.0085,
+      emit: 8.0, emitShell: 0.664, emitW: 0.028,
+      emitA: [1.70, 0.85, 0.20], emitB: [1.30, 0.18, 0.70],
+      hueLo: 0.52, hueHi: 0.72,
+      frontV: 62, frontPeriod: 31, frontW: 58, frontAmp: 3.4,
+      frontColor: [3.2, 2.0, 0.9],
+      ext: [0.85, 1.00, 1.25], exposure: 0.72, far: 1300,
     },
-    cam: {
-      speedF: 8.2, yTarget: 150, yPull: 0.009, yawWobble: 0.0040,
-      pitchTarget: -0.048, rollAmp: 0.020, fov: 66,
+    // 衝撃波が速く・広くなり、格子が吹き飛んで疎になる
+    drift: {
+      frontV: 118, frontW: 130, frontAmp: 5.0, latticeK: 0.0075, latticeW: 0.22,
+      thresh: 0.648, density: 20.0, rough: 4.4, emit: 9.5, emitW: 0.024,
+      emitA: [1.30, 0.18, 0.70], emitB: [1.70, 0.85, 0.20],
+      exposure: 0.90,
     },
-    audio: { tone: 38.89, spectrum: 0.36, wind: 380, windAmt: 0.24, sub: 0.60, level: 0.88 },
+    cam: { speedF: 16, yawWobble: 0.0030, rollAmp: 0.060, fov: 74 },
+    camDrift: { speedF: 40 },
+    audio: { tone: 27.50, spectrum: 0.58, wind: 190, windAmt: 0.12, sub: 1.0, shimmer: 0.75, level: 1.0 },
   },
   {
-    key: 'retsu', name: '裂', dur: 120, morph: 20,
-    note: '太陽が落ちる。垂直の裂け目だけが光源になる。全体の頂点',
+    key: 'mou', name: '網', dur: 90, morph: 18,
+    note: '格子が細かく砕けて海綿になる。休みなく編み替わる',
     params: {
-      thresh: 0.615, density: 8.5, warp: 2.3, scale: 0.00022, ridge: 0.55,
-      slab: [-1400, 1400], slabSoft: 700, dust: 1.1, detailFade: 2000, dustFade: 320,
-      sunDir: [-0.24, -0.05, -0.969], sunColor: [0.30, 0.26, 0.34],
-      ext: [1.05, 1.12, 1.28], ambient: [0.030, 0.036, 0.058],
-      phaseG: 0.55, shadow: 1.5,
-      skyLo: [0.016, 0.019, 0.034], skyHi: [0.004, 0.005, 0.014], sunGlow: 0.2,
-      riftAmp: 0.78, riftColor: [7.4, 3.4, 1.3], riftAxis: 1, riftPos: [0, 0],
-      riftTight: 0.021, riftClear: 0.96, riftWobble: 62,
-      exposure: 1.02, vignette: 0.94, far: 1600, step0: 1.7,
+      lattice: 0.96, latticeK: 0.0235, latticeW: 0.24, rough: 3.4,
+      thresh: 0.634, density: 28.0, ridge: 0.80, warp: 2.9, warpSpin: 0.165,
+      spin: 0.009, shear: 0.024, boil: 0.0125,
+      emit: 5.6, emitShell: 0.666, emitW: 0.022,
+      emitA: [0.15, 1.30, 0.95], emitB: [1.55, 0.75, 0.12],
+      hueLo: 0.600, hueHi: 0.688,
+      ext: [1.00, 0.95, 1.05], dust: 1.5, dustFade: 420, far: 1100,
     },
-    cam: {
-      speedF: 3.4, yTarget: 90, yPull: 0.007, yawWobble: 0.0018, yawFreq: 0.006,
-      pitchTarget: 0.012, rollAmp: 0.009, fov: 60,
+    // 海綿が編み替わりながら粗くなり、空隙が開いていく
+    drift: {
+      latticeK: 0.0090, latticeW: 0.34, rough: 2.4, thresh: 0.608,
+      boil: 0.0035, warpSpin: 0.060, emit: 4.6, emitW: 0.030,
+      emitA: [1.55, 0.75, 0.12], emitB: [0.15, 1.30, 0.95],
     },
-    audio: { tone: 27.50, spectrum: 0.58, wind: 180, windAmt: 0.11, sub: 1.0, shimmer: 0.75, level: 1.0 },
+    cam: { speedF: 28, yawWobble: 0.0040, rollAmp: 0.050, fov: 72 },
+    camDrift: { speedF: 46 },
+    audio: { tone: 38.89, spectrum: 0.46, wind: 420, windAmt: 0.24, sub: 0.60, level: 0.90 },
   },
   {
-    key: 'jin2', name: '燼', dur: 84, morph: 18,
-    note: '物質が解ける。最後に残るのは近くの粒子だけ。解決はしない',
+    key: 'shou', name: '消', dur: 78, morph: 18,
+    note: '稜が細くなって点になり、消えていく。解決はしない',
     params: {
-      thresh: 0.645, density: 6.8, warp: 2.9, scale: 0.00040, ridge: 0.46,
-      slab: [-700, 1200], slabSoft: 700, dust: 2.9, detailFade: 1400, dustFade: 520,
-      sunDir: [-0.809, 0.156, -0.566], sunColor: [2.4, 1.8, 1.4],
-      ext: [0.70, 0.82, 1.10], ambient: [0.055, 0.070, 0.105],
-      phaseG: 0.74, sunGlow: 0.55,
-      skyLo: [0.028, 0.036, 0.062], skyHi: [0.006, 0.009, 0.022],
-      exposure: 1.10, vignette: 0.90, far: 1500,
+      lattice: 0.98, latticeK: 0.0105, latticeW: 0.17, rough: 4.0,
+      thresh: 0.648, density: 16.0, ridge: 0.62, warp: 3.2, warpSpin: 0.070,
+      spin: 0.006, shear: 0.016, boil: 0.0048,
+      emit: 7.0, emitShell: 0.696, emitW: 0.022,
+      emitA: [0.95, 1.00, 1.15], emitB: [1.20, 0.55, 0.30],
+      hueLo: 0.60, hueHi: 0.74,
+      ext: [0.80, 0.85, 0.95], dust: 2.2, dustFade: 520,
+      exposure: 1.10, far: 1000,
     },
-    cam: { speedF: 1.6, yTarget: 70, yawWobble: 0.0022, pitchTarget: -0.01, rollAmp: 0.010, fov: 68 },
-    audio: { tone: 32.70, spectrum: 0.18, wind: 700, windAmt: 0.14, sub: 0.30, level: 0.58 },
+    // 点まで細って、最後は数個の残り火だけになる
+    drift: {
+      latticeW: 0.075, thresh: 0.668, emit: 4.5, emitW: 0.018,
+      density: 9.0, rough: 5.2, warpSpin: 0.030,
+      emitA: [1.20, 0.55, 0.30], emitB: [0.95, 1.00, 1.15],
+      exposure: 1.25,
+    },
+    cam: { speedF: 11, yawWobble: 0.0020, rollAmp: 0.030, fov: 76 },
+    camDrift: { speedF: 4 },
+    audio: { tone: 32.70, spectrum: 0.20, wind: 700, windAmt: 0.14, sub: 0.30, level: 0.58 },
   },
 ];
 
@@ -238,44 +291,103 @@ export function composeWork(seed) {
 
     if (!canon) {
       // 変奏。法を壊さない幅でしか触らない
-      params.thresh   = clamp(jitter(rng, params.thresh, 0.045), 0.52, 0.78);
-      params.ridge    = clamp(jitter(rng, params.ridge + 0.04, 0.45), 0.0, 0.92);
-      params.density  = clamp(jitter(rng, params.density, 0.22), 1.5, 13.0);
-      params.warp     = clamp(jitter(rng, params.warp, 0.22), 0.7, 3.4);
-      params.scale    = clamp(jitter(rng, params.scale, 0.20), 0.00012, 0.00042);
-      params.phaseG   = clamp(jitter(rng, params.phaseG, 0.10), 0.35, 0.90);
+      params.thresh   = clamp(jitter(rng, params.thresh, 0.030), 0.58, 0.70);
+      params.ridge    = clamp(jitter(rng, params.ridge, 0.35), 0.0, 0.92);
+      params.density  = clamp(jitter(rng, params.density, 0.25), 8.0, 70.0);
+      params.warp     = clamp(jitter(rng, params.warp, 0.22), 0.8, 3.6);
       params.offset   = [between(rng, 0, 64), between(rng, 0, 64), between(rng, 0, 64)];
-      // 光の向きは球面上でゆらす（高度は低いまま＝逆光を保つ）
-      const az = between(rng, -1.15, 1.15), el = between(rng, -0.06, 0.34);
-      params.sunDir   = [Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)];
-      // 色温度。減衰の波長依存だけを動かす（＝同じ物質の別の厚み）
-      const warm = between(rng, 0.55, 1.45);
-      params.ext = [params.ext[0] * (1.28 - 0.28 * warm), params.ext[1], params.ext[2] * (0.72 + 0.34 * warm)];
-      params.sunColor = params.sunColor.map((v, k) => v * (k === 0 ? 0.88 + 0.26 * warm : k === 1 ? 1.0 : 1.18 - 0.24 * warm));
-      params.dust     = clamp(jitter(rng, params.dust, 0.25), 0.5, 2.2);
-      cam.speedF      = clamp(jitter(rng, cam.speedF, 0.24), 1.2, LAWS.maxCamSpeed * 0.7);
-      cam.yawWobble   = clamp(jitter(rng, cam.yawWobble, 0.35), 0.0008, LAWS.maxAngRate * 0.45);
-      cam.yawFreq     = jitter(rng, cam.yawFreq, 0.3);
-      cam.fov         = clamp(jitter(rng, cam.fov, 0.07), 52, 72);
-      if (params.riftAmp > 0) {
-        params.riftAxis  = pick(rng, [1, 1, 2, 0]);
-        params.riftTight = clamp(jitter(rng, params.riftTight, 0.3), 0.003, 0.02);
-        params.riftColor = params.riftColor.map((v, k) => clamp(jitter(rng, v, k === 2 ? 0.55 : 0.2), 0.4, 9));
+
+      // 運動は落とさない。速さは振るが、止まる方へは振らない
+      params.spin     = jitter(rng, params.spin, 0.5) * (rng() < 0.5 ? -1 : 1);
+      params.shear    = jitter(rng, params.shear, 0.4) * (rng() < 0.35 ? -1 : 1);
+      params.boil     = Math.abs(jitter(rng, params.boil, 0.4));
+      params.warpSpin = Math.abs(jitter(rng, params.warpSpin, 0.35));
+
+      // 発光する層の位置と厚み。ここが絵の性格をいちばん変える
+      params.emitShell = clamp(jitter(rng, params.emitShell, 0.025), params.thresh + 0.03, 0.78);
+      params.emitW     = clamp(jitter(rng, params.emitW, 0.30), 0.014, 0.040);
+      params.emit      = clamp(jitter(rng, params.emit, 0.25), 3.5, 14.0);
+
+      // 色。**2色の隔たりを運に任せない。**
+      // 色相環の上で A を任意に置き、B は必ず 0.28〜0.72周ずらす。
+      // こうしないと変奏のたびに2色が寄って、単色＝自然物に見える絵が出る。
+      const hueRGB = (h, sat) => {
+        const c = [0, 0.33, 0.67].map((o) => 0.5 + 0.5 * Math.cos(6.2832 * (h + o)));
+        return c.map((x) => clamp(0.5 + (x - 0.5) * sat, 0.03, 1.0));
+      };
+      const hA = rng(), hB = hA + between(rng, 0.28, 0.72);
+      const briA = between(rng, 1.3, 2.0), briB = between(rng, 1.1, 1.8);
+      params.emitA = hueRGB(hA, between(rng, 1.3, 1.9)).map((x) => x * briA);
+      params.emitB = hueRGB(hB, between(rng, 1.3, 1.9)).map((x) => x * briB);
+      if (params.frontAmp > 0) {
+        params.frontColor = hueRGB(hA + between(rng, -0.12, 0.12), 1.7).map((x) => x * between(rng, 2.0, 3.2));
       }
+      params.ext   = params.ext.map((v) => clamp(jitter(rng, v, 0.18), 0.6, 1.5));
+
+      // 形。閉じ込めの重みは原型を保ちつつ寸法だけ振る
+      params.latticeK = clamp(jitter(rng, params.latticeK, 0.30), 0.006, 0.030);
+      params.latticeW = clamp(jitter(rng, params.latticeW, 0.25), 0.14, 0.44);
+      params.tubeR    = clamp(jitter(rng, params.tubeR, 0.30), 120, 520);
+      params.tubeW    = clamp(jitter(rng, params.tubeW, 0.30), 60, 260);
+      params.shellV   = jitter(rng, params.shellV, 0.35);
+      if (params.frontAmp > 0) {
+        params.frontV      = clamp(jitter(rng, params.frontV, 0.30), 22, 130);
+        params.frontPeriod = clamp(jitter(rng, params.frontPeriod, 0.25), 18, 55);
+        params.frontW      = clamp(jitter(rng, params.frontW, 0.30), 40, 190);
+      }
+
+      params.dust     = clamp(jitter(rng, params.dust, 0.25), 0.5, 2.6);
+      params.rough    = clamp(jitter(rng, params.rough, 0.30), 1.2, 6.0);
+      params.mask      = clamp(jitter(rng, params.mask, 0.15), 0.55, 1.0);
+      params.maskScale = clamp(jitter(rng, params.maskScale, 0.35), 0.00045, 0.0016);
+      params.maskT     = clamp(jitter(rng, params.maskT, 0.10), 0.44, 0.62);
+      cam.speedF      = clamp(jitter(rng, cam.speedF, 0.25), 4, LAWS.maxCamSpeed * 0.8);
+      cam.yawWobble   = clamp(jitter(rng, cam.yawWobble, 0.35), 0.0008, LAWS.maxAngRate * 0.4);
+      cam.yawFreq     = jitter(rng, cam.yawFreq, 0.3);
+      cam.rollAmp     = clamp(jitter(rng, cam.rollAmp, 0.4), 0.01, 0.16);
+      cam.fov         = clamp(jitter(rng, cam.fov, 0.07), 60, 86);
       audio.tone = pick(rng, [27.50, 30.87, 32.70, 34.65, 36.71, 38.89, 41.20]);
+
+      // 動の下限を構造で保証する。揺らした結果が足りなければ、
+      // 沸きと巻き替わりを上げて必ず満たす（運に任せない）。
+      let guard = 0;
+      while (motionScore({ params, cam }) < LAWS.minMotion * 1.08 && guard++ < 48) {
+        params.boil *= 1.12;
+        params.warpSpin *= 1.12;
+      }
     }
 
     const dur   = canon ? a.dur   : Math.round(clamp(jitter(rng, a.dur, 0.16), LAWS.minMovementSec + 4, 190));
     const morph = canon ? a.morph : Math.round(clamp(jitter(rng, a.morph, 0.2), LAWS.minMorphSec + 2, dur * 0.4));
 
-    return { key: a.key, name: a.name, note: a.note, index: i, dur, morph: i === 0 ? 0 : morph, params, cam, audio };
-  });
+    // 楽章の中でもパラメータは進み続ける。**定常の区間を作らない。**
+    // ここが無いと、動いてはいるが変化しない絵になる（実際にそうなった。
+    // 60秒後の画面が3秒後と統計的に同じで、退屈だと言われた）。
+    const drift = a.drift || {};
+    const camDrift = a.camDrift || {};
+    const audioDrift = a.audioDrift || {};
+    const paramsEnd = merge(params, drift);
+    const camEnd = merge(cam, camDrift);
+    const audioEnd = merge(audio, audioDrift);
+    if (!canon) {
+      // 変奏でも必ず旅をさせる。終わりの状態を種から作る
+      paramsEnd.latticeK = clamp(jitter(rng, params.latticeK, 0.55), 0.006, 0.034);
+      paramsEnd.thresh   = clamp(jitter(rng, params.thresh, 0.045), 0.58, 0.70);
+      paramsEnd.emitShell = clamp(jitter(rng, paramsEnd.emitShell, 0.035), paramsEnd.thresh + 0.03, 0.78);
+      paramsEnd.emitW    = clamp(jitter(rng, params.emitW, 0.45), 0.014, 0.040);
+      paramsEnd.emit     = clamp(jitter(rng, params.emit, 0.35), 3.5, 14.0);
+      paramsEnd.rough    = clamp(jitter(rng, params.rough, 0.40), 1.2, 6.0);
+      paramsEnd.emitA    = params.emitB.slice();   // 2色が入れ替わっていく
+      paramsEnd.emitB    = params.emitA.slice();
+      camEnd.speedF      = clamp(jitter(rng, cam.speedF, 0.45), 4, LAWS.maxCamSpeed * 0.8);
+    }
 
-  // 裂の軸は作品を通して1つ。楽章ごとに違うと、転換の途中で
-  // 光の向きが切り替わってしまう（＝カット）。軸は溶けない値なので、
-  // 最初から全楽章で同じにしておく。
-  const axis = (movements.find((m) => m.params.riftAmp > 0) || movements[0]).params.riftAxis | 0;
-  for (const m of movements) m.params.riftAxis = axis;
+    return {
+      key: a.key, name: a.name, note: a.note, index: i, dur,
+      morph: i === 0 ? 0 : morph,
+      params, cam, audio, paramsEnd, camEnd, audioEnd,
+    };
+  });
 
   let t = 0;
   for (const m of movements) { m.start = t; t += m.dur; }
@@ -290,6 +402,28 @@ export function composeWork(seed) {
 }
 
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+
+// 運動源の合計。どれか1つが強いか、複数が中くらいにあれば通る。
+// **視点の速さだけでは足りない**ようにしてある（場が動くことが要）。
+export function motionScore(m) {
+  const p = m.params, c = m.cam;
+  return Math.min(c.speedF / 45, 1.0)
+       + Math.abs(p.spin) / 0.020
+       + Math.abs(p.shear) / 0.090
+       + Math.abs(p.boil) / 0.006
+       + Math.abs(p.warpSpin) / 0.070
+       + Math.abs(p.shellV) / 8
+       + (p.frontAmp > 0 ? 1.2 : 0);
+}
+
+// 2色の隔たり。明るさを割り落とした色度（どの色みか）だけで見る。
+// 生のRGBのままベクトル角で測ると、どちらも青が強いだけで「近い」と
+// 判定されてしまう（シアンとマゼンタが近いことになる）。
+function colorGap(a, b) {
+  const chroma = (v) => { const sum = v[0] + v[1] + v[2] || 1; return v.map((x) => x / sum); };
+  const x = chroma(a), y = chroma(b);
+  return Math.abs(x[0] - y[0]) + Math.abs(x[1] - y[1]) + Math.abs(x[2] - y[2]);
+}
 function smooth(x) { return x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x); }
 
 function lerp(a, b, u) {
@@ -312,15 +446,23 @@ export function resolve(work, t) {
   }
   const m = ms[i];
   const local = t - m.start;
-  let params = m.params, cam = m.cam, audio = m.audio, u = 1;
+
+  // 楽章の中の旅。**線形に進める。** ease を掛けると両端で速度が落ちて
+  // 「同じ画面が続く」区間ができてしまう。ここは一定速度でよい。
+  const g = Math.max(0, Math.min(1, local / m.dur));
+  let params = lerpSet(m.params, m.paramsEnd, g);
+  let cam    = lerpSet(m.cam,    m.camEnd,    g);
+  let audio  = lerpSet(m.audio,  m.audioEnd,  g);
+
+  // 楽章の継ぎ目は、前の楽章の**終わりの状態**から溶かす。
+  // これで作品全体が、切れ目のない一本の軌跡になる。
+  let u = 1;
   if (i > 0 && m.morph > 0 && local < m.morph) {
     const prev = ms[i - 1];
     u = smooth(local / m.morph);
-    params = lerpSet(prev.params, m.params, u);
-    cam    = lerpSet(prev.cam,    m.cam,    u);
-    audio  = lerpSet(prev.audio,  m.audio,  u);
-    // 整数のまま扱う欄は混ぜない（軸は溶けない。裂の光量で溶かす）
-    params.riftAxis = u < 0.5 ? prev.params.riftAxis : m.params.riftAxis;
+    params = lerpSet(prev.paramsEnd, params, u);
+    cam    = lerpSet(prev.camEnd,    cam,    u);
+    audio  = lerpSet(prev.audioEnd,  audio,  u);
   }
   // 開幕と終幕の暗転。作品は始まりも終わりも黒から出て黒へ帰る
   let env = 1;
@@ -382,11 +524,25 @@ export function checkWork(work) {
     if (m.cam.speedF > LAWS.maxCamSpeed) bad.push(`${at}: 間 — 視点が速すぎる（${m.cam.speedF.toFixed(1)} > ${LAWS.maxCamSpeed}）`);
     const ang = Math.abs(m.cam.yawRate) + Math.abs(m.cam.yawWobble);
     if (ang > LAWS.maxAngRate) bad.push(`${at}: 間 — 旋回が速すぎる（${ang.toFixed(4)} > ${LAWS.maxAngRate}）`);
+    // 動：何が動いているか。**遅さは法だが、停滞は法ではない。**
+    // 視点が這うだけで場が止まっていると、絵は静止画に見える（実際に見えた）。
+    const mv = motionScore(m);
+    if (mv < LAWS.minMotion) {
+      bad.push(`${at}: 動 — 運動源が足りない（${mv.toFixed(2)} < ${LAWS.minMotion}）。場が止まっていると静止画に見える`);
+    }
     // 闇
     if (m.params.exposure > LAWS.maxExposure) bad.push(`${at}: 闇 — 露出 ${m.params.exposure} が上限 ${LAWS.maxExposure} を超える`);
-    const amb = Math.max(...m.params.ambient);
-    if (amb > LAWS.maxAmbient) bad.push(`${at}: 闇 — 環境光 ${amb.toFixed(3)} が上限 ${LAWS.maxAmbient} を超える`);
-    if (m.params.vignette < 0.5) bad.push(`${at}: 闇 — 周辺の落ち ${m.params.vignette} が浅い`);
+    if (m.params.vignette < 0.4) bad.push(`${at}: 闇 — 周辺の落ち ${m.params.vignette} が浅い`);
+    // 異：発光する層が閾値より上にあること。
+    // 下にあると場の全体が光って、膜ではなく霧になる（＝また雲に見える）
+    if (m.params.emitShell <= m.params.thresh) {
+      bad.push(`${at}: 異 — 光る層 ${m.params.emitShell} が閾値 ${m.params.thresh} より下。物質全体が光って霧になる`);
+    }
+    // 異：同じ絵の中に違う色相が2つあること（1色だと必ず自然物に見える）
+    const hueGap = colorGap(m.params.emitA, m.params.emitB);
+    if (hueGap < LAWS.minColorGap) {
+      bad.push(`${at}: 異 — 2色が近すぎる（隔たり ${hueGap.toFixed(2)}）。単色は自然物に見える`);
+    }
     // 尺：一番細かい波長と視程が何桁離れているか
     const finest = finestWavelength(m.params.scale);
     const ratio = m.params.far / finest;
@@ -400,10 +556,6 @@ export function checkWork(work) {
     if (m.params.dust <= 0) bad.push(`${at}: 尺 — 近景の粒子が無い`);
     // 法（形を直接置いていないこと＝未知の欄が無いこと）は merge() が例外で守る
   });
-
-  // 間：裂の軸が楽章で変わっていないこと（変わると転換の途中で切り替わる）
-  const axes = new Set(ms.map((m) => m.params.riftAxis | 0));
-  if (axes.size > 1) bad.push(`${work.id}: 間 — 裂の軸が楽章で違う（${[...axes].join(',')}）。転換の途中で切り替わってカットになる`);
 
   // 種
   const again = composeWork(work.seed);

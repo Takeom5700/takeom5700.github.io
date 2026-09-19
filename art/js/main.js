@@ -69,48 +69,31 @@ function start() {
   if (bad.length) console.error('基軸違反:\n' + bad.join('\n'));
   renderer.setNoise(work.seed);
 
-  // 裂の光源は「置いた」ものではなく、その楽章に入る時点の視点の前方に
-  // 一度だけ打ち込まれる。以後は世界に固定される（追いかけてはこない）。
-  const anchors = new Map();
-  function anchorFor(w, mi) {
+  // 事象（膨らむ膜・衝撃波）の中心は「置いた」ものではなく、
+  // その楽章に入る時点の視点から一度だけ打ち込まれる。
+  // 世界の原点に固定すると、視点が遠くへ行ったあと事象が画面に入らない。
+  const centers = new Map();
+  function eventCenter(w, mi) {
     const key = w.seed + ':' + mi;
-    if (anchors.has(key)) return anchors.get(key);
+    if (centers.has(key)) return centers.get(key);
     const m = w.movements[mi];
     const c = cameraAt(w, m.start);
     const rng = makeRng(w.seed * 7919 + mi * 104729);
     const cy = Math.cos(c.yaw), sy = Math.sin(c.yaw);
-    // 前方に打つ距離と、中心からのずらし。
-    // 遠すぎると見えず、横にずらしすぎると画角の外に出る。
-    // 楽章のあいだ視点が近づいても画面から出ない値にしてある。
-    const dist = 760 + rng() * 170;
-    const side = (rng() < 0.5 ? -1 : 1) * (40 + rng() * 60);
-    const a = {
-      x: c.x + sy * dist + cy * side,
-      y: c.y + 20 + rng() * 60,
-      z: c.z - cy * dist + sy * side,
-    };
-    anchors.set(key, a);
-    return a;
-  }
-  function riftPos(w, mi, axis) {
-    const a = anchorFor(w, mi);
-    return axis === 0 ? [a.y, a.z] : axis === 1 ? [a.x, a.z] : [a.x, a.y];
-  }
-  // 壁の面。視点が面の中に入ってしまわないよう、楽章に入る時点の視点の横に置く
-  const walls = new Map();
-  function wallXFor(w, mi) {
-    const key = w.seed + ':' + mi;
-    if (walls.has(key)) return walls.get(key);
-    const m = w.movements[mi];
-    const c = cameraAt(w, m.start);
-    const rng = makeRng(w.seed * 15485863 + mi * 31);
-    // 視線を回している側に置く（回していなければ左右どちらか）
-    const side = m.cam.yawOffset !== 0 ? Math.sign(m.cam.yawOffset) : (rng() < 0.5 ? -1 : 1);
-    const v = { x: c.x + side * (100 + rng() * 60), side };
-    walls.set(key, v);
+    const dist = 120 + rng() * 120;
+    const side = (rng() < 0.5 ? -1 : 1) * (30 + rng() * 70);
+    const v = [
+      c.x + sy * dist + cy * side,
+      c.y + (rng() * 2 - 1) * 60,
+      c.z - cy * dist + sy * side,
+    ];
+    centers.set(key, v);
     return v;
   }
-  // その効果を持っている楽章を探す（転換中は溶ける側の楽章のものを使う）
+
+  // その事象を持っている楽章を探す（転換中は溶ける側の楽章のものを使う）。
+  // ここを現在の楽章にすると、爆から次へ溶けるあいだに膜の半径が
+  // 打ち直されて、半径が飛ぶ＝カットになる。
   function owner(w, mi, key) {
     if (w.movements[mi].params[key] > 0) return mi;
     if (mi > 0 && w.movements[mi - 1].params[key] > 0) return mi - 1;
@@ -137,7 +120,7 @@ function start() {
     const v = checkWork(work);
     if (v.length) console.error('基軸違反:\n' + v.join('\n'));
     renderer.setNoise(work.seed);
-    anchors.clear();
+    centers.clear();
     cam = makeCamera(); camT = 0; t = 0;
     renderer.reset();
   }
@@ -173,12 +156,14 @@ function start() {
 
   function draw() {
     const r = resolve(work, t);
-    if (r.params.riftAmp > 0.001) {
-      r.riftPos = riftPos(work, owner(work, r.movement, 'riftAmp'), r.params.riftAxis | 0);
-    }
-    if (r.params.wallMix > 0.001) {
-      const w = wallXFor(work, owner(work, r.movement, 'wallMix'));
-      r.params.wallX = w.x; r.params.wallSide = w.side;
+    // 事象の時刻と中心。膜も衝撃波も「楽章に入ってからの秒数」で動く
+    const ev = r.params.shell > 0.001 ? 'shell' : r.params.frontAmp > 0.001 ? 'frontAmp' : null;
+    if (ev) {
+      const mi = owner(work, r.movement, ev);
+      r.eventC = eventCenter(work, mi);
+      r.local = t - work.movements[mi].start;
+    } else {
+      r.local = r.local === undefined ? t - work.movements[r.movement].start : r.local;
     }
     if (still) applyOver(r.params);
     const roll = r.cam.rollAmp * Math.sin(2 * Math.PI * r.cam.rollFreq * t);
@@ -291,6 +276,8 @@ function start() {
   if (q.get('export') === '1') {
     const frames = parseInt(q.get('frames') || '', 10) || 20;
     const steps = parseInt(q.get('steps') || '', 10) || 176;
+    // シャッター時間（秒）。24fps の半分が既定（実写の 180度シャッター相当）
+    const shutter = parseFloat(q.get('shutter') || '') || 1 / 48;
     const w = parseInt(q.get('w') || '', 10) || 1920;
     const h = parseInt(q.get('h') || '', 10) || Math.round(w * 9 / 16);
     canvas.style.width = w + 'px';
@@ -309,13 +296,21 @@ function start() {
         movements: work.movements.map((m) => ({ name: m.name, start: m.start, dur: m.dur })),
         size: [w, h], frames, steps,
       },
-      // 時刻 t の1枚を焼く。前に進むだけなら視点を積み直さない
+      // 時刻 t の1枚を焼く。前に進むだけなら視点を積み直さない。
+      //
+      // 蓄積の各枚を**シャッター時間の中で少しずつ違う時刻**にする。
+      // 全部を同じ時刻で積むと、1枚は綺麗だが残像がゼロになり、
+      // 24fps で並べたときに世界の速い運動がカクつく（ストロボになる）。
+      // 実写のシャッターと同じ量だけ時間を開くと、適量のモーションブラーが付く。
       frame(to) {
         if (to < camT) { cam = cameraAt(work, to); camT = Math.floor(to / CAM_DT) * CAM_DT; }
         else advanceCamera(to, 0);
-        t = to;
         renderer.reset();
-        for (let i = 0; i < frames; i++) draw();
+        for (let i = 0; i < frames; i++) {
+          t = to + (frames > 1 ? (i / frames) * shutter : 0);
+          draw();
+        }
+        t = to;
         return true;
       },
       png(mime, quality) { return canvas.toDataURL(mime || 'image/png', quality); },

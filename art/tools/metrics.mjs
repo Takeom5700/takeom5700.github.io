@@ -10,7 +10,17 @@ export const OK = {
   lightP99:   0.030,  // 闇：上位1%はこれ以上（暗いだけの絵は闇ではない）
   fineBand:   0.0035, // 尺：1〜2画素の細部エネルギー
   coarseBand: 0.010,  // 尺：128画素規模の構造エネルギー
-  cutDiff:    0.050,  // 間：0.5秒でこれ以上動いたらカットとみなす
+
+  // 間：カットが無いこと。**速いことと切れていることは別。**
+  // カットは Δt をいくら小さくしても差が消えない。運動は消える。
+  // だから 1/96秒 という極小の間隔で測る（実測でカットは27%、運動は2%前後）。
+  cutTiny:    0.030,
+  // 動：静止画に見えないこと。0.5秒でこれ以上動く
+  moveHalf:   0.015,
+
+  // 異：自然物（とくに空）に見えないこと
+  skyRamp:    0.60,   // 縦方向の輝度勾配の直線性。空は 0.9 を超える
+  minChroma:  0.18,   // 彩度。大気で描くと灰青1色に寄って 0.1 を切る
 };
 
 // 見た目の明暗（sRGB のまま）。帯のエネルギーは目に映る量で測る
@@ -50,6 +60,40 @@ export function bands(v, w, h) {
   return out;
 }
 
+// 空らしさ。行ごとの平均輝度が上から下へ単調に変わるほど 1 に近づく。
+// 空と雲の写真はここが 0.9 を超える。**この作品はそこを弾く。**
+export function skyRamp(v, w, h) {
+  const row = new Float64Array(h);
+  for (let y = 0; y < h; y++) {
+    let s = 0;
+    for (let x = 0; x < w; x++) s += v[y * w + x];
+    row[y] = s / w;
+  }
+  let mx = 0, my = 0;
+  for (let y = 0; y < h; y++) { mx += y; my += row[y]; }
+  mx /= h; my /= h;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let y = 0; y < h; y++) {
+    const dx = y - mx, dy = row[y] - my;
+    sxy += dx * dy; sxx += dx * dx; syy += dy * dy;
+  }
+  return syy < 1e-12 ? 0 : Math.abs(sxy / Math.sqrt(sxx * syy));
+}
+
+// 彩度の平均。明るい画素だけを見る（黒い画素の彩度は意味が無い）
+export function chroma(img) {
+  const { w, h, ch, data } = img;
+  let sum = 0, n = 0;
+  for (let i = 0, p = 0; i < w * h; i++, p += ch) {
+    const r = data[p], g = data[p + 1], b = data[p + 2];
+    const mx = Math.max(r, g, b);
+    if (mx < 24) continue;            // 暗すぎる画素は数えない
+    sum += (mx - Math.min(r, g, b)) / mx;
+    n++;
+  }
+  return n ? sum / n : 0;
+}
+
 export function analyse(buf) {
   const img = decode(buf);
   const lin = Array.from(luma(img)).sort((a, b) => a - b);
@@ -63,8 +107,12 @@ export function analyse(buf) {
     coarse: b[Math.min(6, b.length - 1)],
     bands: b,
   };
+  const sl = srgbLuma(img);
+  r.skyRamp = skyRamp(sl, img.w, img.h);
+  r.chroma = chroma(img);
   r.okDark = r.median <= OK.darkMedian && r.p99 >= OK.lightP99;
   r.okScale = r.fine >= OK.fineBand && r.coarse >= OK.coarseBand;
+  r.okOther = r.skyRamp <= OK.skyRamp && r.chroma >= OK.minChroma;
   return r;
 }
 

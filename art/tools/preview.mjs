@@ -35,7 +35,7 @@ const meta = page.meta;
 console.log(`${meta.title}（種 ${SEED}）  ${(meta.total / 60).toFixed(1)}分  ${meta.movements.length}楽章`);
 console.log(`描画: ${page.software ? 'ソフトウェア（遅い）' : 'GPU'}   ${W}×${H} / 蓄積${ACC}枚 / ${STEPS}歩`);
 console.log('');
-console.log('楽章      時刻   闇:中央値  上位1%  暗部率 |  尺:細部  構造   | 判定');
+console.log('楽章      時刻   闇:中央値 上位1% |  尺:細部  構造  | 異:空らしさ 彩度 | 判定');
 
 const imgs = [];
 let fail = 0;
@@ -47,12 +47,13 @@ for (const m of meta.movements) {
   await page.evaluate(`window.__mumei.push(${t})`);
   const a = analyse(buf);
   imgs.push(a.img);
-  if (!a.okDark || !a.okScale) fail++;
+  if (!a.okDark || !a.okScale || !a.okOther) fail++;
   console.log(
     `${m.name.padEnd(4)} ${String(Math.round(t)).padStart(6)}s  ` +
-    `${a.median.toFixed(4).padStart(8)} ${a.p99.toFixed(4).padStart(7)} ${(a.darkFrac * 100).toFixed(0).padStart(5)}% | ` +
+    `${a.median.toFixed(4).padStart(8)} ${a.p99.toFixed(3).padStart(6)} | ` +
     `${a.fine.toFixed(4).padStart(7)} ${a.coarse.toFixed(4).padStart(6)} | ` +
-    `${a.okDark ? '闇○' : '闇×'} ${a.okScale ? '尺○' : '尺×'}`
+    `${a.skyRamp.toFixed(2).padStart(9)} ${a.chroma.toFixed(2).padStart(5)} | ` +
+    `${a.okDark ? '闇○' : '闇×'} ${a.okScale ? '尺○' : '尺×'} ${a.okOther ? '異○' : '異×'}`
   );
 }
 page.close();

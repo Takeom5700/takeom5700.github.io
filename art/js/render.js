@@ -304,17 +304,19 @@ export function createRenderer(canvas, opt = {}) {
     U3(u, 'uCamPos', [cam.x, cam.y, cam.z]);
     U3(u, 'uCamFwd', b.fwd); U3(u, 'uCamRight', b.right); U3(u, 'uCamUp', b.up);
     U(u, 'uTanHalfFov', Math.tan(cam.fov * Math.PI / 360));
-    for (const k of ['scale', 'thresh', 'density', 'warp', 'warpScale', 'slabSoft', 'wallMix',
-      'wallTight', 'wallX', 'wallSide', 'dust', 'detailFade', 'dustFade', 'shadow', 'phaseG', 'powder', 'sunGlow', 'ridge',
-      'riftAmp', 'riftTight', 'riftClear', 'riftWobble', 'step0', 'far']) {
+    for (const k of ['scale', 'thresh', 'density', 'ridge', 'warp', 'warpScale', 'warpSpin',
+      'rough', 'dust', 'detailFade', 'dustFade', 'spin', 'shear', 'boil',
+      'shell', 'shellR', 'shellV', 'shellW', 'lattice', 'latticeK', 'latticeW',
+      'tube', 'tubeR', 'tubeW', 'mask', 'maskScale', 'maskT', 'maskW', 'maskDrift', 'emit', 'emitShell', 'emitW', 'scatter',
+      'hueLo', 'hueHi', 'frontV', 'frontPeriod', 'frontW', 'frontAmp',
+      'step0', 'far']) {
       U(u, 'u' + k[0].toUpperCase() + k.slice(1), p[k]);
     }
-    for (const k of ['offset', 'flow', 'sunDir', 'sunColor', 'ext', 'albedo', 'ambient', 'skyLo', 'skyHi', 'riftColor']) {
+    for (const k of ['offset', 'emitA', 'emitB', 'ext', 'voidTone', 'frontColor']) {
       U3(u, 'u' + k[0].toUpperCase() + k.slice(1), p[k]);
     }
-    U2(u, 'uSlab', p.slab);
-    U2(u, 'uRiftPos', f.riftPos || [0, 0]);
-    if (u.uRiftAxis) gl.uniform1i(u.uRiftAxis, p.riftAxis | 0);
+    U(u, 'uLocal', f.local || 0);
+    U3(u, 'uEventC', f.eventC || [0, 0, 0]);
     U(u, 'uStepMul', solveStepMul(p.step0, st.steps, p.far));
     const rn = ridgeNorm(p.ridge);
     U(u, 'uRidgeMean', rn[0]);
@@ -328,7 +330,11 @@ export function createRenderer(canvas, opt = {}) {
     gl.viewport(0, 0, iw, ih);
     gl.useProgram(accum.p);
     U2(accum.u, 'uRes', [iw, ih]);
-    const w = st.accN === 0 ? 1 : (st.still ? 1 / (st.accN + 1) : Math.max(0.085, 1 / (st.accN + 1)));
+    // 再生では履歴を短く持つ。**世界が速く動くようになったので、
+    // 履歴を長く持つと残像が伸びて絵が溶ける。**
+    // 0.28 だと 60fps で 4フレームぶん ≒ 67ms。実写のシャッターに近い量で、
+    // 残像はモーションブラーとして働く。
+    const w = st.accN === 0 ? 1 : (st.still ? 1 / (st.accN + 1) : Math.max(0.28, 1 / (st.accN + 1)));
     U(accum.u, 'uMix', w);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, cur.tex);
     gl.uniform1i(accum.u.uCur, 0);
