@@ -26,7 +26,8 @@ import { open } from './browser.mjs';
 const argv = process.argv.slice(2);
 const out = argv.find((a) => !a.startsWith('--'));
 if (!out) {
-  console.error('使い方: node art/tools/export.mjs 出力.mp4 [--from 0] [--to 450] [--fps 24] [--size 2560x1440] [--seed 0] [--no-audio] [--sw] [--jpeg] [--verbose]');
+  console.error('使い方: node art/tools/export.mjs 出力.mp4 [--from 0] [--to 0=全長] [--fps 24] [--size 2560x1440] [--seed 0] [--split] [--no-audio] [--sw] [--jpeg] [--verbose]');
+  console.error('  --split  映像（音なし）と音楽（.wav）を別々に出す');
   process.exit(2);
 }
 const flag = (name, def) => {
@@ -114,8 +115,10 @@ if (WANT_AUDIO) {
   }
 }
 
-// 映像の出口を決める
-const canMux = wavPath && (ff.aac || ff.opus || ff.vorbis);
+// 映像の出口を決める。
+// --split のときは混ぜない（音だけ差し替えたい・音だけ使いたいときのため）
+const SPLIT = has('split');
+const canMux = !SPLIT && wavPath && (ff.aac || ff.opus || ff.vorbis);
 const useX264 = ff.x264;
 const ext = useX264 ? '.mp4' : '.webm';
 let video = out;
@@ -174,7 +177,7 @@ page.close();
 const mb = (fs.statSync(video).size / 1e6).toFixed(1);
 console.log(`\n${video}  ${mb}MB  ${(N / FPS).toFixed(1)}秒`);
 if (wavPath && !canMux) {
-  console.log(`音は ${path.basename(wavPath)} に別で出してある（この ffmpeg に音声encoderが無い）。`);
-  console.log('手元の ffmpeg があれば、これで1本にまとまる:');
+  console.log(`音は ${path.basename(wavPath)} に別で出してある${SPLIT ? '（--split）' : '（この ffmpeg に音声encoderが無い）'}。`);
+  console.log('1本にまとめたいときは:');
   console.log(`  ffmpeg -i ${path.basename(video)} -i ${path.basename(wavPath)} -c:v copy -c:a aac -b:a 320k -shortest 完成.mp4`);
 }

@@ -115,6 +115,82 @@ function start() {
 
   function drawAt(to) { film.draw(work, to); }
 
+  // 音を from〜to 秒ぶん焼いて WAV のバイト列にする。
+  // 書き出し（外の道具）と、頁からの保存の両方がここを通る。
+  async function renderWav(from, to, rate) {
+    const sr = rate || 48000;
+    const dur = Math.max(0.05, to - from);
+    const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OC) return null;
+    const oc = new OC(2, Math.ceil(sr * dur), sr);
+    const sd = createSound(oc);
+    if (!sd) return null;
+    for (const n of music.notes) {
+      if (n.t + n.d < from || n.t > to) continue;
+      sd.play(n, Math.max(0, n.t - from));
+    }
+    return wavBytes(await oc.startRendering());
+  }
+
+  // ---- 保存（映像と音楽を別々に） ----
+  // **絵と音を1本に混ぜない。** 音だけ差し替えたい・音だけ使いたい、が
+  // できるようにしておく（依頼者の求め）。
+  function saveBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 8000);
+  }
+  let saying = null;
+  function say(msg, hold) {
+    if (!hud.isConnected) return;
+    hud.textContent = msg;
+    hud.classList.add('shown');
+    clearTimeout(saying);
+    if (hold !== true) saying = setTimeout(() => { if (!showHud) hud.classList.remove('shown'); }, 4000);
+  }
+  const stem = () => '無銘-' + String(((work.seed % 1000) + 1000) % 1000).padStart(3, '0');
+
+  let busy = false;
+  async function saveMusic() {
+    if (busy) return;
+    busy = true;
+    say('音楽を書き出しています…（1分ほどかかります）', true);
+    try {
+      const bytes = await renderWav(0, work.total, 48000);
+      if (!bytes) { say('この端末では音を書き出せません'); busy = false; return; }
+      saveBlob(new Blob([bytes], { type: 'audio/wav' }), stem() + '-音楽.wav');
+      say('音楽を保存しました（' + (bytes.length / 1e6).toFixed(0) + 'MB）');
+    } catch (e) { say('音の書き出しに失敗しました'); }
+    busy = false;
+  }
+
+  let rec = null;
+  function saveFilm() {
+    if (busy || rec) return;
+    const types = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+    const mime = window.MediaRecorder ? types.find((t) => MediaRecorder.isTypeSupported(t)) : null;
+    if (!mime || !canvas.captureStream) { say('この端末では映像を保存できません'); return; }
+    // **音は入れない。** 画面だけを録る（音は S で別に保存する）
+    const stream = canvas.captureStream(30);
+    const chunks = [];
+    try {
+      rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 16e6 });
+    } catch (e) { say('この端末では映像を保存できません'); rec = null; return; }
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      saveBlob(new Blob(chunks, { type: mime }), stem() + '-映像.webm');
+      say('映像を保存しました（音は入っていません。S で音楽を別に保存できます）');
+      rec = null;
+    };
+    seek(0);
+    if (!playing) begin();
+    paused = false;
+    rec.start(2000);
+    say('映像を記録しています… 0%', true);
+  }
+
   // ---- 静止画（検証・サムネイル） ----
   if (still) {
     if (q.has('w')) {
@@ -193,20 +269,10 @@ function start() {
       // 音を from〜to 秒ぶんまとめて焼く。譜が同じなら必ず同じ音になる。
       async audio(from, to, rate) {
         const sr = rate || 48000;
-        const dur = Math.max(0.05, to - from);
-        const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-        if (!OC) return null;
-        const oc = new OC(2, Math.ceil(sr * dur), sr);
-        const s = createSound(oc);
-        if (!s) return null;
-        for (const n of music.notes) {
-          if (n.t + n.d < from || n.t > to) continue;
-          s.play(n, Math.max(0, n.t - from));
-        }
-        const buf = await oc.startRendering();
-        const bytes = wavBytes(buf);
+        const bytes = await renderWav(from, to, sr);
+        if (!bytes) return null;
         await sink(new Blob([bytes], { type: 'audio/wav' }));
-        return { bytes: bytes.length, seconds: buf.length / sr, rate: sr, channels: buf.numberOfChannels };
+        return { bytes: bytes.length, seconds: (bytes.length - 44) / 4 / sr, rate: sr, channels: 2 };
       },
     };
     return;
@@ -225,8 +291,12 @@ function start() {
     }
     if (!paused) {
       t += dt;
-      if (t >= work.total) { rest = REST; return; }
+      if (t >= work.total) {
+        if (rec) { try { rec.stop(); } catch (e) { rec = null; } }
+        rest = REST; return;
+      }
     }
+    if (rec) say('映像を記録しています… ' + Math.round((t / work.total) * 100) + '%', true);
     pumpSound();
     drawAt(t);
     if (showHud && hud.isConnected) {
@@ -302,6 +372,8 @@ function start() {
     } else if (e.key === 'm' || e.key === 'M') { if (snd) snd.toggleMute(); }
     else if (e.key === 'n' || e.key === 'N') { nextWork(); }
     else if (e.key === 'h' || e.key === 'H') { hud.classList.toggle('shown'); }
+    else if (e.key === 's' || e.key === 'S') { saveMusic(); }
+    else if (e.key === 'v' || e.key === 'V') { saveFilm(); }
     else if (e.key === 'ArrowRight') { seek(t + 20); }
     else if (e.key === 'ArrowLeft') { seek(t - 20); }
   });

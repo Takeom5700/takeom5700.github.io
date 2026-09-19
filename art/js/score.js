@@ -40,6 +40,7 @@ export const LAWS = {
   minThemeB: 3,
   minRecall: 5,                     // 再現部が提示部から引き写す景の数
   devEventShare: 0.9,               // 展開部で「事」が起きている景の割合
+  minOwnEvents: 6,                  // 図に固有の事（椅子に座る・壺が割れる…）の数
   // 断
   minCutsPerMin: 20,
   minLenRatio: 30,
@@ -261,10 +262,12 @@ export function composeWork(seed) {
     const end = t + sec2;
     const waves = 3;
     // 波ごとの事：来る → 壊れる → 呑まれる／逃げる
+    // 第一波は**固有の事**。椅子に人が座る、壺が割れる、梯子を登る——
+    // その図にしか起きないことを先に見せてから、壊しにかかる。
     const evSets = [
-      [9, 6],           // 来・侵（何かが来る）
+      [11],             // 固（その図にしか起きないことが、まず起きる）
       [1, 3, 4],        // 崩・溶・殖（壊れはじめる）
-      [7, 8, 1],        // 喰・逃・崩（呑まれる）
+      [7, 8, 11],       // 喰・逃・固（呑まれる）
     ];
     for (let w = 0; w < waves; w++) {
       const last = w === waves - 1;
@@ -358,7 +361,13 @@ export function composeWork(seed) {
       s.recall = 1;
       if (j >= srcB.length * 2) break;
     }
-    if (t < end) put(A, end - t, vary(A, { pal: home, lock: 1 }), 3, 1, 0.6);
+    // 組み上がったあと、**帰ってきた主題が自分のことをする**。
+    // 壊されて戻ってきたものが動きだす——ここが解決のいちばん奥
+    if (t < end) {
+      put(A, end - t, vary(A, {
+        pal: home, lock: 1, ev: 11, ev0: 0.05, ev1: 0.92,
+      }), 3, 1, 0.75);
+    }
   }
 
   // ---- 終（序の形が帰り、解ける） ----
@@ -374,7 +383,11 @@ export function composeWork(seed) {
       ev2: Math.floor(rng() * 3),
     }), 4, 0, 0.7);
     // 最後のためは長くしすぎない。余りは手前に配る
-    while (end - t > 15) put(I, between(rng, 3.0, 5.5), vary(I, { pal: home, lock: 1, mv: pick(rng, [1, 2]) }), 4, 0, 0.6);
+    while (end - t > 15) {
+      put(I, between(rng, 3.0, 5.5), vary(I, {
+        pal: home, lock: 1, mv: pick(rng, [1, 2]), ev: 11, ev0: 0.1, ev1: 0.9,
+      }), 4, 0, 0.6);
+    }
     const rest = clamp2(end - t - 1.0, 4, 12);
     const last = put(I, rest, {
       pal: home, inv: false, hand: 1, mv: pick(rng, [0, 1]), mvA: 0.3, lock: 1,
@@ -482,6 +495,8 @@ export function checkWork(work) {
   if (work.movements[0] && work.movements[0].shots.some((s) => s.ev)) bad.push('型: 序で事が起きている（問いは無垢のまま置く）');
   if (!work.movements[3] || !work.movements[3].shots.some((s) => s.ev === 2)) bad.push('型: 再現部に「組」（組み上がり）が無い');
   if (!work.movements[4] || !work.movements[4].shots.some((s) => s.ev === 9)) bad.push('型: 終に「来」（人が来る）が無い');
+  const owns = S.filter((s) => s.ev === 11).length;
+  if (owns < LAWS.minOwnEvents) bad.push(`事: 図に固有の事が ${owns} 件しかない（${LAWS.minOwnEvents} 以上）`);
   // 展開部がいちばん速いこと（ここが遅いと山が無い）
   const med = (arr) => { const v = arr.slice().sort((x, y) => x - y); return v[v.length >> 1] || 0; };
   const mSec = work.movements.map((m) => med(m.shots.map((s) => s.dur)));

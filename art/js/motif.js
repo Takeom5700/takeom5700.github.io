@@ -33,6 +33,46 @@ const step = (v, n) => Math.round(v * n) / n;
 // 0〜1 を「ためて一気に」変える（グラデーション禁止の担保）
 function snap(p, at, w) { return clamp((p - at) / w, 0, 1) > 0.5 ? 1 : 0; }
 
+// ---- 人 ---------------------------------------------------------------
+// 図の中に置く人。**画面に人が出ると意味が一気に立つ。**
+// 事（event.js）からも、図ごとの固有の事からも、ここを使う。
+//   act 0=歩く 1=座る 2=手を挙げる 3=うずくまる 4=登る
+export function human(ctx, x, y, s, walk, act, seed) {
+  const sw = Math.sin(walk * TAU), sw2 = Math.sin(walk * TAU + Math.PI);
+  const sit = act === 1 ? 1 : 0;
+  const hip = y - s * (sit ? 0.95 : 1.55);
+  const sho = hip - s * 0.72;
+  if (act === 4) {                      // 登る（横棒を掴んで足を掛ける）
+    brush(ctx, [[x - s * 0.1, hip], [x - s * 0.34, hip + s * 0.5], [x - s * 0.3, hip + s * 0.95]], s * 0.2, seed + 1, false);
+    brush(ctx, [[x + s * 0.1, hip], [x + s * 0.36, hip + s * 0.42], [x + s * 0.3, hip + s * 0.86]], s * 0.2, seed + 2, false);
+  } else if (sit) {
+    brush(ctx, [[x - s * 0.16, hip], [x + s * 0.55, hip + s * 0.06], [x + s * 0.6, y]], s * 0.2, seed + 1, false);
+    brush(ctx, [[x + s * 0.06, hip], [x + s * 0.62, hip + s * 0.12], [x + s * 0.68, y]], s * 0.2, seed + 2, false);
+  } else {
+    brush(ctx, [[x, hip], [x + sw * s * 0.36, hip + s * 0.78], [x + sw * s * 0.5, y]], s * 0.2, seed + 1, false);
+    brush(ctx, [[x, hip], [x + sw2 * s * 0.36, hip + s * 0.78], [x + sw2 * s * 0.5, y]], s * 0.2, seed + 2, false);
+  }
+  ctx.beginPath();
+  ctx.moveTo(x - s * 0.3, sho); ctx.lineTo(x + s * 0.3, sho);
+  ctx.lineTo(x + s * 0.2, hip); ctx.lineTo(x - s * 0.2, hip);
+  ctx.closePath(); ctx.fill();
+  if (act === 2) {
+    brush(ctx, [[x - s * 0.24, sho], [x - s * 0.55, sho - s * 0.85]], s * 0.15, seed + 3, false);
+    brush(ctx, [[x + s * 0.24, sho], [x + s * 0.55, sho - s * 0.85]], s * 0.15, seed + 4, false);
+  } else if (act === 3) {
+    brush(ctx, [[x - s * 0.24, sho], [x, sho + s * 0.4], [x + s * 0.24, sho]], s * 0.15, seed + 3, false);
+  } else if (act === 4) {
+    brush(ctx, [[x - s * 0.24, sho], [x - s * 0.16, sho - s * 0.8]], s * 0.15, seed + 3, false);
+    brush(ctx, [[x + s * 0.24, sho], [x + s * 0.18, sho - s * 0.45]], s * 0.15, seed + 4, false);
+  } else {
+    brush(ctx, [[x - s * 0.24, sho], [x - sw * s * 0.3, sho + s * 0.66]], s * 0.15, seed + 3, false);
+    brush(ctx, [[x + s * 0.24, sho], [x - sw2 * s * 0.3, sho + s * 0.66]], s * 0.15, seed + 4, false);
+  }
+  ctx.beginPath();
+  ctx.arc(x + (act === 3 ? s * 0.1 : 0), sho - s * 0.34, s * 0.25, 0, TAU);
+  ctx.fill();
+}
+
 // ---- 群 ---------------------------------------------------------------
 // 数の暴力。1つでは何でもないものが、300 あると意味を持つ。
 function swarm(ctx, S, E) {
@@ -49,12 +89,23 @@ function swarm(ctx, S, E) {
     const rr = (0.12 + nz01(E.fix + i * 7) * 0.9) * S.h * 0.52 * spread;
     const dx = snz(tq * 1.7 + i * 0.6, E.fix) * S.h * 0.06;
     const dy = snz(tq * 1.9 + i * 0.6 + 40, E.fix) * S.h * 0.06;
-    const x = cx + Math.cos(a) * rr * 1.5 + dx, y = cy + Math.sin(a) * rr + dy;
+    const x = cx + Math.cos(a) * rr * 1.5 + dx;
+    let y = cy + Math.sin(a) * rr + dy;
     if (x < -60 || x > S.w + 60 || y < -60 || y > S.h + 60) continue;
     const s = S.h * (0.008 + nz01(E.fix + i * 13) * 0.024) * (n > 200 ? 0.8 : 1.4);
     // 羽ばたき（コマ打ちなので段になる）
-    const w = 0.35 + 0.65 * Math.abs(Math.sin((tq * 6 + nz01(E.fix + i * 5) * 6) * Math.PI));
-    const va = a + Math.PI / 2;
+    let w = 0.35 + 0.65 * Math.abs(Math.sin((tq * 6 + nz01(E.fix + i * 5) * 6) * Math.PI));
+    let va = a + Math.PI / 2;
+    // 固有の事「墜」— 何羽かが順に落ちる。羽ばたきが止まり、きりもみになる
+    if (E.own) {
+      const fall = clamp((E.ep - nz01(E.fix + i * 91) * 0.75) / 0.25, 0, 1);
+      if (fall > 0) {
+        y += fall * fall * S.h * 1.05;
+        va += fall * 7.5;
+        w = 0.2 + 0.1 * (1 - fall);
+        if (y > S.h * 1.05) continue;
+      }
+    }
     const ca = Math.cos(va), sa = Math.sin(va);
     ctx.beginPath();
     ctx.moveTo(x + ca * s * 2.1, y + sa * s * 2.1);
@@ -207,6 +258,9 @@ function ripple(ctx, S, E) {
   const k = Math.max(2, Math.min(sh.n, 6));
   const maxR = S.h * (0.55 + sh.k1 * 0.75);
   const gap = maxR / (5 + Math.floor(sh.k2 * 5));
+  // 固有の事「滴」— 落ちてきた滴が当たって、そこから輪が出る。
+  // 当たるまでは輪を出さない（原因が先、結果が後）
+  const drop = E.own ? clamp((E.ep - 0.42) * 2.6, 0, 1) : 1;
   for (let c = 0; c < k; c++) {
     const cx = S.w * (0.16 + nz01(E.fix + c * 31) * 0.68 + sh.ox * 0.08);
     const cy = S.h * (0.16 + nz01(E.fix + c * 17) * 0.68 + sh.oy * 0.08);
@@ -215,6 +269,7 @@ function ripple(ctx, S, E) {
     for (let i = 0; i < 14; i++) {
       const r = ((tq * sp + (i + ph) * gap) % maxR);
       if (r < gap * 0.12) continue;
+      if (r > drop * maxR) continue;
       const fade = 1 - r / maxR;
       const N = 40, pts = [];
       for (let j = 0; j <= N; j++) {
@@ -227,38 +282,55 @@ function ripple(ctx, S, E) {
     // 落ちた点
     ctx.fillStyle = col.l;
     ctx.beginPath(); ctx.arc(cx, cy, S.h * 0.012, 0, TAU); ctx.fill();
+    // 落ちてくる滴そのもの（最初の中心にだけ）
+    if (E.own && c === 0 && E.ep < 0.46) {
+      const u = clamp(E.ep / 0.42, 0, 1);
+      const dy = mix(-S.h * 0.12, cy, u * u);
+      ctx.fillStyle = col.a;
+      ctx.beginPath(); ctx.arc(cx, dy, S.h * (0.016 + (1 - u) * 0.008), 0, TAU); ctx.fill();
+      brush(ctx, [[cx, dy - S.h * 0.05 * u], [cx, dy]], S.h * 0.01, E.seed + 5, true);
+    }
   }
 }
 
 // ---- 梯 ---------------------------------------------------------------
 // 梯子。どこへも通じていない。見た人が理由を探す形。
+// 位置を関数に出してあるのは、固有の事「登」が同じ梯子を掴むため。
+export function ladderSpot(S, E, i) {
+  const sh = E.sh;
+  const n = Math.max(1, Math.min(sh.n, 10));
+  const u = (i + 0.5) / n;
+  const dep = nz01(E.fix + i * 23);
+  const sc = 0.45 + dep * (0.9 + sh.k1 * 0.9);
+  const tq = E.f / E.fps;
+  return {
+    n,
+    x: S.w * (u + nz(E.fix + i * 7) * 0.12 + sh.ox * 0.06),
+    y: S.h * (0.72 + dep * 0.32 + sh.oy * 0.1),
+    len: S.h * (0.7 + nz01(E.fix + i * 11) * 0.7) * sc,
+    w: S.h * 0.085 * sc,
+    tilt: nz(E.fix + i * 5) * (0.1 + sh.k2 * 0.4) + Math.sin(tq * 0.7 + i) * 0.012,
+    sc,
+  };
+}
+
 function ladder(ctx, S, E) {
   const { col, sh } = E;
-  const tq = E.f / E.fps;
   const n = Math.max(1, Math.min(sh.n, 10));
   for (let i = 0; i < n; i++) {
-    const u = (i + 0.5) / n;
-    const dep = nz01(E.fix + i * 23);                       // 奥行き
-    const sc = 0.45 + dep * (0.9 + sh.k1 * 0.9);
-    const x = S.w * (u + nz(E.fix + i * 7) * 0.12 + sh.ox * 0.06);
-    const yb = S.h * (0.72 + dep * 0.32 + sh.oy * 0.1);
-    const len = S.h * (0.7 + nz01(E.fix + i * 11) * 0.7) * sc;
-    const w = S.h * 0.085 * sc;
-    const tilt = nz(E.fix + i * 5) * (0.1 + sh.k2 * 0.4) + Math.sin(tq * 0.7 + i) * 0.012;
-    const ca = Math.sin(tilt), sa = -Math.cos(tilt);
-    const lw = S.h * 0.013 * sc;
+    const L = ladderSpot(S, E, i);
+    const ca = Math.sin(L.tilt), sa = -Math.cos(L.tilt);
+    const lw = S.h * 0.013 * L.sc;
     ctx.fillStyle = (sh.odd && i === n - 1) ? col.a : col.i;
-    // 二本の親柱
-    for (const s of [-1, 1]) {
-      const bx = x + s * w * 0.5, by = yb;
-      brush(ctx, [[bx, by], [bx + ca * len, by + sa * len]], lw, E.seed + i * 13 + s, false);
+    for (const s2 of [-1, 1]) {
+      const bx = L.x + s2 * L.w * 0.5;
+      brush(ctx, [[bx, L.y], [bx + ca * L.len, L.y + sa * L.len]], lw, E.seed + i * 13 + s2, false);
     }
-    // 踏み桟
-    const rungs = Math.max(3, Math.round(len / (S.h * 0.085 * sc)));
+    const rungs = Math.max(3, Math.round(L.len / (S.h * 0.085 * L.sc)));
     for (let r = 1; r < rungs; r++) {
       const t2 = r / rungs;
-      const px = x + ca * len * t2, py = yb + sa * len * t2;
-      brush(ctx, [[px - w * 0.5, py], [px + w * 0.5, py]], lw * 0.85, E.seed + i * 31 + r, false);
+      const px = L.x + ca * L.len * t2, py = L.y + sa * L.len * t2;
+      brush(ctx, [[px - L.w * 0.5, py], [px + L.w * 0.5, py]], lw * 0.85, E.seed + i * 31 + r, false);
     }
   }
 }
@@ -292,23 +364,31 @@ function chairOne(ctx, x, y, s, rot, seed, lw) {
   ctx.restore();
 }
 
-function chair(ctx, S, E) {
-  const { col, sh } = E;
-  const tq = E.f / E.fps;
+// 椅子1脚の置き場所。固有の事「座」がこの座面を使う
+export function chairSpot(S, E, i) {
+  const sh = E.sh;
   const n = Math.max(1, Math.min(sh.n, 16));
   const big = n === 1;
+  const tq = E.f / E.fps;
+  const dep = big ? 1 : nz01(E.fix + i * 19);
+  const s = S.h * (big ? 0.3 + sh.k1 * 0.16 : 0.05 + dep * dep * (0.14 + sh.k1 * 0.16));
+  const tipped = sh.odd && i === Math.floor(nz01(E.fix + 3) * n);
+  return {
+    n, s, tipped,
+    x: big ? S.w * (0.5 + sh.ox * 0.2) : S.w * (0.06 + nz01(E.fix + i * 7) * 0.88),
+    y: big ? S.h * (0.72 + sh.oy * 0.1)
+      : S.h * (0.42 + dep * 0.52) + Math.sin(tq * 0.9 + i) * S.h * 0.004,
+    rot: tipped ? Math.PI * 0.42 : nz(E.fix + i * 11) * (0.04 + sh.k2 * 0.3),
+  };
+}
+
+function chair(ctx, S, E) {
+  const { col, sh } = E;
+  const n = Math.max(1, Math.min(sh.n, 16));
   for (let i = 0; i < n; i++) {
-    const dep = big ? 1 : nz01(E.fix + i * 19);
-    const s = S.h * (big ? 0.3 + sh.k1 * 0.16 : 0.05 + dep * dep * (0.14 + sh.k1 * 0.16));
-    const x = big ? S.w * (0.5 + sh.ox * 0.2)
-      : S.w * (0.06 + nz01(E.fix + i * 7) * 0.88);
-    const y = big ? S.h * (0.72 + sh.oy * 0.1)
-      : S.h * (0.42 + dep * 0.52) + Math.sin(tq * 0.9 + i) * S.h * 0.004;
-    // 1脚だけ倒れている
-    const tipped = sh.odd && i === Math.floor(nz01(E.fix + 3) * n);
-    const rot = tipped ? Math.PI * 0.42 : nz(E.fix + i * 11) * (0.04 + sh.k2 * 0.3);
-    ctx.fillStyle = tipped ? col.a : col.i;
-    chairOne(ctx, x, y, s, rot, E.seed + i * 131, Math.max(S.h * 0.004, s * 0.055));
+    const C = chairSpot(S, E, i);
+    ctx.fillStyle = C.tipped ? col.a : col.i;
+    chairOne(ctx, C.x, C.y, C.s, C.rot, E.seed + i * 131, Math.max(S.h * 0.004, C.s * 0.055));
   }
 }
 
@@ -334,7 +414,9 @@ function umbrella(ctx, S, E) {
     ctx.save();
     ctx.translate(x, y); ctx.rotate(rot);
     // 天蓋。骨の先が角になるように、直線で折れた扇にする
-    const rx = R * open, ry = R * 0.62;
+    // 固有の事「翻」— 天蓋が裏返る（骨が上を向く）
+    const flip = E.own ? Math.sin(clamp(E.ep, 0, 1) * Math.PI) * 1.9 : 0;
+    const rx = R * open, ry = R * 0.62 * (1 - flip);
     const tips = [];
     for (let j = 0; j <= ribs; j++) {
       const a2 = Math.PI + (j / ribs) * Math.PI;
@@ -380,25 +462,40 @@ function thread(ctx, S, E) {
   const y0 = -S.h * 0.05, y1 = S.h * 1.05;
   const lw = S.h * (0.004 + sh.k1 * 0.008);
   // ほどけ始める高さ
-  const un = mix(1.15, 0.28, clamp(E.p * 1.25, 0, 1)) - sh.k2 * 0.15;
+  let un = mix(1.15, 0.28, clamp(E.p * 1.25, 0, 1)) - sh.k2 * 0.15;
+  // 固有の事「解」— 一本を引くと、そこから横へほどけが伝わる
+  const pull = E.own ? clamp(E.ep, 0, 1) : 0;
+  const pullU = 0.5 + nz(E.fix + 41) * 0.35;
+  if (pull > 0) un = Math.min(un, 1.15);
   ctx.fillStyle = col.i;
   for (let i = 0; i < n; i++) {
     const u = (i + 0.5) / n;
     const x = mix(x0, x1, u);
+    // 引いた糸から遠いほど、ほどけるのが遅れる
+    const unI = pull > 0
+      ? Math.min(un, mix(1.15, 0.12, clamp(pull * 1.6 - Math.abs(u - pullU) * 2.2, 0, 1)))
+      : un;
     const pts = [];
     for (let j = 0; j <= 16; j++) {
       const v = j / 16;
       const y = mix(y0, y1, v);
-      if (v < un) {
+      if (v < unI) {
         pts.push([x + Math.sin(v * 40 + i) * lw * 1.2, y]);
       } else {
         // ほどけた先は垂れて絡む
-        const t2 = (v - un) / Math.max(0.02, 1 - un);
+        const t2 = (v - unI) / Math.max(0.02, 1 - unI);
         pts.push([x + snz(t2 * 2.4 + i * 0.7 + tq * 0.35, E.fix + i) * S.w * 0.1 * t2,
                   y + t2 * t2 * S.h * 0.06]);
       }
     }
     brush(ctx, pts, lw, E.seed + i * 13, false);
+  }
+  // 引き手（糸を掴んでいる点）
+  if (pull > 0) {
+    ctx.fillStyle = col.a;
+    const hx = mix(x0, x1, pullU), hy = mix(y0, y1, mix(1.1, 0.14, clamp(pull * 1.5, 0, 1)));
+    ctx.beginPath(); ctx.arc(hx, hy, S.h * 0.022, 0, TAU); ctx.fill();
+    brush(ctx, [[hx, hy], [hx + nz(E.fix + 7) * S.w * 0.12, hy + S.h * 0.14]], S.h * 0.01, E.seed + 3, true);
   }
   // 横糸（織れている範囲だけ）
   const rows = Math.round(un * 26);
@@ -449,80 +546,89 @@ function seedDrift(ctx, S, E) {
 // ---- 階 ---------------------------------------------------------------
 // 階段。上がっているのか下りているのか決めない。
 // **面（シルエット）で置くこと。** 段板を線で積むと図面にしか見えない。
+export function stairSpot(S, E, f) {
+  const sh = E.sh;
+  const steps = 6 + Math.floor(sh.k1 * 10);
+  const w = S.w * (0.3 + nz01(E.fix + f * 17) * 0.4);
+  const hgt = S.h * (0.3 + nz01(E.fix + f * 7) * 0.45);
+  return {
+    steps, dir: (nz01(E.fix + f * 41) > 0.5) ? 1 : -1,
+    bx: S.w * (0.08 + nz01(E.fix + f * 11) * 0.7 + sh.ox * 0.06),
+    by: S.h * (0.42 + nz01(E.fix + f * 23) * 0.5 + sh.oy * 0.08),
+    sw: w / steps, sh2: hgt / steps,
+  };
+}
+
 function stairs(ctx, S, E) {
   const { col, sh } = E;
   const tq = E.f / E.fps;
   const flights = Math.max(1, Math.min(sh.n, 4));
   for (let f = 0; f < flights; f++) {
-    const dir = (nz01(E.fix + f * 41) > 0.5) ? 1 : -1;
-    const steps = 6 + Math.floor(sh.k1 * 10);
-    const w = S.w * (0.3 + nz01(E.fix + f * 17) * 0.4);
-    const hgt = S.h * (0.3 + nz01(E.fix + f * 7) * 0.45);
-    const bx = S.w * (0.08 + nz01(E.fix + f * 11) * 0.7 + sh.ox * 0.06);
-    const by = S.h * (0.42 + nz01(E.fix + f * 23) * 0.5 + sh.oy * 0.08);
-    const sw = w / steps, sh2 = hgt / steps;
+    const A = stairSpot(S, E, f);
     const grow = clamp(E.p * 1.5 + 0.25, 0, 1);
-    const k = Math.max(2, Math.round(steps * grow));
+    const k = Math.max(2, Math.round(A.steps * grow));
     ctx.fillStyle = (sh.odd && f === flights - 1) ? col.a : col.i;
-    // 段を1本の折れ線として作り、下端まで落として閉じる
-    const pts = [[bx, by]];
+    const pts = [[A.bx, A.by]];
     for (let i = 0; i < k; i++) {
-      const y = by - i * sh2 + Math.sin(tq * 0.7 + f + i * 0.3) * S.h * 0.0015;
-      pts.push([bx + dir * i * sw, y]);
-      pts.push([bx + dir * (i + 1) * sw, y]);
+      const y = A.by - i * A.sh2 + Math.sin(tq * 0.7 + f + i * 0.3) * S.h * 0.0015;
+      pts.push([A.bx + A.dir * i * A.sw, y]);
+      pts.push([A.bx + A.dir * (i + 1) * A.sw, y]);
     }
     ctx.beginPath();
     ctx.moveTo(pts[0][0], pts[0][1]);
     for (const p of pts) ctx.lineTo(p[0], p[1]);
     const last = pts[pts.length - 1];
-    ctx.lineTo(last[0], last[1] + sh2 * 2.2);
-    ctx.lineTo(bx, by + sh2 * 2.2);
+    ctx.lineTo(last[0], last[1] + A.sh2 * 2.2);
+    ctx.lineTo(A.bx, A.by + A.sh2 * 2.2);
     ctx.closePath(); ctx.fill();
-    // 踏み面の鼻（段を読ませる）
     ctx.fillStyle = col.g;
     for (let i = 1; i < k; i++) {
-      const y = by - i * sh2;
-      brush(ctx, [[bx + dir * (i - 0.05) * sw, y], [bx + dir * (i + 1) * sw, y]], S.h * 0.004, E.seed + f * 13 + i, false);
+      const y = A.by - i * A.sh2;
+      brush(ctx, [[A.bx + A.dir * (i - 0.05) * A.sw, y], [A.bx + A.dir * (i + 1) * A.sw, y]],
+        S.h * 0.004, E.seed + f * 13 + i, false);
     }
   }
 }
 
 // ---- 管 ---------------------------------------------------------------
 // 管。直角に折れて、継手で繋がる。中身は見えない。
+export function pipePath(S, E, i) {
+  const sh = E.sh;
+  const w = S.h * (0.018 + nz01(E.fix + i * 19) * 0.05) * (0.6 + sh.k1);
+  let x = nz01(E.fix + i * 7) < 0.5 ? -S.w * 0.05 : S.w * nz01(E.fix + i * 3);
+  let y = S.h * nz01(E.fix + i * 11);
+  let dir = Math.floor(nz01(E.fix + i * 5) * 4);
+  const pts = [[x, y]];
+  const segs = 4 + Math.floor(nz01(E.fix + i * 13) * 5);
+  for (let s2 = 0; s2 < segs; s2++) {
+    const len = S.h * (0.12 + nz01(E.fix + i * 29 + s2 * 7) * 0.5);
+    if (dir === 0) x += len; else if (dir === 1) y += len;
+    else if (dir === 2) x -= len; else y -= len;
+    pts.push([x, y]);
+    dir = (dir + (nz01(E.fix + i * 31 + s2) > 0.5 ? 1 : 3)) % 4;
+  }
+  return { pts, w };
+}
+
 function pipe(ctx, S, E) {
   const { col, sh } = E;
   const tq = E.f / E.fps;
   const n = Math.max(2, Math.min(sh.n, 10));
   for (let i = 0; i < n; i++) {
-    const w = S.h * (0.018 + nz01(E.fix + i * 19) * 0.05) * (0.6 + sh.k1);
-    let x = nz01(E.fix + i * 7) < 0.5 ? -S.w * 0.05 : S.w * nz01(E.fix + i * 3);
-    let y = S.h * nz01(E.fix + i * 11);
-    let dir = Math.floor(nz01(E.fix + i * 5) * 4);     // 0右 1下 2左 3上
-    const pts = [[x, y]];
-    const segs = 4 + Math.floor(nz01(E.fix + i * 13) * 5);
-    for (let s = 0; s < segs; s++) {
-      const len = S.h * (0.12 + nz01(E.fix + i * 29 + s * 7) * 0.5);
-      if (dir === 0) x += len; else if (dir === 1) y += len;
-      else if (dir === 2) x -= len; else y -= len;
-      pts.push([x, y]);
-      dir = (dir + (nz01(E.fix + i * 31 + s) > 0.5 ? 1 : 3)) % 4;
-    }
+    const { pts, w } = pipePath(S, E, i);
     ctx.fillStyle = (sh.odd && i === n - 1) ? col.a : col.i;
-    // 本体
-    for (let s = 0; s < pts.length - 1; s++) {
-      brush(ctx, [pts[s], pts[s + 1]], w, E.seed + i * 17 + s, false);
+    for (let s2 = 0; s2 < pts.length - 1; s2++) {
+      brush(ctx, [pts[s2], pts[s2 + 1]], w, E.seed + i * 17 + s2, false);
     }
-    // 継手（角に輪）
-    for (let s = 1; s < pts.length - 1; s++) {
-      ctx.beginPath(); ctx.arc(pts[s][0], pts[s][1], w * 0.78, 0, TAU); ctx.fill();
+    for (let s2 = 1; s2 < pts.length - 1; s2++) {
+      ctx.beginPath(); ctx.arc(pts[s2][0], pts[s2][1], w * 0.78, 0, TAU); ctx.fill();
     }
-    // 中を通っていくもの
     ctx.fillStyle = col.l;
     for (let k = 0; k < 3; k++) {
       const u = ((tq * (0.1 + sh.k2 * 0.25) + k / 3 + nz01(E.fix + i)) % 1) * (pts.length - 1);
-      const s = Math.min(pts.length - 2, Math.floor(u)), t2 = u - s;
+      const s2 = Math.min(pts.length - 2, Math.floor(u)), t2 = u - s2;
       ctx.beginPath();
-      ctx.arc(mix(pts[s][0], pts[s + 1][0], t2), mix(pts[s][1], pts[s + 1][1], t2), w * 0.3, 0, TAU);
+      ctx.arc(mix(pts[s2][0], pts[s2 + 1][0], t2), mix(pts[s2][1], pts[s2 + 1][1], t2), w * 0.3, 0, TAU);
       ctx.fill();
     }
   }
@@ -530,42 +636,47 @@ function pipe(ctx, S, E) {
 
 // ---- 器 ---------------------------------------------------------------
 // 壺。並べただけ。何も入っていないし、何にも使われない。
+export function vesselSpot(S, E, i) {
+  const sh = E.sh;
+  const n = Math.max(1, Math.min(sh.n, 12));
+  const tq = E.f / E.fps;
+  const u = (i + 0.5) / n;
+  const H = S.h * (n === 1 ? 0.42 + sh.k1 * 0.2 : 0.1 + nz01(E.fix + i * 7) * (0.18 + sh.k1 * 0.22));
+  return {
+    n, H,
+    x: S.w * (n === 1 ? 0.5 + sh.ox * 0.2 : u + nz(E.fix + i * 11) * 0.03),
+    gy: S.h * (0.76 + sh.oy * 0.14) + Math.sin(tq * 0.9 + i) * S.h * 0.012,
+    neck: 0.16 + nz01(E.fix + i * 13) * 0.3,
+    belly: 0.3 + nz01(E.fix + i * 17) * 0.36,
+  };
+}
+// 高さ v（0=底 1=口）における半径
+export function vesselR(V, v) {
+  return V.H * (0.1 + V.neck * Math.exp(-Math.pow((v - 0.03) * 5, 2))
+    + V.belly * Math.sin(Math.pow(v, 0.8) * Math.PI) * (0.5 + v * 0.7));
+}
+
 function vessel(ctx, S, E) {
   const { ink, col, sh } = E;
-  const tq = E.f / E.fps;
   const n = Math.max(1, Math.min(sh.n, 12));
-  const gy = S.h * (0.76 + sh.oy * 0.14);
-  // 棚の線
+  const gy0 = S.h * (0.76 + sh.oy * 0.14);
   ctx.fillStyle = col.i;
   {
     const pts = [];
-    for (let j = 0; j <= 20; j++) pts.push([j / 20 * S.w, gy + snz(j * 0.5, E.fix) * S.h * 0.004]);
+    for (let j = 0; j <= 20; j++) pts.push([j / 20 * S.w, gy0 + snz(j * 0.5, E.fix) * S.h * 0.004]);
     brush(ctx, pts, S.h * 0.007, E.seed + 3, false);
   }
+  const odd = Math.floor(nz01(E.fix + 5) * n);
   for (let i = 0; i < n; i++) {
-    const u = (i + 0.5) / n;
-    const H = S.h * (n === 1 ? 0.42 + sh.k1 * 0.2 : 0.1 + nz01(E.fix + i * 7) * (0.18 + sh.k1 * 0.22));
-    const x = S.w * (n === 1 ? 0.5 + sh.ox * 0.2 : u + nz(E.fix + i * 11) * 0.03);
-    const wob2 = Math.sin(tq * 0.9 + i) * S.h * 0.012;   // 息をさせる（止まって見せない）
-    // 輪郭は高さの関数。口・肩・胴・高台
-    const neck = 0.16 + nz01(E.fix + i * 13) * 0.3;
-    const belly = 0.3 + nz01(E.fix + i * 17) * 0.36;
+    const V = vesselSpot(S, E, i);
+    // 固有の事「割」— この壺だけは、あとで ownEvent が割った姿で描き直す
+    if (E.own && i === odd && E.ep > 0.08) continue;
     const pts = [];
     const M = 22;
-    for (let j = 0; j <= M; j++) {
-      const v = j / M;
-      const r = H * (0.1 + neck * Math.exp(-Math.pow((v - 0.03) * 5, 2))
-        + belly * Math.sin(Math.pow(v, 0.8) * Math.PI) * (0.5 + v * 0.7));
-      pts.push([x - r, gy + wob2 - H * (1 - v)]);
-    }
-    for (let j = M; j >= 0; j--) {
-      const v = j / M;
-      const r = H * (0.1 + neck * Math.exp(-Math.pow((v - 0.03) * 5, 2))
-        + belly * Math.sin(Math.pow(v, 0.8) * Math.PI) * (0.5 + v * 0.7));
-      pts.push([x + r, gy + wob2 - H * (1 - v)]);
-    }
-    const c2 = (sh.odd && i === Math.floor(nz01(E.fix + 5) * n)) ? col.a : col.i;
-    ink.body(() => path(ctx, wob(pts, H * 0.008, E.seed + i * 31)), c2);
+    for (let j = 0; j <= M; j++) { const v = j / M; pts.push([V.x - vesselR(V, v), V.gy - V.H * (1 - v)]); }
+    for (let j = M; j >= 0; j--) { const v = j / M; pts.push([V.x + vesselR(V, v), V.gy - V.H * (1 - v)]); }
+    ink.body(() => path(ctx, wob(pts, V.H * 0.008, E.seed + i * 31)),
+      (sh.odd && i === odd) ? col.a : col.i);
   }
 }
 
@@ -598,6 +709,15 @@ function wave(ctx, S, E) {
   const tq = E.f / E.fps;
   const ph = tq * (1.1 + sh.k1 * 2.6);
   waveLayer(ctx, S, E, S.h * 1.02, 1.25, col.a, ph * 0.7, E.seed + 1);
+  // 固有の事「呑」— 波打ち際に人が立っていて、波がその上を越える。
+  // **波より先に描く。** あとに描くと人が波の手前に浮いて意味が反転する
+  if (E.own) {
+    const gx = S.w * (0.5 + sh.ox * 0.25);
+    const gy = S.h * (0.74 - clamp(E.ep, 0, 1) * 0.06);
+    ctx.fillStyle = col.l;
+    human(ctx, gx, gy, S.h * (0.1 + sh.k1 * 0.05), 0,
+      E.ep > 0.55 ? 3 : (E.ep > 0.3 ? 2 : 0), E.seed + 911);
+  }
   const crest = waveLayer(ctx, S, E, S.h * 1.06, 0.95, col.i, ph, E.seed + 2);
   waveLayer(ctx, S, E, S.h * 1.16, 0.6, col.g, ph * 1.4 + 2, E.seed + 3);
   // 頂から前へ垂れる爪（これが無いと、ただの丘に見える）
@@ -663,8 +783,227 @@ function crowd(ctx, S, E) {
   }
 }
 
-// 名前の並びは譜（score.js）と検査（check-axis）が共有する。
-// **この順番を変えると、過去の種の作品が変わる。** 足すのは末尾だけ。
+
+// ---- 固有の事 ---------------------------------------------------------
+// 図ごとの、その図にしか起こらないこと。
+//
+// 汎用の事（崩・喰・来…）はどの図にも同じように効くが、
+// **「椅子に人が座る」「壺が割れて中身が出る」は、その図でしか起きない。**
+// 依頼者の言う「意味的（セマンティック）な展開」はここに宿る。
+// 図が描かれたあと、同じ座標系で重ねて描く。
+export const OWN_NAMES = [
+  '墜', '狩', '花', '呑', '滴', '離', '登', '座', '翻', '解', '芽', '昇', '漏', '割',
+];
+
+export function ownEvent(ctx, S, E) {
+  const { col, sh } = E;
+  const ep = clamp(E.ep, 0, 1);
+  const m = sh.m | 0;
+
+  if (m === 1) {
+    // 獣「狩」— 追うものが来て、追われたものが倒れる
+    const gy = S.h * (0.74 + sh.oy * 0.14);
+    const s = S.h * (0.06 + sh.k1 * 0.1) * 1.3;
+    const px = mix(-S.w * 0.2, S.w * (0.42 + sh.ox * 0.1), Math.pow(ep, 0.7));
+    ctx.fillStyle = col.a;
+    beastOne(ctx, px, gy, s, (E.f / E.fps) * 4.2, E.seed + 77, E, col.a);
+    if (ep > 0.68) {
+      // 倒れた一頭（横倒し）
+      const u = clamp((ep - 0.68) / 0.32, 0, 1);
+      ctx.save();
+      ctx.translate(S.w * (0.6 + sh.ox * 0.1), gy);
+      ctx.rotate(u * Math.PI * 0.46);
+      ctx.translate(0, -gy);
+      ctx.fillStyle = col.l;
+      beastOne(ctx, S.w * (0.6 + sh.ox * 0.1), gy, s * 0.92, 0.25, E.seed + 78, E, col.l);
+      ctx.restore();
+    }
+
+  } else if (m === 2) {
+    // 菌「花」— 先端が咲いて、やがて落ちる
+    const roots = 2 + Math.floor(sh.k2 * 4);
+    const up = sh.k1 > 0.5 ? -1 : 1;
+    const baseY = up < 0 ? S.h * 1.04 : -S.h * 0.04;
+    const bloom = clamp(ep * 1.6, 0, 1), drop = clamp((ep - 0.62) / 0.38, 0, 1);
+    for (let i = 0; i < 46; i++) {
+      const r = i % roots;
+      const x0 = S.w * ((r + 0.5) / roots + nz(E.fix + r * 17) * 0.22 + sh.ox * 0.1);
+      const a2 = -Math.PI / 2 + nz(E.fix + i * 7) * 1.35;
+      const rr = S.h * (0.16 + nz01(E.fix + i * 11) * 0.44);
+      const x = x0 + Math.cos(a2) * rr;
+      const y = baseY - up * -1 * Math.sin(a2) * rr * (up < 0 ? 1 : -1) + drop * drop * S.h * 1.1;
+      if (y > S.h * 1.05) continue;
+      const pr = S.h * 0.022 * bloom * (0.7 + nz01(E.fix + i * 3) * 0.7);
+      ctx.fillStyle = col.a;
+      for (let k = 0; k < 6; k++) {
+        const th = (k / 6) * TAU + i;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(th) * pr, y + Math.sin(th) * pr, pr * 0.72, 0, TAU);
+        ctx.fill();
+      }
+      ctx.fillStyle = col.l;
+      ctx.beginPath(); ctx.arc(x, y, pr * 0.55, 0, TAU); ctx.fill();
+    }
+
+  } else if (m === 5) {
+    // 衆「離」— 列から一人だけ前へ出て、こちらへ来る
+    const horizon = S.h * (0.28 + sh.oy * 0.16);
+    const u = mix(0.35, 1.0, Math.pow(ep, 0.8));
+    const y = horizon + Math.pow(u, 1.7) * (S.h - horizon) * 1.02;
+    const s = S.h * 0.02 + Math.pow(u, 1.9) * S.h * (0.14 + sh.k2 * 0.24);
+    const x = S.w * (0.5 + sh.ox * 0.2) + nz(E.fix + 3) * S.w * 0.06;
+    ctx.fillStyle = col.a;
+    human(ctx, x, y, s, ep * 7, ep > 0.82 ? 2 : 0, E.seed + 501);
+
+  } else if (m === 6) {
+    // 梯「登」— 人が梯子を登る
+    const L = ladderSpot(S, E, 0);
+    const ca = Math.sin(L.tilt), sa = -Math.cos(L.tilt);
+    const t2 = clamp(ep, 0, 1) * 0.86;
+    const x = L.x + ca * L.len * t2, y = L.y + sa * L.len * t2;
+    ctx.fillStyle = col.a;
+    human(ctx, x, y, L.w * 0.72, 0, 4, E.seed + 601);
+
+  } else if (m === 7) {
+    // 椅「座」— 人が歩いてきて、その椅子に座る
+    const C = chairSpot(S, E, Math.floor(nz01(E.fix + 13) * Math.max(1, Math.min(sh.n, 16))));
+    const walk = clamp(ep / 0.6, 0, 1);
+    const side = nz(E.fix + 17) > 0 ? 1 : -1;
+    const x = mix(C.x + side * S.w * 0.55, C.x + C.s * 0.1, walk);
+    // 座面の高さに腰を置く（座るのは歩き終わってから）
+    const seated = ep > 0.62;
+    const y = seated ? C.y + C.s * 0.95 : C.y + C.s * 1.0;
+    ctx.fillStyle = col.a;
+    human(ctx, x, y, C.s * 0.95, walk < 1 ? walk * 7 : 0, seated ? 1 : 0, E.seed + 701);
+
+  } else if (m === 10) {
+    // 綿「芽」— 落ちた種が芽を出す
+    const gy = S.h * 0.98;
+    const x = S.w * (0.5 + sh.ox * 0.28);
+    const land = clamp(ep / 0.4, 0, 1);
+    const sprout = clamp((ep - 0.4) / 0.6, 0, 1);
+    ctx.fillStyle = col.a;
+    if (land < 1) {
+      const y = mix(-S.h * 0.1, gy, land * land);
+      const r = S.h * 0.07;
+      for (let a2 = 0; a2 < 11; a2++) {
+        const th = (a2 / 11) * TAU + land * 3;
+        brush(ctx, [[x, y], [x + Math.cos(th) * r, y + Math.sin(th) * r]], r * 0.2, E.seed + a2, true);
+      }
+    }
+    if (sprout > 0) {
+      const hgt = S.h * 0.3 * sprout;
+      const stem = [];
+      for (let j = 0; j <= 6; j++) {
+        const v = j / 6;
+        stem.push([x + Math.sin(v * 2.2) * S.h * 0.02, gy - hgt * v]);
+      }
+      brush(ctx, stem, S.h * 0.012, E.seed + 3, false);
+      for (const s2 of [-1, 1]) {
+        const lf = [];
+        for (let j = 0; j <= 5; j++) {
+          const v = j / 5;
+          lf.push([x + s2 * v * S.h * 0.09, gy - hgt * (0.55 + v * 0.35) - Math.sin(v * Math.PI) * S.h * 0.03]);
+        }
+        brush(ctx, lf, S.h * 0.02 * sprout, E.seed + 5 + s2, true);
+      }
+    }
+
+  } else if (m === 11) {
+    // 階「昇」— 人が段を昇っていく
+    const A = stairSpot(S, E, 0);
+    const k = clamp(ep, 0, 1) * (A.steps - 1);
+    const i = Math.floor(k);
+    const x = A.bx + A.dir * (i + 0.5) * A.sw;
+    const y = A.by - i * A.sh2;
+    ctx.fillStyle = col.a;
+    human(ctx, x, y, A.sh2 * 1.5, ep * 9, 0, E.seed + 801);
+
+  } else if (m === 12) {
+    // 管「漏」— 継手が破れて、噴き出して溜まる
+    const { pts, w } = pipePath(S, E, 0);
+    const j = 1 + Math.floor(nz01(E.fix + 23) * Math.max(1, pts.length - 2));
+    const p = pts[Math.min(j, pts.length - 1)];
+    const burst = clamp(ep * 1.4, 0, 1);
+    ctx.fillStyle = col.a;
+    for (let i = 0; i < 70; i++) {
+      const t2 = ((nz01(E.fix + i * 3) + ep * 0.9) % 1);
+      const th = -Math.PI * 0.5 + nz(E.fix + i * 7) * 1.5;
+      const v0 = S.h * (0.35 + nz01(E.fix + i * 11) * 0.5);
+      const x = p[0] + Math.cos(th) * v0 * t2 * burst;
+      const y = p[1] + Math.sin(th) * v0 * t2 * burst + t2 * t2 * S.h * 0.9;
+      if (y > S.h * 1.02) continue;
+      ctx.beginPath(); ctx.arc(x, y, w * 0.28, 0, TAU); ctx.fill();
+    }
+    // 溜まり
+    const pool = burst * S.h * 0.06;
+    if (pool > 1) {
+      ctx.beginPath();
+      path(ctx, blob(p[0], S.h * 1.0, new Array(18).fill(pool * 2.2).map((v, i2) => v * (i2 % 2 ? 1 : 0.5)), E.seed, 0.1));
+      ctx.fill();
+    }
+
+  } else if (m === 13) {
+    // 器「割」— 一つだけ割れて、中身が流れ出る
+    const n = Math.max(1, Math.min(sh.n, 12));
+    const i = Math.floor(nz01(E.fix + 5) * n);
+    const V = vesselSpot(S, E, i);
+    const crack = clamp(ep * 2.2, 0, 1);
+    const tip = clamp((ep - 0.45) / 0.55, 0, 1);
+    const M = 22;
+    const cut = 0.52;                      // ここから上が外れる
+    const lower = [], upper = [];
+    for (let j = 0; j <= M; j++) {
+      const v = (j / M) * cut;
+      lower.push([V.x - vesselR(V, v), V.gy - V.H * (1 - v)]);
+    }
+    for (let j = M; j >= 0; j--) {
+      const v = (j / M) * cut;
+      lower.push([V.x + vesselR(V, v), V.gy - V.H * (1 - v)]);
+    }
+    for (let j = 0; j <= M; j++) {
+      const v = cut + (j / M) * (1 - cut);
+      upper.push([V.x - vesselR(V, v), V.gy - V.H * (1 - v)]);
+    }
+    for (let j = M; j >= 0; j--) {
+      const v = cut + (j / M) * (1 - cut);
+      upper.push([V.x + vesselR(V, v), V.gy - V.H * (1 - v)]);
+    }
+    ctx.fillStyle = col.i;
+    ctx.beginPath(); path(ctx, wob(lower, V.H * 0.01, E.seed + i * 31)); ctx.fill();
+    ctx.save();
+    const px = V.x, py = V.gy - V.H * (1 - cut);
+    ctx.translate(px, py);
+    ctx.rotate(tip * 1.5 * (nz(E.fix + 9) > 0 ? 1 : -1));
+    ctx.translate(tip * V.H * 0.4, tip * tip * V.H * 0.9);
+    ctx.translate(-px, -py);
+    ctx.beginPath(); path(ctx, wob(upper, V.H * 0.01, E.seed + i * 37)); ctx.fill();
+    ctx.restore();
+    // 割れ口の線
+    ctx.fillStyle = col.g;
+    const line = [];
+    for (let j = 0; j <= 7; j++) {
+      const u2 = j / 7;
+      line.push([V.x - vesselR(V, cut) + vesselR(V, cut) * 2 * u2,
+                 py + snz(u2 * 5, E.fix) * V.H * 0.03 * crack]);
+    }
+    brush(ctx, line, V.H * 0.02, E.seed + 3, false);
+    // 中身
+    if (tip > 0) {
+      ctx.fillStyle = col.a;
+      for (let k = 0; k < 60; k++) {
+        const t2 = ((nz01(E.fix + k * 7) + tip * 1.1) % 1);
+        const x = px + nz(E.fix + k * 3) * V.H * 0.3 + t2 * V.H * 0.5;
+        const y = py + t2 * t2 * (V.gy - py) * 1.1;
+        if (y > V.gy) continue;
+        ctx.beginPath(); ctx.arc(x, y, V.H * 0.022, 0, TAU); ctx.fill();
+      }
+      ctx.beginPath();
+      path(ctx, blob(px + V.H * 0.3, V.gy, new Array(16).fill(V.H * 0.28 * tip), E.seed, 0.12));
+      ctx.fill();
+    }
+  }
+}
 
 // 名前の並びは譜（score.js）と検査（check-axis）が共有する。
 // **この順番を変えると、過去の種の作品が変わる。** 足すのは末尾だけ。

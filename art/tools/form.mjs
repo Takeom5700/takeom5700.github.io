@@ -32,9 +32,10 @@ if (argv.includes('--dev')) {
   const dev = shots.filter((s) => s.sec === 2);
   const from = Math.floor(dev.length * parseFloat(flag('at', '0.3')));
   const pick = dev.slice(from, from + K * 2);
-  const EV = ['無', '崩', '組', '溶', '殖', '落', '侵', '喰', '逃', '来', '芽'];
+  const EV = ['無', '崩', '組', '溶', '殖', '落', '侵', '喰', '逃', '来', '芽', '固'];
+  const OWN = ['墜', '狩', '花', '呑', '滴', '離', '登', '座', '翻', '解', '芽', '昇', '漏', '割'];
   console.log(`展開部 ${dev.length}景  ${from}番目から ${pick.length}景`);
-  console.log(pick.map((s) => `${s.name}${EV[s.ev | 0]}${(s.evAt >= 0 ? s.evAt.toFixed(2) : '-')}`).join(' '));
+  console.log(pick.map((s) => `${s.name}${s.ev === 11 ? OWN[s.m] : EV[s.ev | 0]}${(s.evAt >= 0 ? s.evAt.toFixed(2) : '-')}`).join(' '));
   const im = [];
   for (const s of pick) im.push(analyse(await shoot(s.start + s.dur * 0.6)).img);
   page.close();

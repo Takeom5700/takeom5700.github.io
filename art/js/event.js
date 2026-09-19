@@ -25,11 +25,15 @@
 // 壊れたものが組み上がるから、帰ってきたことが効く。
 
 import { nz, nz01, snz, TAU, clamp, mix, brush, path } from './paint.js';
-import { MOTIFS } from './motif.js';
+import { MOTIFS, human } from './motif.js';
 
-export const EV_NAMES = ['無', '崩', '組', '溶', '殖', '落', '侵', '喰', '逃', '来', '芽'];
+export const EV_NAMES = ['無', '崩', '組', '溶', '殖', '落', '侵', '喰', '逃', '来', '芽', '固'];
+// 11「固」は**図ごとの固有の事**で、motif.js の ownEvent が描く。
+// 汎用の事はここ（event.js）、固有の事はあちら（motif.js）。
+//   椅子に人が座る・壺が割れて中身が出る・梯子を登る・波が人を呑む——
+//   それはその図でしか起きないので、図の側が知っているべき。
 // 画素を触る事（図を一度別の板に描いてから、割ったり動かしたりする）
-export const PIXEL = [0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0];
+export const PIXEL = [0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0];
 
 // ---- 描く前に掛ける変形（逃・芽） --------------------------------------
 export function evTransform(ctx, S, sh, ep) {
@@ -46,41 +50,7 @@ export function evTransform(ctx, S, sh, ep) {
   }
 }
 
-// ---- 図の人 -----------------------------------------------------------
-// 歩いてきて、何かをする。**画面に人が出ると、意味が一気に立つ。**
-function human(ctx, x, y, s, walk, act, seed) {
-  const sw = Math.sin(walk * TAU), sw2 = Math.sin(walk * TAU + Math.PI);
-  const sit = act === 1 ? 1 : 0;
-  const hip = y - s * (sit ? 0.95 : 1.55);
-  const sho = hip - s * 0.72;
-  // 脚
-  if (sit) {
-    brush(ctx, [[x - s * 0.16, hip], [x + s * 0.55, hip + s * 0.06], [x + s * 0.6, y]], s * 0.2, seed + 1, false);
-    brush(ctx, [[x + s * 0.06, hip], [x + s * 0.62, hip + s * 0.12], [x + s * 0.68, y]], s * 0.2, seed + 2, false);
-  } else {
-    brush(ctx, [[x, hip], [x + sw * s * 0.36, hip + s * 0.78], [x + sw * s * 0.5, y]], s * 0.2, seed + 1, false);
-    brush(ctx, [[x, hip], [x + sw2 * s * 0.36, hip + s * 0.78], [x + sw2 * s * 0.5, y]], s * 0.2, seed + 2, false);
-  }
-  // 胴
-  ctx.beginPath();
-  ctx.moveTo(x - s * 0.3, sho); ctx.lineTo(x + s * 0.3, sho);
-  ctx.lineTo(x + s * 0.2, hip); ctx.lineTo(x - s * 0.2, hip);
-  ctx.closePath(); ctx.fill();
-  // 腕
-  if (act === 2) {                      // 手を挙げる
-    brush(ctx, [[x - s * 0.24, sho], [x - s * 0.55, sho - s * 0.85]], s * 0.15, seed + 3, false);
-    brush(ctx, [[x + s * 0.24, sho], [x + s * 0.55, sho - s * 0.85]], s * 0.15, seed + 4, false);
-  } else if (act === 3) {               // うずくまる（腕を抱える）
-    brush(ctx, [[x - s * 0.24, sho], [x, sho + s * 0.4], [x + s * 0.24, sho]], s * 0.15, seed + 3, false);
-  } else {
-    brush(ctx, [[x - s * 0.24, sho], [x - sw * s * 0.3, sho + s * 0.66]], s * 0.15, seed + 3, false);
-    brush(ctx, [[x + s * 0.24, sho], [x - sw2 * s * 0.3, sho + s * 0.66]], s * 0.15, seed + 4, false);
-  }
-  // 頭
-  ctx.beginPath();
-  ctx.arc(x + (act === 3 ? s * 0.1 : 0), sho - s * 0.34, s * 0.25, 0, TAU);
-  ctx.fill();
-}
+// 人は motif.js が持っている（図の側からも「座る」「登る」で使うため）。
 
 // ---- 図の上に描き足す事（侵・喰・来） -----------------------------------
 export function evOverlay(ctx, S, E, ep) {
