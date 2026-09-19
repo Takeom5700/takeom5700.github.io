@@ -157,10 +157,9 @@ export function composeWork(seed) {
     if (prev && !s.lock && (prev.th !== theme || prev.sec !== sec)) pushApart(prev, s, null);
     // 同じ主題が続くときは色が動かないので、面の割り当てか反転を必ず替える。
     // これをしないと「切ったのに絵が変わらない断」が出る（実測 6.9%）。
-    if (prev && prev.m === s.m && prev.pal === s.pal
-        && prev.shade === s.shade && prev.inv === s.inv) {
-      if (s.shade === prev.shade) s.shade = (prev.shade + 1) % 3;
-      else s.inv = !prev.inv;
+    if (prev && prev.m === s.m && prev.pal === s.pal && prev.shade === s.shade) {
+      s.shade = (prev.shade + 1 + (s.inv === prev.inv ? 0 : 1)) % 3;
+      if (s.shade === prev.shade) s.inv = !prev.inv;
     }
     // 長い景は途中で色を跳ばす（止まって見えるのを防ぐ）
     if (s.dur >= 7) {
@@ -336,10 +335,13 @@ export function composeWork(seed) {
     }
     // **壊れていたものが、景を追うごとに組み上がっていく。**
     // 最後の数景では完全に元の姿に戻る（＝帰ってきたことが絵で分かる）
+    // **組み上がるのは頭の3景だけ。** 再現部は「帰ってきた」と分からせる場所なので、
+    // 半分も壊れたままだと、展開部がまだ続いているようにしか見えない
+    // （実際にそうなった）。だから半分組み上がった状態から始めて、すぐ元へ戻す。
+    const REBUILD = 3;
     for (let k = 0; k < recalls.length; k++) {
-      const u = recalls.length < 2 ? 1 : k / (recalls.length - 1);
-      recalls[k].evAt = Math.min(1, u * 1.25);
-      if (recalls[k].evAt > 0.98) recalls[k].ev = 0;
+      if (k >= REBUILD) { recalls[k].ev = 0; continue; }
+      recalls[k].evAt = 0.45 + (k / REBUILD) * 0.52;
     }
     // 第二主題：**主調で**帰る。これがソナタの解決で、終わった感じの出どころ
     const srcB = shots.expB || [];
@@ -384,6 +386,17 @@ export function composeWork(seed) {
     if (t < end) put(I, end - t, { pal: home, hand: 1, n: Math.round((COUNT[I.m][0] + COUNT[I.m][1]) / 2), gk: 0, mv: 0, lock: 1 }, 4, 0, 0.4);
   }
 
+  // **長い景で画面を止めない。** 5秒以上の景に「動かない」を許すと、
+  // 図が静止しているものだったとき 0.5秒で 0.16% しか動かず、
+  // 実測で「静止画に見える」に落ちる（実際に落ちた）。
+  // 動かない景を許さないだけでなく、**動く量にも下限を置く。**
+  // 寄りが 8秒で 19% しか無いと、面で描いた絵では画素がほとんど変わらない
+  // （実測 0.18%／0.5秒）。長い景ほど大きく動かす。
+  for (const s of shots) {
+    if (s.dur < 5) continue;
+    if (s.mv === 0) s.mv = pick(rng, [1, 2, 4]);
+    s.mvA = Math.max(s.mvA, 0.8);
+  }
   // 通し番号と閃光
   for (let i = 0; i < shots.length; i++) shots[i].id = i;
   placeFlash(shots, rng);

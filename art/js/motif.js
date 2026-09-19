@@ -546,7 +546,7 @@ function vessel(ctx, S, E) {
     const u = (i + 0.5) / n;
     const H = S.h * (n === 1 ? 0.42 + sh.k1 * 0.2 : 0.1 + nz01(E.fix + i * 7) * (0.18 + sh.k1 * 0.22));
     const x = S.w * (n === 1 ? 0.5 + sh.ox * 0.2 : u + nz(E.fix + i * 11) * 0.03);
-    const wob2 = Math.sin(tq * 0.9 + i) * S.h * 0.003;
+    const wob2 = Math.sin(tq * 0.9 + i) * S.h * 0.012;   // 息をさせる（止まって見せない）
     // 輪郭は高さの関数。口・肩・胴・高台
     const neck = 0.16 + nz01(E.fix + i * 13) * 0.3;
     const belly = 0.3 + nz01(E.fix + i * 17) * 0.36;

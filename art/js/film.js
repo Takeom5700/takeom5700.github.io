@@ -107,14 +107,18 @@ export function createFilm(canvas) {
     g.scale(sx, sy);
     g.translate(nz(seed + 7) * weave, nz(seed + 13) * weave);
 
-    // 画面そのものの動き。すべて段で刻む
+    // 画面そのものの動き。すべて段で刻む。
+    // **段の数は景の長さから決める。** 固定の段数にすると、長い景では
+    // 0.5秒のあいだ一度も段が変わらず、実測で「静止画に見える」に落ちる
+    // （8.2秒の景が 0.5秒で 0.17% しか動かなかった）。0.3秒に一度は必ず動かす。
+    const NS = clamp(Math.round(sh.dur / 0.3), 8, 72);
     g.save();
     const q = (v, n) => Math.round(v * n) / n;
     g.translate(S.w / 2, S.h / 2);
-    if (sh.mv === 1) g.scale(1 + q(p, 20) * sh.mvA * 0.55, 1 + q(p, 20) * sh.mvA * 0.55);
-    else if (sh.mv === 2) g.translate(q(p, 16) * sh.mvA * S.w * 0.28 * (sh.ox > 0 ? 1 : -1), 0);
+    if (sh.mv === 1) g.scale(1 + q(p, NS) * sh.mvA * 0.55, 1 + q(p, NS) * sh.mvA * 0.55);
+    else if (sh.mv === 2) g.translate(q(p, NS) * sh.mvA * S.w * 0.28 * (sh.ox > 0 ? 1 : -1), 0);
     else if (sh.mv === 3) g.translate(nz(seed + 3) * sh.mvA * S.h * 0.035, nz(seed + 5) * sh.mvA * S.h * 0.035);
-    else if (sh.mv === 4) g.rotate(q(p, 14) * sh.mvA * 0.26 * (sh.oy > 0 ? 1 : -1));
+    else if (sh.mv === 4) g.rotate(q(p, NS) * sh.mvA * 0.26 * (sh.oy > 0 ? 1 : -1));
     g.translate(-S.w / 2, -S.h / 2);
     // 事の変形（逃・芽）は図の直前に掛ける
     evTransform(g, S, sh, ep);
