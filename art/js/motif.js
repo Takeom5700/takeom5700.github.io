@@ -550,8 +550,8 @@ function seedDrift(ctx, S, E) {
     const arms = 11;
     for (let a2 = 0; a2 < arms; a2++) {
       const th = rot + (a2 / arms) * TAU;
-      brush(ctx, [[x, y], [x + Math.cos(th) * r, y + Math.sin(th) * r]], r * 0.2, E.seed + i * 7 + a2, true);
-      ctx.beginPath(); ctx.arc(x + Math.cos(th) * r, y + Math.sin(th) * r, r * 0.14, 0, TAU); ctx.fill();
+      brush(ctx, [[x, y], [x + Math.cos(th) * r, y + Math.sin(th) * r]], r * 0.26, E.seed + i * 7 + a2, true);
+      ctx.beginPath(); ctx.arc(x + Math.cos(th) * r, y + Math.sin(th) * r, r * 0.1, 0, TAU); ctx.fill();
     }
     brush(ctx, [[x, y], [x, y + r * 1.05]], r * 0.22, E.seed + i, true);
     ctx.beginPath(); ctx.arc(x, y + r * 1.05, r * 0.16, 0, TAU); ctx.fill();
@@ -875,7 +875,10 @@ export function ownEvent(ctx, S, E) {
     let L = ladderSpot(S, E, 0);
     for (let i = 1; i < n6; i++) { const l2 = ladderSpot(S, E, i); if (l2.len > L.len) L = l2; }
     const ca = Math.sin(L.tilt), sa = -Math.cos(L.tilt);
-    const t2 = clamp(ep, 0, 1) * 0.86;
+    // **枠の外まで登らせない。** 梯子は枠より高いので、素直に登らせると
+    // 途中で人が画面から消える（実際に消えた）。上端は枠の内側で止める
+    const tMax = clamp((L.y - S.h * 0.16) / Math.max(1, L.len * Math.cos(L.tilt)), 0.1, 0.86);
+    const t2 = clamp(ep, 0, 1) * tMax;
     const x = L.x + ca * L.len * t2, y = L.y + sa * L.len * t2;
     humanOn(ctx, col, x, y, Math.max(L.w * 0.78, S.h * 0.08), 0, 4, E.seed + 601);
 
@@ -897,7 +900,7 @@ export function ownEvent(ctx, S, E) {
 
   } else if (m === 10) {
     // 綿「芽」— 落ちた種が芽を出す
-    const gy = S.h * 0.98;
+    const gy = S.h * 0.94;
     const x = S.w * (0.5 + sh.ox * 0.28);
     const land = clamp(ep / 0.4, 0, 1);
     const sprout = clamp((ep - 0.4) / 0.6, 0, 1);
@@ -911,27 +914,33 @@ export function ownEvent(ctx, S, E) {
       }
     }
     if (sprout > 0) {
-      const hgt = S.h * 0.3 * sprout;
+      const hgt = S.h * 0.42 * sprout;
       const stem = [];
       for (let j = 0; j <= 6; j++) {
         const v = j / 6;
         stem.push([x + Math.sin(v * 2.2) * S.h * 0.02, gy - hgt * v]);
       }
-      brush(ctx, stem, S.h * 0.012, E.seed + 3, false);
+      brush(ctx, stem, S.h * 0.018, E.seed + 3, false);
       for (const s2 of [-1, 1]) {
         const lf = [];
         for (let j = 0; j <= 5; j++) {
           const v = j / 5;
-          lf.push([x + s2 * v * S.h * 0.09, gy - hgt * (0.55 + v * 0.35) - Math.sin(v * Math.PI) * S.h * 0.03]);
+          lf.push([x + s2 * v * S.h * 0.13, gy - hgt * (0.55 + v * 0.35) - Math.sin(v * Math.PI) * S.h * 0.045]);
         }
-        brush(ctx, lf, S.h * 0.02 * sprout, E.seed + 5 + s2, true);
+        brush(ctx, lf, S.h * 0.03 * sprout, E.seed + 5 + s2, true);
       }
     }
 
   } else if (m === 11) {
     // 階「昇」— 人が段を昇っていく
     const A = stairSpot(S, E, 0);
-    const k = clamp(ep, 0, 1) * (A.steps - 1);
+    // 枠の内側に居る段までしか昇らない
+    let top = A.steps - 1;
+    for (let i2 = 0; i2 < A.steps; i2++) {
+      const xx = A.bx + A.dir * (i2 + 0.5) * A.sw, yy = A.by - i2 * A.sh2;
+      if (xx < S.w * 0.04 || xx > S.w * 0.96 || yy < S.h * 0.14) { top = Math.max(1, i2 - 1); break; }
+    }
+    const k = clamp(ep, 0, 1) * top;
     const i = Math.floor(k);
     const x = A.bx + A.dir * (i + 0.5) * A.sw;
     const y = A.by - i * A.sh2;
