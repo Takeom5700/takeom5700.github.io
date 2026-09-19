@@ -25,7 +25,7 @@
 // 壊れたものが組み上がるから、帰ってきたことが効く。
 
 import { nz, nz01, snz, TAU, clamp, mix, brush, path } from './paint.js';
-import { MOTIFS, human } from './motif.js';
+import { MOTIFS, humanOn } from './motif.js';
 
 export const EV_NAMES = ['無', '崩', '組', '溶', '殖', '落', '侵', '喰', '逃', '来', '芽', '固'];
 // 11「固」は**図ごとの固有の事**で、motif.js の ownEvent が描く。
@@ -116,9 +116,8 @@ export function evOverlay(ctx, S, E, ep) {
     const s = S.h * (0.13 + sh.k1 * 0.12);
     const act = after < 0.25 ? 0 : (sh.ev2 % 3) + 1;
     ctx.save();
-    ctx.fillStyle = col.a;
     if (side > 0) { ctx.translate(x * 2, 0); ctx.scale(-1, 1); }
-    human(ctx, side > 0 ? x : x, gy, s, arrive < 1 ? arrive * 6 : 0, act, E.seed + 313);
+    humanOn(ctx, col, x, gy, s, arrive < 1 ? arrive * 6 : 0, act, E.seed + 313);
     ctx.restore();
   }
 }

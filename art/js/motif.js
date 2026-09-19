@@ -73,6 +73,21 @@ export function human(ctx, x, y, s, walk, act, seed) {
   ctx.fill();
 }
 
+// 人を、どんな地の上でも読めるように置く。
+// **差し色そのままで置かないこと。** 地の割りに差し色を使っている景では
+// 赤の上に赤の人を置くことになり、完全に消える（実際に消えた）。
+// 地の色で細く縁取ってから、図の色で本体を描く。これで
+// 地・図・差し色のどの面の上に居ても、必ずどちらかが効く。
+export function humanOn(ctx, col, x, y, s, walk, act, seed) {
+  ctx.save();
+  ctx.translate(x, y); ctx.scale(1.07, 1.07); ctx.translate(-x, -y);
+  ctx.fillStyle = col.g;
+  human(ctx, x, y, s, walk, act, seed);
+  ctx.restore();
+  ctx.fillStyle = col.i;
+  human(ctx, x, y, s, walk, act, seed);
+}
+
 // ---- 群 ---------------------------------------------------------------
 // 数の暴力。1つでは何でもないものが、300 あると意味を持つ。
 function swarm(ctx, S, E) {
@@ -714,8 +729,7 @@ function wave(ctx, S, E) {
   if (E.own) {
     const gx = S.w * (0.5 + sh.ox * 0.25);
     const gy = S.h * (0.74 - clamp(E.ep, 0, 1) * 0.06);
-    ctx.fillStyle = col.l;
-    human(ctx, gx, gy, S.h * (0.1 + sh.k1 * 0.05), 0,
+    humanOn(ctx, { g: col.g, i: col.l }, gx, gy, S.h * (0.1 + sh.k1 * 0.05), 0,
       E.ep > 0.55 ? 3 : (E.ep > 0.3 ? 2 : 0), E.seed + 911);
   }
   const crest = waveLayer(ctx, S, E, S.h * 1.06, 0.95, col.i, ph, E.seed + 2);
@@ -852,29 +866,34 @@ export function ownEvent(ctx, S, E) {
     const y = horizon + Math.pow(u, 1.7) * (S.h - horizon) * 1.02;
     const s = S.h * 0.02 + Math.pow(u, 1.9) * S.h * (0.14 + sh.k2 * 0.24);
     const x = S.w * (0.5 + sh.ox * 0.2) + nz(E.fix + 3) * S.w * 0.06;
-    ctx.fillStyle = col.a;
-    human(ctx, x, y, s, ep * 7, ep > 0.82 ? 2 : 0, E.seed + 501);
+    humanOn(ctx, col, x, y, s, ep * 7, ep > 0.82 ? 2 : 0, E.seed + 501);
 
   } else if (m === 6) {
     // 梯「登」— 人が梯子を登る
-    const L = ladderSpot(S, E, 0);
+    // いちばん大きい梯子を登る（小さいものだと人が見えない）
+    const n6 = Math.max(1, Math.min(sh.n, 10));
+    let L = ladderSpot(S, E, 0);
+    for (let i = 1; i < n6; i++) { const l2 = ladderSpot(S, E, i); if (l2.len > L.len) L = l2; }
     const ca = Math.sin(L.tilt), sa = -Math.cos(L.tilt);
     const t2 = clamp(ep, 0, 1) * 0.86;
     const x = L.x + ca * L.len * t2, y = L.y + sa * L.len * t2;
-    ctx.fillStyle = col.a;
-    human(ctx, x, y, L.w * 0.72, 0, 4, E.seed + 601);
+    humanOn(ctx, col, x, y, Math.max(L.w * 0.78, S.h * 0.08), 0, 4, E.seed + 601);
 
   } else if (m === 7) {
-    // 椅「座」— 人が歩いてきて、その椅子に座る
-    const C = chairSpot(S, E, Math.floor(nz01(E.fix + 13) * Math.max(1, Math.min(sh.n, 16))));
+    // 椅「座」— 人が歩いてきて、その椅子に座る。
+    // **いちばん手前（大きい）椅子を選ぶ。** 奥の小さい椅子に座られても、
+    // 人が豆粒になって何が起きたか分からない（実際に見えなかった）。
+    const n7 = Math.max(1, Math.min(sh.n, 16));
+    let C = chairSpot(S, E, 0);
+    for (let i = 1; i < n7; i++) { const c2 = chairSpot(S, E, i); if (c2.s > C.s) C = c2; }
+    // 大きさは椅子に合わせる（下限を置くと人が椅子より大きくなって嘘になる）
+    const hs = C.s * 0.95;
     const walk = clamp(ep / 0.6, 0, 1);
     const side = nz(E.fix + 17) > 0 ? 1 : -1;
-    const x = mix(C.x + side * S.w * 0.55, C.x + C.s * 0.1, walk);
-    // 座面の高さに腰を置く（座るのは歩き終わってから）
+    const x = mix(C.x + side * S.w * 0.45, C.x + C.s * 0.12, walk);
     const seated = ep > 0.62;
-    const y = seated ? C.y + C.s * 0.95 : C.y + C.s * 1.0;
-    ctx.fillStyle = col.a;
-    human(ctx, x, y, C.s * 0.95, walk < 1 ? walk * 7 : 0, seated ? 1 : 0, E.seed + 701);
+    const y = Math.min(S.h * 0.99, seated ? C.y + hs * 0.95 : C.y + hs * 1.0);
+    humanOn(ctx, col, x, y, hs, walk < 1 ? walk * 7 : 0, seated ? 1 : 0, E.seed + 701);
 
   } else if (m === 10) {
     // 綿「芽」— 落ちた種が芽を出す
@@ -916,8 +935,7 @@ export function ownEvent(ctx, S, E) {
     const i = Math.floor(k);
     const x = A.bx + A.dir * (i + 0.5) * A.sw;
     const y = A.by - i * A.sh2;
-    ctx.fillStyle = col.a;
-    human(ctx, x, y, A.sh2 * 1.5, ep * 9, 0, E.seed + 801);
+    humanOn(ctx, col, x, y, Math.max(A.sh2 * 1.6, S.h * 0.08), ep * 9, 0, E.seed + 801);
 
   } else if (m === 12) {
     // 管「漏」— 継手が破れて、噴き出して溜まる

@@ -41,6 +41,7 @@ for (const it of list) {
     hand: parseInt(flag('hand', '0'), 10),
     pal: parseInt(flag('pal', String(it.m % 12)), 10),
     gk: parseInt(flag('gk', '1'), 10),
+    ev: parseInt(flag('ev', '0'), 10),
   }, it.over);
   await page.evaluate(`window.__mumei.demo(${it.m}, ${it.p}, ${JSON.stringify(over)})`);
   const buf = await shoot();
