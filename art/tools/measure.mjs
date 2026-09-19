@@ -1,83 +1,101 @@
-import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import { composeWork } from '../js/compose.js';
+// 焼いた絵を測る。**「そう書いたか」ではなく「そう見えるか」を見る。**
+//
+//   node art/tools/measure.mjs [種]
+//
+// check-axis.mjs は譜しか見られない。譜が正しくても、
+// 絵が壁紙で、切っても絵が変わらなければ、それは退屈な映像である。
+// ここで測るのは4つ。
+//
+//   断 … 切れ目をまたいで、絵がどれだけ変わるか（変わらない断は断ではない）
+//   動 … 同じ景の中で、0.5秒でどれだけ動くか（静止画に見えないか）
+//   対比 … 1枚の中に、違う性格の区画があるか（tileVar）
+//   種 … 同じ引数なら同じ絵か
+
+import { open } from './browser.mjs';
 import { analyse, meanAbsDiff, OK } from './metrics.mjs';
 
 const SEED = parseInt(process.argv[2] || '0', 10);
-const SIZE = '512x288';
-const FRAMES = 12, STEPS = 140;
-const OVER = 'grain:0';
-const DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'mumei-'));
-const HERE = path.dirname(new URL(import.meta.url).pathname);
+const has = (n) => process.argv.includes('--' + n);
+const W = 480, H = 270;
 
-function shot(name, t, over = OVER) {
-  const out = path.join(DIR, name + '.png');
-  execFileSync(path.join(HERE, 'capture.sh'),
-    [out, String(t), SIZE, String(FRAMES), String(STEPS), String(SEED), over],
-    { stdio: ['ignore', 'ignore', 'inherit'] });
-  return out;
-}
+const page = await open(`export=1&seed=${SEED}&w=${W}&h=${H}`, { software: has('sw'), size: `${W},${H}` });
+const meta = page.meta;
+const shots = JSON.parse(await page.evaluate('JSON.stringify(window.__mumei.list())'));
+const shoot = async (t) => {
+  let buf = null;
+  page.setSink((b) => { buf = b; });
+  await page.evaluate(`window.__mumei.push(${t})`);
+  return buf;
+};
 
-const look = (f) => analyse(fs.readFileSync(f));
-const diff = (a, b) => meanAbsDiff(fs.readFileSync(a), fs.readFileSync(b));
-
-const work = composeWork(SEED);
-console.log(`${work.title}（種 ${SEED}）を ${SIZE} / 蓄積${FRAMES}枚 / ${STEPS}歩で測る`);
-console.log('');
-console.log('楽章      時刻   闇:中央値 上位1% |  尺:細部  構造  | 異:空らしさ 彩度 | 判定');
-
+console.log(`${meta.title}（種 ${SEED}）を ${W}×${H} で測る  ${meta.shots}景 / ${(meta.total / 60).toFixed(1)}分`);
 let fail = 0;
-const times = [];
-for (const m of work.movements) {
-  const t = m.start + m.dur * 0.55;
-  times.push([m.name, t]);
-  const a = look(shot('m' + m.index, t));
-  if (!a.okDark || !a.okScale || !a.okOther) fail++;
-  console.log(
-    `${m.name.padEnd(4)} ${String(Math.round(t)).padStart(6)}s  ` +
-    `${a.median.toFixed(4).padStart(8)} ${a.p99.toFixed(3).padStart(6)} | ` +
-    `${a.fine.toFixed(4).padStart(7)} ${a.coarse.toFixed(4).padStart(6)} | ` +
-    `${a.skyRamp.toFixed(2).padStart(9)} ${a.chroma.toFixed(2).padStart(5)} | ` +
-    `${a.okDark ? '闇○' : '闇×'} ${a.okScale ? '尺○' : '尺×'} ${a.okOther ? '異○' : '異×'}`
-  );
-}
 
-// 間と動。**速いことと切れていることは別。**
-// カットは Δt をいくら小さくしても差が消えない。運動は消える。
-// だから極小の間隔（1/96秒）でカットを見て、0.5秒で「動いているか」を見る。
+// ---- 断 ----------------------------------------------------------------
+// 切れ目の 1/96 秒前後を測る。**この作品ではここが大きいほど正しい。**
+// （第一版は逆で、ここが小さいことを法にしていた。それが退屈の原因だった。）
 console.log('');
-for (const [name, t] of times) {
-  const a = shot('a', t);
-  const tiny = diff(a, shot('b', t + 1 / 96));
-  const half = diff(a, shot('c', t + 0.5));
-  const okCut = tiny <= OK.cutTiny;
-  const okMove = half >= OK.moveHalf;
-  if (!okCut || !okMove) fail++;
-  console.log(
-    `間/動 ${name.padEnd(3)} ${String(Math.round(t)).padStart(4)}s  ` +
-    `1/96秒差 ${(tiny * 100).toFixed(2).padStart(5)}%（カットなら桁が変わる）  ` +
-    `0.5秒差 ${(half * 100).toFixed(2).padStart(5)}%  ` +
-    `${okCut ? '間○' : '間×'} ${okMove ? '動○' : '動× 静止画に見える'}`
-  );
+console.log('断（切れ目をまたぐ変化。大きいほど切れている）');
+const picks = [];
+for (let i = 1; i < shots.length; i += Math.max(1, Math.floor(shots.length / 8))) picks.push(shots[i]);
+let cutMin = 1, cutSum = 0;
+for (const s of picks.slice(0, 8)) {
+  const d = meanAbsDiff(await shoot(s.start - 1 / 96), await shoot(s.start + 1 / 96));
+  cutMin = Math.min(cutMin, d); cutSum += d;
+  console.log(`  ${String(s.start.toFixed(1)).padStart(6)}s → ${s.name}  ${(d * 100).toFixed(1).padStart(5)}%  ${d >= OK.cutJump ? '○' : '×'}`);
+  if (d < OK.cutJump) fail++;
+}
+console.log(`  平均 ${(cutSum / Math.min(8, picks.length) * 100).toFixed(1)}%（${OK.cutJump * 100}% 以上が合格）`);
+
+// ---- 動 ----------------------------------------------------------------
+console.log('');
+console.log('動（同じ景の中で 0.5 秒に動く量）');
+const longs = shots.filter((s) => s.dur > 4).slice(0, 5);
+for (const s of longs) {
+  const t = s.start + s.dur * 0.3;
+  const d = meanAbsDiff(await shoot(t), await shoot(t + 0.5));
+  console.log(`  ${s.name} ${s.dur.toFixed(1)}s ${s.fps}コマ  ${(d * 100).toFixed(2).padStart(5)}%  ${d >= OK.moveHalf ? '○' : '× 静止画に見える'}`);
+  if (d < OK.moveHalf) fail++;
 }
 
-// 対照：本当にカットしたらどの値になるか。
-// これを出さないと、上の数字が「小さい」と言えているのか分からない。
+// ---- 対比（1枚の中） ----------------------------------------------------
+console.log('');
+console.log('対比（1枚の中）  色の幅 区画のばらつき 彩度 図の量');
+let vivid = 0, n = 0;
+for (let i = 0; i < 10; i++) {
+  const s = shots[Math.floor((i + 0.5) / 10 * shots.length)];
+  const a = analyse(await shoot(s.start + s.dur * 0.5));
+  n++;
+  if (a.okColor) vivid++;
+  const ok = a.okContrast || s.empty;
+  if (!ok) fail++;
+  console.log(`  ${String(Math.round(s.start)).padStart(5)}s ${s.name}  ${a.poster.toFixed(2)}  ${a.tileVar.toFixed(2)}  ${a.chroma.toFixed(2)}  ${a.cover.toFixed(2)}  ${ok ? '○' : '×'}`);
+}
+const vs = vivid / n;
+console.log(`  原色の景: ${(vs * 100) | 0}%（${OK.vividShare * 100}% 以上が合格）`);
+if (vs < OK.vividShare) fail++;
+
+// ---- 冒頭10秒 ----------------------------------------------------------
 {
-  const a = shot('x1', work.movements[1].start + work.movements[1].dur * 0.55);
-  const b = shot('x2', work.movements[3].start + work.movements[3].dur * 0.55);
-  console.log(`\n（対照）別の楽章どうしを並べた場合は ${(diff(a, b) * 100).toFixed(2)}% —— カットはこの桁になる`);
+  const head = shots.filter((s) => s.start < 10);
+  let sum = 0;
+  for (let i = 1; i < head.length; i++) {
+    sum += meanAbsDiff(await shoot(head[i].start - 1 / 96), await shoot(head[i].start + 1 / 96));
+  }
+  console.log('');
+  console.log(`冒頭10秒: ${head.length}景 / 断のたびに平均 ${(sum / Math.max(1, head.length - 1) * 100).toFixed(0)}% 変わる`);
+  if (head.length < 4) fail++;
 }
 
-// 種：同じ引数なら同じ絵
-const d1 = shot('d1', times[1][1]), d2 = shot('d2', times[1][1]);
-const same = fs.readFileSync(d1).equals(fs.readFileSync(d2));
-if (!same) fail++;
-console.log(`種  同じ引数の再現  ${same ? '一致（バイト単位）' : '×  一致しない'}`);
+// ---- 種 ----------------------------------------------------------------
+{
+  const a = await shoot(61.234), b = await shoot(61.234);
+  const same = Buffer.from(a).equals(Buffer.from(b));
+  console.log(`種: 同じ引数の再現  ${same ? '一致（バイト単位）' : '×  一致しない'}`);
+  if (!same) fail++;
+}
 
-fs.rmSync(DIR, { recursive: true, force: true });
+page.close();
 console.log('');
 if (fail) { console.error(`基軸に届いていない項目が ${fail} 件ある`); process.exit(1); }
 console.log('焼いた絵は基軸を満たしている。');

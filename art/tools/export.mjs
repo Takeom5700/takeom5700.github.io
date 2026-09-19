@@ -10,11 +10,12 @@
 // 仕組み:
 //   頁を1回だけ開いて、CDP 経由で時刻を指定して1枚ずつ焼かせ、
 //   PNG をそのまま ffmpeg の標準入力に流す。連番をディスクに置かないので、
-//   8分半（12,000枚）でも容量を食わない。
+//   7分半（11,000枚）でも容量を食わない。
 //   音は OfflineAudioContext で先にまとめて焼いて WAV にする（画面収録は要らない）。
 //
-// 速さはほぼ GPU 次第。ソフトウェア描画だと1枚十数秒かかるので、
-// 通しで焼くなら GPU のある機械で回すこと。
+// **蓄積（モーションブラー）はしない。** 絵はコマ打ち（8／12／24）なので、
+// ブラーを足すと早期アニメーションの呼吸が消えてただの CG になる。
+// 1枚が速いので、この環境でも通しで焼ける。
 
 import { spawn, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -25,7 +26,7 @@ import { open } from './browser.mjs';
 const argv = process.argv.slice(2);
 const out = argv.find((a) => !a.startsWith('--'));
 if (!out) {
-  console.error('使い方: node art/tools/export.mjs 出力.mp4 [--from 0] [--to 504] [--fps 24] [--size 2560x1440] [--seed 0] [--frames 24] [--steps 176] [--no-audio] [--sw] [--jpeg] [--verbose]');
+  console.error('使い方: node art/tools/export.mjs 出力.mp4 [--from 0] [--to 450] [--fps 24] [--size 2560x1440] [--seed 0] [--no-audio] [--sw] [--jpeg] [--verbose]');
   process.exit(2);
 }
 const flag = (name, def) => {
@@ -35,16 +36,13 @@ const flag = (name, def) => {
 const has = (name) => argv.includes('--' + name);
 
 const FROM = parseFloat(flag('from', '0'));
-const TO = parseFloat(flag('to', '504'));
+const TO = parseFloat(flag('to', '0'));   // 0 なら譜の長さいっぱい
 const FPS = parseFloat(flag('fps', '24'));
 const SIZE = flag('size', '2560x1440');
 const SEED = parseInt(flag('seed', '0'), 10);
-const ACC = parseInt(flag('frames', '24'), 10);
-const STEPS = parseInt(flag('steps', '176'), 10);
 const WANT_AUDIO = !has('no-audio');
 const JPEG = has('jpeg');
 const [W, H] = SIZE.split('x').map((v) => parseInt(v, 10));
-const N = Math.max(1, Math.round((TO - FROM) * FPS));
 
 // ---- ffmpeg を選ぶ -------------------------------------------------------
 // 手元の ffmpeg があればそちらを使う（libx264 と aac が入っている）。
@@ -81,7 +79,7 @@ step('ffmpeg:', ff.bin, ff.x264 ? 'H.264' : ff.vpx ? 'VP8' : '?', ff.aac ? '+AAC
   '／入力', ff.png ? 'PNG' : ff.mjpeg ? 'JPEG のみ' : 'なし');
 
 const page = await open(
-  `export=1&seed=${SEED}&w=${W}&h=${H}&frames=${ACC}&steps=${STEPS}`,
+  `export=1&seed=${SEED}&w=${W}&h=${H}`,
   {
     software: has('sw'),
     size: Math.min(W, 1600) + ',' + Math.min(H, 900),
@@ -91,8 +89,10 @@ const page = await open(
 const meta = page.meta;
 console.log(`描画: ${page.software ? 'ソフトウェア（遅い）' : 'GPU'}`);
 
-console.log(`${meta.title}（種 ${SEED}）  ${W}×${H} / ${FPS}fps / 蓄積${ACC}枚 / ${STEPS}歩`);
-console.log(`${FROM}〜${TO}秒 = ${N}枚   楽章: ${meta.movements.map((m) => m.name).join('→')}`);
+const END = TO > 0 ? TO : meta.total;
+const N = Math.max(1, Math.round((END - FROM) * FPS));
+console.log(`${meta.title}（種 ${SEED}）  ${W}×${H} / ${FPS}fps  ${meta.shots}景`);
+console.log(`${FROM}〜${END}秒 = ${N}枚   楽章: ${meta.movements.map((m) => m.name).join('→')}`);
 
 // 音を先に焼く（映像と一度に多重化するため）
 let wavPath = null;
@@ -102,7 +102,7 @@ if (WANT_AUDIO) {
   wavPath = out.replace(/\.[^.]+$/, '') + '.wav';
   const fd = fs.openSync(wavPath, 'w');
   page.setSink((buf) => { fs.writeSync(fd, buf); });
-  const info = await page.evaluate(`window.__mumei.audio(${FROM}, ${TO})`);
+  const info = await page.evaluate(`window.__mumei.audio(${FROM}, ${END})`);
   fs.closeSync(fd);
   page.setSink(null);
   if (info) {
