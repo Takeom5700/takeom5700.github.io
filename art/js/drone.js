@@ -6,15 +6,18 @@
 //
 // メロディも拍も無い。持続音だけ。拍が入ると体が数えはじめて、
 // 時間が「長さ」として意識される。それは基軸「三・間」の逆をやることになる。
+//
+// 書き出しのために、時刻を明示して予約できるようにしてある
+// （OfflineAudioContext に同じ譜を流せば、同じ音が必ず出る）。
 
 import { makeRng } from './rng.js';
 
 const RATIOS = [1, 2, 2.996, 4, 5.04, 6, 7.98, 10.06, 12.1, 15.9];
 
-export function createDrone(seed) {
+export function createDrone(seed, given) {
   const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return null;
-  const ctx = new AC();
+  if (!given && !AC) return null;
+  const ctx = given || new AC();
   const rng = makeRng((seed | 0) ^ 0x2f6b1d);
 
   const master = ctx.createGain();
@@ -71,11 +74,16 @@ export function createDrone(seed) {
   const subG = ctx.createGain(); subG.gain.value = 0;
   subOsc.connect(subG); subG.connect(master); subOsc.start();
 
-  let muted = false, level = 0.26;
+  let muted = false, level = 0.55;   // 書き出した音が YouTube で十分な音量になる値
   const T = 0.7; // 追従の時定数（秒）。速く動かすと音が「切り替わった」と聞こえる
 
+  // 予約する時刻。実時間なら「いま」、書き出しなら譜の時刻をそのまま渡す
+  let at = null;
+  // 途中から書き出すとき、最初の1回だけは即座に合わせる。
+  // 追従に任せると2秒ほど音が立ち上がらず、抜き出しの頭が欠ける。
+  let snap = false;
   function set(node, v, tc) {
-    node.setTargetAtTime(v, ctx.currentTime, tc === undefined ? T : tc);
+    node.setTargetAtTime(v, at === null ? ctx.currentTime : at, snap ? 0.001 : (tc === undefined ? T : tc));
   }
 
   return {
@@ -83,7 +91,10 @@ export function createDrone(seed) {
     resume() { if (ctx.state !== 'running') ctx.resume(); },
     get muted() { return muted; },
     toggleMute() { muted = !muted; set(master.gain, muted ? 0 : level, 0.5); return muted; },
-    update(a, env, t) {
+    // when を渡すとその時刻に予約する（書き出し用）。省略すれば「いま」
+    update(a, env, t, when, snapNow) {
+      at = when === undefined ? null : when;
+      snap = !!snapNow;
       const on = muted ? 0 : level * env;
       set(master.gain, on, 0.6);
       const f0 = a.tone;
@@ -104,6 +115,7 @@ export function createDrone(seed) {
       set(subG.gain, a.sub * 0.20 * a.level);
       set(subOsc.frequency, f0 * 0.5, 1.6);
       set(lp.frequency, 620 + a.spectrum * 2600 + a.shimmer * 3400, 1.0);
+      at = null; snap = false;
     },
   };
 }

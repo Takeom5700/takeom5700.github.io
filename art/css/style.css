@@ -13,9 +13,13 @@ html, body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* 16:9 の枠を画面の中央に置く。余りは黒のまま。
+   画角を画面の形に合わせて伸ばすと端末ごとに別の構図になるので、
+   枠を固定して、余白を捨てる側を選んでいる。 */
 #stage {
-  position: fixed; inset: 0;
-  width: 100%; height: 100%;
+  position: fixed;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
   display: block;
   background: #000;
 }

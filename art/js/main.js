@@ -10,13 +10,46 @@ import { createRenderer } from './render.js';
 import { createDrone } from './drone.js';
 import { makeRng } from './rng.js';
 
+// AudioBuffer を 16bit PCM の WAV（バイト列）にする。
+// ここで作っておけば、外の道具は ffmpeg の音声encoderを要らない。
+function wavBytes(buf) {
+  const ch = buf.numberOfChannels, n = buf.length, sr = buf.sampleRate;
+  const bytes = new Uint8Array(44 + n * ch * 2);
+  const dv = new DataView(bytes.buffer);
+  const tag = (o, str) => { for (let i = 0; i < str.length; i++) bytes[o + i] = str.charCodeAt(i); };
+  tag(0, 'RIFF'); dv.setUint32(4, 36 + n * ch * 2, true); tag(8, 'WAVEfmt ');
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, ch, true);
+  dv.setUint32(24, sr, true); dv.setUint32(28, sr * ch * 2, true);
+  dv.setUint16(32, ch * 2, true); dv.setUint16(34, 16, true);
+  tag(36, 'data'); dv.setUint32(40, n * ch * 2, true);
+  const src = [];
+  for (let c = 0; c < ch; c++) src.push(buf.getChannelData(c));
+  let o = 44;
+  for (let i = 0; i < n; i++) {
+    for (let c = 0; c < ch; c++, o += 2) {
+      const v = Math.max(-1, Math.min(1, src[c][i]));
+      dv.setInt16(o, v < 0 ? v * 0x8000 : v * 0x7fff, true);
+    }
+  }
+  return bytes;
+}
+
+// 大きいものは配ってくれている所へそのまま POST する。
+// CDP 経由で base64 文字列として返すと、1MB を超えたあたりで
+// 受け渡しが詰まって永久に返ってこなくなる（実際に詰まった）。
+async function sink(blob) {
+  const res = await fetch('/__sink', { method: 'POST', body: blob });
+  if (!res.ok) throw new Error('受け取り先が ' + res.status);
+  return blob.size;
+}
+
 const canvas = document.getElementById('stage');
 const veil = document.getElementById('veil');
 const hint = document.getElementById('hint');
 const hud = document.getElementById('hud');
 const q = new URLSearchParams(location.search);
 
-const renderer = createRenderer(canvas, { readback: q.has('t') });
+const renderer = createRenderer(canvas, { readback: q.has('t') || q.has('export') });
 if (!renderer) {
   hint.innerHTML = 'この端末では WebGL2 が使えないため、映像を出せません。<br>' +
     '<span class="sub">別のブラウザか端末で開いてください</span>';
@@ -109,11 +142,34 @@ function start() {
     renderer.reset();
   }
 
+  // 画面の形に関わらず 16:9 に収める。
+  // 画角を画面に合わせて広げると、端末ごとに別の構図になってしまう。
+  // 枠を固定しておけば、縦持ちでも横長のモニタでも、
+  // 書き出した静止画とまったく同じ絵が出る。
+  const ASPECT = 16 / 9;
   function fit() {
-    renderer.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1);
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w = Math.max(64, Math.round(Math.min(vw, vh * ASPECT)));
+    const h = Math.max(36, Math.round(Math.min(vh, vw / ASPECT)));
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    renderer.resize(w, h, window.devicePixelRatio || 1);
   }
   window.addEventListener('resize', fit);
   fit();
+
+  // 視点は必ず固定歩幅で積む（でないと機械ごとに別の絵になる）。
+  // 積みきれたら true。再生では歩数に上限を置き、書き出しでは置かない。
+  function advanceCamera(target, maxSteps) {
+    let n = 0;
+    while (camT + CAM_DT <= target) {
+      if (maxSteps && n++ >= maxSteps) return false;
+      const rc = resolve(work, camT);
+      stepCamera(cam, rc.cam, camT);
+      camT += CAM_DT;
+    }
+    return true;
+  }
 
   function draw() {
     const r = resolve(work, t);
@@ -168,7 +224,7 @@ function start() {
     renderer.setStill(true, steps);
     veil.style.opacity = '0';
     hint.remove();
-    document.getElementById('back').remove();   // 静止画に頁の部品を混ぜない
+    document.getElementById('back')?.remove();  // 静止画に頁の部品を混ぜない
     hud.remove();
     seek(stillT);
     // 蓄積を同期で焼き切る。読み込み完了より前に絵を置いておきたいので
@@ -203,14 +259,8 @@ function start() {
     }
     if (!paused) {
       t += dt;
-      // 視点は必ず固定歩幅で積む（でないと機械ごとに別の絵になる）
-      let guard = 0;
-      while (camT + CAM_DT <= t && guard++ < 60) {
-        const rc = resolve(work, camT);
-        stepCamera(cam, rc.cam, camT);
-        camT += CAM_DT;
-      }
-      if (guard >= 60) camT = t;
+      // 追いつけない機械では時計に合わせる（再生は止めない）
+      if (!advanceCamera(t, 60)) camT = t;
       if (t >= work.total) { rest = REST; return; }
     }
     draw();
@@ -232,6 +282,75 @@ function start() {
     try { drone = createDrone(work.seed); if (drone) drone.resume(); } catch (e) { drone = null; }
     last = performance.now();
     requestAnimationFrame(loop);
+  }
+
+  // ---- 書き出し（tools/export.mjs が使う） ----
+  // 頁を1回だけ開いて、外から時刻を指定して1枚ずつ焼かせる。
+  // 毎フレーム別々にブラウザを立ち上げるより、場のテクスチャを
+  // 作り直さずに済むぶん速い。絵は静止画モードと同じ品質。
+  if (q.get('export') === '1') {
+    const frames = parseInt(q.get('frames') || '', 10) || 20;
+    const steps = parseInt(q.get('steps') || '', 10) || 176;
+    const w = parseInt(q.get('w') || '', 10) || 1920;
+    const h = parseInt(q.get('h') || '', 10) || Math.round(w * 9 / 16);
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    window.removeEventListener('resize', fit);
+    renderer.resize(w, h, 1);
+    renderer.setStill(true, steps);
+    veil.style.opacity = '0';
+    hint.remove();
+    document.getElementById('back')?.remove();
+    hud.remove();
+
+    window.__mumei = {
+      meta: {
+        title: work.title, seed: work.seed, total: work.total,
+        movements: work.movements.map((m) => ({ name: m.name, start: m.start, dur: m.dur })),
+        size: [w, h], frames, steps,
+      },
+      // 時刻 t の1枚を焼く。前に進むだけなら視点を積み直さない
+      frame(to) {
+        if (to < camT) { cam = cameraAt(work, to); camT = Math.floor(to / CAM_DT) * CAM_DT; }
+        else advanceCamera(to, 0);
+        t = to;
+        renderer.reset();
+        for (let i = 0; i < frames; i++) draw();
+        return true;
+      },
+      png(mime, quality) { return canvas.toDataURL(mime || 'image/png', quality); },
+      // 1枚焼いて、そのまま外へ送る（base64 を通さない）
+      async push(to, mime, quality) {
+        this.frame(to);
+        const blob = await new Promise((r) => canvas.toBlob(r, mime || 'image/png', quality));
+        return sink(blob);
+      },
+      // 音を from〜to 秒ぶんまとめて焼く。譜が同じなら必ず同じ音になる。
+      // 位相を繋ぐため、途中で切らずに一度に焼いて頁の側に置く。
+      async audio(from, to, rate) {
+        const sr = rate || 48000;
+        const dur = Math.max(0.05, to - from);
+        const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        if (!OC) return null;
+        const oc = new OC(2, Math.ceil(sr * dur), sr);
+        const d = createDrone(work.seed, oc);
+        if (!d) return null;
+        // この間隔で予約する。持続音で、譜の変化も十数秒かけて溶けるので
+        // 2秒刻みで足りる（追従の時定数が0.6〜1.6秒あるので段は聞こえない）。
+        // 細かくしても音はほぼ変わらず、予約イベントだけ増える
+        // （8分半なら 6千件 と 5万件 の差になる）。
+        const STEP = parseFloat(q.get('astep') || '') || 2.0;
+        for (let x = 0; x <= dur; x += STEP) {
+          const r = resolve(work, Math.min(from + x, work.total));
+          d.update(r.audio, r.env, from + x, x, x === 0);
+        }
+        const buf = await oc.startRendering();
+        const bytes = wavBytes(buf);
+        await sink(new Blob([bytes], { type: 'audio/wav' }));
+        return { bytes: bytes.length, seconds: buf.length / sr, rate: sr, channels: buf.numberOfChannels };
+      },
+    };
+    return;
   }
 
   // 検証用: ?auto=1 で一触りを待たずに始める。
