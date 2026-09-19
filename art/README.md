@@ -445,19 +445,33 @@ art/tools/capture.sh out.png 41 1920x1080 0
 `1`〜`5` 部へ飛ぶ／`space` 止める／`f` 全画面／`m` 消音／
 `n` 次の種へ／`h` 数値／`←→` 20秒
 
-**`v` 映像を保存／`s` 音楽を保存。** 絵と音は**別々のファイル**で出る
-（`.webm` と `.wav`）。音だけ使いたい・音だけ差し替えたいときのため。
-映像は頭から通しで記録するので、保存には作品の長さぶん（約5分）かかる。
-手元で1本にまとめるなら:
+**保存は3通り。** 用途が違うので混ぜていない。
+
+| 鍵 | 出るもの | 何のため |
+|---|---|---|
+| `v` | **映像＋音楽**（`.webm`・VP9＋Opus） | そのまま観る・そのまま上げる |
+| `b` | 映像だけ（`.webm`・音なし） | あとで別の音を当てる |
+| `s` | 音楽だけ（`.wav`・48kHz ステレオ） | 音だけ使う・音だけ差し替える |
+
+`v` と `b` は頭から通しで記録するので、**作品の長さぶん（約5分）かかる**
+（MediaRecorder は実時間でしか録れない）。途中でもう一度押すと、そこまでを保存して止まる。
+`s` は実時間より速く焼ける（OfflineAudioContext）。
+
+道具からも同じものが出る。`record.mjs` は頁と**同じ道**を通るので中身が一致する。
+
+```bash
+node art/tools/record.mjs 無銘-004.webm --seed 4              # 映像＋音楽（実時間）
+node art/tools/record.mjs 無銘-004.webm --seed 4 --no-audio   # 映像だけ
+node art/tools/record.mjs 無銘-004.wav  --seed 4 --music      # 音楽だけ
+node art/tools/export.mjs 無銘-004.mp4  --seed 4 --split      # 速い。映像と音を別々に
+```
+
+`export.mjs` は絵を1枚ずつ焼いて ffmpeg に流すので**実時間より速い**が、
+手元の ffmpeg に音声encoderが無いと音を混ぜられない。
+1本にまとめたいときは:
 
 ```bash
 ffmpeg -i 無銘-004-映像.webm -i 無銘-004-音楽.wav -c:v copy -c:a aac -b:a 320k 完成.mp4
-```
-
-道具から焼くときも `--split` で別々に出せる:
-
-```bash
-node art/tools/export.mjs 無銘-004.mp4 --seed 4 --split
 ```
 
 ---

@@ -82,8 +82,16 @@ function start() {
     const h = Math.max(36, Math.round(Math.min(vh, vw / ASPECT)));
     film.resize(w, h, window.devicePixelRatio || 1);
   }
-  window.addEventListener('resize', fit);
-  fit();
+  // ?w=&h= があれば枠の大きさを固定する（録るときに窓の都合で大きさが
+  // 変わらないようにするため。実測で 640×360 の窓から 299×168 が出た）。
+  const fixedW = q.has('w') ? parseInt(q.get('w'), 10) : 0;
+  if (fixedW > 0) {
+    const fixedH = parseInt(q.get('h') || '', 10) || Math.round(fixedW * 9 / 16);
+    film.resize(fixedW, fixedH, 1);
+  } else {
+    window.addEventListener('resize', fit);
+    fit();
+  }
 
   function seek(to) {
     t = Math.max(0, Math.min(to, work.total));
@@ -166,29 +174,58 @@ function start() {
     busy = false;
   }
 
-  let rec = null;
-  function saveFilm() {
-    if (busy || rec) return;
-    const types = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
-    const mime = window.MediaRecorder ? types.find((t) => MediaRecorder.isTypeSupported(t)) : null;
-    if (!mime || !canvas.captureStream) { say('この端末では映像を保存できません'); return; }
-    // **音は入れない。** 画面だけを録る（音は S で別に保存する）
-    const stream = canvas.captureStream(30);
+  // 映像を録る。withAudio なら音楽も一緒に1本へ入れる。
+  //   V … 映像＋音楽（本編1本）
+  //   B … 映像だけ（音なし。あとで別の音を当てたいとき）
+  //   S … 音楽だけ
+  let rec = null, recDone = null;
+  // 録っている途中でもう一度押したら、そこまでを保存して止める
+  function stopFilm() {
+    if (!rec) return false;
+    try { rec.stop(); } catch (e) { rec = null; }
+    return true;
+  }
+  function saveFilm(withAudio) {
+    if (busy) return null;
+    if (rec) { stopFilm(); return null; }
+    if (!canvas.captureStream || !window.MediaRecorder) { say('この端末では映像を保存できません'); return null; }
+    if (!playing) begin();
+    const types = withAudio
+      ? ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+      : ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+    const mime = types.find((t) => MediaRecorder.isTypeSupported(t));
+    if (!mime) { say('この端末では映像を保存できません'); return null; }
+    const tracks = canvas.captureStream(30).getVideoTracks();
+    let withSound = false;
+    if (withAudio && snd && snd.stream) {
+      const as = snd.stream();
+      if (as && as.getAudioTracks().length) { tracks.push(as.getAudioTracks()[0]); withSound = true; }
+    }
     const chunks = [];
     try {
-      rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 16e6 });
-    } catch (e) { say('この端末では映像を保存できません'); rec = null; return; }
+      // 面で描いた絵はよく縮むので、画素数から見積もる。
+      // ?vbr= で明示もできる（道具から大きさを詰めるため）。
+      const vbr = parseInt(q.get('vbr') || '', 10)
+        || Math.max(2e6, Math.round(film.st.w * film.st.h * 2.4));
+      rec = new MediaRecorder(new MediaStream(tracks), {
+        mimeType: mime, videoBitsPerSecond: vbr, audioBitsPerSecond: 192e3,
+      });
+    } catch (e) { say('この端末では映像を保存できません'); rec = null; return null; }
+    const name = stem() + (withSound ? '.webm' : '-映像.webm');
+    const done = new Promise((ok) => { recDone = ok; });
     rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
     rec.onstop = () => {
-      saveBlob(new Blob(chunks, { type: mime }), stem() + '-映像.webm');
-      say('映像を保存しました（音は入っていません。S で音楽を別に保存できます）');
+      const blob = new Blob(chunks, { type: mime });
+      saveBlob(blob, name);
+      say(withSound ? '映像（音楽入り）を保存しました' : '映像を保存しました（音なし。S で音楽を別に保存できます）');
       rec = null;
+      if (recDone) { recDone(blob); recDone = null; }
     };
     seek(0);
-    if (!playing) begin();
     paused = false;
     rec.start(2000);
-    say('映像を記録しています… 0%', true);
+    say(withSound ? '映像と音楽を記録しています… 0%' : '映像を記録しています… 0%', true);
+    return done;
   }
 
   // ---- 静止画（検証・サムネイル） ----
@@ -327,6 +364,28 @@ function start() {
     requestAnimationFrame(loop);
   }
 
+  // 道具から録らせるための口（tools/record.mjs）。**作品の一部ではない。**
+  // 頁の V / S と同じ道を通るので、頁で保存したものと中身が一致する。
+  window.__save = {
+    async film(withAudio) {
+      window.__saveSunk = false;
+      const blob = await saveFilm(withAudio !== false);
+      if (!blob) { window.__saveSunk = 'fail'; return null; }
+      await sink(blob);
+      window.__saveSunk = true;
+      return { bytes: blob.size, type: blob.type };
+    },
+    async music(rate) {
+      const bytes = await renderWav(0, work.total, rate || 48000);
+      if (!bytes) return null;
+      await sink(new Blob([bytes], { type: 'audio/wav' }));
+      return { bytes: bytes.length };
+    },
+    meta() { return { title: work.title, seed: work.seed, total: work.total }; },
+    stop() { return stopFilm(); },
+    done() { return !rec; },
+  };
+
   // 検証用: ?auto=1 で一触りを待たずに始める
   if (q.get('auto') === '1') setTimeout(begin, 30);
 
@@ -373,7 +432,8 @@ function start() {
     else if (e.key === 'n' || e.key === 'N') { nextWork(); }
     else if (e.key === 'h' || e.key === 'H') { hud.classList.toggle('shown'); }
     else if (e.key === 's' || e.key === 'S') { saveMusic(); }
-    else if (e.key === 'v' || e.key === 'V') { saveFilm(); }
+    else if (e.key === 'v' || e.key === 'V') { saveFilm(true); }
+    else if (e.key === 'b' || e.key === 'B') { saveFilm(false); }
     else if (e.key === 'ArrowRight') { seek(t + 20); }
     else if (e.key === 'ArrowLeft') { seek(t - 20); }
   });

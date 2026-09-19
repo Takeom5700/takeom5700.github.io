@@ -196,8 +196,20 @@ export function createSound(givenCtx) {
     }
   }
 
+  // 録るための出口。画面と一緒に1本へ録るときだけ使う
+  // （`ctx.destination` とは別に、音声トラックとして取り出せるようにする）。
+  let streamDest = null;
+  function stream() {
+    if (!ctx.createMediaStreamDestination) return null;
+    if (!streamDest) {
+      try { streamDest = ctx.createMediaStreamDestination(); comp.connect(streamDest); }
+      catch (e) { return null; }
+    }
+    return streamDest.stream;
+  }
+
   return {
-    ctx, master, play,
+    ctx, master, play, stream,
     resume() { if (ctx.resume) ctx.resume(); },
     toggleMute() { muted = !muted; master.gain.value = muted ? 0 : 1.15; return muted; },
     close() { if (ctx.close && !givenCtx) ctx.close(); },

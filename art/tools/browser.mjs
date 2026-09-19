@@ -106,6 +106,10 @@ async function launch(url, software, size) {
     '--remote-debugging-port=0', '--user-data-dir=' + dir,
     '--hide-scrollbars', '--force-device-scale-factor=1',
     '--autoplay-policy=no-user-gesture-required',
+    // 実時間で録るとき（tools/record.mjs）に rAF を絞られないようにする
+    '--disable-background-timer-throttling',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding',
     '--window-size=' + (size || '1280,720'),
     ...gl, url,
   ], { stdio: ['ignore', 'ignore', 'ignore'] });
@@ -145,9 +149,12 @@ export async function open(query, opt = {}) {
     const ch = await launch(url, software, opt.size);
     const cdp = await connect(ch.page.webSocketDebuggerUrl);
     await cdp.send('Runtime.enable', {});
+    // 書き出しの口（__mumei）か、録りの口（__save）が出るまで待つ。
+    // 再生の頁（?auto=1）には __mumei が無いので、両方を見る。
+    const want = opt.api === 'save' ? 'window.__save ? 1 : null' : 'window.__mumei ? window.__mumei.meta : null';
     let meta = null;
-    for (let i = 0; i < 120; i++) {
-      meta = await cdp.evaluate('window.__mumei ? window.__mumei.meta : null').catch(() => null);
+    for (let i = 0; i < 160; i++) {
+      meta = await cdp.evaluate(want).catch(() => null);
       if (meta) break;
       await sleep(100);
     }
@@ -170,5 +177,5 @@ export async function open(query, opt = {}) {
     if (!software && opt.onFallback) opt.onFallback();
   }
   srv.close();
-  throw new Error('頁が書き出しの口を出さなかった（WebGL2 が無い）');
+  throw new Error('頁が口を出さなかった（読み込みに失敗している）');
 }
