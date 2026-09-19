@@ -164,6 +164,7 @@ function start() {
           m: s.m, fps: s.fps, hand: s.hand, pal: s.pal, inv: s.inv ? 1 : 0,
           n: s.n, odd: s.odd ? 1 : 0, empty: s.empty, flash: s.flash, mv: s.mv,
           sec: s.sec, th: s.th, w: s.w, recall: s.recall ? 1 : 0,
+          ev: s.ev, evAt: s.evAt, p0: s.p0, p1: s.p1,
         }));
       },
       async push(to, mime, quality) {

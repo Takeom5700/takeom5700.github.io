@@ -20,6 +20,17 @@
 //
 // 返すのは音符の並びだけ: { t 秒, d 秒, midi, v 強さ, voice 声部 }
 //   voice 0=旋律（オルゴール） 1=分散和音（竪琴） 2=低音（弓） 3=持続（弦） 4=鐘
+//         5=太鼓 6=聲（合唱） 7=弾（ピツィカート） 8=弓の旋律（弦が主旋律）
+//
+// **楽器は部ごとに入れ替わる。** 依頼者の指摘:
+//   「基本的にオルゴール調で、最後のエンディング近くだけストリングスの和音が
+//    入ったのが、やっと変化が入ったなと思ったぐらい。サウンドがあまり変わらない。
+//    どこかで急に違う楽器になったり、ドラムが入ったり、コーラスが入ったり、
+//    いろいろ考えられる」
+// その通りなので、音色そのものにも構造を持たせた。
+//   序=オルゴールと弦／提示A=オルゴール／提示B=**弦が主旋律・弾く低音**
+//   展開=**太鼓が入り、途中から聲（合唱）が重なる**／再現=オルゴールが帰る
+//   終=聲と弦、最後にオルゴールが独りで終わる
 
 import { makeRng, between, pick } from './rng.js';
 
@@ -81,22 +92,35 @@ export function composeMusic(work, seedIn) {
   const tuneA = makeTune(rng, 7 + Math.floor(rng() * 2), 7);
   const tuneB = makeTune(rng, 5 + Math.floor(rng() * 3), 5);
 
-  // 1小節ぶんを置く
+  // 1小節ぶんを置く。o.voicing で楽器を入れ替える
   function putBar(t, ch, opt) {
     const [root, q] = CH[ch];
     const tri = TRIAD[q].map((x) => root + x);
     const o = opt || {};
     const vv = o.v === undefined ? 0.6 : o.v;
-    // 持続（弦）— 和音を小節いっぱい
+    const V = o.voicing || {};
+    // 持続 — 弦（3）か聲（6）
     if (o.pad !== false) {
+      const pv = V.pad === undefined ? 3 : V.pad;
       for (let i = 0; i < tri.length; i++) {
-        add(t, bar * 1.02, tonic + 24 + tri[i], vv * 0.2, 3);
+        add(t, bar * 1.02, tonic + 24 + tri[i], vv * (pv === 6 ? 0.9 : 0.2), pv);
+      }
+      // 聲が入る部では、弦も薄く重ねて土台を残す
+      if (V.choir) for (const x of [tri[0], tri[2] === undefined ? tri[0] : tri[2]]) {
+        add(t, bar * 1.02, tonic + 36 + x, vv * 0.75, 6);
       }
     }
-    // 低音（弓）
+    // 低音 — 弓（2）か弾（7）
     if (o.bass !== false) {
-      add(t, bar * 0.55, tonic + root, vv * 0.5, 2);
-      add(t + bar * 0.5, bar * 0.5, tonic + root + (o.fifth ? 7 : 12), vv * 0.38, 2);
+      const bv = V.bass === undefined ? 2 : V.bass;
+      if (bv === 7) {
+        for (let i = 0; i < 4; i++) {
+          add(t + beat * i, beat * 0.6, tonic + root + (i % 2 ? 7 : 0) + (i === 3 ? 12 : 0), vv * 0.6, 7);
+        }
+      } else {
+        add(t, bar * 0.55, tonic + root, vv * 0.5, 2);
+        add(t + bar * 0.5, bar * 0.5, tonic + root + (o.fifth ? 7 : 12), vv * 0.38, 2);
+      }
     }
     // 分散和音（竪琴）— **ここが止まらないので、長い景でも音が動く**
     const div = o.div || 8;
@@ -106,6 +130,15 @@ export function composeMusic(work, seedIn) {
       const oc = (i % 4 === 3) ? 12 : 0;
       add(t + (bar / div) * i, bar / div * 1.6,
         tonic + 36 + tri[k % tri.length] + oc, vv * (i % 2 ? 0.16 : 0.24), 1);
+    }
+    // 太鼓
+    if (V.drum) {
+      add(t, 0.3, tonic - 12 + root, vv * (V.drum > 1 ? 1 : 0.8), 5);
+      add(t + beat * 2, 0.3, tonic - 12 + root, vv * 0.6, 5);
+      if (V.drum > 1) {
+        add(t + beat * 3, 0.3, tonic - 12 + root + 7, vv * 0.5, 5);
+        add(t + beat * 3.5, 0.3, tonic - 12 + root, vv * 0.4, 5);
+      }
     }
     return tri;
   }
@@ -131,7 +164,8 @@ export function composeMusic(work, seedIn) {
         }
         if (bd <= 2) p = best;
       }
-      add(cur, d * 0.95, p, (o.v === undefined ? 0.75 : o.v), 0);
+      add(cur, d * (o.mel === 8 ? 1.05 : 0.95), p, (o.v === undefined ? 0.75 : o.v), o.mel === undefined ? 0 : o.mel);
+      if (o.dbl) add(cur, d * 0.9, p + 12, (o.v === undefined ? 0.5 : o.v) * 0.45, o.dbl);
       cur += d;
     }
     return cur - t;
@@ -139,12 +173,13 @@ export function composeMusic(work, seedIn) {
 
   // ---- 部ごとに敷く ----
   const sec = work.movements;
+  // 編成。**部ごとに楽器が入れ替わる**（mel=主旋律 bass=低音 pad=持続）
   const plan = [
-    { i: 0, prog: PROG.intro, v: 0.58, div: 4, tune: null },
-    { i: 1, prog: PROG.expoA, v: 0.7, div: 8, tune: tuneA },
-    { i: 2, prog: PROG.devel, v: 0.85, div: 16, tune: 'frag' },
-    { i: 3, prog: PROG.recapA, v: 0.72, div: 8, tune: tuneA },
-    { i: 4, prog: PROG.coda, v: 0.4, div: 4, tune: 'end' },
+    { i: 0, prog: PROG.intro, v: 0.58, div: 4, tune: null, vo: {} },
+    { i: 1, prog: PROG.expoA, v: 0.7, div: 8, tune: tuneA, vo: {} },
+    { i: 2, prog: PROG.devel, v: 0.85, div: 16, tune: 'frag', vo: { mel: 8 } },
+    { i: 3, prog: PROG.recapA, v: 0.72, div: 8, tune: tuneA, vo: {} },
+    { i: 4, prog: PROG.coda, v: 0.4, div: 4, tune: 'end', vo: { pad: 6 } },
   ];
 
   for (const pl of plan) {
@@ -167,23 +202,38 @@ export function composeMusic(work, seedIn) {
       if (pl.i === 2) v = pl.v * (0.55 + 0.75 * Math.min(1, u * 1.25));
       if (pl.i === 4) v = pl.v * (1 - u * 0.75);
       if (pl.i === 0) v = pl.v * (0.72 + u * 0.45);
-      putBar(t, ch, { v, div: inB ? Math.max(6, pl.div * 0.75) : pl.div, fifth: k % 2 === 1 });
+      // 編成を組む。展開部は途中で太鼓が入り、後半で聲が重なる
+      const V = Object.assign({}, pl.vo);
+      if (inB && pl.i === 1) { V.mel = 8; V.bass = 7; }      // 第二主題で弦と弾く低音へ
+      if (inB && pl.i === 3) { V.mel = 8; V.dbl = 0; }       // 再現の第二主題は弦＋オルゴール
+      if (pl.i === 2) {
+        if (u > 0.18) V.drum = u > 0.62 ? 2 : 1;
+        if (u > 0.55) V.choir = 1;
+        if (u > 0.78) V.pad = 6;
+      }
+      putBar(t, ch, {
+        v, div: inB ? Math.max(6, pl.div * 0.75) : pl.div,
+        fifth: k % 2 === 1, voicing: V,
+      });
 
       // 旋律
       if (pl.tune === 'frag') {
         // 展開部：主題の頭だけを取り出して、小節ごとに音階を1つずつ上げる
         if (k % 2 === 0) {
           const frag = (k % 4 === 0 ? tuneA : tuneB).slice(0, 3);
-          putTune(t, frag, ch, { shift: (k % 6) - 2, v: v * 0.9, stretch: 0.85 });
+          putTune(t, frag, ch, { shift: (k % 6) - 2, v: v * 0.9, stretch: 0.85, mel: V.mel });
         }
       } else if (pl.tune === 'end') {
         if (k === 0) putTune(t, tuneA.slice(0, 3), ch, { stretch: 1.9, v: 0.55 });
+        // 終わりの直前、オルゴールが独りで主題の頭を鳴らす
+        if (k === prog.length - 2) putTune(t + bar * 0.5, tuneA.slice(0, 4), ch, { stretch: 1.5, v: 0.6, mel: 0 });
         if (k === prog.length - 1) {
           // 最後の和音を長く伸ばす（終わったことが分かるように）
           const [root, q] = CH[ch];
           for (const x of TRIAD[q]) {
             add(t, Math.max(4, t1 - t), tonic + 24 + root + x, 0.3, 3);
             add(t, Math.max(4, t1 - t), tonic + 36 + root + x, 0.18, 3);
+            add(t, Math.max(4, t1 - t), tonic + 36 + root + x, 0.7, 6);   // 聲
           }
           add(t, 6, tonic + 48 + root, 0.5, 4);
         }
@@ -191,7 +241,9 @@ export function composeMusic(work, seedIn) {
         const tn = inB ? tuneB : pl.tune;
         // 2小節にひとつ、頭から旋律を流す（息継ぎを作る）
         if (t >= tuneAt) {
-          const used = putTune(t, tn, ch, { v: v * 0.95, oct: inB ? 0 : 0, stretch: inB ? 1.3 : 1 });
+          const used = putTune(t, tn, ch, {
+            v: v * 0.95, stretch: inB ? 1.3 : 1, mel: V.mel, dbl: V.dbl,
+          });
           tuneAt = t + Math.max(used, bar * 2) + bar * (rng() < 0.5 ? 0 : 1);
         }
       }

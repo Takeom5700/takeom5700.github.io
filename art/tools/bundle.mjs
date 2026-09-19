@@ -14,7 +14,7 @@ const JS = path.resolve(HERE, '../js');
 const OUT = process.argv[2] || 'mumei.html';
 
 // 依存の順。ここを間違えると「定義より先に使う」で落ちる
-const ORDER = ['rng.js', 'paint.js', 'motif.js', 'score.js', 'music.js', 'sound.js', 'film.js', 'main.js'];
+const ORDER = ['rng.js', 'paint.js', 'motif.js', 'event.js', 'score.js', 'music.js', 'sound.js', 'film.js', 'main.js'];
 
 const code = ORDER.map((f) => {
   const src = fs.readFileSync(path.join(JS, f), 'utf8');

@@ -27,6 +27,22 @@ const shoot = async (t) => {
   return buf;
 };
 
+// --dev … 展開部の連続する景を並べる（事が一段ずつ進むのを見る）
+if (argv.includes('--dev')) {
+  const dev = shots.filter((s) => s.sec === 2);
+  const from = Math.floor(dev.length * parseFloat(flag('at', '0.3')));
+  const pick = dev.slice(from, from + K * 2);
+  const EV = ['無', '崩', '組', '溶', '殖', '落', '侵', '喰', '逃', '来', '芽'];
+  console.log(`展開部 ${dev.length}景  ${from}番目から ${pick.length}景`);
+  console.log(pick.map((s) => `${s.name}${EV[s.ev | 0]}${(s.evAt >= 0 ? s.evAt.toFixed(2) : '-')}`).join(' '));
+  const im = [];
+  for (const s of pick) im.push(analyse(await shoot(s.start + s.dur * 0.6)).img);
+  page.close();
+  fs.writeFileSync(OUT, encode(grid(im, K)));
+  console.log(OUT);
+  process.exit(0);
+}
+
 const expo = shots.filter((s) => s.sec === 1 && s.th === 1);
 const recap = shots.filter((s) => s.sec === 3 && s.th === 1 && s.recall);
 const n = Math.min(K, expo.length, recap.length);

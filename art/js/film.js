@@ -11,6 +11,7 @@
 
 import { shotAt } from './score.js';
 import { MOTIFS, NAMES } from './motif.js';
+import { PIXEL, evTransform, evOverlay, evComposite } from './event.js';
 import { colorsOf, ground, makeInk, makeGrain, nz, nz01, snz, clamp, TAU } from './paint.js';
 
 // 作品の枠は 1600×900 の論理座標。出力の大きさによらず同じ構図になる。
@@ -26,13 +27,31 @@ export function createFilm(canvas) {
   });
   const st = { w: 0, h: 0, dpr: 1, shot: 0, name: '', fps: 0, ms: 0 };
 
+  // 事（崩・組・溶・殖・落）のための板。図だけをここに描いてから、
+  // 割ったり落としたりする。地は本体に描くので巻き込まれない。
+  const buf = document.createElement('canvas');
+  const bctx = buf.getContext('2d');
+
   function resize(w, h, dpr) {
     const d = Math.min(dpr || 1, 2);
     canvas.width = Math.max(2, Math.round(w * d));
     canvas.height = Math.max(2, Math.round(h * d));
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
+    buf.width = canvas.width; buf.height = canvas.height;
     st.w = canvas.width; st.h = canvas.height; st.dpr = d;
+  }
+
+  // 事がどこまで進んだか。
+  //   evAt >= 0 … その段で止めて、少しだけ進める
+  //               （展開部で、断ごとに事が一段ずつ進むようにするため）
+  //   evAt <  0 … 景の中で ev0〜ev1 のあいだに起きる
+  function evPhase(sh, p) {
+    if (!sh.ev) return 0;
+    if (sh.evAt !== undefined && sh.evAt >= 0) return clamp(sh.evAt + p * 0.12, 0, 1);
+    const a = sh.ev0 === undefined ? 0.12 : sh.ev0;
+    const b = sh.ev1 === undefined ? 0.95 : sh.ev1;
+    return clamp((p - a) / Math.max(0.05, b - a), 0, 1);
   }
 
   function draw(work, t) {
@@ -62,37 +81,57 @@ export function createFilm(canvas) {
     if (sh.flash && f < sh.flash) col = { name: col.name, g: col.i, i: col.g, a: col.l, l: col.a, raw: col.raw };
 
     const sx = st.w / S.w, sy = st.h / S.h;
+    const ep = evPhase(sh, p);
+    const pix = PIXEL[sh.ev | 0] === 1;
+
+    // 地は必ず本体に描く（割れるのは図だけ）
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = col.g;
     ctx.fillRect(0, 0, st.w, st.h);
     ctx.save();
     ctx.scale(sx, sy);
-
     // フィルムの横揺れ（ゲートウィーブ）。1〜2画素でも絵が生きる
     const weave = sh.boil ? 2.2 : 0;
     ctx.translate(nz(seed + 7) * weave, nz(seed + 13) * weave);
-
     ground(ctx, S, sh, col, fix);
+    ctx.restore();
+
+    // 図を描く先。画素を触る事のときだけ別の板へ
+    const g = pix ? bctx : ctx;
+    if (pix) {
+      bctx.setTransform(1, 0, 0, 1, 0, 0);
+      bctx.clearRect(0, 0, st.w, st.h);
+    }
+    g.save();
+    if (pix) g.setTransform(1, 0, 0, 1, 0, 0);
+    g.scale(sx, sy);
+    g.translate(nz(seed + 7) * weave, nz(seed + 13) * weave);
 
     // 画面そのものの動き。すべて段で刻む
-    ctx.save();
+    g.save();
     const q = (v, n) => Math.round(v * n) / n;
-    ctx.translate(S.w / 2, S.h / 2);
-    if (sh.mv === 1) ctx.scale(1 + q(p, 20) * sh.mvA * 0.55, 1 + q(p, 20) * sh.mvA * 0.55);
-    else if (sh.mv === 2) ctx.translate(q(p, 16) * sh.mvA * S.w * 0.28 * (sh.ox > 0 ? 1 : -1), 0);
-    else if (sh.mv === 3) ctx.translate(nz(seed + 3) * sh.mvA * S.h * 0.035, nz(seed + 5) * sh.mvA * S.h * 0.035);
-    else if (sh.mv === 4) ctx.rotate(q(p, 14) * sh.mvA * 0.26 * (sh.oy > 0 ? 1 : -1));
-    ctx.translate(-S.w / 2, -S.h / 2);
+    g.translate(S.w / 2, S.h / 2);
+    if (sh.mv === 1) g.scale(1 + q(p, 20) * sh.mvA * 0.55, 1 + q(p, 20) * sh.mvA * 0.55);
+    else if (sh.mv === 2) g.translate(q(p, 16) * sh.mvA * S.w * 0.28 * (sh.ox > 0 ? 1 : -1), 0);
+    else if (sh.mv === 3) g.translate(nz(seed + 3) * sh.mvA * S.h * 0.035, nz(seed + 5) * sh.mvA * S.h * 0.035);
+    else if (sh.mv === 4) g.rotate(q(p, 14) * sh.mvA * 0.26 * (sh.oy > 0 ? 1 : -1));
+    g.translate(-S.w / 2, -S.h / 2);
+    // 事の変形（逃・芽）は図の直前に掛ける
+    evTransform(g, S, sh, ep);
 
     const E = {
       p: pm, f, fps: sh.fps, seed, fix, sh, col,
       lw: S.h * 0.0062 * (1 + sh.k1 * 0.8),
-      ink: null, S,
+      ink: null, S, ep,
     };
-    E.ink = makeInk(ctx, S, sh, col, E);
-    (MOTIFS[sh.m] || MOTIFS[0])(ctx, S, E);
-    ctx.restore();
-    ctx.restore();
+    E.ink = makeInk(g, S, sh, col, E);
+    (MOTIFS[sh.m] || MOTIFS[0])(g, S, E);
+    g.restore();
+    // 事の描き足し（侵・喰・来）は画面の座標で置く
+    if (sh.ev && !pix) evOverlay(g, S, E, ep);
+    g.restore();
+
+    if (pix) evComposite(ctx, buf, st.w, st.h, sh, ep, seed);
 
     // 粒は出力の画素の上で打つ（解像度が変わっても同じ粗さ）
     ctx.setTransform(1, 0, 0, 1, 0, 0);

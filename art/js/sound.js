@@ -26,7 +26,7 @@ export function createSound(givenCtx) {
   let out = comp;
   try {
     const rev = ctx.createConvolver();
-    const len = Math.floor(ctx.sampleRate * 2.6);
+    const len = Math.floor(ctx.sampleRate * 1.9);
     const buf = ctx.createBuffer(2, len, ctx.sampleRate);
     let s = 1234567;
     for (let c = 0; c < 2; c++) {
@@ -34,7 +34,7 @@ export function createSound(givenCtx) {
       for (let i = 0; i < len; i++) {
         s ^= s << 13; s |= 0; s ^= s >>> 17; s ^= s << 5; s |= 0;
         const n = (s >>> 0) / 2147483648 - 1;
-        d[i] = n * Math.pow(1 - i / len, 2.6) * (i < 400 ? i / 400 : 1);
+        d[i] = n * Math.pow(1 - i / len, 2.4) * (i < 400 ? i / 400 : 1);
       }
     }
     rev.buffer = buf;
@@ -44,6 +44,17 @@ export function createSound(givenCtx) {
     master.connect(comp);
   }
   comp.connect(ctx.destination);
+
+  // 太鼓の胴に使う雑音。**これ1本だけ**（音として前に出す雑音は使わない）
+  const NB = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.5), ctx.sampleRate);
+  {
+    const d = NB.getChannelData(0);
+    let s = 20250919;
+    for (let i = 0; i < d.length; i++) {
+      s ^= s << 13; s |= 0; s ^= s >>> 17; s ^= s << 5; s |= 0;
+      d[i] = (s >>> 0) / 2147483648 - 1;
+    }
+  }
 
   const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -81,20 +92,74 @@ export function createSound(givenCtx) {
     g.gain.setValueAtTime(peak, at + Math.max(atk + 0.02, dur * 0.85));
     g.gain.exponentialRampToValueAtTime(0.0001, at + dur + 0.35);
     fil.connect(g); g.connect(master);
+    const made = [];
     for (const d of detune) {
       const o = osc('sawtooth', f, d);
       const og = ctx.createGain(); og.gain.value = 1 / detune.length;
       o.connect(og); og.connect(fil);
       o.start(at); o.stop(at + dur + 0.45);
+      made.push(o);
     }
-    // ごく浅いビブラート（機械の音から離す）
+    // ごく浅いビブラート（機械の音から離す）。
+    // **揺らす先に繋ぐのを忘れないこと。** 繋がないと一切かからないまま、
+    // 音符の数だけ無駄な発振器が積み上がる（実際にそうなっていた）。
     const lfo = osc('sine', 4.6 + (f % 7) * 0.1, 0);
     const lg = ctx.createGain(); lg.gain.value = f * 0.004;
     lfo.connect(lg);
+    for (const o of made) lg.connect(o.frequency);
     lfo.start(at); lfo.stop(at + dur + 0.45);
   }
 
   let muted = false;
+
+  // 声（合唱）。母音のフォルマントを重ねるだけで人の声に寄る。
+  // **これを足したのは、音に変化が足りないと言われたから。**
+  function choir(at, f, dur, peak) {
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.linearRampToValueAtTime(peak, at + 0.7);
+    g.gain.setValueAtTime(peak, at + Math.max(0.75, dur * 0.8));
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur + 0.6);
+    g.connect(master);
+    const src = [];
+    for (const d of [-9, 0, 8]) {
+      const o = osc('sawtooth', f, d);
+      o.start(at); o.stop(at + dur + 0.7);
+      src.push(o);
+    }
+    for (const [fr, q, amp] of [[700, 9, 1], [1150, 11, 0.55], [2600, 13, 0.2]]) {
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = fr; bp.Q.value = q;
+      const ag = ctx.createGain(); ag.gain.value = amp * 0.5;
+      for (const o of src) o.connect(bp);
+      bp.connect(ag); ag.connect(g);
+    }
+    const lfo = osc('sine', 5.1, 0);
+    const lg = ctx.createGain(); lg.gain.value = f * 0.006;
+    lfo.connect(lg);
+    for (const o of src) lg.connect(o.frequency);
+    lfo.start(at); lfo.stop(at + dur + 0.7);
+  }
+
+  // 太鼓。撥で打つ膜。雑音を一瞬だけ通して、低い胴を鳴らす
+  function drum(at, f, peak) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(f * 2.2, at);
+    o.frequency.exponentialRampToValueAtTime(Math.max(28, f * 0.8), at + 0.12);
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.linearRampToValueAtTime(peak, at + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.42);
+    o.connect(g); g.connect(master);
+    o.start(at); o.stop(at + 0.6);
+    const s2 = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), ng = ctx.createGain();
+    s2.buffer = NB; s2.loop = true;
+    bp.type = 'bandpass'; bp.frequency.value = 220; bp.Q.value = 0.9;
+    ng.gain.setValueAtTime(peak * 0.5, at);
+    ng.gain.exponentialRampToValueAtTime(0.0001, at + 0.1);
+    s2.connect(bp); bp.connect(ng); ng.connect(master);
+    s2.start(at); s2.stop(at + 0.2);
+  }
 
   // music.js の音符を1つ鳴らす
   function play(n, at) {
@@ -114,10 +179,20 @@ export function createSound(givenCtx) {
     } else if (n.voice === 3) {
       // 持続：弦
       bowed(at, f, n.d, v * 0.16, 0.85, 1250, [-8, 0, 7]);
-    } else {
+    } else if (n.voice === 4) {
       // 鐘（部の変わり目だけ）
       pluck(at, f, Math.max(2.5, n.d), v * 0.3,
         [[1, 1, 1], [2.76, 0.4, 0.5], [5.4, 0.16, 0.25], [8.9, 0.06, 0.15]], 'sine', 9000);
+    } else if (n.voice === 5) {
+      drum(at, f, v * 0.55);                          // 太鼓
+    } else if (n.voice === 6) {
+      choir(at, f, n.d, v * 0.16);                    // 聲
+    } else if (n.voice === 7) {
+      // 弾（ピツィカート）
+      pluck(at, f, 0.3, v * 0.34, [[1, 1, 1], [2, 0.3, 0.4], [3.1, 0.12, 0.25]], 'triangle', 2400);
+    } else {
+      // 弓の旋律（弦が主旋律を取る）
+      bowed(at, f, n.d, v * 0.2, 0.12, 2400, [-7, 0, 6]);
     }
   }
 

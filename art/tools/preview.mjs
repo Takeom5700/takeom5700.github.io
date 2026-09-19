@@ -12,6 +12,8 @@ import { open } from './browser.mjs';
 import { encode } from './png.mjs';
 import { analyse, grid, meanAbsDiff, OK } from './metrics.mjs';
 
+const EV = ['　', '崩', '組', '溶', '殖', '落', '侵', '喰', '逃', '来', '芽'];
+
 const argv = process.argv.slice(2);
 const flag = (n, d) => { const i = argv.indexOf('--' + n); return i < 0 ? d : argv[i + 1]; };
 const has = (n) => argv.includes('--' + n);
@@ -52,7 +54,7 @@ if (has('open')) {
   }
 }
 
-console.log('部 時刻   図  長さ  コマ 塗 | 色の幅 画面内 彩度 図の量 面 | 細部  構造 | 判定');
+console.log('部 時刻   図 事 長さ  コマ 塗 | 色の幅 画面内 彩度 図の量 面 | 細部  構造 | 判定');
 const imgs = [];
 let fail = 0, vivid = 0, weak = 0;
 const shoot = async (t) => {
@@ -69,7 +71,7 @@ for (const s of picks) {
   if (!(a.okContrast || s.empty)) weak++;
   if (a.okColor) vivid++;
   console.log(
-    `${'序提展再終'[s.sec] || '?'} ${String(Math.round(s.start)).padStart(4)}s ${s.name}  ${s.dur.toFixed(2).padStart(5)} ` +
+    `${'序提展再終'[s.sec] || '?'} ${String(Math.round(s.start)).padStart(4)}s ${s.name} ${EV[s.ev | 0]} ${s.dur.toFixed(2).padStart(5)} ` +
     `${String(s.fps).padStart(3)} ${['塗', '線', '刻', '点'][s.hand]} |` +
     `${a.poster.toFixed(2).padStart(6)} ${a.tileVar.toFixed(2).padStart(6)} ${a.chroma.toFixed(2).padStart(5)} ${a.cover.toFixed(2).padStart(6)} ${a.flat.toFixed(2).padStart(4)} |` +
     `${a.fine.toFixed(4).padStart(7)}${a.coarse.toFixed(4).padStart(7)} | ` +

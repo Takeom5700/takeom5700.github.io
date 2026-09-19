@@ -39,6 +39,7 @@ export const LAWS = {
   minThemeA: 4,                     // 第一主題が現れる回数（序・提示・展開・再現）
   minThemeB: 3,
   minRecall: 5,                     // 再現部が提示部から引き写す景の数
+  devEventShare: 0.9,               // 展開部で「事」が起きている景の割合
   // 断
   minCutsPerMin: 20,
   minLenRatio: 30,
@@ -100,6 +101,8 @@ function shotFrom(th, dur, over) {
   return Object.assign({
     dur, start: 0, id: 0, sec: 0, th: 0, w: 0.5,
     p0: 0, p1: 1,
+    // 事（event.js）。提示部では何も起きない＝0
+    ev: 0, evAt: -1, ev0: 0.12, ev1: 0.95, ev2: 0,
     flash: 0, empty: 0,
     turn: 0, tp1: 0.34, tp2: 0.68, tc1: th.pal, tc2: th.pal,
     hang: 0.6, hgap: 0.5,
@@ -231,7 +234,10 @@ export function composeWork(seed) {
     for (let k = 0; k < 7 && t < trEnd - 0.1; k++) {
       d = Math.max(0.26, d * 0.72);
       const th = k % 3 === 2 ? C : (k % 2 ? B : A);
-      put(th, Math.min(trEnd - t, d), vary(th, { pal: pick(rng, far), fps: 24 }), 1, k % 2 ? 2 : 1, 0.5);
+      // 推移で初めて事が起きる。**別の図が入ってきてぶつかる**
+      const over = vary(th, { pal: pick(rng, far), fps: 24 });
+      if (k >= 3) { over.ev = 6; over.ev2 = (th === A ? C.m : A.m); over.ev0 = 0; over.ev1 = 1; }
+      put(th, Math.min(trEnd - t, d), over, 1, k % 2 ? 2 : 1, 0.5);
     }
     if (t < trEnd) put(A, trEnd - t, vary(A, { pal: pick(rng, far) }), 1, 1, 0.55);
     // 第二主題の群（属調・静か・長い）
@@ -243,42 +249,65 @@ export function composeWork(seed) {
     }
     // 小結（小結主題 C）
     put(A, between(rng, 0.5, 1.0), vary(A, { p0: 0.5, p1: 0.56 }), 1, 1, 0.4);
-    put(C, Math.max(0.5, end - t), vary(C, { hand: 1 }), 1, 2, 0.5);
+    put(C, Math.max(0.5, end - t), vary(C, { hand: 1, ev: 1, evAt: 0.22 }), 1, 2, 0.5);
     shots.expA = expA; shots.expB = expB;
   }
 
   // ---- 展開部（断片・遠い調・いちばん速い） ----
+  // **速く切るだけでは展開にならない。** 波ごとに図に起きる事を決めて、
+  // 断のたびに事を一段ずつ進める（`evAt` が 0→1 へ上がっていく）。
+  // 観る側には「同じものが、切るたびに壊れていく」ように見える。
   const sec2 = D(84);
   {
     const end = t + sec2;
     const waves = 3;
+    // 波ごとの事：来る → 壊れる → 呑まれる／逃げる
+    const evSets = [
+      [9, 6],           // 来・侵（何かが来る）
+      [1, 3, 4],        // 崩・溶・殖（壊れはじめる）
+      [7, 8, 1],        // 喰・逃・崩（呑まれる）
+    ];
     for (let w = 0; w < waves; w++) {
       const last = w === waves - 1;
       const wEnd = Math.min(end - (last ? 0 : 4), t + sec2 / waves);
       const fast = mix2(0.52, 0.2, w / (waves - 1));
+      const evK = pick(rng, evSets[w]);
+      const wave = [];
       while (t < wEnd - 2.6) {
         const q3 = rng();
         const th = q3 < 0.4 ? A : q3 < 0.72 ? B : C;
         const q = rng();
-        put(th, Math.min(wEnd - t, between(rng, fast * 0.7, fast * 1.5)),
+        wave.push(put(th, Math.min(wEnd - t, between(rng, fast * 0.7, fast * 1.5)),
           vary(th, {
             pal: pick(rng, far),
             p0: q * 0.7, p1: q * 0.7 + 0.06,      // 断片だけを見せる
             fps: 24, mv: pick(rng, [1, 3, 4]), mvA: between(rng, 0.6, 1),
-          }), 2, th === A ? 1 : 2, 0.5 + w * 0.15);
+            ev: evK, ev2: (th === A ? B.m : A.m),
+          }), 2, th === A ? 1 : 2, 0.5 + w * 0.15));
       }
-      // 着地（波のあとに一度ためる）
+      // 事を断のあいだに配る。ここが「映像そのものが展開していく」ところ
+      for (let i = 0; i < wave.length; i++) {
+        if (!wave[i]) continue;
+        // 0.72 までしか進めない。振り切ると図が枠から出て空の画面になる
+        wave[i].evAt = wave.length < 2 ? 0.4 : (i / (wave.length - 1)) * 0.66 + 0.06;
+      }
+      // 着地（波のあとに一度ためる）。事が終わった姿を見せる
       if (!last) {
         const th2 = pick(rng, [A, B, C]);
-        put(th2, Math.min(end - t, between(rng, 2.0, 4.0)), vary(th2, { pal: pick(rng, far) }), 2, 1, 0.5);
+        put(th2, Math.min(end - t, between(rng, 2.0, 4.0)),
+          vary(th2, { pal: pick(rng, far), ev: evK, evAt: 0.82 }), 2, 1, 0.5);
       }
     }
     // 頂点。作品でいちばん強い一撃をここに置く（＝すべての景が同格ではない）
     const climax = put(A, Math.min(end - t, between(rng, 4.5, 7.0)),
-      vary(A, { pal: pick(rng, far), n: COUNT[A.m][1], mv: 1, mvA: 1, fps: 12, inv: true }), 2, 1, 1.0);
+      vary(A, {
+        pal: pick(rng, far), n: COUNT[A.m][1], mv: 1, mvA: 1, fps: 12, inv: true,
+        ev: 1, ev0: 0.12, ev1: 0.92, evAt: -1,      // 頂点では崩れきる
+      }), 2, 1, 1.0);
     climax.flash = 2;
     // 崩れ（ほぼ空へ）
-    put(B, Math.max(0.6, end - t), vary(B, { pal: pick(rng, far), hand: 1, n: COUNT[B.m][0] }), 2, 2, 0.3).empty = 1;
+    put(B, Math.max(0.6, end - t),
+      vary(B, { pal: pick(rng, far), hand: 1, n: COUNT[B.m][0], ev: 3, evAt: 0.6 }), 2, 2, 0.3).empty = 1;
   }
 
   // ---- 再現部（同じ姿で帰る） ----
@@ -288,6 +317,7 @@ export function composeWork(seed) {
     // 第一主題：提示部の景を**そのまま引き写す**（少し長くする）
     const srcA = shots.expA || [];
     const aEnd = t + sec3 * 0.46;
+    const recalls = [];
     let i = 0, recall = 0;
     while (t < aEnd - 0.3 && srcA.length) {
       const src = srcA[i++ % srcA.length];
@@ -297,10 +327,19 @@ export function composeWork(seed) {
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: src.inv, shade: src.shade, mv: src.mv, mvA: src.mvA,
         fps: src.fps, pal: home, lock: 1,
+        ev: 2, evAt: 0,                      // 組 — 破片が集まって組み上がる
       }, 3, 1, 0.8);
       s.recall = 1;
       recall++;
+      recalls.push(s);
       if (i >= srcA.length * 2) break;
+    }
+    // **壊れていたものが、景を追うごとに組み上がっていく。**
+    // 最後の数景では完全に元の姿に戻る（＝帰ってきたことが絵で分かる）
+    for (let k = 0; k < recalls.length; k++) {
+      const u = recalls.length < 2 ? 1 : k / (recalls.length - 1);
+      recalls[k].evAt = Math.min(1, u * 1.25);
+      if (recalls[k].evAt > 0.98) recalls[k].ev = 0;
     }
     // 第二主題：**主調で**帰る。これがソナタの解決で、終わった感じの出どころ
     const srcB = shots.expB || [];
@@ -326,6 +365,12 @@ export function composeWork(seed) {
     const end = t + sec4;
     put(I, between(rng, 1.6, 2.6), vary(I, { pal: home, mv: 3, lock: 1 }), 4, 0, 0.5);
     put(A, between(rng, 0.5, 0.9), vary(A, { pal: home, p0: 0.3, p1: 0.36, lock: 1 }), 4, 1, 0.5);
+    // 終わりに人がひとり歩いてきて、座る／手を挙げる／うずくまる。
+    // 画面に人が出ると意味が一気に立つので、ここまで取っておく
+    put(I, between(rng, 5.0, 7.0), vary(I, {
+      pal: home, lock: 1, hand: 1, mv: 0, ev: 9, ev0: 0.05, ev1: 0.85,
+      ev2: Math.floor(rng() * 3),
+    }), 4, 0, 0.7);
     // 最後のためは長くしすぎない。余りは手前に配る
     while (end - t > 15) put(I, between(rng, 3.0, 5.5), vary(I, { pal: home, lock: 1, mv: pick(rng, [1, 2]) }), 4, 0, 0.6);
     const rest = clamp2(end - t - 1.0, 4, 12);
@@ -417,6 +462,13 @@ export function checkWork(work) {
   if (b < LAWS.minThemeB) bad.push(`型: 第二主題が ${b} 回しか出ない`);
   const recall = S.filter((s) => s.recall).length;
   if (recall < LAWS.minRecall) bad.push(`型: 再現部の引き写しが ${recall} 景しかない`);
+  // 事（event）— **速く切るだけでは展開にならない**
+  const dev = work.movements[2] ? work.movements[2].shots : [];
+  const evShare = dev.length ? dev.filter((s) => s.ev).length / dev.length : 0;
+  if (evShare < LAWS.devEventShare) bad.push(`型: 展開部で事が起きている景が ${(evShare * 100) | 0}%（${LAWS.devEventShare * 100}% 以上）`);
+  if (work.movements[0] && work.movements[0].shots.some((s) => s.ev)) bad.push('型: 序で事が起きている（問いは無垢のまま置く）');
+  if (!work.movements[3] || !work.movements[3].shots.some((s) => s.ev === 2)) bad.push('型: 再現部に「組」（組み上がり）が無い');
+  if (!work.movements[4] || !work.movements[4].shots.some((s) => s.ev === 9)) bad.push('型: 終に「来」（人が来る）が無い');
   // 展開部がいちばん速いこと（ここが遅いと山が無い）
   const med = (arr) => { const v = arr.slice().sort((x, y) => x - y); return v[v.length >> 1] || 0; };
   const mSec = work.movements.map((m) => med(m.shots.map((s) => s.dur)));
