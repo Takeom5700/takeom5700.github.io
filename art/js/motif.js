@@ -26,7 +26,7 @@
 //   E.col  色
 //   E.sh   譜の数値
 
-import { nz, nz01, snz, TAU, clamp, mix, wob, brush, path, blob } from './paint.js';
+import { nz, nz01, snz, TAU, clamp, mix, wob, brush, path, blob, lumOf, hueGap } from './paint.js';
 
 // 段で動かすための道具。なめらかに動かすと CG になる。
 const step = (v, n) => Math.round(v * n) / n;
@@ -619,15 +619,31 @@ function stairs(ctx, S, E) {
 export function pipePath(S, E, i) {
   const sh = E.sh;
   const w = S.h * (0.018 + nz01(E.fix + i * 19) * 0.05) * (0.6 + sh.k1);
-  let x = nz01(E.fix + i * 7) < 0.5 ? -S.w * 0.05 : S.w * nz01(E.fix + i * 3);
-  let y = S.h * nz01(E.fix + i * 11);
+  // **1本目は枠の中に収める。** 管は序の形（問い）なので、
+  // 管と、その中を通る球が、1本まるごと見えていなければならない。
+  // 全部を枠の外へ伸ばすと「どこかの配管の断片」にしか見えず、
+  // 球も枠の外を通ってしまう（実際にそうなった）。2本目からは枠の外へ出ていい。
+  const inside = i === 0;
+  const X0 = S.w * 0.06, X1 = S.w * 0.94, Y0 = S.h * 0.08, Y1 = S.h * 0.92;
+  let x = inside ? S.w * (0.18 + nz01(E.fix + 7) * 0.26)
+    : (nz01(E.fix + i * 7) < 0.5 ? -S.w * 0.05 : S.w * nz01(E.fix + i * 3));
+  let y = inside ? S.h * (0.24 + nz01(E.fix + 11) * 0.42) : S.h * nz01(E.fix + i * 11);
   let dir = Math.floor(nz01(E.fix + i * 5) * 4);
   const pts = [[x, y]];
   const segs = 4 + Math.floor(nz01(E.fix + i * 13) * 5);
+  const step = (d, len) => [
+    x + (d === 0 ? len : d === 2 ? -len : 0),
+    y + (d === 1 ? len : d === 3 ? -len : 0),
+  ];
   for (let s2 = 0; s2 < segs; s2++) {
-    const len = S.h * (0.12 + nz01(E.fix + i * 29 + s2 * 7) * 0.5);
-    if (dir === 0) x += len; else if (dir === 1) y += len;
-    else if (dir === 2) x -= len; else y -= len;
+    const len = S.h * (0.12 + nz01(E.fix + i * 29 + s2 * 7) * (inside ? 0.28 : 0.5));
+    let [nx, ny] = step(dir, len);
+    if (inside && (nx < X0 || nx > X1 || ny < Y0 || ny > Y1)) {
+      dir = (dir + 2) % 4;                      // 枠に当たったら折り返す
+      [nx, ny] = step(dir, len);
+      nx = clamp(nx, X0, X1); ny = clamp(ny, Y0, Y1);
+    }
+    x = nx; y = ny;
     pts.push([x, y]);
     dir = (dir + (nz01(E.fix + i * 31 + s2) > 0.5 ? 1 : 3)) % 4;
   }
@@ -638,6 +654,10 @@ function pipe(ctx, S, E) {
   const { col, sh } = E;
   const tq = E.f / E.fps;
   const n = Math.max(2, Math.min(sh.n, 10));
+  // 中を通る球の色。**地から遠い方を選ぶ。**
+  // 光の色で決め打ちすると、淡い地の景で球が消える（序の形なので消せない）。
+  const ball = Math.abs(lumOf(col.g) - lumOf(col.l)) + hueGap(col.g, col.l)
+    > Math.abs(lumOf(col.g) - lumOf(col.a)) + hueGap(col.g, col.a) ? col.l : col.a;
   for (let i = 0; i < n; i++) {
     const { pts, w } = pipePath(S, E, i);
     ctx.fillStyle = (sh.odd && i === n - 1) ? col.a : col.i;
@@ -647,12 +667,15 @@ function pipe(ctx, S, E) {
     for (let s2 = 1; s2 < pts.length - 1; s2++) {
       ctx.beginPath(); ctx.arc(pts[s2][0], pts[s2][1], w * 0.78, 0, TAU); ctx.fill();
     }
-    ctx.fillStyle = col.l;
+    // **管の中を球が通っていく。** これが序の形（問い）の中身なので、
+    // 球は管の内径いっぱいまで大きくする（0.3 では管の模様に見えた）。
+    // どこから来てどこへ行くのかは分からないままにする。
+    ctx.fillStyle = ball;
     for (let k = 0; k < 3; k++) {
-      const u = ((tq * (0.1 + sh.k2 * 0.25) + k / 3 + nz01(E.fix + i)) % 1) * (pts.length - 1);
+      const u = ((tq * (0.12 + sh.k2 * 0.28) + k / 3 + nz01(E.fix + i)) % 1) * (pts.length - 1);
       const s2 = Math.min(pts.length - 2, Math.floor(u)), t2 = u - s2;
       ctx.beginPath();
-      ctx.arc(mix(pts[s2][0], pts[s2 + 1][0], t2), mix(pts[s2][1], pts[s2 + 1][1], t2), w * 0.3, 0, TAU);
+      ctx.arc(mix(pts[s2][0], pts[s2 + 1][0], t2), mix(pts[s2][1], pts[s2 + 1][1], t2), w * 0.42, 0, TAU);
       ctx.fill();
     }
   }
