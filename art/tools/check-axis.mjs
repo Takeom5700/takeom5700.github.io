@@ -77,7 +77,7 @@ row('閃光の数', stat.flash, (v) => v.toFixed(0));
   console.log('');
   console.log('  種0の図の内訳: ' + Object.entries(share).sort((a, b) => b[1] - a[1])
     .map(([m, d]) => `${NAMES[m]}${((d / w.total) * 100) | 0}%`).join(' '));
-  console.log('  種0の楽章: ' + w.movements.map((m) => `${m.name}${m.dur}s/${m.shots.length}景`).join(' '));
+  console.log('  種0の楽章: ' + w.movements.map((m) => `${m.name}${Math.round(m.dur)}s/${m.shots.length}景`).join(' '));
 }
 
 // 種：同じ引数なら必ず同じ譜

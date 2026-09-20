@@ -32,6 +32,11 @@ import { NAMES, MOTIFS } from './motif.js';
 
 export const REST = 3.0;
 
+// **尺は6分ちょうど（360秒）。**
+// 依頼者:「Suno の制限で6分までしか作れないようだから、映像もちょうど6分にして」。
+// 部ごとの長さは種ごとに ±10% 振れたままで、**全体だけを一度伸縮させて**合わせる。
+export const TOTAL = 360;
+
 // 題名。**作品の中では一度も出さない**（画面に文字を置かない）。
 // 出るのは頁を開いたときの一行と、書き出したファイルの名前だけ。
 //
@@ -54,7 +59,7 @@ export const TITLE = 'Passage';
 export const LAWS = {
   // 型 — 構造（この版で足したもの）
   sections: 5,
-  minTotal: 300, maxTotal: 420,     // 5〜7分。**1本で完結させる**
+  minTotal: 359.9, maxTotal: 360.1, // 6分ちょうど（Suno が6分までのため）
   minThemeA: 4,                     // 第一主題が現れる回数（序・提示・展開・再現）
   minThemeB: 3,
   minRecall: 5,                     // 再現部が提示部から引き写す景の数
@@ -545,6 +550,20 @@ export function composeWork(seed) {
     last.empty = 1;
     while (end - t > 5) put(I, between(rng, 2.0, 4.0), air(I, { pal: home, lock: 1 }), 4, 0, 0.4);
     if (t < end) put(I, end - t, air(I, { pal: home, lock: 1, mv: 0 }), 4, 0, 0.4);
+  }
+
+  // ---- 尺を6分ちょうどに合わせる ----
+  // 部ごとの割合（±10%の振れ）はそのままに、**全体を一度だけ伸縮させる。**
+  // 景の長短の関係も、事の進みかたも、層の時計も、比のまま保たれる。
+  // 端数は最後の景で吸って、合計をぴったり TOTAL にする。
+  // **ここは層の時計（lyD）と音（composeMusic が movements を読む）より前に置くこと。**
+  {
+    const k = TOTAL / t;
+    let acc = 0;
+    for (const s of shots) { s.dur *= k; s.start = acc; acc += s.dur; }
+    const last = shots[shots.length - 1];
+    if (last) last.dur += TOTAL - acc;
+    t = TOTAL;
   }
 
   // **長い景で画面を止めない。** 5秒以上の景に「動かない」を許すと、
