@@ -1,84 +1,7 @@
 {
-  "fetched_at": "2026-09-20",
+  "fetched_at": "2026-09-21",
   "notes": [],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "全体",
-      "target": "全体",
-      "kind": "caution",
-      "value": "9月17日から19日にかけては、心が折れるような出来事が起こったり、ニュース速報や号外でショックを受けることがあるかもしれません。活動を休止する人が出る可能性もあり、注意が必要です。",
-      "period_start": "2026-09-17",
-      "period_end": "2026-09-19",
-      "url": "https://www.youtube.com/watch?v=gSxsG1oZgK8",
-      "label": "Loveちゃん 全体（全体・9/17-19）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "全体",
-      "kind": "caution",
-      "value": "大きな事故や事件、乗り物系のトラブルに注意が必要な時です。地震や噴火などの自然災害や、海外でのテロや凶悪犯罪、人間関係の縺れや刃物によるトラブルにも気をつけましょう。",
-      "period_start": "2026-09-18",
-      "period_end": "2026-09-20",
-      "url": "https://www.youtube.com/watch?v=e1Iwo5kC1WI",
-      "label": "Loveちゃん 全体（十二支・9/18-20）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "全体",
-      "kind": "theme",
-      "value": "「若」「藤」「苗」などの草冠のつく漢字や、「原」「野」「花」など草原や花を連想させる名前を持つ人が、良くも悪くも世間から注目を集めやすい運気です。",
-      "period_start": "2026-09-18",
-      "period_end": "2026-09-20",
-      "url": "https://www.youtube.com/watch?v=e1Iwo5kC1WI",
-      "label": "Loveちゃん 全体（十二支・9/18-20）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "color",
-      "value": "この期間のラッキーカラーは緑です。日常のアイテムや服装に取り入れて運気を高めていきましょう。",
-      "period_start": "2026-09-18",
-      "period_end": "2026-09-20",
-      "url": "https://www.youtube.com/watch?v=e1Iwo5kC1WI",
-      "label": "Loveちゃん 寅年（十二支・9/18-20）ラッキーカラー🎨"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "caution",
-      "value": "意見が噛み合わなくても怒ったりイライラせず、細かいことは気にしないようにしましょう。身近な人や兄弟姉妹と揉めやすいため、お互いに干渉しすぎないことが大切です。",
-      "period_start": "2026-09-18",
-      "period_end": "2026-09-20",
-      "url": "https://www.youtube.com/watch?v=e1Iwo5kC1WI",
-      "label": "Loveちゃん 寅年（十二支・9/18-20）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "theme",
-      "value": "型にはまりすぎず、のびのびと自由を意識して過ごすことがテーマになります。自分のノリの良さを発揮できるかどうかが運気の鍵となります。",
-      "period_start": "2026-09-18",
-      "period_end": "2026-09-20",
-      "url": "https://www.youtube.com/watch?v=e1Iwo5kC1WI",
-      "label": "Loveちゃん 寅年（十二支・9/18-20）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "action",
-      "value": "気になるカフェへの寄り道や外食、買い物に出かけると運気が高まります。また、カラオケやおしゃべりで声を出してストレスを発散したり、肩甲骨を回すことも開運行動です。",
-      "period_start": "2026-09-18",
-      "period_end": "2026-09-20",
-      "url": "https://www.youtube.com/watch?v=e1Iwo5kC1WI",
-      "label": "Loveちゃん 寅年（十二支・9/18-20）開運アクション✨"
-    },
     {
       "source": "Loveちゃん",
       "scope": "12星座",
@@ -124,22 +47,77 @@
       "label": "Loveちゃん 牡牛座（12星座・9/19-21）運気テーマ🌅"
     },
     {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "全体",
+      "kind": "caution",
+      "value": "お金と愛が急展開しやすい時です。特にお金の貸し借りは大きなトラブルに発展しやすいため避けましょう。どうしても貸す場合はあげる覚悟を持つことが大切です。",
+      "period_start": "2026-09-21",
+      "period_end": "2026-09-23",
+      "url": "https://www.youtube.com/watch?v=vujibYtIw44",
+      "label": "Loveちゃん 全体（十二支・9/21-23）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "全体",
+      "kind": "theme",
+      "value": "「まさかの発表」に驚かされやすい運気です。有名人の結婚や離婚、引退や活動休止、企業の買収や倒産などのニュースが出やすく、様々な憶測が広がりやすい時期となります。",
+      "period_start": "2026-09-21",
+      "period_end": "2026-09-23",
+      "url": "https://www.youtube.com/watch?v=vujibYtIw44",
+      "label": "Loveちゃん 全体（十二支・9/21-23）運気テーマ🌅"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
       "kind": "color",
-      "value": "気分を落ち着かせたい時には、森の色を取り入れると良いでしょう。穏やかな気持ちを保ち、冷静に対応するために活用してください。",
-      "period_start": "2026-09-14",
-      "period_end": "2026-09-20",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-14/taurus/",
-      "label": "しいたけ 牡牛座（週間・9/14-20）ラッキーカラー🎨"
+      "value": "ラッキーカラーは白です。ファッションや持ち物などに取り入れて運気アップに役立てましょう。",
+      "period_start": "2026-09-21",
+      "period_end": "2026-09-23",
+      "url": "https://www.youtube.com/watch?v=vujibYtIw44",
+      "label": "Loveちゃん 寅年（十二支・9/21-23）ラッキーカラー🎨"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "food",
+      "value": "カレーライスを作ると運気が高まるタイミングです。自分で時間をかけて料理してみるのがおすすめです。",
+      "period_start": "2026-09-21",
+      "period_end": "2026-09-23",
+      "url": "https://www.youtube.com/watch?v=vujibYtIw44",
+      "label": "Loveちゃん 寅年（十二支・9/21-23）ラッキーフード🍜"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "caution",
+      "value": "ずるい人や理不尽な人が目についても、自分から揉めようとしないことが大切です。そうした相手には後で天罰が下るため、関わらずにスルーしましょう。",
+      "period_start": "2026-09-21",
+      "period_end": "2026-09-23",
+      "url": "https://www.youtube.com/watch?v=vujibYtIw44",
+      "label": "Loveちゃん 寅年（十二支・9/21-23）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "action",
+      "value": "昔の友人と連絡を取ったり再会したりすると良い時です。また、家でゆっくり疲れを取るか、逆にライブや演劇、映画などを見に行ってパワーをもらうと運気が高まります。",
+      "period_start": "2026-09-21",
+      "period_end": "2026-09-23",
+      "url": "https://www.youtube.com/watch?v=vujibYtIw44",
+      "label": "Loveちゃん 寅年（十二支・9/21-23）開運アクション✨"
     },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "theme",
-      "value": "今週の牡牛座は、「少し様子を見ること」や「放置をすること」が重要なキーワードです。問題解決を急がず、「付き合いますよー」という緩い感覚で臨み、出口を探すのではなく、話を共有する姿勢が良いでしょう。",
+      "value": "今週は問題解決を急がず、「付き合いますよー」という緩い感覚で臨み、話を共有する姿勢が重要。モチベーションが下がりやすい時は、変な顔で「楽しくなってきました」と唱え、ズレを楽しむと良い。恋愛・人間関係も無理に解決せず、話に付き合う感覚で。",
       "period_start": "2026-09-14",
       "period_end": "2026-09-20",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-14/taurus/",
