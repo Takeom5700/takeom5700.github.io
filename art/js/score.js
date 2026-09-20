@@ -35,7 +35,7 @@ export const REST = 3.0;
 export const LAWS = {
   // 型 — 構造（この版で足したもの）
   sections: 5,
-  minTotal: 270, maxTotal: 330,     // 5分前後
+  minTotal: 300, maxTotal: 420,     // 5〜7分。**1本で完結させる**
   minThemeA: 4,                     // 第一主題が現れる回数（序・提示・展開・再現）
   minThemeB: 3,
   minRecall: 5,                     // 再現部が提示部から引き写す景の数
@@ -46,8 +46,8 @@ export const LAWS = {
   minLenRatio: 30,
   openCuts: 3, openWindow: 10,
   // 貌
-  maxSameShare: 0.30,
-  minMotifs: 6,
+  maxSameShare: 0.22,
+  minMotifs: 14,                    // **14の図を全部1本に出す**
   // 彩
   minJump: 0.30,
   minJumpShare: 0.55,               // **全部は跳ばさない。** 主題の中は同じ色で続ける
@@ -76,12 +76,15 @@ const COUNT = {
 const cnt = (rng, m) => Math.max(1, Math.round(between(rng, COUNT[m][0], COUNT[m][1])));
 
 // ---- 主題 -------------------------------------------------------------
-// 主題＝「図・色・置きかた・打ちかた」の組。これが作品の顔になる。
-function makeTheme(rng, pool, pal, kind) {
-  const m = pick(rng, pool);
+// 主題＝「**図の組**・色・置きかた・打ちかた」。これが作品の顔になる。
+//
+// 主題が図1つだと、14ある図のうち4つしか1本に出せない。
+// だから主題は**図を2〜4持つ**ことにした。主題の同一性は
+// 図ではなく「色・塗りかた・コマ数・画面の動き・起きる事」が担う。
+// 同じ色と同じ手つきで違う図が出てくるので、同じ主題だと分かる。
+function makeTheme(rng, ms, pal, kind) {
   return {
-    m, pal, inv: false, shade: 0,
-    n: cnt(rng, m),
+    ms: ms.slice(), k: 0, m: ms[0], pal, inv: false, shade: 0,
     hand: kind === 1 ? 0 : pick(rng, [0, 0, 1, 2, 3]),
     gk: pick(rng, [0, 0, 1, 1, 2, 3, 5]),
     gx: between(rng, 0.25, 0.75), gy: between(rng, 0.25, 0.75),
@@ -136,20 +139,42 @@ export function composeWork(seed) {
   const far = [(home + 7) % PALETTES.length, (home + 9) % PALETTES.length,
     (home + 2) % PALETTES.length, (dom + 6) % PALETTES.length];
 
-  const A = makeTheme(rng, MOVING, home, 1);            // 第一主題（動）
-  let B = makeTheme(rng, STILL, dom, 2);                // 第二主題（静）
-  for (let g = 0; g < 8 && B.m === A.m; g++) B = makeTheme(rng, STILL, dom, 2);
-  let I = makeTheme(rng, ASKING, home, 2);              // 序の形（問い）
-  for (let g = 0; g < 8 && (I.m === A.m || I.m === B.m); g++) I = makeTheme(rng, ASKING, home, 2);
-  // 小結主題。推移と展開と小結に出る。**図が2つだけだと5分は持たない**
-  const ALL = MOVING.concat(STILL);
-  let C = makeTheme(rng, ALL, dom, 1);
-  for (let g = 0; g < 12 && (C.m === A.m || C.m === B.m || C.m === I.m); g++) C = makeTheme(rng, ALL, dom, 1);
+  // **14の図を全部1本に出す。** 役割に配る（同じ図は二度使わない）。
+  //   I 序の形2つ／A 第一主題4つ／B 第二主題4つ／C 小結2つ／E 挿話2つ
+  // **主題に4つ持たせる。** 挿話に寄せると、その図が1%しか映らない
+  // （実測でそうなった）。「全部を活かす」なら主題の側に配るしかない。
+  // 挿話（E）は展開部にだけ出る新しい材料。古典のソナタでも展開部は
+  // 新しい動機を持ち込むので、そこに全部の残りを入れている。
+  const left = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+  const take = (from, k) => {
+    const out = [];
+    for (let i = 0; i < k; i++) {
+      const cand = from.filter((m) => left.includes(m));
+      const m = cand.length ? pick(rng, cand) : pick(rng, left);
+      out.push(m);
+      left.splice(left.indexOf(m), 1);
+    }
+    return out;
+  };
+  const msI = take(ASKING, 2);
+  const msA = take(MOVING, 4);
+  const msB = take(STILL, 4);
+  const msC = take(left.slice(), 2);
+  const msE = take(left.slice(), 2);
+
+  const A = makeTheme(rng, msA, home, 1);     // 第一主題（動・主調）
+  const B = makeTheme(rng, msB, dom, 2);      // 第二主題（静・属調）
+  const I = makeTheme(rng, msI, home, 2);     // 序の形（問い）
+  const C = makeTheme(rng, msC, dom, 1);      // 小結主題
+  const E = makeTheme(rng, msE, far[0], 1);   // 挿話（展開部だけ）
 
   const shots = [];
   let t = 0;
   const put = (th, dur, over, sec, theme, w) => {
     const s = shotFrom(th, dur, over);
+    // 図は主題の組から順に取る（順番が決まっているから再現部で同じ並びが戻る）
+    if (!over || over.m === undefined) s.m = th.ms[(th.k++) % th.ms.length];
+    if (!over || over.n === undefined) s.n = cnt(rng, s.m);
     s.start = t; s.sec = sec; s.th = theme; s.w = w;
     // **主題の中では色を動かさない。** 同じ色で続くから「同じ主題」に見える。
     // 跳ばすのは群が替わる（主題が替わる／部が替わる）ときだけ。
@@ -179,7 +204,6 @@ export function composeWork(seed) {
   // 調を保ったまま和音を替えるのと同じで、同じ主題だと分かるのに画面は変わる。
   const vary = (th, extra) => Object.assign({
     ox: between(rng, -0.85, 0.85), oy: between(rng, -0.85, 0.85),
-    n: cnt(rng, th.m),
     hand: rng() < 0.55 ? th.hand : pick(rng, [0, 1, 2, 3]),
     inv: rng() < 0.5,
     shade: pick(rng, [0, 0, 0, 1, 1, 2]),
@@ -194,7 +218,7 @@ export function composeWork(seed) {
 
   // ---- 序（問いを置く） ----
   // 冒頭で止まらせないために、短い断片を3つ打ってから長く溜める
-  const sec0 = D(24);
+  const sec0 = D(30);
   {
     const end = t + sec0;
     // 頭の3枚で掴む。**面の割り当てと反転を1枚ずつ変える。**
@@ -217,7 +241,7 @@ export function composeWork(seed) {
   }
 
   // ---- 提示部 ----
-  const sec1 = D(76);
+  const sec1 = D(96);
   {
     const end = t + sec1;
     // 第一主題の群（主調）
@@ -257,7 +281,7 @@ export function composeWork(seed) {
   // **速く切るだけでは展開にならない。** 波ごとに図に起きる事を決めて、
   // 断のたびに事を一段ずつ進める（`evAt` が 0→1 へ上がっていく）。
   // 観る側には「同じものが、切るたびに壊れていく」ように見える。
-  const sec2 = D(84);
+  const sec2 = D(112);
   {
     const end = t + sec2;
     const waves = 3;
@@ -277,7 +301,8 @@ export function composeWork(seed) {
       const wave = [];
       while (t < wEnd - 2.6) {
         const q3 = rng();
-        const th = q3 < 0.4 ? A : q3 < 0.72 ? B : C;
+        // 挿話（E）を混ぜる。展開部は新しい材料を持ち込む場所
+        const th = q3 < 0.32 ? A : q3 < 0.56 ? B : q3 < 0.74 ? C : E;
         const q = rng();
         wave.push(put(th, Math.min(wEnd - t, between(rng, fast * 0.7, fast * 1.5)),
           vary(th, {
@@ -295,13 +320,22 @@ export function composeWork(seed) {
       }
       // 着地（波のあとに一度ためる）。事が終わった姿を見せる
       if (!last) {
-        const th2 = pick(rng, [A, B, C]);
+        const th2 = pick(rng, [E, C, A, B]);
         put(th2, Math.min(end - t, between(rng, 2.0, 4.0)),
           vary(th2, { pal: pick(rng, far), ev: evK, evAt: 0.82 }), 2, 1, 0.5);
       }
+      // 第一波のあとに**挿話**を置く。ここだけは新しい材料（E）が
+      // ゆっくり出る。全部を速い断で流すと、その図が1%も映らない
+      if (w === 0) {
+        const epEnd = Math.min(end - 6, t + between(rng, 22, 32));
+        while (t < epEnd - 1.0) {
+          put(E, Math.min(epEnd - t, between(rng, 1.4, 3.4)),
+            vary(E, { pal: pick(rng, far), ev: 11, ev0: 0.06, ev1: 0.94 }), 2, 2, 0.6);
+        }
+      }
     }
     // 頂点。作品でいちばん強い一撃をここに置く（＝すべての景が同格ではない）
-    const climax = put(A, Math.min(end - t, between(rng, 4.5, 7.0)),
+    const climax = put(A, Math.min(end - t, between(rng, 5.0, 7.5)),
       vary(A, {
         pal: pick(rng, far), n: COUNT[A.m][1], mv: 1, mvA: 1, fps: 12, inv: true,
         ev: 1, ev0: 0.12, ev1: 0.92, evAt: -1,      // 頂点では崩れきる
@@ -313,7 +347,7 @@ export function composeWork(seed) {
   }
 
   // ---- 再現部（同じ姿で帰る） ----
-  const sec3 = D(76);
+  const sec3 = D(96);
   {
     const end = t + sec3;
     // 第一主題：提示部の景を**そのまま引き写す**（少し長くする）
@@ -325,7 +359,7 @@ export function composeWork(seed) {
       const src = srcA[i++ % srcA.length];
       const d = Math.min(aEnd - t, src.dur * between(rng, 1.05, 1.5));
       const s = put(A, d, {
-        n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        m: src.m, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: src.inv, shade: src.shade, mv: src.mv, mvA: src.mvA,
         fps: src.fps, pal: home, lock: 1,
@@ -353,7 +387,7 @@ export function composeWork(seed) {
       const src = srcB[j++ % srcB.length];
       const d = Math.min(end - t, src.dur * between(rng, 1.0, 1.35));
       const s = put(B, d, {
-        n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        m: src.m, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: false, shade: src.shade, mv: src.mv, mvA: src.mvA,
         fps: src.fps, pal: home, lock: 1,               // ← 属調から主調へ
@@ -371,7 +405,7 @@ export function composeWork(seed) {
   }
 
   // ---- 終（序の形が帰り、解ける） ----
-  const sec4 = D(32);
+  const sec4 = D(46);
   {
     const end = t + sec4;
     put(I, between(rng, 1.6, 2.6), vary(I, { pal: home, mv: 3, lock: 1 }), 4, 0, 0.5);
@@ -405,10 +439,18 @@ export function composeWork(seed) {
   // 動かない景を許さないだけでなく、**動く量にも下限を置く。**
   // 寄りが 8秒で 19% しか無いと、面で描いた絵では画素がほとんど変わらない
   // （実測 0.18%／0.5秒）。長い景ほど大きく動かす。
+  // 下限は **4秒**（実測の「長い景」の線と同じ）。5秒にしていたとき、
+  // 4.5秒の梯の景が 0.79%／0.5秒で「静止画に見える」に落ちた。
   for (const s of shots) {
-    if (s.dur < 5) continue;
+    if (s.dur < 4) continue;
     if (s.mv === 0) s.mv = pick(rng, [1, 2, 4]);
+    // 揺れ（mv 3）は地が付いてこないので面がほとんど変わらない。
+    // 長い景では寄り・流し・傾きに替える。
+    if (s.mv === 3) s.mv = pick(rng, [1, 2, 4]);
     s.mvA = Math.max(s.mvA, 0.8);
+    // **地も一緒に動かす。** 図だけ流すと、面積の大半を占める地が
+    // 止まったままなので画面が固まって見える（実測 0.66%／0.5秒）。
+    s.gmv = 1;
   }
   // 通し番号と閃光
   for (let i = 0; i < shots.length; i++) shots[i].id = i;
@@ -517,13 +559,13 @@ export function checkWork(work) {
   // 貌
   const share = {};
   for (const s of S) share[s.m] = (share[s.m] || 0) + s.dur;
+  // **14の図を全部1本に出す。** 主題が図の組を持っているので出せる
   if (Object.keys(share).length < LAWS.minMotifs) {
-    // 主題は3つなので、図の種類は少なくてよい。ただし少なすぎると単調
-    if (Object.keys(share).length < 3) bad.push(`貌: 図が ${Object.keys(share).length} 種しかない`);
+    bad.push(`貌: 図が ${Object.keys(share).length} 種しかない（${LAWS.minMotifs} 全部出す）`);
   }
   for (const k in share) {
     const r = share[k] / work.total;
-    if (r > LAWS.maxSameShare + 0.22) bad.push(`貌: 「${NAMES[k]}」が全体の ${(r * 100) | 0}%`);
+    if (r > LAWS.maxSameShare) bad.push(`貌: 「${NAMES[k]}」が全体の ${(r * 100) | 0}%（${(LAWS.maxSameShare * 100) | 0}% 以下）`);
   }
   // 彩
   let jumps = 0;

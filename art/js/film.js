@@ -17,6 +17,21 @@ import { colorsOf, ground, makeInk, makeGrain, nz, nz01, snz, clamp, TAU } from 
 // 作品の枠は 1600×900 の論理座標。出力の大きさによらず同じ構図になる。
 export const STAGE = { w: 1600, h: 900 };
 
+// 画面そのものの動き（寄り・流し・揺れ・傾き）。すべて段で刻む。
+// **段の数は景の長さから決める。** 固定の段数にすると、長い景では
+// 0.5秒のあいだ一度も段が変わらず、実測で「静止画に見える」に落ちる
+// （8.2秒の景が 0.5秒で 0.17% しか動かなかった）。0.3秒に一度は必ず動かす。
+function camera(g, S, sh, p, seed = 0) {
+  const NS = Math.max(8, Math.min(72, Math.round(sh.dur / 0.3)));
+  const q = (v, n) => Math.round(v * n) / n;
+  g.translate(S.w / 2, S.h / 2);
+  if (sh.mv === 1) g.scale(1 + q(p, NS) * sh.mvA * 0.55, 1 + q(p, NS) * sh.mvA * 0.55);
+  else if (sh.mv === 2) g.translate(q(p, NS) * sh.mvA * S.w * 0.28 * (sh.ox > 0 ? 1 : -1), 0);
+  else if (sh.mv === 3) g.translate(nz(seed + 3) * sh.mvA * S.h * 0.035, nz(seed + 5) * sh.mvA * S.h * 0.035);
+  else if (sh.mv === 4) g.rotate(q(p, NS) * sh.mvA * 0.26 * (sh.oy > 0 ? 1 : -1));
+  g.translate(-S.w / 2, -S.h / 2);
+}
+
 export function createFilm(canvas) {
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
   if (!ctx) return null;
@@ -93,6 +108,11 @@ export function createFilm(canvas) {
     // フィルムの横揺れ（ゲートウィーブ）。1〜2画素でも絵が生きる
     const weave = sh.boil ? 2.2 : 0;
     ctx.translate(nz(seed + 7) * weave, nz(seed + 13) * weave);
+    // **長い景では地も一緒に動かす。** 地を釘で止めたまま図だけ流すと、
+    // 面積の大半（斜めに割った地）が固まったままなので、画面が止まって見える。
+    // 実測で 4.5秒の梯の景が 0.5秒に 0.66% しか変わらず「静止画」に落ちた。
+    // 地は必ず col.g で全面を塗ってから形を置くので、動かしても穴は開かない。
+    if (sh.gmv) camera(ctx, S, sh, p, seed);
     ground(ctx, S, sh, col, fix);
     ctx.restore();
 
@@ -107,19 +127,9 @@ export function createFilm(canvas) {
     g.scale(sx, sy);
     g.translate(nz(seed + 7) * weave, nz(seed + 13) * weave);
 
-    // 画面そのものの動き。すべて段で刻む。
-    // **段の数は景の長さから決める。** 固定の段数にすると、長い景では
-    // 0.5秒のあいだ一度も段が変わらず、実測で「静止画に見える」に落ちる
-    // （8.2秒の景が 0.5秒で 0.17% しか動かなかった）。0.3秒に一度は必ず動かす。
-    const NS = clamp(Math.round(sh.dur / 0.3), 8, 72);
+    // 画面そのものの動き（中身は camera()）
     g.save();
-    const q = (v, n) => Math.round(v * n) / n;
-    g.translate(S.w / 2, S.h / 2);
-    if (sh.mv === 1) g.scale(1 + q(p, NS) * sh.mvA * 0.55, 1 + q(p, NS) * sh.mvA * 0.55);
-    else if (sh.mv === 2) g.translate(q(p, NS) * sh.mvA * S.w * 0.28 * (sh.ox > 0 ? 1 : -1), 0);
-    else if (sh.mv === 3) g.translate(nz(seed + 3) * sh.mvA * S.h * 0.035, nz(seed + 5) * sh.mvA * S.h * 0.035);
-    else if (sh.mv === 4) g.rotate(q(p, NS) * sh.mvA * 0.26 * (sh.oy > 0 ? 1 : -1));
-    g.translate(-S.w / 2, -S.h / 2);
+    camera(g, S, sh, p, seed);
     // 事の変形（逃・芽）は図の直前に掛ける
     evTransform(g, S, sh, ep);
 

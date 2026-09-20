@@ -12,7 +12,7 @@ import { open } from './browser.mjs';
 import { encode } from './png.mjs';
 import { analyse, grid, meanAbsDiff, OK } from './metrics.mjs';
 
-const EV = ['　', '崩', '組', '溶', '殖', '落', '侵', '喰', '逃', '来', '芽'];
+const EV = ['　', '崩', '組', '溶', '殖', '落', '侵', '喰', '逃', '来', '芽', '固'];
 
 const argv = process.argv.slice(2);
 const flag = (n, d) => { const i = argv.indexOf('--' + n); return i < 0 ? d : argv[i + 1]; };

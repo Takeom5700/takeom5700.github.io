@@ -238,6 +238,17 @@ function stippleClip(ctx, S, color, dens, seed, r) {
 export function makeInk(ctx, S, shot, col, E) {
   const hand = shot.hand;
   const lw = E.lw;
+  // 縁取り。**引き直してから縁を取ること。**
+  // Canvas の「いまの path」は save/restore では戻らないので、
+  // 刻む・点で打つの中で beginPath されると、そのあとの stroke は
+  // 刻み線や点を縁取ってしまい、**形の輪郭が1本も出ない**（実際に出ていなかった。
+  // 壺を点で打った景が、輪郭を失って赤い点の塊になっていた）。
+  function outline(pathFn, c, w) {
+    ctx.beginPath(); pathFn();
+    ctx.save(); ctx.clip();
+    ctx.lineWidth = w; ctx.strokeStyle = c; ctx.stroke();
+    ctx.restore();
+  }
   function body(pathFn, color) {
     const c = color || col.i;
     ctx.save();
@@ -250,14 +261,10 @@ export function makeInk(ctx, S, shot, col, E) {
       ctx.restore();
     } else if (hand === 2) {                // 刻む（銅版画）
       hatchClip(ctx, S, c, shot.hang, lw * (2.4 + shot.hgap * 5), E.seed, lw * 0.5);
-      ctx.save(); ctx.clip();
-      ctx.lineWidth = lw * 2.2; ctx.strokeStyle = c; ctx.stroke();
-      ctx.restore();
+      outline(pathFn, c, lw * 2.2);
     } else if (hand === 3) {                // 点で打つ
-      stippleClip(ctx, S, c, 2600, E.seed, lw * 0.6);
-      ctx.save(); ctx.clip();
-      ctx.lineWidth = lw * 1.6; ctx.strokeStyle = c; ctx.stroke();
-      ctx.restore();
+      stippleClip(ctx, S, c, 2600, E.seed, lw * 0.9);
+      outline(pathFn, c, lw * 1.8);
     } else {                                // 塗る
       ctx.fillStyle = c; ctx.fill();
     }

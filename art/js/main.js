@@ -1,7 +1,9 @@
 // 進行。譜を時計で引いて、映写と音に渡す。
 // ここには美の判断を置かない（全部 score.js / motif.js / paint.js にある）。
 //
-// 作品は終わらない。一つ終われば次の種の作品が始まる。
+// **1本で終わる。** 終わったら黒に落ちて、題だけ戻る。
+// 次の種は `n` で自分から始める（自動で始めると、続けて観た人に
+// 「3つか4つの作品がある」ように見えてしまう。実際にそう見られた）。
 //
 // 第一版から変わった一番大きいところ: **絵は時刻だけで決まる。**
 // 視点を積み上げる状態が無くなったので、どこへ飛んでも同じ絵が出る。
@@ -69,7 +71,7 @@ function start() {
   const bad = checkWork(work);
   if (bad.length) console.error('基軸違反:\n' + bad.join('\n'));
 
-  let t = 0, rest = 0;
+  let t = 0, rest = 0, ended = false;
   let playing = false, paused = false;
   let snd = null, sndT0 = 0, sndIdx = 0;
   let last = 0;
@@ -100,6 +102,7 @@ function start() {
     while (sndIdx < music.notes.length && music.notes[sndIdx].t < t) sndIdx++;
   }
   function nextWork() {
+    ended = false; rest = 0;
     seed += 1;
     work = composeWork(seed);
     music = composeMusic(work);
@@ -270,6 +273,24 @@ function start() {
       // 早期アニメーションの呼吸が消えて、ただの CG になる。
       frame(to) { drawAt(to); return true; },
       png(mime, quality) { return canvas.toDataURL(mime || 'image/png', quality); },
+      // 音楽の中身（tools/suno.mjs が style prompt を組むのに使う）。
+      // **譜から取る。** 耳で聞いて書くと、種を変えたときに嘘になる。
+      musicInfo() {
+        const V = ['music box', 'harp', 'bowed bass', 'string pad', 'bell',
+          'soft timpani', 'wordless choir', 'pizzicato', 'strings lead'];
+        return {
+          tempo: music.tempo, tonic: music.tonic, total: work.total,
+          notes: music.notes.length,
+          sections: work.movements.map((m) => {
+            const inSec = music.notes.filter((n) => n.t >= m.start - 0.5 && n.t < m.start + m.dur);
+            const set = [...new Set(inSec.map((n) => n.voice))].sort();
+            return {
+              name: m.name, start: +m.start.toFixed(1), dur: +m.dur.toFixed(1),
+              voices: set.map((v) => V[v] || ('voice' + v)),
+            };
+          }),
+        };
+      },
       // 譜の中身（下見の道具が、どの時刻を見るか決めるのに使う）
       list() {
         return work.shots.map((s) => ({
@@ -319,7 +340,14 @@ function start() {
   function tick(dt) {
     if (rest > 0) {
       rest -= dt;
-      if (rest <= 0) nextWork();
+      // **1本で終わる。** 続けて次の種を始めない。
+      // 自動で次が始まると「3つか4つの作品がある」ように見えてしまう
+      // （実際にそう見られた）。終わったら黒に落として、題だけ戻す。
+      if (rest <= 0) {
+        ended = true; playing = false;
+        hint.classList.add('shown');
+        document.body.classList.remove('running');
+      }
       const c = film.ctx;
       c.setTransform(1, 0, 0, 1, 0, 0);
       c.fillStyle = '#000';
@@ -352,6 +380,7 @@ function start() {
 
   function begin() {
     if (playing) return;
+    if (ended) { ended = false; seek(0); }   // 終わったあとに触られたら頭から
     playing = true;
     hint.classList.remove('shown');
     veil.style.opacity = '0';
@@ -413,8 +442,6 @@ function start() {
   const kick = (e) => {
     if (e.type === 'keydown' && e.key !== ' ' && e.key !== 'Enter') return;
     begin();
-    window.removeEventListener('pointerdown', kick);
-    window.removeEventListener('keydown', kick);
   };
   window.addEventListener('pointerdown', kick);
   window.addEventListener('keydown', kick);
@@ -429,7 +456,7 @@ function start() {
       if (document.fullscreenElement) document.exitFullscreen();
       else document.documentElement.requestFullscreen().catch(() => {});
     } else if (e.key === 'm' || e.key === 'M') { if (snd) snd.toggleMute(); }
-    else if (e.key === 'n' || e.key === 'N') { nextWork(); }
+    else if (e.key === 'n' || e.key === 'N') { nextWork(); ended = false; rest = 0; }
     else if (e.key === 'h' || e.key === 'H') { hud.classList.toggle('shown'); }
     else if (e.key === 's' || e.key === 'S') { saveMusic(); }
     else if (e.key === 'v' || e.key === 'V') { saveFilm(true); }
