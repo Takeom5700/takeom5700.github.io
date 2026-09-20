@@ -39,8 +39,13 @@ export const PIXEL = [0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0];
 export function evTransform(ctx, S, sh, ep) {
   const ev = sh.ev | 0;
   if (ev === 8) {                       // 逃 — 一点から逃げ散る
-    const k = 1 + ep * ep * (1.2 + sh.mvA * 1.6);
-    const cx = S.w * (0.5 + sh.ox * 0.3), cy = S.h * (0.5 + sh.oy * 0.3);
+    // **振り切ると図が枠の外へ出て、画面が空になる。**
+    // 余白の法を入れて図の数を下限から取るようにしたら、
+    // 「1匹だけの獣が逃げて画面から消える」景が実際に出た（実測 poster 0.00）。
+    // だから伸びは 2.2 倍までにして、中心を**図の置き場所と同じ**にする。
+    // 図はその場で迫ってきて、枠からは出ない。
+    const k = 1 + ep * ep * (0.6 + sh.mvA * 0.6);
+    const cx = S.w * (0.5 + sh.ox * 0.25), cy = S.h * (0.5 + sh.oy * 0.25);
     ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-cx, -cy);
   } else if (ev === 10) {               // 芽 — 縦横が別々に伸び縮みして姿が変わる
     const q = Math.round(ep * 12) / 12;

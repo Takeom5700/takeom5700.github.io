@@ -127,16 +127,24 @@ export function posterize(img) {
   const flat = ent.slice(0, 3).reduce((a, b) => a + b[1], 0) / N;
   // 0.6% でも拾う。線だけの景では、図が画面の 1% しか占めないことがある
   // （2% で切っていたら、赤地に黒い雨の画面を「一色」と誤判定した）
-  const big = ent.filter((e) => e[1] / N >= 0.005).slice(0, 10)
-    .map((e) => [((e[0] >> 6) & 7) / 7, ((e[0] >> 3) & 7) / 7, (e[0] & 7) / 7]);
-  let poster = 0;
-  for (let i = 0; i < big.length; i++) {
-    for (let j = i + 1; j < big.length; j++) {
-      const d = Math.sqrt((big[i][0] - big[j][0]) ** 2 + (big[i][1] - big[j][1]) ** 2 + (big[i][2] - big[j][2]) ** 2) / Math.sqrt(3);
-      if (d > poster) poster = d;
+  const rgb = (e) => [((e[0] >> 6) & 7) / 7, ((e[0] >> 3) & 7) / 7, (e[0] & 7) / 7];
+  const spread = (floor) => {
+    const big = ent.filter((e) => e[1] / N >= floor).slice(0, 10).map(rgb);
+    let p = 0;
+    for (let i = 0; i < big.length; i++) {
+      for (let j = i + 1; j < big.length; j++) {
+        const d = Math.sqrt((big[i][0] - big[j][0]) ** 2 + (big[i][1] - big[j][1]) ** 2
+          + (big[i][2] - big[j][2]) ** 2) / Math.sqrt(3);
+        if (d > p) p = d;
+      }
     }
-  }
-  return { flat, poster, cover: 1 - ent[0][1] / N };
+    return p;
+  };
+  // **余白の景は、もっと小さい面まで拾って測る。**
+  // 黒地に小さな赤い梯子を2本置いた景（図は画面の 1%）で、
+  // 0.5% の床では赤を拾えず「画面に色が1つしかない」と出た。
+  // 目にはいちばん強い対比に見えるのに、である。
+  return { flat, poster: spread(0.005), posterSmall: spread(0.0015), cover: 1 - ent[0][1] / N };
 }
 
 export function analyse(buf) {
@@ -163,11 +171,61 @@ export function analyse(buf) {
   return r;
 }
 
+// 2枚のあいだの変化。**色で測ること。**
+// 明るさだけで測っていたとき、紅の地から桃の地へ切った断
+// （黄の日 → 白の日）が 2.8% と出た。人の目には全部入れ替わって見えるのに、
+// 明度がほとんど同じだったからである。この作品は原色を面で置くので、
+// 断は「明るさの跳び」ではなく**色の跳び**になることが多い。
 export function meanAbsDiff(bufA, bufB) {
-  const x = srgbLuma(decode(bufA)), y = srgbLuma(decode(bufB));
+  const a = decode(bufA), b = decode(bufB);
+  const n = Math.min(a.w * a.h, b.w * b.h);
   let s = 0;
-  for (let i = 0; i < x.length; i++) s += Math.abs(x[i] - y[i]);
-  return s / x.length;
+  for (let i = 0; i < n; i++) {
+    const p = i * a.ch, q = i * b.ch;
+    s += (Math.abs(a.data[p] - b.data[q])
+        + Math.abs(a.data[p + 1] - b.data[q + 1])
+        + Math.abs(a.data[p + 2] - b.data[q + 2])) / 3;
+  }
+  return s / n / 255;
+}
+
+// 断の大きさ。**画面ぜんたいの平均だけでは測れない。**
+// 余白を法に入れてから、画面の大半が同じ地の面になった。
+// 図が椅子から傘へ全部入れ替わっていても、地の面が残っていると
+// 平均は 9% 程度しか動かない（実際にそう出て、目で見たら完全に別の景だった）。
+// 人の目は「どこかが大きく変わった」ことに気づくので、
+// 区画（8×5）ごとの変化も測り、**上位の区画がどれだけ変わったか**を併せて見る。
+// 同じ絵を2枚並べれば、平均も区画も 0 になる（＝空振りの断は必ず落ちる）。
+export function cutChange(bufA, bufB) {
+  const a = decode(bufA), b = decode(bufB);
+  const w = Math.min(a.w, b.w), h = Math.min(a.h, b.h);
+  const COLS = 8, ROWS = 5;
+  const tiles = [];
+  let all = 0, allN = 0;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const x0 = Math.floor(c * w / COLS), x1 = Math.floor((c + 1) * w / COLS);
+      const y0 = Math.floor(r * h / ROWS), y1 = Math.floor((r + 1) * h / ROWS);
+      let s = 0, n = 0;
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const p = (y * a.w + x) * a.ch, q = (y * b.w + x) * b.ch;
+          s += (Math.abs(a.data[p] - b.data[q])
+              + Math.abs(a.data[p + 1] - b.data[q + 1])
+              + Math.abs(a.data[p + 2] - b.data[q + 2])) / 3;
+          n++;
+        }
+      }
+      tiles.push(s / Math.max(1, n) / 255);
+      all += s; allN += n;
+    }
+  }
+  tiles.sort((x, y) => y - x);
+  const mean = all / Math.max(1, allN) / 255;
+  // 上から2割の区画の平均（＝「どこかが大きく変わった」の量）
+  const k = Math.max(1, Math.round(tiles.length * 0.2));
+  const tile = tiles.slice(0, k).reduce((x, y) => x + y, 0) / k;
+  return { mean, tile, change: Math.max(mean, tile) };
 }
 
 // 同じ大きさの絵を格子に並べて1枚にする（下見用）

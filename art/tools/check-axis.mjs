@@ -7,10 +7,15 @@
 // ここを通っても絵が退屈なことはあり得る（一度そうなった）。
 
 import { composeWork, checkWork, LAWS, NAMES } from '../js/score.js';
+import { LAYER_NAMES } from '../js/layer.js';
 
 const N = parseInt(process.argv[2] || '400', 10);
 let bad = 0;
-const stat = { cpm: [], ratio: [], open: [], maxShare: [], hold: [], flash: [], turn: [] };
+const stat = {
+  cpm: [], ratio: [], open: [], maxShare: [], kinds: [], hold: [], flash: [], turn: [],
+  quiet: [], rests: [],
+};
+const layCount = {};
 
 for (let seed = 0; seed < N; seed++) {
   const w = composeWork(seed);
@@ -23,6 +28,11 @@ for (let seed = 0; seed < N; seed++) {
   stat.ratio.push(Math.max(...d) / Math.min(...d));
   stat.open.push(w.shots.filter((s) => s.start < 10).length);
   stat.maxShare.push(Math.max(...Object.values(share)) / w.total);
+  stat.kinds.push(Object.keys(share).length);
+  stat.quiet.push(w.shots.filter((x) => x.sparse).reduce((a, x) => a + x.dur, 0) / w.total);
+  stat.rests.push(w.shots.filter((x) => x.sparse && x.dur >= 2.5).length);
+  const lay = w.shots[0] ? (w.shots[0].lay | 0) : 0;
+  layCount[lay] = (layCount[lay] || 0) + 1;
   stat.hold.push(w.shots.filter((s) => s.dur >= LAWS.minHold).length);
   stat.flash.push(w.shots.filter((s) => s.flash).length);
   stat.turn.push(w.shots.filter((s) => s.turn).length);
@@ -46,8 +56,15 @@ row('長短の比（倍）', stat.ratio, (v) => v.toFixed(0));
 row(`冒頭${LAWS.openWindow}秒の景の数`, stat.open, (v) => v.toFixed(0));
 console.log('間（ためる）');
 row(`${LAWS.minHold}秒以上の景`, stat.hold, (v) => v.toFixed(0));
-console.log('貌（図）');
+console.log('貌（図）— 選別する');
+row('1本に出る図の数', stat.kinds, (v) => v.toFixed(0));
 row('同じ図の最大占有率', stat.maxShare, (v) => (v * 100).toFixed(0) + '%');
+console.log('余白（空ける）');
+row('疎な景の尺の割合', stat.quiet, (v) => (v * 100).toFixed(0) + '%');
+row('ための景の数', stat.rests, (v) => v.toFixed(0));
+console.log('層（断をまたいで続く）');
+console.log('  ' + Object.entries(layCount).sort((a, b) => b[1] - a[1])
+  .map(([k, n]) => `${LAYER_NAMES[k] || k} ${n}本`).join('  '));
 console.log('彩（色を跳ばす）');
 row('景の中で色が替わる数', stat.turn, (v) => v.toFixed(0));
 row('閃光の数', stat.flash, (v) => v.toFixed(0));

@@ -192,7 +192,16 @@ function beast(ctx, S, E) {
   for (let i = 0; i < n; i++) {
     const s = S.h * (0.055 + sh.k1 * 0.11) * (n === 1 ? 1.5 : 0.6 + nz01(E.fix + i * 7) * 0.8);
     const u = n === 1 ? 0.5 : (i + 0.5) / n;
-    const x = ((u + tq * 0.055 * run + nz01(E.fix + i * 3) * 0.06) % 1.35 - 0.16) * S.w;
+    // 横の位置。巻き戻しは**必ず正の剰余**で書く
+    // （JS の % は左が負なら負を返す。左へ走る群が枠の外へ出たまま帰らなかった）。
+    // **1匹だけのときは巻き戻さない。** 巻き戻しの帯には枠の外の余白が
+    // 入っているので、1匹だと「画面に獣が1匹も映らない景」が出る（実際に出た）。
+    // 1匹のときは行って戻る（うろつく）。
+    const wrap = (v, m) => ((v % m) + m) % m;
+    const walk = tq * 0.055 * run;
+    const x = n === 1
+      ? S.w * (0.5 + sh.ox * 0.16 + Math.sin(walk * 1.7) * 0.2)
+      : (wrap(u + walk + nz01(E.fix + i * 3) * 0.06, 1.35) - 0.16) * S.w;
     beastOne(ctx, x, gy - nz01(E.fix + i * 11) * S.h * 0.06, s,
       tq * (2.2 + sh.k3 * 3) + nz01(E.fix + i), E.seed + i * 131, E,
       (sh.odd && i === n - 1) ? col.a : col.i);

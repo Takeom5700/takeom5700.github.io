@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import { open } from './browser.mjs';
 import { encode } from './png.mjs';
-import { analyse, grid, meanAbsDiff, OK } from './metrics.mjs';
+import { analyse, grid, meanAbsDiff, cutChange, OK } from './metrics.mjs';
 
 const EV = ['　', '崩', '組', '溶', '殖', '落', '侵', '喰', '逃', '来', '芽', '固'];
 
@@ -68,14 +68,18 @@ for (const s of picks) {
   const buf = await shoot(t);
   const a = analyse(buf);
   imgs.push(a.img);
-  if (!(a.okContrast || s.empty)) weak++;
+  // 余白の景は別の基準で見る（tileVar が低いのは余白の効きそのもの）
+  const okShot = s.empty ? true
+    : s.sparse ? (a.posterSmall >= OK.poster && a.cover >= 0.004 && a.cover <= 0.4)
+    : a.okContrast;
+  if (!okShot) weak++;
   if (a.okColor) vivid++;
   console.log(
     `${'序提展再終'[s.sec] || '?'} ${String(Math.round(s.start)).padStart(4)}s ${s.name} ${EV[s.ev | 0]} ${s.dur.toFixed(2).padStart(5)} ` +
     `${String(s.fps).padStart(3)} ${['塗', '線', '刻', '点'][s.hand]} |` +
     `${a.poster.toFixed(2).padStart(6)} ${a.tileVar.toFixed(2).padStart(6)} ${a.chroma.toFixed(2).padStart(5)} ${a.cover.toFixed(2).padStart(6)} ${a.flat.toFixed(2).padStart(4)} |` +
     `${a.fine.toFixed(4).padStart(7)}${a.coarse.toFixed(4).padStart(7)} | ` +
-    `${a.okContrast ? '対比○' : '対比×'} ${a.okColor ? '彩○' : '彩×'}`
+    `${okShot ? '対比○' : '対比×'}${s.sparse ? '(余白)' : ''} ${a.okColor ? '彩○' : '彩×'}`
   );
 }
 
@@ -84,7 +88,7 @@ const cuts = shots.filter((s) => s.start > 1 && s.start < meta.total - 1).slice(
 let cutMin = 1;
 for (const s of cuts.filter((_, i) => i % 2 === 0).slice(0, 3)) {
   const a = await shoot(s.start - 0.02), b = await shoot(s.start + 0.02);
-  const d = meanAbsDiff(a, b);
+  const d = cutChange(a, b).change;
   cutMin = Math.min(cutMin, d);
   console.log(`断 ${s.start.toFixed(1)}秒: ${(d * 100).toFixed(1)}% 変化`);
 }

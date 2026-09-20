@@ -301,6 +301,8 @@ function start() {
           n: s.n, odd: s.odd ? 1 : 0, empty: s.empty, flash: s.flash, mv: s.mv,
           sec: s.sec, th: s.th, w: s.w, recall: s.recall ? 1 : 0,
           ev: s.ev, evAt: s.evAt, p0: s.p0, p1: s.p1,
+          // 余白と層（道具が基準を切り替えるのに使う）
+          sparse: s.sparse ? 1 : 0, zoom: s.zoom, lay: s.lay,
         }));
       },
       async push(to, mime, quality) {
@@ -321,6 +323,7 @@ function start() {
           ox: 0.12, oy: -0.08, k1: 0.5, k2: 0.5, k3: 0.45, odd: true,
           fps: 12, boil: 1, grain: 0.18, mv: 0, mvA: 0.5, flash: 0,
           hang: 0.6, hgap: 0.5, empty: 0,
+          zoom: 1, vx: 0, vy: 0, sparse: 0, lay: 0, lyW: 0, lyD: 1,
           au: { hit: 0, root: 0, chord: 0, level: 1, silent: 0 },
         }, over || {});
         film.drawShot(sh, p * sh.dur);

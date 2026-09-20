@@ -12,7 +12,7 @@
 //   種 … 同じ引数なら同じ絵か
 
 import { open } from './browser.mjs';
-import { analyse, meanAbsDiff, OK } from './metrics.mjs';
+import { analyse, meanAbsDiff, cutChange, OK } from './metrics.mjs';
 
 const SEED = parseInt(process.argv[2] || '0', 10);
 const has = (n) => process.argv.includes('--' + n);
@@ -40,7 +40,7 @@ const picks = [];
 for (let i = 1; i < shots.length; i += Math.max(1, Math.floor(shots.length / 8))) picks.push(shots[i]);
 let cutMin = 1, cutSum = 0;
 for (const s of picks.slice(0, 8)) {
-  const d = meanAbsDiff(await shoot(s.start - 1 / 96), await shoot(s.start + 1 / 96));
+  const d = cutChange(await shoot(s.start - 1 / 96), await shoot(s.start + 1 / 96)).change;
   cutMin = Math.min(cutMin, d); cutSum += d;
   console.log(`  ${String(s.start.toFixed(1)).padStart(6)}s → ${s.name}  ${(d * 100).toFixed(1).padStart(5)}%  ${d >= OK.cutJump ? '○' : '×'}`);
   if (d < OK.cutJump) fail++;
@@ -67,9 +67,14 @@ for (let i = 0; i < 10; i++) {
   const a = analyse(await shoot(s.start + s.dur * 0.5));
   n++;
   if (a.okColor) vivid++;
-  const ok = a.okContrast || s.empty;
+  // **余白の景は別の基準で見る。** 図を小さく置いた景は、
+  // 区画ごとの散らばり（tileVar）が低いのが当たり前で、そこが余白の効きである。
+  // 見るのは「形がちゃんと在るか（cover）」と「色が立っているか（poster）」だけ。
+  const ok = s.empty ? true
+    : s.sparse ? (a.posterSmall >= OK.poster && a.cover >= 0.004 && a.cover <= 0.4)
+    : a.okContrast;
   if (!ok) weak++;
-  console.log(`  ${String(Math.round(s.start)).padStart(5)}s ${s.name}  ${a.poster.toFixed(2)}  ${a.tileVar.toFixed(2)}  ${a.chroma.toFixed(2)}  ${a.cover.toFixed(2)}  ${ok ? '○' : '×'}`);
+  console.log(`  ${String(Math.round(s.start)).padStart(5)}s ${s.name}${s.sparse ? '余' : '　'}  ${a.poster.toFixed(2)}  ${a.tileVar.toFixed(2)}  ${a.chroma.toFixed(2)}  ${a.cover.toFixed(2)}  ${ok ? '○' : '×'}`);
 }
 // 静かな景は法「間」が要求しているので、1〜2割までは通す
 if (weak > Math.max(1, Math.ceil(n * 0.15))) { console.log(`  対比の弱い景が ${weak}/${n}`); fail++; }
@@ -82,7 +87,7 @@ if (vs < OK.vividShare) fail++;
   const head = shots.filter((s) => s.start < 10);
   let sum = 0;
   for (let i = 1; i < head.length; i++) {
-    sum += meanAbsDiff(await shoot(head[i].start - 1 / 96), await shoot(head[i].start + 1 / 96));
+    sum += cutChange(await shoot(head[i].start - 1 / 96), await shoot(head[i].start + 1 / 96)).change;
   }
   console.log('');
   console.log(`冒頭10秒: ${head.length}景 / 断のたびに平均 ${(sum / Math.max(1, head.length - 1) * 100).toFixed(0)}% 変わる`);

@@ -12,6 +12,7 @@
 import { shotAt } from './score.js';
 import { MOTIFS, NAMES, ownEvent } from './motif.js';
 import { PIXEL, evTransform, evOverlay, evComposite } from './event.js';
+import { drawLayer, layerPhase } from './layer.js';
 import { colorsOf, ground, makeInk, makeGrain, nz, nz01, snz, clamp, TAU } from './paint.js';
 
 // 作品の枠は 1600×900 の論理座標。出力の大きさによらず同じ構図になる。
@@ -71,11 +72,13 @@ export function createFilm(canvas) {
 
   function draw(work, t) {
     const i = shotAt(work, Math.max(0, Math.min(t, work.total - 1e-4)));
-    drawShot(work.shots[i], Math.max(0, t - work.shots[i].start));
+    // **絶対時刻も渡す。** 層（断をまたいで続くもの）は景のローカル時間では
+    // 切れてしまうので、作品の頭からの時刻で動かす
+    drawShot(work.shots[i], Math.max(0, t - work.shots[i].start), t);
     st.shot = i;
   }
 
-  function drawShot(sh, local) {
+  function drawShot(sh, local, abs) {
     const t0 = performance.now();
     const S = STAGE;
     const p = clamp(local / sh.dur, 0, 1);
@@ -116,6 +119,16 @@ export function createFilm(canvas) {
     ground(ctx, S, sh, col, fix);
     ctx.restore();
 
+    // 層（図の後ろに出るもの：水位・日）。
+    // **景の動きを掛けない。** 層だけが動かない平面なので、
+    // カットとカメラがその周りで動いていることが分かる。
+    const lu = layerPhase(sh, abs === undefined ? sh.start + local : abs);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(sx, sy);
+    drawLayer(ctx, S, sh, col, lu, f, false);
+    ctx.restore();
+
     // 図を描く先。画素を触る事のときだけ別の板へ
     const g = pix ? bctx : ctx;
     if (pix) {
@@ -130,6 +143,14 @@ export function createFilm(canvas) {
     // 画面そのものの動き（中身は camera()）
     g.save();
     camera(g, S, sh, p, seed);
+    // 余白 — 図を小さくして空きの中に寄せる。**地には掛けない**
+    // （地まで縮めると枠の中に枠ができて、ただの額縁になる）
+    if (sh.zoom && sh.zoom !== 1) {
+      g.translate(S.w / 2, S.h / 2);
+      g.scale(sh.zoom, sh.zoom);
+      g.translate(-S.w / 2, -S.h / 2);
+    }
+    if (sh.vx || sh.vy) g.translate((sh.vx || 0) * S.w, (sh.vy || 0) * S.h);
     // 事の変形（逃・芽）は図の直前に掛ける
     evTransform(g, S, sh, ep);
 
@@ -149,6 +170,14 @@ export function createFilm(canvas) {
     g.restore();
 
     if (pix) evComposite(ctx, buf, st.w, st.h, sh, ep, seed);
+
+    // 層（図の前に出るもの：塵・歩）。事で割られる板より後に置くので、
+    // **図が崩れても層は崩れない**（層は景の出来事の外にある）
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(sx, sy);
+    drawLayer(ctx, S, sh, col, lu, f, true);
+    ctx.restore();
 
     // 粒は出力の画素の上で打つ（解像度が変わっても同じ粗さ）
     ctx.setTransform(1, 0, 0, 1, 0, 0);
