@@ -51,6 +51,20 @@ npm の設定は置いていない（静的ファイルのみ）。
 
 # 映像作品《Passage》（art/）
 
+**チャンネルは《Primaries》**（原色）。作品名は1本ごとに変わり、チャンネル名は変わらない。
+テーマ・図・音は毎回変えるが、**原色・面・コマ打ち・一つの種・十法は変えない。**
+
+新作を作るときは道具立てが用意してある。
+
+| | |
+|---|---|
+| `.claude/skills/new-work/` | 新作1本を通しで作る手順（テーマ→実装→検査→焼く）|
+| `.claude/skills/add-motif/` | 図と固有の事の足しかた。**踏んだ穴の一覧つき** |
+| `.claude/skills/publish/` | 焼き出しと YouTube の書式 |
+| `.claude/agents/art-critic` | 出す前に止める役（絵を見て退屈・詰め込み・型を指摘する）|
+| `.claude/agents/art-verifier` | 検査を回して数値で報告する役 |
+| `.claude/agents/motif-smith` | 図を実装する役 |
+
 **題名は `score.js` の `TITLE` 一箇所で決まる**（`'Passage'`）。頁の `<title>`・
 始める前の一行・書き出すファイル名がこれに揃う。改題するならそこと
 `art/index.html` の2箇所（`<title>` と `.mark`）だけ。

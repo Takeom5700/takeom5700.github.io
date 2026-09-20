@@ -1,10 +1,21 @@
-# Passage — チャンネルの設計
+# Primaries — チャンネルの設計
 
 YouTube で出し続けるための取り決め。作品そのものの基軸（十法）は
 `art/README.md` にある。ここはその**外側**、つまり「どう世に出すか」だけを書く。
 
 出すものは映像ブランドで、コンテンツではない。
 **1本 = 1つの世界（1つの種）。** 同じものは二度出ない。
+
+| | |
+|---|---|
+| チャンネル名 | **Primaries** |
+| ハンドル | `@primaries`（取れなければ `@primaries.film`）※空きは各自で確認する |
+| 由来 | 原色（primary colours）。混ぜず、面で置く——画面のいちばんの特徴を名詞一語で。**形容詞も用途も入っていない** |
+| 作品名 | 1本ごとに変わる（第1作は `Passage`）。チャンネル名は変わらない |
+| 動画の題名 | `Passage 004` のように **作品名＋番号だけ** |
+
+**チャンネル名は作品名ではない。** テーマも図も音も毎回変わるが、
+**原色・面・コマ打ち・一つの種・十法**は変わらない。変わらない方を名前にしてある。
 
 ---
 
@@ -25,9 +36,24 @@ YouTube で出し続けるための取り決め。作品そのものの基軸（
 説明欄の書式（これ以上書かない）:
 
 ```
+Generative film. One seed, one world, six minutes.
+Made entirely from code — no footage, no images, no stock. Music from the same seed.
+
 Passage 004
 I II III IV V
 6:00  seed 4
+```
+
+**1行目と2行目だけは言葉を置く。** ここは画面の外で、
+**機械にどの棚へ置くかを教える唯一の場所**だから（無いと、どこにも置かれない）。
+売り文句は入れない——`generative` `film` `code` は**ジャンルの名詞**であって、
+`Relaxing` `Beautiful` `4K` のような**主張**ではない。この区別だけは守る。
+
+タグ（画面に出ないので各言語で入れてよい）:
+
+```
+generative art, algorithmic art, abstract animation, experimental animation,
+visual music, procedural art, creative coding, motion art, flat design animation
 ```
 
 ---
