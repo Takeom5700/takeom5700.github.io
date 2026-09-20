@@ -14,7 +14,25 @@ import http from 'node:http';
 
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 export const ROOT = path.resolve(HERE, '../..');
-const CHROME = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+// Chrome の場所。`CHROME` で指すのが確実。
+// 指定が無ければ、その OS のよくある場所を順に探す（Windows でも動くように）。
+const CHROME = process.env.CHROME || findChrome();
+function findChrome() {
+  const cands = process.platform === 'win32' ? [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    (process.env.LOCALAPPDATA || '') + '\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+  ] : process.platform === 'darwin' ? [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+  ] : [
+    '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+    '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser',
+  ];
+  for (const c of cands) { try { if (c && fs.existsSync(c)) return c; } catch (e) { /* 次へ */ } }
+  return cands[0];
+}
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ES モジュールは file:// から読めないので、自分で配る。

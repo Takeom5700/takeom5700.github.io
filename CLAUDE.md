@@ -64,6 +64,13 @@ npm の設定は置いていない（静的ファイルのみ）。
 | `.claude/agents/art-critic` | 出す前に止める役（絵を見て退屈・詰め込み・型を指摘する）|
 | `.claude/agents/art-verifier` | 検査を回して数値で報告する役 |
 | `.claude/agents/motif-smith` | 図を実装する役 |
+| `art/DAILY.md` | **毎日1本を自動で作って上げる**（note から着想・6分・YouTube）|
+
+**毎日の自動化は持ち主のパソコンでしか動かない。**
+このコンテナからは note.com も googleapis.com も遮断されている（占いと同じ事情）。
+`art/tools/daily.mjs`（1日1本を焼いてフォルダに置く）と
+`art/tools/upload.mjs`（YouTube へ上げる）は、そちらで走らせる前提で書いてある。
+**YouTube は API 審査を通すまで、上げた動画が非公開に固定される**（外せない）。
 
 **題名は `score.js` の `TITLE` 一箇所で決まる**（`'Passage'`）。頁の `<title>`・
 始める前の一行・書き出すファイル名がこれに揃う。改題するならそこと

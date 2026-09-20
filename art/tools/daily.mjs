@@ -1,0 +1,218 @@
+// 毎日1本作る。note の記事から着想を得て、6分ちょうどの作品を焼き、
+// 1日1つのフォルダに「作品・音楽だけ・テキスト（題名と説明文）」を置く。
+//
+//   node art/tools/daily.mjs --out "C:\\Users\\User\\Desktop\\Claude Art Project"
+//   node art/tools/daily.mjs --out ./out --dry-run        # 焼かずに、何を作るかだけ見る
+//   node art/tools/daily.mjs --out ./out --seed 42 --title Interval   # 手で決める
+//   node art/tools/daily.mjs --out ./out --upload         # YouTube まで上げる
+//
+// **この道具は持ち主のパソコンで動かすもの。**
+// Claude Code のコンテナからは note.com も YouTube も遮断されていて動かない
+// （占いの自動更新と同じ事情。CLAUDE.md を見よ）。
+//
+// 記事から何を受け取るか:
+//   記事の URL から種（seed）を決める。種が変われば図・配色・層・事が全部変わる。
+//   **記事の意味を読み取って図を選ぶのは機械にはできない。**
+//   そこまでやるなら Claude Code を挟んで `--title` と `--seed` を渡す
+//   （`art/DAILY.md` の「二つの動かしかた」を見よ）。
+
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const argv = process.argv.slice(2);
+const flag = (n, d) => { const i = argv.indexOf('--' + n); return i < 0 ? d : argv[i + 1]; };
+const has = (n) => argv.includes('--' + n);
+
+const OUT = flag('out', process.platform === 'win32'
+  ? path.join(process.env.USERPROFILE || 'C:\\Users\\User', 'Desktop', 'Claude Art Project')
+  : './out');
+const FEED = flag('feed', 'https://note.com/alert_zinnia5671/rss');
+const SIZE = flag('size', '2560x1440');
+const VBR = flag('bitrate', '24000000');
+const DRY = has('dry-run');
+
+// 題名の候補。**主語のない動作か、物の名前だけ。**
+// 形容詞・主張・主題を入れない（`art/CHANNEL.md` の線）。
+// 使った題名は state に記録して、二度使わない。
+const TITLES = [
+  'Passage', 'Interval', 'Drift', 'Threshold', 'Relay', 'Current', 'Lapse',
+  'Tide', 'Vessel', 'Column', 'Signal', 'Remainder', 'Transfer', 'Orbit',
+  'Descent', 'Ledger', 'Vertex', 'Aperture', 'Cadence', 'Pivot', 'Sediment',
+  'Beacon', 'Conduit', 'Ember', 'Fold', 'Grain', 'Hinge', 'Lattice',
+  'Margin', 'Notch', 'Parcel', 'Quiver', 'Rung', 'Spindle', 'Tessera',
+  'Undertow', 'Vault', 'Wane', 'Yield', 'Zenith',
+];
+
+// 決まった数（同じ記事からは必ず同じ作品が出る）
+function hash(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+const log = (...a) => console.log(...a);
+const run = (args, opt = {}) => new Promise((ok, ng) => {
+  const p = spawn(process.execPath, args, { stdio: 'inherit', ...opt });
+  p.on('exit', (c) => (c === 0 ? ok() : ng(new Error(args[0] + ' が ' + c + ' で終わった'))));
+  p.on('error', ng);
+});
+
+// ---- 記事を1つ選ぶ -------------------------------------------------------
+// RSS には有料記事も並ぶ。**有料記事は使わない**ので、記事の頁を引いて
+// 値段が付いていないかを確かめる（確かめられなければ使わない。
+// 勝手に有料記事を題材にしてしまう方が事故が大きい）。
+function parseRss(xml) {
+  const items = [];
+  const re = /<item>([\s\S]*?)<\/item>/g;
+  let m;
+  while ((m = re.exec(xml))) {
+    const b = m[1];
+    const pick = (tag) => {
+      const r = new RegExp('<' + tag + '>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</' + tag + '>');
+      const g = b.match(r);
+      return g ? g[1].trim() : '';
+    };
+    items.push({
+      title: pick('title'),
+      link: pick('link'),
+      date: pick('pubDate'),
+      body: pick('description').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+    });
+  }
+  return items;
+}
+
+async function looksFree(url) {
+  try {
+    const res = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 (daily.mjs)' } });
+    if (!res.ok) return { free: false, why: 'HTTP ' + res.status };
+    const html = await res.text();
+    if (/"isPriced"\s*:\s*true/.test(html)) return { free: false, why: '有料（isPriced）' };
+    if (/この続きをみるには|購入手続きへ|記事を購入する/.test(html)) return { free: false, why: '有料（本文に購入の案内）' };
+    if (/"isPriced"\s*:\s*false/.test(html)) return { free: true, why: 'isPriced:false' };
+    return { free: true, why: '有料の印が見つからない' };
+  } catch (e) {
+    return { free: false, why: '頁を引けなかった（' + e.message + '）' };
+  }
+}
+
+// ---- 記録（同じ記事・同じ種・同じ題名を二度使わない） ---------------------
+function loadState(dir) {
+  const p = path.join(dir, '.state.json');
+  try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return { works: [] }; }
+}
+function saveState(dir, st) {
+  fs.writeFileSync(path.join(dir, '.state.json'), JSON.stringify(st, null, 2));
+}
+
+// ---- 本番 ---------------------------------------------------------------
+fs.mkdirSync(OUT, { recursive: true });
+const state = loadState(OUT);
+const usedLinks = new Set(state.works.map((w) => w.link));
+const usedSeeds = new Set(state.works.map((w) => w.seed));
+const usedTitles = new Set(state.works.map((w) => w.title));
+
+let article = null;
+if (!has('no-feed')) {
+  log('note を読みます: ' + FEED);
+  let xml = '';
+  try {
+    const res = await fetch(FEED, { headers: { 'user-agent': 'Mozilla/5.0 (daily.mjs)' } });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    xml = await res.text();
+  } catch (e) {
+    console.error('note を読めませんでした: ' + e.message);
+    console.error('（このコンテナからは note.com が遮断されています。持ち主のパソコンで動かしてください）');
+    if (flag('seed', null) === null) process.exit(2);
+  }
+  const items = xml ? parseRss(xml) : [];
+  log(`記事 ${items.length} 件`);
+  for (const it of items) {
+    if (usedLinks.has(it.link)) continue;
+    const f = await looksFree(it.link);
+    if (!f.free) { log(`  見送り: ${it.title}（${f.why}）`); continue; }
+    article = it; break;
+  }
+  if (!article && items.length) log('新しい無料記事が見つかりませんでした');
+}
+
+// 種と題名。記事があれば記事から、無ければ引数か日付から決める
+const key = article ? article.link : (flag('key', null) || new Date().toISOString().slice(0, 10));
+let seed = parseInt(flag('seed', ''), 10);
+if (!Number.isFinite(seed)) {
+  seed = hash(key) % 1000;
+  for (let g = 0; g < 1000 && usedSeeds.has(seed); g++) seed = (seed + 1) % 1000;
+}
+let title = flag('title', '');
+if (!title) {
+  const free = TITLES.filter((t) => !usedTitles.has(t));
+  const pool = free.length ? free : TITLES;
+  title = pool[hash(key + 'title') % pool.length];
+}
+const tag = String(((seed % 1000) + 1000) % 1000).padStart(3, '0');
+const today = new Date().toISOString().slice(0, 10);
+const folder = path.join(OUT, `${today} ${title} ${tag}`);
+
+log('');
+log(`題名: ${title} ${tag}`);
+log(`種  : ${seed}`);
+log(`記事: ${article ? article.title + ' / ' + article.link : '（無し）'}`);
+log(`置場: ${folder}`);
+log('');
+
+// ---- 説明文（YouTube にそのまま貼れる形） --------------------------------
+// `art/CHANNEL.md` の書式。**1〜2行目だけ言葉を置く**（機械に棚を教えるため）。
+// 売り文句は入れない。記事への案内は「記録」の側に置いてあるので、
+// 貼りたいときだけ自分で足すこと。
+const desc = [
+  'Generative film. One seed, one world, six minutes.',
+  'Made entirely from code — no footage, no images, no stock. Music from the same seed.',
+  '',
+  `${title} ${tag}`,
+  'I II III IV V',
+  `6:00  seed ${seed}`,
+].join('\n');
+
+const memo = [
+  '',
+  '— ここから下は記録（説明欄には貼らない）—',
+  `作った日: ${today}`,
+  `種: ${seed}`,
+  article ? `着想: ${article.title}` : '着想: （記事なし）',
+  article ? `記事: ${article.link}` : '',
+  'タグ: generative art, algorithmic art, abstract animation, experimental animation,',
+  '      visual music, procedural art, creative coding, motion art',
+].filter(Boolean).join('\n');
+
+if (DRY) { log('--dry-run なのでここで止めます。'); log(desc); process.exit(0); }
+
+fs.mkdirSync(folder, { recursive: true });
+const film = path.join(folder, `${title}-${tag}.webm`);
+const music = path.join(folder, `${title}-${tag}-music.wav`);
+const text = path.join(folder, `${title}-${tag}.txt`);
+
+fs.writeFileSync(text, `${title} ${tag}\n\n${desc}\n${memo}\n`);
+log('テキストを書きました: ' + text);
+
+// **音楽が先。** 実時間の録画中に別の重い処理を走らせるとコマが落ちる。
+log('音楽を焼きます（実時間より速い）…');
+await run([path.join(HERE, 'record.mjs'), music, '--seed', String(seed), '--music']);
+
+log('映像を録ります（6分かかります）…');
+await run([path.join(HERE, 'record.mjs'), film, '--seed', String(seed),
+  '--size', SIZE, '--bitrate', VBR]);
+
+state.works.push({ date: today, title, seed, link: article ? article.link : null,
+  article: article ? article.title : null, folder });
+saveState(OUT, state);
+log('');
+log('できました: ' + folder);
+
+if (has('upload')) {
+  log('YouTube へ上げます…');
+  await run([path.join(HERE, 'upload.mjs'), film, '--title', `${title} ${tag}`,
+    '--desc-file', text, '--privacy', flag('privacy', 'private')]);
+}
