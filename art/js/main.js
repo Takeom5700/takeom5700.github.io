@@ -9,15 +9,18 @@
 // 視点を積み上げる状態が無くなったので、どこへ飛んでも同じ絵が出る。
 // おかげで書き出しは「時刻を渡して1枚もらう」だけになった。
 
-import { composeWork, checkWork, shotAt, REST } from './score.js';
+import { composeWork, checkWork, shotAt, REST, TITLE } from './score.js';
 import { createFilm, STAGE } from './film.js';
 import { createSound } from './sound.js';
 import { composeMusic } from './music.js';
 import { NAMES } from './motif.js';
 
 // AudioBuffer を 16bit PCM の WAV にする（外の道具に音声encoderを要らせない）
-function wavBytes(buf) {
-  const ch = buf.numberOfChannels, n = buf.length, sr = buf.sampleRate;
+// mono を立てると左右を混ぜて1本にする。
+// **音の作りは触らない。** 書き出しの器だけを小さくするための道具で、
+// 送れる大きさに収める必要があるとき（全長を1ファイルで渡すとき）に使う。
+function wavBytes(buf, mono) {
+  const ch = mono ? 1 : buf.numberOfChannels, n = buf.length, sr = buf.sampleRate;
   const bytes = new Uint8Array(44 + n * ch * 2);
   const dv = new DataView(bytes.buffer);
   const tag = (o, str) => { for (let i = 0; i < str.length; i++) bytes[o + i] = str.charCodeAt(i); };
@@ -27,12 +30,19 @@ function wavBytes(buf) {
   dv.setUint16(32, ch * 2, true); dv.setUint16(34, 16, true);
   tag(36, 'data'); dv.setUint32(40, n * ch * 2, true);
   const src = [];
-  for (let c = 0; c < ch; c++) src.push(buf.getChannelData(c));
+  for (let c = 0; c < buf.numberOfChannels; c++) src.push(buf.getChannelData(c));
   let o = 44;
   for (let i = 0; i < n; i++) {
-    for (let c = 0; c < ch; c++, o += 2) {
-      const v = Math.max(-1, Math.min(1, src[c][i]));
-      dv.setInt16(o, v < 0 ? v * 0x8000 : v * 0x7fff, true);
+    if (mono) {
+      let v = 0;
+      for (let c = 0; c < src.length; c++) v += src[c][i];
+      v = Math.max(-1, Math.min(1, v / src.length));
+      dv.setInt16(o, v < 0 ? v * 0x8000 : v * 0x7fff, true); o += 2;
+    } else {
+      for (let c = 0; c < ch; c++, o += 2) {
+        const v = Math.max(-1, Math.min(1, src[c][i]));
+        dv.setInt16(o, v < 0 ? v * 0x8000 : v * 0x7fff, true);
+      }
     }
   }
   return bytes;
@@ -128,7 +138,7 @@ function start() {
 
   // 音を from〜to 秒ぶん焼いて WAV のバイト列にする。
   // 書き出し（外の道具）と、頁からの保存の両方がここを通る。
-  async function renderWav(from, to, rate) {
+  async function renderWav(from, to, rate, mono) {
     const sr = rate || 48000;
     const dur = Math.max(0.05, to - from);
     const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
@@ -140,7 +150,7 @@ function start() {
       if (n.t + n.d < from || n.t > to) continue;
       sd.play(n, Math.max(0, n.t - from));
     }
-    return wavBytes(await oc.startRendering());
+    return wavBytes(await oc.startRendering(), mono);
   }
 
   // ---- 保存（映像と音楽を別々に） ----
@@ -161,7 +171,7 @@ function start() {
     clearTimeout(saying);
     if (hold !== true) saying = setTimeout(() => { if (!showHud) hud.classList.remove('shown'); }, 4000);
   }
-  const stem = () => '無銘-' + String(((work.seed % 1000) + 1000) % 1000).padStart(3, '0');
+  const stem = () => TITLE + '-' + String(((work.seed % 1000) + 1000) % 1000).padStart(3, '0');
 
   let busy = false;
   async function saveMusic() {
@@ -330,12 +340,13 @@ function start() {
         return true;
       },
       // 音を from〜to 秒ぶんまとめて焼く。譜が同じなら必ず同じ音になる。
-      async audio(from, to, rate) {
+      async audio(from, to, rate, mono) {
         const sr = rate || 48000;
-        const bytes = await renderWav(from, to, sr);
+        const bytes = await renderWav(from, to, sr, mono);
         if (!bytes) return null;
         await sink(new Blob([bytes], { type: 'audio/wav' }));
-        return { bytes: bytes.length, seconds: (bytes.length - 44) / 4 / sr, rate: sr, channels: 2 };
+        const ch = mono ? 1 : 2;
+        return { bytes: bytes.length, seconds: (bytes.length - 44) / (2 * ch) / sr, rate: sr, channels: ch };
       },
     };
     return;
@@ -409,11 +420,11 @@ function start() {
       window.__saveSunk = true;
       return { bytes: blob.size, type: blob.type };
     },
-    async music(rate) {
-      const bytes = await renderWav(0, work.total, rate || 48000);
+    async music(rate, mono) {
+      const bytes = await renderWav(0, work.total, rate || 48000, mono);
       if (!bytes) return null;
       await sink(new Blob([bytes], { type: 'audio/wav' }));
-      return { bytes: bytes.length };
+      return { bytes: bytes.length, rate: rate || 48000, channels: mono ? 1 : 2 };
     },
     meta() { return { title: work.title, seed: work.seed, total: work.total }; },
     stop() { return stopFilm(); },

@@ -4,9 +4,9 @@
 //   node art/tools/suno.mjs 4 --dir ./out
 //
 // 出るもの:
-//   無銘-004-音楽.wav        全長（48kHz ステレオ）— 参照用・長さのある取り込み用
-//   無銘-004-音楽-60秒.wav   いちばん性格の出ている60秒 — Suno の取り込みは短い方が通る
-//   無銘-004-suno.txt        style prompt（短・長）、除外タグ、構成のメモ
+//   通過-004-音楽.wav        全長（48kHz ステレオ）— 参照用・長さのある取り込み用
+//   通過-004-音楽-60秒.wav   いちばん性格の出ている60秒 — Suno の取り込みは短い方が通る
+//   通過-004-suno.txt        style prompt（短・長）、除外タグ、構成のメモ
 //
 // **style prompt は譜から組む。** 耳で聞いて書くと、種を変えたときに嘘になる。
 // 音色・調・速さ・部ごとの編成は `window.__mumei.musicInfo()` が譜から返す。
@@ -20,7 +20,7 @@ const flag = (n, d) => { const i = argv.indexOf('--' + n); return i < 0 ? d : ar
 const SEED = parseInt(argv.find((a) => !a.startsWith('--')) || '0', 10);
 const DIR = flag('dir', '.');
 const tag = String(((SEED % 1000) + 1000) % 1000).padStart(3, '0');
-const stem = path.join(DIR, `無銘-${tag}`);
+const stem = path.join(DIR, `通過-${tag}`);
 fs.mkdirSync(DIR, { recursive: true });
 
 const page = await open(`export=1&seed=${SEED}&w=160&h=90`, { size: '160,90' });
@@ -37,7 +37,7 @@ const expo = info.sections[1] || info.sections[0];
 const from = Math.max(0, expo.start + 4);
 const to = Math.min(info.total, from + 60);
 
-console.log(`無銘 ${tag}  ${(info.total / 60).toFixed(1)}分  ${info.tempo}BPM  ${key}  音符${info.notes}`);
+console.log(`通過 ${tag}  ${(info.total / 60).toFixed(1)}分  ${info.tempo}BPM  ${key}  音符${info.notes}`);
 for (const s of info.sections) {
   console.log(`  ${s.name} ${String(Math.round(s.dur)).padStart(3)}s  ${s.voices.join(', ')}`);
 }
@@ -93,7 +93,7 @@ const structure = info.sections.map((s) =>
   `[${secName[s.name] || s.name}]\n(${Math.round(s.dur)}s — ${s.voices.join(', ')}; instrumental, no vocals except wordless choir)`
 ).join('\n\n');
 
-const txt = `無銘 ${tag} — Suno 用のメモ
+const txt = `通過 ${tag} — Suno 用のメモ
 =====================================
 調: ${key}   速さ: ${info.tempo} BPM   長さ: ${(info.total / 60).toFixed(1)}分
 
@@ -110,9 +110,11 @@ ${exclude}
 ${structure}
 
 ■ 音源
-- 無銘-${tag}-音楽-60秒.wav … ${Math.round(from)}秒目から60秒。第一主題が素で出るところ。
+- 通過-${tag}-音楽-60秒.wav … ${Math.round(from)}秒目から60秒。第一主題が素で出るところ。
   取り込み（Upload / Extend）に使うならこちら。
-- 無銘-${tag}-音楽.wav … 全長。Cover / Remaster のように長い取り込みができる場合に。
+- 通過-${tag}-音楽.wav … 全長。Cover / Remaster のように長い取り込みができる場合に。
+  大きすぎて渡せないときは、器だけ小さくして焼き直せる（音の作りは変わらない）:
+    node art/tools/record.mjs 通過-${tag}-音楽.wav --seed ${SEED} --music --rate 32000 --mono
 
 ■ 元の音がどう作られているか（伝えると近づけやすい）
 - 音のファイルは1つも使っていない。全部その場の合成（WebAudio）。

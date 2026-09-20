@@ -32,16 +32,15 @@ export const LAYER_FRONT = [0, 0, 0, 1, 1];
 // （人を差し色で描いて赤の上に赤になった、あの穴と同じ）。
 // 図と同じ色にしてもいけない。層が図の一部に見えて、
 // 「カットをまたいで続いているもの」だと分からなくなる（実際にそう見えた）。
-export function layerColor(col) {
+// `alt` を立てると**2番目に遠い色**を返す。
+// 譜の側が「この色は避けたい」と判断したときの逃げ道
+// （白に近い地に赤い円を置かないため。下の score.js の禁を見よ）。
+export function layerColor(col, alt) {
   const cands = [col.a, col.l, col.i];
-  let best = cands[0], score = -1;
-  for (const c of cands) {
-    const fromG = Math.abs(lumOf(col.g) - lumOf(c)) * 1.3 + hueGap(col.g, c);
-    const fromI = Math.abs(lumOf(col.i) - lumOf(c)) * 0.9 + hueGap(col.i, c);
-    const d = fromG + fromI;
-    if (d > score) { score = d; best = c; }
-  }
-  return best;
+  const far = (c) => Math.abs(lumOf(col.g) - lumOf(c)) * 1.3 + hueGap(col.g, c)
+    + Math.abs(lumOf(col.i) - lumOf(c)) * 0.9 + hueGap(col.i, c);
+  const sorted = cands.slice().sort((x, y) => far(y) - far(x));
+  return (alt ? sorted[1] : sorted[0]) || sorted[0];
 }
 
 // 進みぐあい。端でためて中ほどで動く（機械の等速に見せない）
@@ -51,7 +50,7 @@ export function drawLayer(ctx, S, sh, col, u, f, front) {
   const k = sh.lay | 0;
   if (!k || !sh.lyW) return;
   if (!!LAYER_FRONT[k] !== !!front) return;
-  const c = layerColor(col);
+  const c = layerColor(col, sh.lyAlt);
   const w = sh.lyW;
   const dir = sh.lyDir < 0 ? -1 : 1;
   const p = clamp(u, 0, 1);

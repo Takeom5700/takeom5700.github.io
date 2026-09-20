@@ -26,10 +26,22 @@
 // 帰ってきたと分かるから、終わったことが分かる。
 
 import { makeRng, between, pick } from './rng.js';
-import { PALETTES, hueGap, lumOf, colorsOf } from './paint.js';
+import { PALETTES, hueGap, lumOf, hsOf, colorsOf } from './paint.js';
+import { layerColor } from './layer.js';
 import { NAMES, MOTIFS } from './motif.js';
 
 export const REST = 3.0;
+
+// 題名。**作品の中では一度も出さない**（画面に文字を置かない）。
+// 出るのは頁を開いたときの一行と、書き出したファイルの名前だけ。
+//
+// 「無銘」から改めた。依頼者:「無銘ってタイトルは逃げの感じがするので、
+// 何か抽象的な言葉でいいからタイトルは無銘以外でつけてほしい」。
+//
+// **通過** — 序の形（管）の中を球が通っていくこと。
+// 層が断をまたいで作品を渡っていくこと。主題が出ていって帰ってくること。
+// 6分が過ぎること。**主語のない動作**だけを名にしてある。
+export const TITLE = '通過';
 
 // ---- 基軸の数値 -------------------------------------------------------
 export const LAWS = {
@@ -131,9 +143,13 @@ function shotFrom(th, dur, over) {
     // 余白。zoom<1 で図を小さくし、vx/vy で空きの中に寄せる
     zoom: 1, vx: 0, vy: 0, sparse: 0,
     // 層（断をまたいで続くもの）。中身は post-pass で入れる
-    lay: 0, lyW: 1, lyT0: 0, lyD: 1, lyA: 0.5, lyB: 0.5, lyDir: 1,
+    lay: 0, lyW: 1, lyT0: 0, lyD: 1, lyA: 0.5, lyB: 0.5, lyDir: 1, lyAlt: 0,
   }, th, over || {});
 }
+
+// 白に近い色／赤い色（禁「白地に赤い円」に使う）
+const nearWhite = (h) => { const x = hsOf(h); return x.v > 0.9 && x.s < 0.12; };
+const isRed = (h) => { const x = hsOf(h); return x.s > 0.6 && x.v > 0.6 && (x.h < 0.05 || x.h > 0.95); };
 
 // ---- 検査に使う色の跳び -----------------------------------------------
 function jumpOf(a, b) {
@@ -563,6 +579,24 @@ export function composeWork(seed) {
       if (lay === 2 && s.gk === 3) s.gk = 0;
     }
   }
+  // ---- 禁：白に近い地に、赤い円を置かない ----
+  // 白・黒・赤は対比が最強なので配色に入れてある。円は地の割りの1つで、
+  // 「日」（円が渡っていく）は層の1つ。この3つが重なると
+  // **生成りの地に赤い丸＝日の丸**になる（実測 17,290景に41景・100種のうち28種）。
+  //
+  // 狙っていない型が乗ると、あとの全部がそれについての論評として読まれる。
+  // 三度目の失敗が「型を読み当てられた時点で冷める」だったので、
+  // **意図していない型が乗ることは、この作品では不具合である。**
+  // 円も赤も残す。重なりだけを外す。
+  for (const s of shots) {
+    const c = colorsOf(s);
+    if (!nearWhite(c.g)) continue;
+    if (s.gk === 3 && isRed(s.g2 ? c.a : c.i)) {
+      s.g2 = !s.g2;                                   // 円を図の色で置く
+      if (isRed(s.g2 ? c.a : c.i)) s.gk = pick(rng, [0, 1, 2, 5]);   // それでも赤なら円をやめる
+    }
+    if (s.lay === 2 && isRed(layerColor(c, 0))) s.lyAlt = 1;         // 日を2番目の色で置く
+  }
   // 通し番号と閃光
   for (let i = 0; i < shots.length; i++) shots[i].id = i;
   placeFlash(shots, rng);
@@ -583,7 +617,7 @@ export function composeWork(seed) {
 
   return {
     seed: seed | 0,
-    title: '無銘 ' + String(((seed | 0) % 1000 + 1000) % 1000).padStart(3, '0'),
+    title: TITLE + ' ' + String(((seed | 0) % 1000 + 1000) % 1000).padStart(3, '0'),
     total: +t.toFixed(3), movements,
     shots: shots.slice(),
     themes: { A: A.m, B: B.m, C: C.m, I: I.m, home, dom },
@@ -704,6 +738,13 @@ export function checkWork(work) {
   if (S.some((s) => Math.abs((s.lyD || 0) - work.total) > 0.01)) bad.push('層: 層の時計が作品全体になっていない');
   if (S.filter((s) => s.odd).length < LAWS.minOdd) bad.push('異: 違和感が足りない');
   if (new Set(S.map((s) => s.hand)).size < LAWS.minHands) bad.push('異: 塗りかたが足りない');
+  // 禁：白に近い地に赤い円（日の丸）を置かない
+  for (const s of S) {
+    const c = colorsOf(s);
+    if (!nearWhite(c.g)) continue;
+    if (s.gk === 3 && isRed(s.g2 ? c.a : c.i)) bad.push(`禁: ${s.start.toFixed(1)}秒 白地に赤い円（地の円）`);
+    if (s.lay === 2 && isRed(layerColor(c, s.lyAlt))) bad.push(`禁: ${s.start.toFixed(1)}秒 白地に赤い円（層の日）`);
+  }
   // 安全
   for (let i = 1; i < S.length; i++) {
     if (S[i].flash && S[i - 1].flash && S[i].start - S[i - 1].start < 1 / LAWS.maxFlashPerSec) {
