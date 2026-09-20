@@ -1,0 +1,249 @@
+// 焼いた絵を基軸で測る目。
+// 実測（measure.mjs）と下見（preview.mjs）が共有する。
+//
+// **「そう書いたか」は score.js の checkWork が見る。ここは「そう見えるか」を見る。**
+// 譜がいくら正しくても、絵が壁紙なら退屈なので、絵の側で測る必要がある。
+//
+// この版で一番大事な数値は tileVar（画面内の性格の散らばり）。
+// 画面を 6×4 に割って「細部の量」と「明るさ」を区画ごとに測り、
+// その散らばりを見る。**均一な壁紙はここが 0 に近づく。**
+// 依頼者が3回言った「同じ画面が続く」の、1枚の中の側の正体がこれ。
+
+import { decode, luma } from './png.mjs';
+
+export const OK = {
+  poster:    0.35,   // 対比：画面に載っている色どうしの隔たり（面で見る）
+  cover:     0.02,   // 対比：地以外が占める割合（線だけの景もあるので低め）
+  chroma:    0.30,   // 彩：原色で置いているか（灰色に寄ると落ちる）
+  // ただし彩度は**1枚ずつでは見ない。** 白黒＋赤のような組は彩度が低くても
+  // 対比は最強なので、1枚で弾くと組を1つ失う。本全体の割合で見る。
+  vividShare: 0.65,
+  tileVar:   0.28,   // 対比：区画ごとの性格の散らばり（壁紙だと 0 に寄る）
+  fine:      0.004,  // 尺：1〜2画素の細部
+  coarse:    0.020,  // 尺：128画素規模の構造
+  // 断：切れ目をまたいだときの変化。同じ景の中は 1〜3% なので、
+  // 10% あれば「切れている」と分かる（平均は 30% 前後出ている）
+  cutJump:   0.10,
+  moveHalf:  0.008,  // 動：同じ景の中で 0.5 秒に動く量
+};
+
+export function srgbLuma(img) {
+  const { w, h, ch, data } = img;
+  const out = new Float32Array(w * h);
+  for (let i = 0, p = 0; i < w * h; i++, p += ch) {
+    out[i] = (0.2126 * data[p] + 0.7152 * data[p + 1] + 0.0722 * data[p + 2]) / 255;
+  }
+  return out;
+}
+
+// 多重解像度。out[0] が 1〜2画素、out[k] が 2^(k+1) 画素の構造。
+export function bands(v, w, h) {
+  let cur = v, cw = w, ch = h;
+  const out = [];
+  while (cw >= 2 && ch >= 2) {
+    const nw = cw >> 1, nh = ch >> 1;
+    const next = new Float32Array(nw * nh);
+    for (let y = 0; y < nh; y++) {
+      for (let x = 0; x < nw; x++) {
+        next[y * nw + x] = (cur[2 * y * cw + 2 * x] + cur[2 * y * cw + 2 * x + 1]
+                          + cur[(2 * y + 1) * cw + 2 * x] + cur[(2 * y + 1) * cw + 2 * x + 1]) / 4;
+      }
+    }
+    let s2 = 0;
+    for (let y = 0; y < nh * 2; y++) {
+      for (let x = 0; x < nw * 2; x++) {
+        const d = cur[y * cw + x] - next[(y >> 1) * nw + (x >> 1)];
+        s2 += d * d;
+      }
+    }
+    out.push(Math.sqrt(s2 / (nw * nh * 4)));
+    cur = next; cw = nw; ch = nh;
+  }
+  return out;
+}
+
+// 画面内の性格の散らばり。区画ごとの「細部の量」と「明るさ」を測り、
+// それぞれの変動係数の大きい方を返す。均一な画面ほど 0 に近い。
+export function tileVar(v, w, h, cols = 6, rows = 4) {
+  const det = [], lum = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x0 = Math.floor(c * w / cols), x1 = Math.floor((c + 1) * w / cols);
+      const y0 = Math.floor(r * h / rows), y1 = Math.floor((r + 1) * h / rows);
+      let s = 0, n = 0, d = 0;
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const a = v[y * w + x];
+          s += a; n++;
+          if (x + 1 < x1) d += Math.abs(a - v[y * w + x + 1]);
+          if (y + 1 < y1) d += Math.abs(a - v[(y + 1) * w + x]);
+        }
+      }
+      lum.push(s / Math.max(1, n));
+      det.push(d / Math.max(1, n));
+    }
+  }
+  const cv = (a) => {
+    const m = a.reduce((x, y) => x + y, 0) / a.length;
+    if (m < 1e-9) return 0;
+    const s = Math.sqrt(a.reduce((x, y) => x + (y - m) * (y - m), 0) / a.length);
+    return s / m;
+  };
+  return Math.max(cv(det), cv(lum));
+}
+
+// 彩度の平均。暗すぎる画素は数えない（黒の彩度は意味が無い）
+export function chroma(img) {
+  const { w, h, ch, data } = img;
+  let sum = 0, n = 0;
+  for (let i = 0, p = 0; i < w * h; i++, p += ch) {
+    const r = data[p], g = data[p + 1], b = data[p + 2];
+    const mx = Math.max(r, g, b);
+    if (mx < 24) continue;
+    sum += (mx - Math.min(r, g, b)) / mx;
+    n++;
+  }
+  return n ? sum / n : 0;
+}
+
+// 面で見たときの色。**明暗の幅では、この絵は測れない。**
+// 原色の面で作っているので、図が画面の3%しか無くても対比は強い。
+// 逆に明暗だけ見ると「一色に見える」と誤判定する（実際に誤判定した）。
+// だから「載っている色どうしがどれだけ離れているか」で測る。
+//   flat   … 上位3色が占める割合。高いほど面で置けている
+//   poster … 2%以上を占める色どうしの、いちばん遠い隔たり
+//   cover  … 地以外が占める割合
+export function posterize(img) {
+  const { w, h, ch, data } = img;
+  const hist = new Map();
+  const N = w * h;
+  for (let i = 0, p = 0; i < N; i++, p += ch) {
+    // **3bit で量子化する。** 4bit だと、縁の中間色や粒が別の色として散り、
+    // 細かい図（綿など）で「上位の色が1つしか無い」と誤判定した。
+    const k = ((data[p] >> 5) << 6) | ((data[p + 1] >> 5) << 3) | (data[p + 2] >> 5);
+    hist.set(k, (hist.get(k) || 0) + 1);
+  }
+  const ent = [...hist.entries()].sort((a, b) => b[1] - a[1]);
+  const flat = ent.slice(0, 3).reduce((a, b) => a + b[1], 0) / N;
+  // 0.6% でも拾う。線だけの景では、図が画面の 1% しか占めないことがある
+  // （2% で切っていたら、赤地に黒い雨の画面を「一色」と誤判定した）
+  const rgb = (e) => [((e[0] >> 6) & 7) / 7, ((e[0] >> 3) & 7) / 7, (e[0] & 7) / 7];
+  const spread = (floor) => {
+    const big = ent.filter((e) => e[1] / N >= floor).slice(0, 10).map(rgb);
+    let p = 0;
+    for (let i = 0; i < big.length; i++) {
+      for (let j = i + 1; j < big.length; j++) {
+        const d = Math.sqrt((big[i][0] - big[j][0]) ** 2 + (big[i][1] - big[j][1]) ** 2
+          + (big[i][2] - big[j][2]) ** 2) / Math.sqrt(3);
+        if (d > p) p = d;
+      }
+    }
+    return p;
+  };
+  // **余白の景は、もっと小さい面まで拾って測る。**
+  // 黒地に小さな赤い梯子を2本置いた景（図は画面の 1%）で、
+  // 0.5% の床では赤を拾えず「画面に色が1つしかない」と出た。
+  // 目にはいちばん強い対比に見えるのに、である。
+  return { flat, poster: spread(0.005), posterSmall: spread(0.0015), cover: 1 - ent[0][1] / N };
+}
+
+export function analyse(buf) {
+  const img = decode(buf);
+  const sl = srgbLuma(img);
+  const sorted = Array.from(sl).sort((a, b) => a - b);
+  const b = bands(sl, img.w, img.h);
+  const r = {
+    img,
+    p5: sorted[Math.floor(sorted.length * 0.05)],
+    p95: sorted[Math.floor(sorted.length * 0.95)],
+    median: sorted[sorted.length >> 1],
+    fine: b[0],
+    coarse: b[Math.min(6, b.length - 1)],
+    bands: b,
+    tileVar: tileVar(sl, img.w, img.h),
+    chroma: chroma(img),
+  };
+  Object.assign(r, posterize(img));
+  r.lumRange = r.p95 - r.p5;
+  r.okContrast = r.poster >= OK.poster && r.tileVar >= OK.tileVar && r.cover >= OK.cover;
+  r.okColor = r.chroma >= OK.chroma;
+  r.okScale = r.fine >= OK.fine && r.coarse >= OK.coarse;
+  return r;
+}
+
+// 2枚のあいだの変化。**色で測ること。**
+// 明るさだけで測っていたとき、紅の地から桃の地へ切った断
+// （黄の日 → 白の日）が 2.8% と出た。人の目には全部入れ替わって見えるのに、
+// 明度がほとんど同じだったからである。この作品は原色を面で置くので、
+// 断は「明るさの跳び」ではなく**色の跳び**になることが多い。
+export function meanAbsDiff(bufA, bufB) {
+  const a = decode(bufA), b = decode(bufB);
+  const n = Math.min(a.w * a.h, b.w * b.h);
+  let s = 0;
+  for (let i = 0; i < n; i++) {
+    const p = i * a.ch, q = i * b.ch;
+    s += (Math.abs(a.data[p] - b.data[q])
+        + Math.abs(a.data[p + 1] - b.data[q + 1])
+        + Math.abs(a.data[p + 2] - b.data[q + 2])) / 3;
+  }
+  return s / n / 255;
+}
+
+// 断の大きさ。**画面ぜんたいの平均だけでは測れない。**
+// 余白を法に入れてから、画面の大半が同じ地の面になった。
+// 図が椅子から傘へ全部入れ替わっていても、地の面が残っていると
+// 平均は 9% 程度しか動かない（実際にそう出て、目で見たら完全に別の景だった）。
+// 人の目は「どこかが大きく変わった」ことに気づくので、
+// 区画（8×5）ごとの変化も測り、**上位の区画がどれだけ変わったか**を併せて見る。
+// 同じ絵を2枚並べれば、平均も区画も 0 になる（＝空振りの断は必ず落ちる）。
+export function cutChange(bufA, bufB) {
+  const a = decode(bufA), b = decode(bufB);
+  const w = Math.min(a.w, b.w), h = Math.min(a.h, b.h);
+  const COLS = 8, ROWS = 5;
+  const tiles = [];
+  let all = 0, allN = 0;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const x0 = Math.floor(c * w / COLS), x1 = Math.floor((c + 1) * w / COLS);
+      const y0 = Math.floor(r * h / ROWS), y1 = Math.floor((r + 1) * h / ROWS);
+      let s = 0, n = 0;
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const p = (y * a.w + x) * a.ch, q = (y * b.w + x) * b.ch;
+          s += (Math.abs(a.data[p] - b.data[q])
+              + Math.abs(a.data[p + 1] - b.data[q + 1])
+              + Math.abs(a.data[p + 2] - b.data[q + 2])) / 3;
+          n++;
+        }
+      }
+      tiles.push(s / Math.max(1, n) / 255);
+      all += s; allN += n;
+    }
+  }
+  tiles.sort((x, y) => y - x);
+  const mean = all / Math.max(1, allN) / 255;
+  // 上から2割の区画の平均（＝「どこかが大きく変わった」の量）
+  const k = Math.max(1, Math.round(tiles.length * 0.2));
+  const tile = tiles.slice(0, k).reduce((x, y) => x + y, 0) / k;
+  return { mean, tile, change: Math.max(mean, tile) };
+}
+
+// 同じ大きさの絵を格子に並べて1枚にする（下見用）
+export function grid(imgs, cols = 3, gap = 8) {
+  const w = imgs[0].w, h = imgs[0].h;
+  const rows = Math.ceil(imgs.length / cols);
+  const W = cols * w + gap * (cols - 1), H = rows * h + gap * (rows - 1);
+  const out = Buffer.alloc(W * H * 3);
+  imgs.forEach((im, i) => {
+    const ox = (i % cols) * (w + gap), oy = Math.floor(i / cols) * (h + gap);
+    for (let y = 0; y < Math.min(h, im.h); y++) {
+      for (let x = 0; x < Math.min(w, im.w); x++) {
+        const s = (y * im.w + x) * im.ch, d = ((oy + y) * W + ox + x) * 3;
+        out[d] = im.data[s]; out[d + 1] = im.data[s + 1]; out[d + 2] = im.data[s + 2];
+      }
+    }
+  });
+  return { w: W, h: H, ch: 3, data: out };
+}
+
+export function stack(imgs, gap = 6) { return grid(imgs, 1, gap); }

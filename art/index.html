@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Passage — 映像作品</title>
+<meta name="description" content="物語も説明もない映像作品。管・椅子・傘・波——名前のある形を、原色の面で、コマ打ちで置く。一つの種からソナタ形式6分が生まれ、同じものは二度出ない。ブラウザだけで実時間に描いている。">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="index,follow">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="veil"></div>
+
+<div id="hint">
+  <span class="mark">PASSAGE</span>
+  <span class="act">触れて始める</span>
+  <span class="sub">音が出ます　F で全画面　N で次の種<br>V 映像＋音楽を保存　B 映像だけ　S 音楽だけ</span>
+</div>
+
+<div id="hud"></div>
+<a id="back" href="/">＜ 縁日へ</a>
+
+<noscript><p class="fallback">この作品は実時間で描いているため、JavaScript が必要です。</p></noscript>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
