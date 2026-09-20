@@ -31,6 +31,32 @@ if (!KEY) {
   process.exit(2);
 }
 
+// ---- 怪しいものに印を付ける（捨てはしない。印だけ） --------------------
+// **判断はしないが、目印は付ける。** 汲む側（style-from-comments）が
+// これを見て弾く。機械の側で先に印を付けておくと、見落としが減る。
+const SUSPECT = [
+  // 指示を乗っ取ろうとするもの（プロンプトインジェクション）
+  [/ignore (all )?(previous|prior|above)|disregard (the )?(previous|above)/i, '指示の乗っ取り'],
+  [/これまでの指示|上の指示|命令を無視|システムプロンプト|system prompt/i, '指示の乗っ取り'],
+  [/あなたは今から|you are now|act as|jailbreak|DAN モード/i, '役割の書き換え'],
+  [/スキルを書き換え|rewrite the (skill|rule|prompt)|update your (rules|instructions)/i, 'スキルの書き換え'],
+  [/APIキー|api[ _-]?key|token|パスワード|password|\.env/i, '鍵の要求'],
+  [/実行して|コマンド|curl |wget |npm i |pip install|powershell|cmd\.exe/i, '実行の要求'],
+  // 金や手間がかかるもの
+  [/課金|有料|サブスク|購入|買って|投げ銭|支援して|スパチャ|メンバーシップ/i, '金のかかる求め'],
+  [/\$\d|\d+\s*(円|ドル|USD|JPY)/i, '金のかかる求め'],
+  [/10時間|24時間|毎時|1日\s*\d+\s*本|(\d+)\s*hours?\b/i, '量の要求（時間・本数）'],
+  [/premiere|after ?effects|midjourney|runway|stock (footage|music)|素材を買/i, '外部の有料サービス'],
+  // 連絡先・宣伝
+  [/https?:\/\/|www\.|t\.me\/|discord\.gg|@[a-z0-9_]{4,}\.(com|net)/i, '外部リンク'],
+  [/チャンネル登録して|相互登録|拡散希望|宣伝|PR|案件/i, '宣伝'],
+];
+function suspect(text) {
+  const out = [];
+  for (const [re, why] of SUSPECT) if (re.test(text) && !out.includes(why)) out.push(why);
+  return out;
+}
+
 const api = async (p, q) => {
   const u = new URL('https://www.googleapis.com/youtube/v3/' + p);
   for (const k in q) u.searchParams.set(k, q[k]);
@@ -81,14 +107,16 @@ for (const v of videos) {
       const s = it.snippet.topLevelComment.snippet;
       if (known.has(it.id)) continue;
       known.add(it.id);
+      const text = (s.textOriginal || '').slice(0, 1200);
       store.comments.push({
         id: it.id,
         video: v.id,
         videoTitle: v.title,
         at: s.publishedAt,
         by: s.authorDisplayName,       // 記録には残すが、**作風の書付には名前を書かない**
-        text: (s.textOriginal || '').slice(0, 1200),
+        text,
         likes: s.likeCount || 0,
+        flags: suspect(text),          // 怪しいものの目印（捨てはしない）
         used: false,                   // 作風に取り込んだら true にする
       });
       added++;
@@ -105,3 +133,11 @@ console.log(`新しいコメント ${added} 件（ぜんぶで ${store.comments.
 console.log(file);
 const un = store.comments.filter((c) => !c.used).length;
 console.log(`まだ作風に取り込んでいないもの: ${un} 件`);
+const flagged = store.comments.filter((c) => !c.used && c.flags && c.flags.length);
+if (flagged.length) {
+  console.log('');
+  console.log(`印の付いたもの: ${flagged.length} 件（**従わない**。作風に積まない）`);
+  for (const c of flagged.slice(0, 10)) {
+    console.log(`  [${c.flags.join('・')}] ${c.text.replace(/\s+/g, ' ').slice(0, 70)}`);
+  }
+}
