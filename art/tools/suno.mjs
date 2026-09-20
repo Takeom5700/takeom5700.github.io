@@ -62,26 +62,36 @@ const short = `${key}, ${info.tempo} BPM, melancholic minimal chamber score, `
   + `music box and harp over slow bowed strings, wordless choir, soft timpani, `
   + `sparse and spacious, analog hall reverb, instrumental`;
 
-const long = [
-  `${key}, ${info.tempo} BPM, 4/4.`,
+// **長い欄は 1000 文字まで。** Suno の style 欄に収まらないと切られるので、
+// 入らなければ後ろから落とす（作りかたの話 → 響きの話 → 形の話 の順で捨てる）。
+// 楽器名も短く書く（`bowed bass` → `bass`）。意味は変わらない。
+const SHORT = {
+  'bowed bass': 'bass', 'string pad': 'pad', 'wordless choir': 'choir',
+  'soft timpani': 'timpani', 'strings lead': 'strings', 'pizzicato': 'pizz',
+};
+const shorten = (v) => SHORT[v] || v;
+const sectionLines = info.sections.map((s) =>
+  `${secName[s.name] || s.name} ${Math.round(s.dur)}s: ${s.voices.map(shorten).join(', ')}`);
+
+const head = [
+  `${key}, ${info.tempo} BPM, 4/4. Melancholic minimal chamber score — something`,
+  `beautiful still playing after everyone has gone. Acoustic and tonal,`,
+  `never synthetic or ominous.`,
   ``,
-  `A melancholic minimal chamber score — the sound of something beautiful still playing`,
-  `after everyone has gone. Acoustic and tonal, never synthetic or ominous.`,
+  `Music box carries the melody; harp keeps a broken-chord figure moving underneath;`,
+  `bowed strings hold slow pads; timpani and wordless choir enter from the middle.`,
   ``,
-  `Instruments: ${allVoices.join(', ')}.`,
-  `Music box (celesta) carries the melody; harp keeps a continuous broken-chord figure`,
-  `underneath so the music never stands still; bowed strings hold slow pads;`,
-  `soft timpani and wordless choir enter from the middle section onwards.`,
-  ``,
-  `Form (sonata): the second subject leaves in the relative major and returns in the`,
-  `home minor; the opening music-box timbre comes back at the recapitulation;`,
-  `the final chord is a Picardy major.`,
-  ``,
-  ...info.sections.map((s) => `  ${secName[s.name] || s.name} — ${Math.round(s.dur)}s — ${s.voices.join(', ')}`),
-  ``,
-  `Production: wide natural hall reverb, quiet dynamics with one long crescendo into`,
-  `the development, no compression pumping, no side-chain, analog warmth, 24-bit clean.`,
+  ...sectionLines,
 ].join('\n');
+const form = `Sonata form: the second subject leaves in the relative major and returns\n`
+  + `in the home minor; the music box comes back at the recapitulation;\n`
+  + `the last chord is a Picardy major.`;
+const prod = `Wide natural hall reverb, quiet dynamics, one long crescendo into the\n`
+  + `development, no compression pumping, no side-chain.`;
+
+let long = [head, form, prod].join('\n\n');
+if (long.length > 1000) long = [head, form].join('\n\n');
+if (long.length > 1000) long = head;
 
 const exclude = [
   'no lyrics', 'no rap', 'no spoken word', 'no EDM', 'no dubstep', 'no trap drums',
@@ -124,6 +134,7 @@ ${structure}
 `;
 fs.writeFileSync(`${stem}-suno.txt`, txt);
 console.log(`\n${path.basename(stem)}-suno.txt`);
+console.log(`長い Style 欄: ${long.length} 文字（1000 まで）`);
 console.log('');
 console.log('■ Style of Music（そのまま貼れる）');
 console.log(short);
