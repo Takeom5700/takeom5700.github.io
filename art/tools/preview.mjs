@@ -120,4 +120,4 @@ if (fail) {
   process.exit(1);
 }
 console.log('\nこの種は基軸を満たしている。絵を見て、納得できたら書き出す:');
-console.log(`  node art/tools/export.mjs 通過-${String(SEED).padStart(3, '0')}.mp4 --seed ${SEED}`);
+console.log(`  node art/tools/export.mjs Passage-${String(SEED).padStart(3, '0')}.mp4 --seed ${SEED}`);

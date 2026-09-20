@@ -9,7 +9,7 @@ GitHub Pages で公開している個人サイト。公開元は **`main` ブラ
 | `uranai/` | 占いダッシュボード（毎日更新） |
 | `ai-shinbun/` | AI新聞（GitHub Actions が毎日自動生成） |
 | `rivals/` | ライバルズ再現版（一人用カードゲーム・自己完結） |
-| `art/` | 映像作品《通過》（一つの種から生成・自己完結） |
+| `art/` | 映像作品《Passage》（一つの種から生成・自己完結） |
 | `mistlands/`, `column-*.html` | 静的ページ |
 
 ---
@@ -49,12 +49,15 @@ npm の設定は置いていない（静的ファイルのみ）。
 
 ---
 
-# 映像作品《通過》（art/）
+# 映像作品《Passage》（art/）
 
-**題名は `score.js` の `TITLE` 一箇所で決まる**（`'通過'`）。頁の `<title>`・
+**題名は `score.js` の `TITLE` 一箇所で決まる**（`'Passage'`）。頁の `<title>`・
 始める前の一行・書き出すファイル名がこれに揃う。改題するならそこと
 `art/index.html` の2箇所（`<title>` と `.mark`）だけ。
-はじめ《無銘》だったが「逃げの感じがする」と言われて改めた経緯がある。
+
+《無銘》→《通過》→《Passage》と二度改めた。無銘は「逃げの感じがする」、
+通過は意味は正しいが日本語だった（**全世界へ出すので英語**にした）。
+**日本語の副題を付けないこと。** 付けた瞬間に、読む人によって別の作品になる。
 
 物語も説明もない映像作品。一つの種から **ソナタ形式・6分前後**（5〜7分・160〜195のカット）が
 生まれる。**1本で終わる作品。** 14ある図のうち**5つだけを選んで**組み、
@@ -249,14 +252,14 @@ npm の設定は置いていない（静的ファイルのみ）。
 
 ```bash
 node art/tools/preview.mjs 12                    # 下見（見ていない世界を出さない）
-node art/tools/export.mjs 通過-012.mp4 --seed 12  # 映像＋音を1本に（--to を省くと全長）
-node art/tools/export.mjs 通過-012.mp4 --seed 12 --split   # 映像と音楽を別々に
-node art/tools/record.mjs 通過-012.webm --seed 12          # 映像＋音楽を1本に（実時間）
+node art/tools/export.mjs Passage-012.mp4 --seed 12  # 映像＋音を1本に（--to を省くと全長）
+node art/tools/export.mjs Passage-012.mp4 --seed 12 --split   # 映像と音楽を別々に
+node art/tools/record.mjs Passage-012.webm --seed 12          # 映像＋音楽を1本に（実時間）
 node art/tools/suno.mjs 12                       # 音楽を外で磨く用（音源＋style prompt）
 ```
 
-`suno.mjs` は `通過-012-音楽.wav`（全長）・`通過-012-音楽-60秒.wav`・
-`通過-012-suno.txt`（style prompt・除外タグ・構成タグ）を出す。
+`suno.mjs` は `Passage-012-音楽.wav`（全長）・`Passage-012-音楽-60秒.wav`・
+`Passage-012-suno.txt`（style prompt・除外タグ・構成タグ）を出す。
 **prompt は譜から組む**（`window.__mumei.musicInfo()`）ので、耳で書いた文にしないこと。
 種を変えたときに嘘になる。
 

@@ -35,7 +35,7 @@ const html = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>通過</title>
+<title>Passage</title>
 <style>
 ${css}
 </style>
@@ -44,7 +44,7 @@ ${css}
 <canvas id="stage"></canvas>
 <div id="veil"></div>
 <div id="hint">
-  <span class="mark">通過</span>
+  <span class="mark">PASSAGE</span>
   <span class="act">触れて始める</span>
   <span class="sub">音が出ます　F で全画面　N で次の種</span>
 </div>

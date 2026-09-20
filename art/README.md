@@ -1,13 +1,20 @@
-# 通過 — 映像作品と、その基軸
+# Passage — 映像作品と、その基軸
 
-**題名は《通過》。** 序の形（管）の中を球が通っていくこと、層が断をまたいで
-作品を渡っていくこと、主題が出ていって帰ってくること、6分が過ぎること——
-**主語のない動作**だけを名にしてある。画面の中に文字は1つも出さないので、
-主題を入れられる場所は題名だけで、そこに何も入れないのがこの作品の線である
-（→ `CHANNEL.md`「画面の中と題名は売らない」）。
+**題名は《Passage》。** 三つの意味がそのまま作品に当たっている。
 
-はじめは《無銘》としていたが、依頼者に「逃げの感じがする」と言われて改めた。
-**名づけないことを名にするのは、名づけから降りているだけだった。**
+1. **通り抜けること** — 序の形（管）の中を、球が通っていく。
+   層が断をまたいで、作品を端から端まで渡っていく
+2. **楽曲の一節** — この作品はソナタ形式で、主題が出ていって帰ってくる
+3. **通路そのもの** — 管
+
+**主語のない動作**だけを名にしてある。形容詞も主張も主題も入っていない
+（→ `CHANNEL.md`「画面の中と題名は売らない」）。画面の中に文字は1つも
+出さないので、主題を入れられる場所は題名だけで、そこに何も入れないのが線である。
+
+題名は二度改めた。**《無銘》**（逃げの感じがする、と言われた。
+名づけないことを名にするのは、名づけから降りているだけだった）→
+**《通過》**（主語のない動作にした）→ **《Passage》**（全世界へ出すので英語にした。
+日本語の副題は付けない。付けた瞬間に、読む人によって別の作品になる）。
 
 物語も説明もない映像作品。一つの種（seed）から、**ソナタ形式・6分前後**（5〜7分）が生まれる。
 **1本で終わる作品。** 14 ある図のうち**5つだけを選んで**組み、
@@ -579,10 +586,10 @@ art/tools/capture.sh out.png 41 1920x1080 0
 道具からも同じものが出る。`record.mjs` は頁と**同じ道**を通るので中身が一致する。
 
 ```bash
-node art/tools/record.mjs 通過-004.webm --seed 4              # 映像＋音楽（実時間）
-node art/tools/record.mjs 通過-004.webm --seed 4 --no-audio   # 映像だけ
-node art/tools/record.mjs 通過-004.wav  --seed 4 --music      # 音楽だけ
-node art/tools/export.mjs 通過-004.mp4  --seed 4 --split      # 速い。映像と音を別々に
+node art/tools/record.mjs Passage-004.webm --seed 4              # 映像＋音楽（実時間）
+node art/tools/record.mjs Passage-004.webm --seed 4 --no-audio   # 映像だけ
+node art/tools/record.mjs Passage-004.wav  --seed 4 --music      # 音楽だけ
+node art/tools/export.mjs Passage-004.mp4  --seed 4 --split      # 速い。映像と音を別々に
 ```
 
 `export.mjs` は絵を1枚ずつ焼いて ffmpeg に流すので**実時間より速い**が、
@@ -590,7 +597,7 @@ node art/tools/export.mjs 通過-004.mp4  --seed 4 --split      # 速い。映�
 1本にまとめたいときは:
 
 ```bash
-ffmpeg -i 通過-004-映像.webm -i 通過-004-音楽.wav -c:v copy -c:a aac -b:a 320k 完成.mp4
+ffmpeg -i Passage-004-映像.webm -i Passage-004-音楽.wav -c:v copy -c:a aac -b:a 320k 完成.mp4
 ```
 
 ### 音楽を外（Suno）で磨くとき
@@ -600,7 +607,7 @@ node art/tools/suno.mjs 4                # 音源（全長＋60秒）と style p
 node art/tools/suno.mjs 4 --short        # 60秒だけ（速い）
 ```
 
-`通過-004-suno.txt` に、短い style 欄用の1行・長い説明・除外タグ・
+`Passage-004-suno.txt` に、短い style 欄用の1行・長い説明・除外タグ・
 `[Intro]`〜`[Coda]` の構成タグが入る。**中身は譜から組んでいる**
 （`window.__mumei.musicInfo()` が調・速さ・部ごとの編成を返す）ので、
 種を変えても嘘にならない。取り込みには 60秒のほうが通りやすい。
