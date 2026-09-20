@@ -18,7 +18,7 @@ import { open } from './browser.mjs';
 const argv = process.argv.slice(2);
 const out = argv.find((a) => !a.startsWith('--'));
 if (!out) {
-  console.error('使い方: node art/tools/record.mjs 出力.webm [--seed 0] [--size 1280x720] [--bitrate 2000000] [--no-audio] [--music]');
+  console.error('使い方: node art/tools/record.mjs 出力.webm [--seed 0] [--size 1280x720] [--bitrate 2000000] [--audio-bitrate 192000] [--no-audio] [--music]');
   process.exit(2);
 }
 const flag = (n, d) => { const i = argv.indexOf('--' + n); return i < 0 ? d : argv[i + 1]; };
@@ -28,7 +28,9 @@ const [W, H] = flag('size', '1280x720').split('x').map((v) => parseInt(v, 10));
 const MUSIC = has('music');
 
 const VBR = parseInt(flag('bitrate', '0'), 10);
-const page = await open(`auto=1&seed=${SEED}&w=${W}&h=${H}${VBR ? '&vbr=' + VBR : ''}`, {
+const ABR = parseInt(flag('audio-bitrate', '0'), 10);
+const page = await open(`auto=1&seed=${SEED}&w=${W}&h=${H}`
+  + `${VBR ? '&vbr=' + VBR : ''}${ABR ? '&abr=' + ABR : ''}`, {
   software: has('sw'),
   size: `${W},${H}`,
   api: 'save',

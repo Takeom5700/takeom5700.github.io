@@ -210,8 +210,10 @@ function start() {
       // ?vbr= で明示もできる（道具から大きさを詰めるため）。
       const vbr = parseInt(q.get('vbr') || '', 10)
         || Math.max(2e6, Math.round(film.st.w * film.st.h * 2.4));
+      // 音は既定 192kbps。?abr= で下げられる（送れる大きさに詰めるため）
+      const abr = parseInt(q.get('abr') || '', 10) || 192e3;
       rec = new MediaRecorder(new MediaStream(tracks), {
-        mimeType: mime, videoBitsPerSecond: vbr, audioBitsPerSecond: 192e3,
+        mimeType: mime, videoBitsPerSecond: vbr, audioBitsPerSecond: abr,
       });
     } catch (e) { say('この端末では映像を保存できません'); rec = null; return null; }
     const name = stem() + (withSound ? '.webm' : '-映像.webm');

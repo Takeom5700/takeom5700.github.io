@@ -26,7 +26,8 @@ fs.mkdirSync(DIR, { recursive: true });
 const page = await open(`export=1&seed=${SEED}&w=160&h=90`, { size: '160,90' });
 const info = JSON.parse(await page.evaluate('JSON.stringify(window.__mumei.musicInfo())'));
 
-const NOTE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+// 短調はフラットで書くのが普通（D# minor ではなく Eb minor）
+const NOTE = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 const key = NOTE[((info.tonic % 12) + 12) % 12] + ' minor';
 const secName = { 序: 'Intro', 提: 'Exposition', 展: 'Development', 再: 'Recapitulation', 終: 'Coda' };
 const allVoices = [...new Set(info.sections.flatMap((s) => s.voices))];
@@ -70,7 +71,7 @@ const long = [
   `Instruments: ${allVoices.join(', ')}.`,
   `Music box (celesta) carries the melody; harp keeps a continuous broken-chord figure`,
   `underneath so the music never stands still; bowed strings hold slow pads;`,
-  `soft timpani and wordless choir enter only in the middle section.`,
+  `soft timpani and wordless choir enter from the middle section onwards.`,
   ``,
   `Form (sonata): the second subject leaves in the relative major and returns in the`,
   `home minor; the opening music-box timbre comes back at the recapitulation;`,
