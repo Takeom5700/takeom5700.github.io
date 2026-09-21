@@ -70,28 +70,19 @@
 
 ---
 
-## 自動で毎朝6時に回す
+## 毎朝、打たずに自動で回す
 
-`daily.bat` をデスクトップに置く:
+**`art\tools\win\install-task.bat` をダブルクリックするだけ。**
+毎日 06:00 に `art\tools\win\daily.bat` が起き、上のプロンプトを
+Claude Code に流して1本作る（詳しくは `art/DAILY.md`）。
 
-```bat
-@echo off
-cd /d C:\path\to\takeom5700.github.io
-set OUTDIR=C:\Users\User\Desktop\Claude Art Project
-claude -p "art/DAILY-PROMPT.md の『毎日のプロンプト』を最後まで実行してください。" ^
-  --allowedTools "Bash(node *)" "Bash(git *)" Read Edit Write WebFetch ^
-  >> "%OUTDIR%\daily.log" 2>&1
-```
-
-```bat
-schtasks /create /tn "Primaries daily" /tr "C:\Users\User\Desktop\daily.bat" /sc daily /st 06:00 /rl highest
-```
-
-- タスクのプロパティで「**タスクを実行するためにスリープを解除する**」を入れる
-- `--allowedTools` に無い道具は毎回止まる。止めたくなければ
-  `--dangerously-skip-permissions` を足すことになるが、**その端末では
-  Claude が確認なしに何でも実行できる**ので、このリポジトリ専用の場所で動かすこと
-- ログは `daily.log`。朝いちばんに見て、止まっていたら手で打つ
+- `daily.bat` は**リポジトリの場所を自分で割り出す**ので、どこに clone してもよい
+- `claude` が見つからない／失敗したときは `daily.mjs` 単体で作る。**必ず1本は出る**
+- `--allowedTools` に無い道具が要ると、その回は止まる。止めたくなければ
+  `daily.bat` の `claude -p` に `--dangerously-skip-permissions` を足すことになるが、
+  **その端末では Claude が確認なしに何でも実行できる**ので、
+  このリポジトリ専用の場所で動かすこと
+- ログは `Claude Art Project\daily.log`。朝いちばんに見て、止まっていたら手で打つ
 
 ---
 

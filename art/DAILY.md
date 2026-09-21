@@ -113,16 +113,41 @@ node art/tools/comments.mjs --channel @primaries --out "<作品フォルダ>" --
 
 ---
 
-## 毎朝6時に起こす（Windows タスクスケジューラ）
+## 毎朝6時に起こす（**ダブルクリック1回**）
 
-```bat
-schtasks /create /tn "Primaries daily" /tr "cmd /c cd /d C:\path\to\takeom5700.github.io && node art\tools\daily.mjs --out \"C:\Users\User\Desktop\Claude Art Project\" --upload >> \"%USERPROFILE%\Desktop\Claude Art Project\daily.log\" 2>&1" /sc daily /st 06:00
+```
+art\tools\win\install-task.bat   ← これをダブルクリックするだけ
 ```
 
-- **パソコンが起きている必要がある**（スリープだと動かない。
-  タスクの設定で「タスクを実行するためにスリープを解除する」を入れておく）
+管理者権限は要らない。登録されるのは「毎日 06:00 に `art\tools\win\daily.bat` を叩く」
+という予定ひとつで、次の設定まで一緒に入る。
+
+| 入る設定 | なぜ |
+|---|---|
+| **スリープを解除して実行**（WakeToRun） | 6時に寝ていても起きて作る |
+| **取りこぼしを拾う**（StartWhenAvailable） | パソコンが消えていた日は、次に起きたときに作る |
+| 電池でも動かす | ノートで蓋を閉じていない限り回る |
+| 2時間で打ち切る | 何かで固まっても翌日に引きずらない |
+
+`daily.bat` がやること:
+
+1. リポジトリの場所を**自分で割り出す**（どこに clone してあってもよい）
+2. `git pull --ff-only`（道具とスキルを最新にする。失敗しても止まらない）
+3. `claude` があれば**記事を読ませて作る**（本命）。無ければ／失敗したら
+   `daily.mjs` 単体で作る（**必ず1本は出る**）
+4. 全部の出力を `Claude Art Project\daily.log` に足していく
+
+やめるときは `art\tools\win\uninstall-task.bat`。
+時刻を変えるときは `install-task.bat` の `set "TIME=06:00"` を書き換えて、もう一度叩く。
+
+```bat
+schtasks /run /tn "Primaries daily"      :: いますぐ1回試す
+schtasks /query /tn "Primaries daily"    :: 次の実行予定を見る
+```
+
 - 映像は**実時間で6分**かかる。その間パソコンは他のことをしてよいが、
   重い処理を並べるとコマが落ちる
+- **同じ日に2本作らない**（`--skip-if-done`。その日ぶんが `.state.json` にあれば何もしない）
 
 ---
 

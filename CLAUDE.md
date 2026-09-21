@@ -65,7 +65,8 @@ npm の設定は置いていない（静的ファイルのみ）。
 | `.claude/agents/art-verifier` | 検査を回して数値で報告する役 |
 | `.claude/agents/motif-smith` | 図を実装する役 |
 | `art/DAILY.md` | **毎日1本を自動で作って上げる**（note から着想・6分・YouTube）|
-| `art/DAILY-PROMPT.md` | パソコンの Claude Code へ毎朝打つプロンプトと `.bat` |
+| `art/DAILY-PROMPT.md` | パソコンの Claude Code へ毎朝打つプロンプト |
+| `art/tools/win/` | **毎朝6時に自動で回す仕掛け**（`install-task.bat` をダブルクリックするだけ）|
 | `.claude/skills/house-style` | **視聴者のコメントで積み上がった作風。** 新作の前に必ず読む |
 | `.claude/skills/style-from-comments` | コメントを汲んで作風に積む／膨らんだら圧縮する |
 
