@@ -33,6 +33,28 @@
 //   終=聲と弦、最後にオルゴールが独りで終わる
 
 import { makeRng, between, pick } from './rng.js';
+import { forRole } from './sound.js';
+
+// ---- 楽器の割り当て --------------------------------------------------
+// **声部と楽器の対応を作品ごとに組む。** これが固定だと、和音・拍子・音階を
+// 振っても「同じ曲」に聞こえる（依頼者に二度そう聞こえた。ここが本当の原因）。
+// 声部 0=旋律 1=分散和音 2=低音 3=持続 4=一撃 5=拍 6=もう一つの声 7=弾き 8=もう一つの旋律
+function makeVoices(rng) {
+  const one = (role, avoid) => {
+    const pool = forRole(role).filter((x) => !avoid || !avoid.includes(x.n));
+    return pick(rng, pool.length ? pool : forRole(role))?.n;
+  };
+  const mel = one('mel');
+  const mel2 = one('mel', [mel]);                 // 別の部で主旋律を取るもの
+  const arp = one('arp', [mel]);
+  const bass = one('bass');
+  const pad = one('pad');
+  const pad2 = one('pad', [pad]);
+  const hit = one('hit');
+  const pulse = one('pulse');
+  const low2 = one('bass', [bass]);
+  return [mel, arp, bass, pad, hit, pulse, pad2, low2, mel2];
+}
 
 // ---- 音階 ------------------------------------------------------------
 // **音階は哲学ではない。** 根（対比）・型（ソナタ形式）・6分・一つの種は動かさないが、
@@ -257,8 +279,9 @@ export function composeMusic(work, seedIn) {
     return slots.map((at, i) => ({ at, step: i === 0 ? 0 : pick(rng, [4, 4, 2, 7]) }));
   })();
   const bassWalk = bassPat.length;
-  // 音色（同じ楽器の別の個体くらいの幅で振る）
+  // 音色（同じ楽器の別の個体くらいの幅で振る）＋**楽器の割り当てそのもの**
   const tone = makeTone(rng);
+  tone.voices = makeVoices(rng);
   // **展開部で何が厚みを作るかを替える。** ここを固定すると、
   // どの作品も同じ場所で同じ楽器が入ってきて、山の形が同じに聞こえる。
   const DEVC = ['太鼓と聲', '太鼓', '聲', '弦の厚み', '太鼓と弦'];

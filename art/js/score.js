@@ -32,10 +32,19 @@ import { NAMES, MOTIFS } from './motif.js';
 
 export const REST = 3.0;
 
-// **尺は6分ちょうど（360秒）。**
-// 依頼者:「Suno の制限で6分までしか作れないようだから、映像もちょうど6分にして」。
-// 部ごとの長さは種ごとに ±10% 振れたままで、**全体だけを一度伸縮させて**合わせる。
+// ---- 尺 --------------------------------------------------------------
+// 6分ちょうどに固定していたのは **Suno が6分までしか扱えなかったから**で、
+// 作品の側の理由ではなかった。依頼者:
+//   「Sunoのことはもうかんがえなくていい。そのままクオリティの高い体験になる
+//     アートとして出力して。sunoを使うのはやめます」
+// **だから尺も作品ごとに決める。** 4分半〜9分。
+// 部ごとの長さは種ごとに振れたままで、**全体だけを一度伸縮させて**その尺に合わせる。
+// `TOTAL` は既定値として残す（引数を省いた古い呼び出しのため）。
 export const TOTAL = 360;
+export function totalOf(seed) {
+  const r = makeRng((seed | 0) * 1013904223 + 2654435761);
+  return Math.round(between(r, 270, 540));
+}
 
 // 題名。**作品の中では一度も出さない**（画面に文字を置かない）。
 // 出るのは頁を開いたときの一行と、書き出したファイルの名前だけ。
@@ -59,7 +68,7 @@ export const TITLE = 'Passage';
 export const LAWS = {
   // 型 — 構造（この版で足したもの）
   sections: 5,
-  minTotal: 359.9, maxTotal: 360.1, // 6分ちょうど（Suno が6分までのため）
+  minTotal: 269.9, maxTotal: 540.1, // 4分半〜9分（作品ごとに決まる。Suno の縛りは外した）
   minThemeA: 4,                     // 第一主題が現れる回数（序・提示・展開・再現）
   minThemeB: 3,
   minRecall: 5,                     // 再現部が提示部から引き写す景の数
@@ -191,6 +200,9 @@ function pushApart(prev, s, pals) {
 // ---- 一本を組む -------------------------------------------------------
 export function composeWork(seed) {
   const rng = makeRng((seed | 0) * 2654435761 + 12345);
+  // この作品の尺。**種から決まる**（別の乱数の筋から引くので、
+  // 譜の中身の並びは尺に影響されない）
+  const WANT = totalOf(seed);
 
   // 調（色）を決める。home が主調、dom が属調、far が遠い調
   const home = Math.floor(rng() * PALETTES.length);
@@ -313,7 +325,13 @@ export function composeWork(seed) {
     sparse: 1,
   }), extra || {});
 
-  const D = (base) => Math.round(base * between(rng, 0.9, 1.12));
+  // 部の予算。**この作品の尺に合わせて先に伸ばす。**
+  // 組み終わってから全体を伸ばすだけだと、景の数が 360秒ぶんのまま残って
+  // 1分あたりの断が薄まり、長い景に色の替わりが入らない
+  // （9分の作品で 18.8断/分に落ちて検査に落ちた）。
+  // **尺を変えるなら景の数も増やすこと。**
+  const SPAN = WANT / 360;
+  const D = (base) => Math.round(base * SPAN * between(rng, 0.9, 1.12));
 
   // ---- 序（問いを置く） ----
   // 冒頭で止まらせないために、短い断片を3つ打ってから長く溜める
@@ -565,18 +583,18 @@ export function composeWork(seed) {
     if (t < end) put(I, end - t, air(I, { pal: home, lock: 1, mv: 0 }), 4, 0, 0.4);
   }
 
-  // ---- 尺を6分ちょうどに合わせる ----
+  // ---- 尺をこの作品の長さに合わせる ----
   // 部ごとの割合（±10%の振れ）はそのままに、**全体を一度だけ伸縮させる。**
   // 景の長短の関係も、事の進みかたも、層の時計も、比のまま保たれる。
-  // 端数は最後の景で吸って、合計をぴったり TOTAL にする。
+  // 端数は最後の景で吸って、合計をぴったり合わせる。
   // **ここは層の時計（lyD）と音（composeMusic が movements を読む）より前に置くこと。**
   {
-    const k = TOTAL / t;
+    const k = WANT / t;
     let acc = 0;
     for (const s of shots) { s.dur *= k; s.start = acc; acc += s.dur; }
     const last = shots[shots.length - 1];
-    if (last) last.dur += TOTAL - acc;
-    t = TOTAL;
+    if (last) last.dur += WANT - acc;
+    t = WANT;
   }
 
   // **長い景で画面を止めない。** 5秒以上の景に「動かない」を許すと、
@@ -727,6 +745,12 @@ export function checkWork(work) {
   const durs = S.map((s) => s.dur);
   // 型
   if (work.movements.length !== LAWS.sections) bad.push(`型: 部が ${work.movements.length} しかない`);
+  // **その作品が名乗った尺と、実際の合計が一致しているか**を見る
+  // （固定の6分ではなくなったので、比べる相手は totalOf(seed)）
+  const want = totalOf(work.seed);
+  if (Math.abs(work.total - want) > 0.15) {
+    bad.push(`型: 全体が ${work.total.toFixed(2)}秒（名乗りは ${want}秒）`);
+  }
   if (work.total < LAWS.minTotal || work.total > LAWS.maxTotal) {
     bad.push(`型: 全体が ${Math.round(work.total)}秒（${LAWS.minTotal}〜${LAWS.maxTotal}秒）`);
   }
