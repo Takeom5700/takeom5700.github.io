@@ -1,10 +1,13 @@
 @echo off
 chcp 65001 >nul
 rem ===================================================================
-rem  配管を1枚で確かめる。**詰まったらこれをダブルクリックする。**
-rem  予定が入っているか／道具があるか／鍵／作品／ログの終わりまで出る。
-rem  出てきた文字をそのまま貼れば、どこで詰まったか分かる。
+rem  ASCII ONLY. Do not write Japanese in this file.
+rem  cmd.exe mis-parses UTF-8 multibyte text in .bat: it loses the line
+rem  break inside a rem comment and tries to run the rest as a command
+rem  ("'...' is not recognized as an internal or external command").
+rem  All wording lives in the .ps1 next to this file (UTF-8 with BOM).
 rem ===================================================================
+rem  One-page health check. Double-click this when something looks wrong.
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0check-task.ps1"
 echo.
 pause

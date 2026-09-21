@@ -129,7 +129,29 @@ art\tools\win\install-task.bat   ← これをダブルクリックするだけ
 | 電池でも動かす | ノートで蓋を閉じていない限り回る |
 | 2時間で打ち切る | 何かで固まっても翌日に引きずらない |
 
-`daily.bat` がやること:
+### `.bat` には日本語を書かない（2026-09-21 に実際に踏んだ）
+
+cmd.exe は UTF-8 の日本語を含む `.bat` を読み損なう。`rem` コメントの途中で
+行の切れ目を見失い、**続きをコマンドとして実行しようとする。**
+
+```
+'...は6分だが、余裕を見る） ' is not recognized as an internal or external command
+```
+
+これは `install-task.bat` の `rem` コメントの一部が実行されたもの。登録自体は
+成功していたのに、赤い文字が並ぶので失敗に見えた。**ここで一度止まった。**
+
+そこで `.bat` は**ASCII だけの薄い呼び出し**にして、
+文言も処理も隣の `.ps1` に置いた（`.ps1` は UTF-8 BOM 付きなので安全に読める）。
+
+| ファイル | 中身 |
+|---|---|
+| `daily.bat` / `install-task.bat` / `uninstall-task.bat` / `check-task.bat` | ASCII のみ。`.ps1` を呼ぶだけ |
+| `daily.ps1` / `install-task.ps1` / `uninstall-task.ps1` / `check-task.ps1` | 本体（日本語はここ） |
+
+**`.bat` に日本語を足さないこと。** 足すなら `.ps1` の側へ。
+
+`daily.ps1` がやること:
 
 1. リポジトリの場所を**自分で割り出す**（どこに clone してあってもよい）
 2. `git pull --ff-only`（道具とスキルを最新にする。失敗しても止まらない）
