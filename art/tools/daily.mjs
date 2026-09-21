@@ -33,6 +33,10 @@ const FEED = flag('feed', 'https://note.com/alert_zinnia5671/rss');
 const SIZE = flag('size', '2560x1440');
 const VBR = flag('bitrate', '24000000');
 const DRY = has('dry-run');
+// 予定実行（タスクスケジューラ）から叩かれたとき、その日ぶんが既にあれば何もしない。
+// 取りこぼしを拾う設定（StartWhenAvailable）を入れてあるので、
+// 遅れて起きた日に2本焼いてしまわないための歯止め。
+const ONCE = has('skip-if-done');
 
 // 題名の候補。**主語のない動作か、物の名前だけ。**
 // 形容詞・主張・主題を入れない（`art/CHANNEL.md` の線）。
@@ -114,6 +118,14 @@ const state = loadState(OUT);
 const usedLinks = new Set(state.works.map((w) => w.link));
 const usedSeeds = new Set(state.works.map((w) => w.seed));
 const usedTitles = new Set(state.works.map((w) => w.title));
+
+if (ONCE) {
+  const today0 = new Date().toISOString().slice(0, 10);
+  if (state.works.some((w) => w.date === today0)) {
+    log(`${today0} のぶんはもう作ってあります（${state.works.filter((w) => w.date === today0).length}本）。何もしません。`);
+    process.exit(0);
+  }
+}
 
 let article = null;
 if (!has('no-feed')) {

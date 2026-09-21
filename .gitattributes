@@ -3,3 +3,6 @@
 uranai/*.html text eol=lf
 uranai/*.json text eol=lf
 uranai/*.md text eol=lf
+
+# Windows のバッチは CRLF で置く（メモ帳やコマンドプロンプトで崩れないように）
+*.bat text eol=crlf
