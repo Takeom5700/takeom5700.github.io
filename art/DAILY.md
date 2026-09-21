@@ -168,6 +168,23 @@ cmd.exe は UTF-8 の日本語を含む `.bat` を読み損なう。`rem` コメ
 
 **`claude` は先に一度ログインしておくこと。** 予定実行は画面を持たないので、
 `/login` を出せない。`claude` を手で立ち上げて通しておけば、以後は予定から使える。
+通ったかは `claude -p "reply with just: OK"` で分かる（予定と同じ呼び方）。
+
+### 必ず1本出すための三段（2026-09-21 に穴が3つ見つかった）
+
+| 穴 | どうなったか | 塞ぎかた |
+|---|---|---|
+| `claude` が居座る | 予定の打ち切り（2時間）に食われて、**退避路が一度も走らない** | `claude` に**70分の上限**を付け、超えたら木ごと止めて `daily.mjs` へ落ちる（`$CLAUDE_MINUTES`）|
+| 手で2回起こすと2本走る | 同じフォルダと同じリポジトリを2つが触る | 置場に `.running` の印を置く。**印の PID が生きているかを見る**（時刻だけで見ると、手で止めたあと次の回が止まる）|
+| ログの日本語が化ける | `Get-Content` が Shift-JIS として読む | ログの先頭に**UTF-8 の印（BOM）**を .NET で書く。印の無い古いログは `daily-old.log` へ寄せる |
+
+ログを読むときは `-Encoding UTF8` を付けるのが確実。
+
+```powershell
+Get-Content "$env:USERPROFILE\Desktop\Claude Art Project\daily.log" -Tail 30 -Wait -Encoding UTF8
+```
+
+上限を試すときは `$env:PRIMARIES_CLAUDE_MINUTES = 0` で即打ち切りにできる。
 
 やめるときは `art\tools\win\uninstall-task.bat`。
 時刻を変えるときは `install-task.ps1` の `$At = '06:00'` を書き換えて、もう一度叩く。
