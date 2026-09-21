@@ -23,7 +23,9 @@ const N = parseInt(flag('n', '12'), 10);
 const [W, H] = SIZE.split('x').map((v) => parseInt(v, 10));
 const OUT = flag('out', `mumei-${String(SEED).padStart(3, '0')}.png`);
 
-const page = await open(`export=1&seed=${SEED}&w=${W}&h=${H}`, {
+const BRIEF = flag('brief', '');
+const page = await open(`export=1&seed=${SEED}&w=${W}&h=${H}`
+  + `${BRIEF ? '&brief=' + BRIEF : ''}`, {
   software: has('sw'),
   size: Math.min(W, 1600) + ',' + Math.min(H, 900),
 });

@@ -30,8 +30,11 @@ const MUSIC = has('music');
 
 const VBR = parseInt(flag('bitrate', '0'), 10);
 const ABR = parseInt(flag('audio-bitrate', '0'), 10);
+// 指示書（記事から決めた要素）。base64url のまま頁へ渡す
+const BRIEF = flag('brief', '');
 const page = await open(`auto=1&seed=${SEED}&w=${W}&h=${H}`
-  + `${VBR ? '&vbr=' + VBR : ''}${ABR ? '&abr=' + ABR : ''}`, {
+  + `${VBR ? '&vbr=' + VBR : ''}${ABR ? '&abr=' + ABR : ''}`
+  + `${BRIEF ? '&brief=' + BRIEF : ''}`, {
   software: has('sw'),
   size: `${W},${H}`,
   api: 'save',

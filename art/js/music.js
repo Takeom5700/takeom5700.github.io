@@ -231,21 +231,44 @@ function makeTune(rng, len, span) {
   return out;
 }
 
+// 記事の内容（指示書）も音の種に混ぜる。
+// **混ぜないと、同じ種の別の記事で音が1音も変わらない**（実際に変わらなかった）。
+function briefHash(br) {
+  if (!br) return 0;
+  const str = (br.from && br.from.words ? br.from.words.join('') : '')
+    + '|' + (br.forms || []).join(',') + '|' + br.layer + '|' + br.total;
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
 export function composeMusic(work, seedIn) {
   const seed = (seedIn === undefined ? work.seed : seedIn) | 0;
-  const rng = makeRng(seed * 2246822519 + 7);
+  const rng = makeRng(seed * 2246822519 + 7 + briefHash(work && work.brief));
 
   // ---- 1本ぶんの素性を種から選ぶ --------------------------------------
   // **音色・メロディ・編成・リズム・調・和音・伴奏を、一つとして固定しない**
   // （依頼者の指定）。動かさないのは根（対比）・型（ソナタ形式）・
   // 6分ちょうど・一つの種・原色の面・コマ打ちだけ。
+  const BR = work && work.brief;
   const mode = MODES[Math.floor(rng() * MODES.length)];
   const SC = mode.sc;
-  const met = METERS[Math.floor(rng() * METERS.length)];
+  // 拍子。指示書（記事の文の調子）が向きを言っていれば、それに寄せる
+  //   短く切る文 → 拍の多い拍子／長く続く文 → 拍の少ない拍子
+  const mSorted = METERS.map((x, i) => ({ x, i })).sort((a, b) => a.x.beats - b.x.beats);
+  const met = (BR && BR.beatsBias)
+    ? (BR.beatsBias > 0
+      ? mSorted[Math.floor(mSorted.length * 0.5 + rng() * mSorted.length * 0.5)].x
+      : mSorted[Math.floor(rng() * mSorted.length * 0.6)].x)
+    : METERS[Math.floor(rng() * METERS.length)];
   const prg = makeProg(rng);
   const band = makeBand(rng);
   // 速さ。八分を1拍に取る拍子（6/8・7/8）は、そのぶん速い数字になる
-  const tempo = Math.round(between(rng, met.half ? 108 : 48, met.half ? 168 : 92));
+  // 速さ。指示書が「速い／遅い」を言っていれば、その半分の幅から取る
+  const tLo = met.half ? 108 : 48, tHi = met.half ? 168 : 92;
+  const tempo = Math.round((BR && BR.tempoBias)
+    ? (BR.tempoBias > 0 ? between(rng, (tLo + tHi) / 2, tHi) : between(rng, tLo, (tLo + tHi) / 2))
+    : between(rng, tLo, tHi));
   const beat = 60 / tempo;
   const bar = beat * met.beats;
   const tonic = 38 + Math.floor(rng() * 22);            // 主音（調）
@@ -285,7 +308,7 @@ export function composeMusic(work, seedIn) {
   // **展開部で何が厚みを作るかを替える。** ここを固定すると、
   // どの作品も同じ場所で同じ楽器が入ってきて、山の形が同じに聞こえる。
   const DEVC = ['太鼓と聲', '太鼓', '聲', '弦の厚み', '太鼓と弦'];
-  const devColor = DEVC[Math.floor(rng() * DEVC.length)];
+  const devColor = (BR && BR.devColor) || DEVC[Math.floor(rng() * DEVC.length)];
   const useBell = rng() < 0.68;            // 部の変わり目の鐘。無い作品もある
   const notes = [];
   const add = (t, d, midi, v, voice) => {

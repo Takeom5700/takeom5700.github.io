@@ -58,6 +58,44 @@ export const PALETTES = [
   { n: '極',   g: '#0b0b0b', i: '#ff00a8', a: '#00ffd0', l: '#ffe600' },
 ];
 
+// ---- その作品のための配色を作る ---------------------------------------
+// **配色も棚から選ばない。** 12組から選んでいたので、1000種のうち素材が
+// 一切かぶらない作品は122本しかなかった（いちばんの制約が配色だった）。
+// 依頼者「毎回1から全く違うものを作って、過去の素材の使い回しはしないこと」。
+//
+// **ただし「原色を面で置く」は哲学なので動かさない。**
+// だから作るのは「彩度を振り切った色相を、離して2〜3つ」＋「黒に近い／白に近い一色」。
+// 濁った中間色は作らない（混色しない、という線）。
+export function makePalette(rng) {
+  const H = () => rng();
+  // 色相を大きく離して取る（近い色を並べると断が消える）
+  const h0 = H();
+  const gap = 0.24 + rng() * 0.2;
+  const h1 = (h0 + gap + (rng() < 0.5 ? 0 : 0.5)) % 1;
+  const h2 = (h1 + gap * (0.8 + rng() * 0.6)) % 1;
+  // 彩度と明度は振り切る（原色）。黒に近い／白に近いを1つ混ぜる
+  const vivid = (h, v) => hsv2hex(h, 0.92 + rng() * 0.08, v);
+  const dark = hsv2hex(h0, 0.5 + rng() * 0.45, 0.06 + rng() * 0.08);
+  const light = hsv2hex(h1, 0.02 + rng() * 0.1, 0.95 + rng() * 0.05);
+  const bright = [vivid(h0, 0.95 + rng() * 0.05), vivid(h1, 0.9 + rng() * 0.1),
+    vivid(h2, 0.88 + rng() * 0.12)];
+  // 地は「暗い／明るい／原色」のどれか。図は地から遠いものを取る
+  const kind = Math.floor(rng() * 3);
+  const g = kind === 0 ? dark : kind === 1 ? light : bright[0];
+  const rest = kind === 2 ? [bright[1], bright[2], dark, light] : bright.concat([kind === 0 ? light : dark]);
+  const i = rest[0], a = rest[1], l = rest[2] || light;
+  return { n: '生', g, i, a, l };
+}
+function hsv2hex(h, s, v) {
+  const f = (n) => {
+    const k = (n + h * 6) % 6;
+    const x = v - v * s * Math.max(0, Math.min(k, 4 - k, 1));
+    return Math.round(Math.max(0, Math.min(1, x)) * 255);
+  };
+  const [r, g, b] = [f(5), f(3), f(1)];
+  return '#' + [r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('');
+}
+
 export function hex2rgb(h) {
   const v = parseInt(h.slice(1), 16);
   return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
@@ -89,8 +127,15 @@ export function lumOf(h) {
 //   shade … 同じ組のまま、どの色を地にするかを替える
 //           （調を変えずに和音だけ替えるのと同じこと。
 //            主題の中で色を保ったまま、画面だけ変えられる）
+// **その作品の配色表**。譜（score.js）が作品ごとに作って渡す。
+// 渡されていなければ手で選んだ12組を引く（過去の種と下見のため）。
+let WORK_PALETTES = null;
+export function setPalettes(list) { WORK_PALETTES = (list && list.length) ? list : null; }
+export function palettes() { return WORK_PALETTES || PALETTES; }
+
 export function colorsOf(shot) {
-  const p = PALETTES[shot.pal % PALETTES.length];
+  const P = (shot && shot.pals) ? shot.pals : palettes();
+  const p = P[shot.pal % P.length];
   const sh = shot.shade | 0;
   let g = p.g, i = p.i, a = p.a, l = p.l;
   if (sh === 1) { g = p.a; i = p.g; a = p.i; }

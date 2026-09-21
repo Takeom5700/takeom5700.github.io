@@ -179,6 +179,21 @@ if (!title) {
   const pool = free.length ? free : TITLES;
   title = pool[hash(key + 'title') % pool.length];
 }
+// ---- 記事から指示書を組む ---------------------------------------------
+// **種は記事のハッシュでしかない。** ハッシュは中身を読んでいないので、
+// 「記事から着想を得た」とは言えない。記事の言葉から出す要素を決める
+// （`art/js/brief.js`）。依頼者「作品にどのような要素を出すかは、
+// インプットしたnote記事の内容から着想を得るようにしてね」。
+let brief = null;
+if (article) {
+  const { briefFromText } = await import('../js/brief.js');
+  brief = briefFromText({ title: article.title, body: article.body }, seed);
+}
+const briefArg = brief
+  ? Buffer.from(JSON.stringify(brief), 'utf8').toString('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  : null;
+
 const tag = String(((seed % 1000) + 1000) % 1000).padStart(3, '0');
 const today = new Date().toISOString().slice(0, 10);
 const folder = path.join(OUT, `${today} ${title} ${tag}`);
@@ -188,6 +203,18 @@ log(`題名: ${title} ${tag}`);
 log(`種  : ${seed}`);
 log(`記事: ${article ? article.title + ' / ' + article.link : '（無し）'}`);
 log(`置場: ${folder}`);
+if (brief) {
+  const { FORM_KEYS } = await import('../js/form.js');
+  const { LAYER_NAMES } = await import('../js/layer.js');
+  log('');
+  log('記事から決めた要素:');
+  log(`  読んだ語: ${brief.from.words.join('・') || '（当たらず。種で振った）'}`);
+  log(`  形      : ${brief.forms.map((i) => FORM_KEYS[i]).join(' ')}`);
+  log(`  序の形  : ${FORM_KEYS[brief.opening]}`);
+  log(`  層      : ${LAYER_NAMES[brief.layer]}`);
+  log(`  尺      : ${brief.total}秒（記事 ${brief.from.文字数}字）`);
+  log(`  音の向き: ${brief.tempoBias > 0 ? '速い' : '遅い'}／一文 ${brief.from.一文の長さ}字`);
+}
 log('');
 
 // ---- 説明文（YouTube にそのまま貼れる形） --------------------------------
@@ -210,6 +237,8 @@ const memo = [
   `種: ${seed}`,
   article ? `着想: ${article.title}` : '着想: （記事なし）',
   article ? `記事: ${article.link}` : '',
+  brief ? `記事から決めた要素: 形 ${brief.forms.join(',')} / 序 ${brief.opening} / 層 ${brief.layer} / 尺 ${brief.total}秒` : '',
+  brief ? `読んだ語: ${brief.from.words.join('・')}` : '',
   'タグ: generative art, algorithmic art, abstract animation, experimental animation,',
   '      visual music, procedural art, creative coding, motion art',
 ].filter(Boolean).join('\n');
@@ -226,11 +255,12 @@ log('テキストを書きました: ' + text);
 
 // **音楽が先。** 実時間の録画中に別の重い処理を走らせるとコマが落ちる。
 log('音楽を焼きます（実時間より速い）…');
-await run([path.join(HERE, 'record.mjs'), music, '--seed', String(seed), '--music']);
+await run([path.join(HERE, 'record.mjs'), music, '--seed', String(seed), '--music',
+  ...(briefArg ? ['--brief', briefArg] : [])]);
 
 log('映像を録ります（6分かかります）…');
 await run([path.join(HERE, 'record.mjs'), film, '--seed', String(seed),
-  '--size', SIZE, '--bitrate', VBR]);
+  '--size', SIZE, '--bitrate', VBR, ...(briefArg ? ['--brief', briefArg] : [])]);
 
 state.works.push({ date: today, title, seed, link: article ? article.link : null,
   article: article ? article.title : null, folder });

@@ -76,7 +76,18 @@ function start() {
   let seed = q.has('seed') ? (parseInt(q.get('seed'), 10) | 0) : 0;
   const showHud = q.get('hud') === '1';
 
-  let work = composeWork(seed);
+  // 指示書（記事の内容から決めた要素）。`?brief=` に base64url の JSON で渡す。
+  // **外部ファイルを読まない**（`art/` の中だけで完結、という線を守る）。
+  // 無ければ全部を種から振る（頁を素で開いたとき・過去の種を見るとき）。
+  let brief = null;
+  if (q.has('brief')) {
+    try {
+      const b64 = q.get('brief').replace(/-/g, '+').replace(/_/g, '/');
+      brief = JSON.parse(decodeURIComponent(escape(atob(b64))));
+    } catch (e) { console.error('指示書を読めませんでした: ' + e.message); brief = null; }
+  }
+
+  let work = composeWork(seed, brief);
   let music = composeMusic(work);
   const bad = checkWork(work);
   if (bad.length) console.error('基軸違反:\n' + bad.join('\n'));
@@ -114,6 +125,8 @@ function start() {
   function nextWork() {
     ended = false; rest = 0;
     seed += 1;
+    // 次の種へ行くときは指示書を外す（指示書はその記事のためのもの）
+    brief = null;
     work = composeWork(seed);
     music = composeMusic(work);
     const v = checkWork(work);

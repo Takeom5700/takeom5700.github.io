@@ -26,7 +26,7 @@
 // 帰ってきたと分かるから、終わったことが分かる。
 
 import { makeRng, between, pick } from './rng.js';
-import { PALETTES, hueGap, lumOf, hsOf, colorsOf } from './paint.js';
+import { PALETTES, makePalette, hueGap, lumOf, hsOf, colorsOf } from './paint.js';
 import { layerColor } from './layer.js';
 import { NAMES, MOTIFS } from './motif.js';
 import { makeForm, RANGE, FORM_KEYS, OPENING_FORMS, MOVING_FORMS, STILL_FORMS } from './form.js';
@@ -145,9 +145,10 @@ const cnt = (rng, m, u = 0.42) =>
 // 主題は**図を1つ持つ**（`ms` は組で持てる作りにしてあるが、1本では1つ）。
 // 主題が図を2つ以上持つと、帰ってきたときに同じ主題だと分からない。
 // 図を増やすより、同じ図に**別のことを起こす**方が展開になる（法「事」）。
-function makeTheme(rng, ms, pal, kind) {
+function makeTheme(rng, ms, pal, kind, pals) {
   return {
     ms: ms.slice(), k: 0, m: ms[0], pal, inv: false, shade: 0,
+    pals,
     // **その主題のための形をここで組む。** 骨格は ms[0]、寸法はこの作品だけのもの
     form: makeForm(rng, ms[0]),
     hand: kind === 1 ? 0 : pick(rng, [0, 0, 1, 2, 3]),
@@ -195,26 +196,37 @@ function jumpOf(a, b) {
 }
 // 色が近いときだけ差し替える（主題の中では色を変えないので、
 // 跳ばすのは「別の群へ移るとき」だけにする）
-function pushApart(prev, s, pals) {
+function pushApart(prev, s) {
+  // 組の数は景が持っている配色表から取る（作品ごとに違う）
+  const n = (s.pals && s.pals.length) ? s.pals.length : PALETTES.length;
   for (let g = 0; g < 24 && jumpOf(prev, s) < LAWS.minJump; g++) {
     if (g % 3 === 2) s.inv = !s.inv;
-    else s.pal = (s.pal + 5) % PALETTES.length;
+    else s.pal = (s.pal + 5) % n;
   }
   return s;
 }
 
 // ---- 一本を組む -------------------------------------------------------
-export function composeWork(seed) {
+// `brief`（指示書）は**記事の内容から決めた要素**（`brief.js`）。
+// 渡されなければ全部を種から振る。**記事から着想を得るのはこの道。**
+export function composeWork(seed, brief) {
   const rng = makeRng((seed | 0) * 2654435761 + 12345);
-  // この作品の尺。**種から決まる**（別の乱数の筋から引くので、
-  // 譜の中身の並びは尺に影響されない）
-  const WANT = totalOf(seed);
+  const BR = brief || null;
+  // この作品の尺。指示書があればそちら（記事の長さから決まる）
+  const WANT = (BR && BR.total) ? Math.round(BR.total) : totalOf(seed);
+
+  // **その作品のための配色をここで作る。** 棚から選ばない（`makePalette`）。
+  // 8組作って、そこから主調・属調・遠い調を割る。
+  // **`pals` を景に載せること。** 載せないと映写が既定の12組を引いて、
+  // 譜の思っている色と画面の色が食い違う（shade のときと同じ轍）。
+  const PALS = Array.from({ length: 8 }, () => makePalette(rng));
+  const NPAL = PALS.length;
 
   // 調（色）を決める。home が主調、dom が属調、far が遠い調
-  const home = Math.floor(rng() * PALETTES.length);
-  const dom = (home + 4 + Math.floor(rng() * 4)) % PALETTES.length;
-  const far = [(home + 7) % PALETTES.length, (home + 9) % PALETTES.length,
-    (home + 2) % PALETTES.length, (dom + 6) % PALETTES.length];
+  const home = Math.floor(rng() * NPAL);
+  const dom = (home + 4 + Math.floor(rng() * 4)) % NPAL;
+  const far = [(home + 7) % NPAL, (home + 9) % NPAL,
+    (home + 2) % NPAL, (dom + 6) % NPAL];
 
   // **図は選ぶ。1本に5つだけ。**
   //   I 序の形／A 第一主題／B 第二主題／C 小結／E 挿話（展開部だけ）
@@ -238,18 +250,19 @@ export function composeWork(seed) {
     }
     return out;
   };
-  // 序（＝終）の形。**役は固定・形は種で選ぶ**（上の OPENINGS を見よ）
-  const msI = take([pick(rng, OPENINGS)], 1);
-  const msA = take(MOVING, 1);
-  const msB = take(STILL, 1);
-  const msC = take(left.slice(), 1);
-  const msE = take(left.slice(), 1);
+  // 序（＝終）の形。**役は固定・形は可変。**
+  // 指示書があれば記事から決まった骨格を使う（順番も指示書の重みの順）。
+  const msI = take([BR ? BR.opening : pick(rng, OPENINGS)], 1);
+  const msA = take(BR ? BR.forms : MOVING, 1);
+  const msB = take(BR ? BR.forms : STILL, 1);
+  const msC = take(BR ? BR.forms : left.slice(), 1);
+  const msE = take(BR ? BR.forms : left.slice(), 1);
 
-  const A = makeTheme(rng, msA, home, 1);     // 第一主題（動・主調）
-  const B = makeTheme(rng, msB, dom, 2);      // 第二主題（静・属調）
-  const I = makeTheme(rng, msI, home, 2);     // 序の形（問い）
-  const C = makeTheme(rng, msC, dom, 1);      // 小結主題
-  const E = makeTheme(rng, msE, far[0], 1);   // 挿話（展開部だけ）
+  const A = makeTheme(rng, msA, home, 1, PALS);     // 第一主題（動・主調）
+  const B = makeTheme(rng, msB, dom, 2, PALS);      // 第二主題（静・属調）
+  const I = makeTheme(rng, msI, home, 2, PALS);     // 序の形（問い）
+  const C = makeTheme(rng, msC, dom, 1, PALS);      // 小結主題
+  const E = makeTheme(rng, msE, far[0], 1, PALS);   // 挿話（展開部だけ）
 
   const shots = [];
   let t = 0;
@@ -651,7 +664,8 @@ export function composeWork(seed) {
   // 6分が「6分の1本」としてつながる。依頼者の求め:
   //   「シーンとかカットをまたいでるようなレイヤーがあってもいいんじゃないか」
   {
-    const lay = 1 + Math.floor(rng() * 4);
+    // 層。指示書があれば記事から決まったもの（水位・日・塵・歩）
+    const lay = (BR && BR.layer) ? BR.layer : 1 + Math.floor(rng() * 4);
     const lyA = rng(), lyB = rng(), lyDir = rng() < 0.5 ? -1 : 1;
     for (const s of shots) {
       s.lay = lay; s.lyT0 = 0; s.lyD = t;
@@ -706,6 +720,9 @@ export function composeWork(seed) {
     total: +t.toFixed(3), movements,
     shots: shots.slice(),
     themes: { A: A.m, B: B.m, C: C.m, I: I.m, home, dom },
+    pals: PALS,
+    brief: BR,
+    want: WANT,
   };
 }
 
@@ -752,9 +769,10 @@ export function checkWork(work) {
   const durs = S.map((s) => s.dur);
   // 型
   if (work.movements.length !== LAWS.sections) bad.push(`型: 部が ${work.movements.length} しかない`);
-  // **その作品が名乗った尺と、実際の合計が一致しているか**を見る
-  // （固定の6分ではなくなったので、比べる相手は totalOf(seed)）
-  const want = totalOf(work.seed);
+  // **その作品が名乗った尺と、実際の合計が一致しているか**を見る。
+  // 名乗りは work.want（指示書があれば記事の長さから決まっている）。
+  // ここで totalOf(seed) を引くと、指示書つきの作品を全部落とす（実際に落ちた）。
+  const want = work.want !== undefined ? work.want : totalOf(work.seed);
   if (Math.abs(work.total - want) > 0.15) {
     bad.push(`型: 全体が ${work.total.toFixed(2)}秒（名乗りは ${want}秒）`);
   }

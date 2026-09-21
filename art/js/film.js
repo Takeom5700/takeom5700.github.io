@@ -101,7 +101,7 @@ export function createFilm(canvas) {
     // 画面は1画素も変わっていなかった。法「同じ主題が続く断では
     // shade か inv を必ず替える」が画面の側で死んでいたので、
     // 版を重ねても弱い断が消えなかった（実測 8.7% → 5.3% → 5.4%）。
-    let col = colorsOf({ pal, inv: sh.inv, shade: sh.shade });
+    let col = colorsOf({ pal, inv: sh.inv, shade: sh.shade, pals: sh.pals });
     if (sh.flash && f < sh.flash) col = { name: col.name, g: col.i, i: col.g, a: col.l, l: col.a, raw: col.raw };
 
     const sx = st.w / S.w, sy = st.h / S.h;

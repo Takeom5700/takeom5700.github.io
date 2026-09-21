@@ -42,6 +42,14 @@
   new-work スキルの手順どおりに。図を足すなら add-motif スキルと motif-smith。
   尺は必ず 360.000 秒。
 
+【4.5】過去の使い回しを潰す
+  node art/tools/fresh.mjs --seed <種>
+  → 落ちたら**種を変えて逃げない。素材を新しく作る**
+    形   … art/js/form.js に骨格を足す（add-motif / motif-smith）
+    楽器 … art/js/sound.js の INSTRUMENTS に処方を足す
+    音階・拍子 … art/js/music.js の MODES / METERS に足す
+  足したら node art/tools/forms.mjs で焼いて、**自分の目で物に見えるか確かめる**。
+
 【5】検査（両方通すまで焼かない）
   node art/tools/check-axis.mjs 400        → 違反 0 でなければ直す
   node art/tools/variety.mjs 40            → 同じ組み合わせ 0 件でなければ直す
@@ -73,6 +81,9 @@
   ・断ったものは理由を1行で書付に残す。迷ったら積まない側に倒す。
   ・書付が60行または6000字を超えたら圧縮する（似た声を1つの原則にまとめ、
     原文は art/style/archive-YYYY-MM.md へ移す。声は消さない）。
+
+【8.5】台帳に書く（出したあとに）
+  node art/tools/fresh.mjs --seed <種> --record --article "<記事のURL>"
 
 【9】片付けと報告
   art/ を直したら git add -A && git commit && git push（公開ページも新しくなる）。
