@@ -1,50 +1,17 @@
 {
-  "fetched_at": "2026-09-21",
+  "fetched_at": "2026-09-22",
   "notes": [],
   "items": [
     {
       "source": "Loveちゃん",
-      "scope": "12星座",
+      "scope": "全体",
       "target": "全体",
       "kind": "caution",
-      "value": "鍵のかけ忘れや戸締まりなど家のセキュリティ・防犯意識を高めましょう。また安易に情報を流さないことや、台風・土砂災害など危険な場所へ近づかないよう注意が必要です。",
-      "period_start": "2026-09-19",
-      "period_end": "2026-09-21",
-      "url": "https://www.youtube.com/watch?v=Q3pqIGz86gg",
-      "label": "Loveちゃん 全体（12星座・9/19-21）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "food",
-      "value": "ジェノベーゼのパスタ",
-      "period_start": "2026-09-19",
-      "period_end": "2026-09-21",
-      "url": "https://www.youtube.com/watch?v=Q3pqIGz86gg",
-      "label": "Loveちゃん 牡牛座（12星座・9/19-21）ラッキーフード🍜"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "caution",
-      "value": "ぎっくり腰に注意が必要です。背中や腰の疲れをとり、姿勢を正して過ごすことを意識しましょう。",
-      "period_start": "2026-09-19",
-      "period_end": "2026-09-21",
-      "url": "https://www.youtube.com/watch?v=Q3pqIGz86gg",
-      "label": "Loveちゃん 牡牛座（12星座・9/19-21）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "自由を満喫できたり冒険心が高まる時。仕事運も絶好調で、最高の仕事ができたり大きな成果を上げられます。",
-      "period_start": "2026-09-19",
-      "period_end": "2026-09-21",
-      "url": "https://www.youtube.com/watch?v=Q3pqIGz86gg",
-      "label": "Loveちゃん 牡牛座（12星座・9/19-21）運気テーマ🌅"
+      "value": "地震や噴火、竜巻、大雨、雷、雹、台風、土砂崩れ、土砂災害、地滑り、道路の陥没、津波など、何らかの自然災害に注意が必要な期間です。",
+      "period_start": "2026-09-21",
+      "period_end": "2026-09-23",
+      "url": "https://www.youtube.com/watch?v=qbYMilKHAEM",
+      "label": "Loveちゃん 全体（全体・9/21-23）注意⚠"
     },
     {
       "source": "Loveちゃん",
@@ -116,12 +83,34 @@
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
+      "kind": "color",
+      "value": "エメラルド",
+      "period_start": "2026-09-21",
+      "period_end": "2026-09-27",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-21/taurus/",
+      "label": "しいたけ 牡牛座（週間・9/21-27）ラッキーカラー🎨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "caution",
+      "value": "落ち着きやリラックスを求めるため、テキパキ動けない自分を許しましょう。ダラダラしたり寝すぎても、緊張感から解放されている時と捉えて。真面目な話し合いを要求される際は、頭を使うため、話し合いの前後には睡眠を意識した立ち回りを。",
+      "period_start": "2026-09-21",
+      "period_end": "2026-09-27",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-21/taurus/",
+      "label": "しいたけ 牡牛座（週間・9/21-27）注意⚠"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
       "kind": "theme",
-      "value": "今週は問題解決を急がず、「付き合いますよー」という緩い感覚で臨み、話を共有する姿勢が重要。モチベーションが下がりやすい時は、変な顔で「楽しくなってきました」と唱え、ズレを楽しむと良い。恋愛・人間関係も無理に解決せず、話に付き合う感覚で。",
-      "period_start": "2026-09-14",
-      "period_end": "2026-09-20",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-14/taurus/",
-      "label": "しいたけ 牡牛座（週間・9/14-20）運気テーマ🌅"
+      "value": "今週の牡牛座は「約束は守るぜ」という執念に近い力が出ています。他の人がスルーするような場面でも、自分で決めたことのために時間をかけ、完結させるでしょう。その勢いのまま、色々なことをやっていきましょう。",
+      "period_start": "2026-09-21",
+      "period_end": "2026-09-27",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-21/taurus/",
+      "label": "しいたけ 牡牛座（週間・9/21-27）運気テーマ🌅"
     }
   ]
 }
