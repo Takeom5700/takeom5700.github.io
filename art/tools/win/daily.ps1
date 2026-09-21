@@ -31,7 +31,26 @@ function Run([string]$exe, [string[]]$a) {
     try { Add-Content -LiteralPath $log -Value $line -Encoding UTF8 } catch {}
     Write-Host $line
   }
-  return $LASTEXITCODE
+}
+
+# **その日ぶんができたかを、終了コードではなく物で見る。**
+# claude は .ps1 や .cmd の包みを通って呼ばれるので、終了コードが素直に
+# 返ってこないことがある（未ログインで失敗したのに退避路へ落ちなかった）。
+# フォルダと .state.json を見れば、できたかどうかは確実に分かる。
+function MadeToday([string]$dir) {
+  $today = Get-Date -Format 'yyyy-MM-dd'
+  $stamp = $today.Replace('-', '')
+  $hit = @(Get-ChildItem $dir -Directory -ErrorAction SilentlyContinue |
+           Where-Object { $_.Name.StartsWith($today) -or $_.Name.StartsWith($stamp) })
+  if ($hit.Count) { return $true }
+  $st = Join-Path $dir '.state.json'
+  if (Test-Path $st) {
+    try {
+      $j = Get-Content -LiteralPath $st -Raw -Encoding UTF8 | ConvertFrom-Json
+      if (@($j.works | Where-Object { $_.date -eq $today }).Count) { return $true }
+    } catch {}
+  }
+  return $false
 }
 
 Set-Location $repo
@@ -43,8 +62,14 @@ Say ('置場      : ' + $out)
 # 道具とスキルを最新にする（失敗しても止めない。ネットが無い日もある）
 Run 'git' @('pull', '--ff-only') | Out-Null
 
-# claude があれば記事を読ませて作る（本命）。無ければ／失敗したら機械だけで作る。
-$made = $false
+# その日ぶんが既にあるなら何もしない（遅れて起きた日に2本焼かないため）
+if (MadeToday $out) {
+  Say '今日のぶんはもう作ってあります。何もしません。'
+  Say ('----- 終わり ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' -----')
+  exit 0
+}
+
+# claude があれば記事を読ませて作る（本命）。無ければ／出来ていなければ機械だけで作る。
 $claude = Get-Command claude -ErrorAction SilentlyContinue
 if ($claude) {
   Say '[claude] 記事を読んで作ります'
@@ -53,14 +78,19 @@ if ($claude) {
   $prompt = 'Follow art/DAILY-PROMPT.md and complete today''s work. ' +
             'Output folder: "' + $out + '". ' +
             'If today''s work already exists in that folder, do nothing.'
-  $code = Run $claude.Source @('-p', $prompt,
+  Run $claude.Source @('-p', $prompt,
     '--allowedTools', 'Bash(node *)', 'Bash(git *)', 'Read', 'Edit', 'Write', 'WebFetch')
-  if ($code -eq 0) { $made = $true } else { Say '[claude] 失敗したので、機械だけで作り直します' }
 } else {
-  Say '[claude] claude が見つかりません。機械だけで作ります'
+  Say '[claude] claude が見つかりません'
 }
 
-if (-not $made) {
+# **できたかどうかは物で見る。** claude が黙って失敗しても、ここで拾う。
+if (MadeToday $out) {
+  Say '[claude] できました'
+} else {
+  if ($claude) { Say '[claude] 今日のぶんができていません。機械だけで作り直します' }
+  Say '  （claude が「Not logged in」と言っていたら、一度 claude を手で立ち上げて'
+  Say '   /login を通してください。それまでは記事を読まずに作ります）'
   $a = @('art\tools\daily.mjs', '--out', $out, '--skip-if-done')
   if ($env:YT_REFRESH_TOKEN) {
     Say '[node] 作って YouTube まで上げます'
@@ -68,8 +98,9 @@ if (-not $made) {
   } else {
     Say '[node] YouTube の鍵が無いので、作るところまで（上げません）'
   }
-  $code = Run 'node' $a
-  if ($code -ne 0) { Say ('[node] ' + $code + ' で終わりました。上のログを見てください') }
+  Run 'node' $a
+  if (MadeToday $out) { Say '[node] できました' }
+  else { Say '[node] できませんでした。上のログを見てください' }
 }
 
 Say ('----- 終わり ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' -----')
