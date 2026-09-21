@@ -161,8 +161,13 @@ if (!has('no-feed')) {
   if (!article && items.length) log('新しい無料記事が見つかりませんでした');
 }
 
-// 種と題名。記事があれば記事から、無ければ引数か日付から決める
-const key = article ? article.link : (flag('key', null) || new Date().toISOString().slice(0, 10));
+// 種と題名。記事があれば記事から、無ければ引数か日付から決める。
+// **URL だけでなく題と本文も混ぜる。** URL だけだと、記事の中身が変わっても
+// （書き直し・別の記事が同じ体裁）同じ種になり得る。題と本文を混ぜておけば、
+// 違う記事からは必ず違う世界が出る。
+const key = article
+  ? (article.link + '|' + article.title + '|' + article.body.slice(0, 2000))
+  : (flag('key', null) || new Date().toISOString().slice(0, 10));
 let seed = parseInt(flag('seed', ''), 10);
 if (!Number.isFinite(seed)) {
   seed = hash(key) % 1000;

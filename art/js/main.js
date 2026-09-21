@@ -144,7 +144,7 @@ function start() {
     const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!OC) return null;
     const oc = new OC(2, Math.ceil(sr * dur), sr);
-    const sd = createSound(oc);
+    const sd = createSound(oc, music.tone);   // 音色も種から（頁と書き出しで同じ音）
     if (!sd) return null;
     for (const n of music.notes) {
       if (n.t + n.d < from || n.t > to) continue;
@@ -293,6 +293,11 @@ function start() {
         return {
           tempo: music.tempo, tonic: music.tonic, total: work.total,
           notes: music.notes.length,
+          // **1本ぶんの素性。** 種を替えるとここが全部変わる
+          mode: music.mode, meter: music.meter, prog: music.prog,
+          band: music.band, tone: music.tone && music.tone.name,
+          devColor: music.devColor, bell: music.bell,
+          arp: music.arp, drum: music.drum,
           sections: work.movements.map((m) => {
             const inSec = music.notes.filter((n) => n.t >= m.start - 0.5 && n.t < m.start + m.dur);
             const set = [...new Set(inSec.map((n) => n.voice))].sort();
@@ -402,7 +407,7 @@ function start() {
     veil.style.opacity = '0';
     document.body.classList.add('running');
     try {
-      snd = createSound();
+      snd = createSound(null, music.tone);
       if (snd) { snd.resume(); sndT0 = snd.ctx.currentTime - t; sndIdx = 0; }
     } catch (e) { snd = null; }
     last = performance.now();

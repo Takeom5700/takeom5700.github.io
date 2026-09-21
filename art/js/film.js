@@ -95,7 +95,12 @@ export function createFilm(canvas) {
     let pal = sh.pal;
     if (sh.turn >= 1 && p > sh.tp1) pal = sh.tc1;
     if (sh.turn >= 2 && p > sh.tp2) pal = sh.tc2;
-    let col = colorsOf({ pal, inv: sh.inv });
+    // **shade（面の割り当て）を必ず渡すこと。** 渡し忘れていて、
+    // 譜が「shade を替えたから色が変わった」と思っているのに
+    // 画面は1画素も変わっていなかった。法「同じ主題が続く断では
+    // shade か inv を必ず替える」が画面の側で死んでいたので、
+    // 版を重ねても弱い断が消えなかった（実測 8.7% → 5.3% → 5.4%）。
+    let col = colorsOf({ pal, inv: sh.inv, shade: sh.shade });
     if (sh.flash && f < sh.flash) col = { name: col.name, g: col.i, i: col.g, a: col.l, l: col.a, raw: col.raw };
 
     const sx = st.w / S.w, sy = st.h / S.h;

@@ -8,10 +8,22 @@
 // **だから音は美しい方へ振る。** オルゴール・竪琴・弓・弦、そして残響。
 // 怖い絵に綺麗な音が乗っている状態そのものが、いちばん強い対比になる。
 
-export function createSound(givenCtx) {
+// **音色は1本ごとに振る**（`tone` は music.js が種から出す）。
+// 渡されなければ既定値で鳴る（古い呼び出しも壊れない）。
+// 振れる幅は「同じ楽器の別の個体」くらいに収める。**音の哲学は動かさない**
+// ——美しい方へ振る、雑音で驚かさない、という線は超えない。
+const TONE0 = {
+  melWave: 'sine', melBright: 1, melDecay: 1,
+  harpWave: 'triangle', harpBright: 1,
+  bowAtk: 1, bowBright: 1, spread: 1,
+  bellBright: 1, drumTight: 1, drumNoise: 1, choirBright: 1, pizzBright: 1,
+};
+
+export function createSound(givenCtx, tone) {
   const AC = givenCtx ? null : (window.AudioContext || window.webkitAudioContext);
   if (!givenCtx && !AC) return null;
   const ctx = givenCtx || new AC();
+  const T = Object.assign({}, TONE0, tone || {});
 
   const master = ctx.createGain();
   master.gain.value = 1.15;   // 合成音は素で小さい。実測 RMS 0.018 だったので上げた
@@ -129,7 +141,7 @@ export function createSound(givenCtx) {
     }
     for (const [fr, q, amp] of [[700, 9, 1], [1150, 11, 0.55], [2600, 13, 0.2]]) {
       const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass'; bp.frequency.value = fr; bp.Q.value = q;
+      bp.type = 'bandpass'; bp.frequency.value = fr * T.choirBright; bp.Q.value = q;
       const ag = ctx.createGain(); ag.gain.value = amp * 0.5;
       for (const o of src) o.connect(bp);
       bp.connect(ag); ag.connect(g);
@@ -145,8 +157,8 @@ export function createSound(givenCtx) {
   function drum(at, f, peak) {
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.type = 'sine';
-    o.frequency.setValueAtTime(f * 2.2, at);
-    o.frequency.exponentialRampToValueAtTime(Math.max(28, f * 0.8), at + 0.12);
+    o.frequency.setValueAtTime(f * 2.2 * T.drumTight, at);
+    o.frequency.exponentialRampToValueAtTime(Math.max(28, f * 0.8), at + 0.12 / T.drumTight);
     g.gain.setValueAtTime(0.0001, at);
     g.gain.linearRampToValueAtTime(peak, at + 0.005);
     g.gain.exponentialRampToValueAtTime(0.0001, at + 0.42);
@@ -155,7 +167,7 @@ export function createSound(givenCtx) {
     const s2 = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), ng = ctx.createGain();
     s2.buffer = NB; s2.loop = true;
     bp.type = 'bandpass'; bp.frequency.value = 220; bp.Q.value = 0.9;
-    ng.gain.setValueAtTime(peak * 0.5, at);
+    ng.gain.setValueAtTime(peak * 0.5 * T.drumNoise, at);
     ng.gain.exponentialRampToValueAtTime(0.0001, at + 0.1);
     s2.connect(bp); bp.connect(ng); ng.connect(master);
     s2.start(at); s2.stop(at + 0.2);
@@ -165,34 +177,38 @@ export function createSound(givenCtx) {
   function play(n, at) {
     if (muted) return;
     const f = hz(n.midi), v = n.v;
+    const sp = (a) => a.map((x) => x * T.spread);
     if (n.voice === 0) {
       // 旋律：オルゴール
-      pluck(at, f, Math.max(1.1, Math.min(2.4, n.d * 1.7)), v * 0.42,
-        [[1, 1, 1], [2.01, 0.28, 0.55], [3.98, 0.12, 0.3], [5.4, 0.05, 0.2]], 'sine', 7000);
+      pluck(at, f, Math.max(1.1, Math.min(2.4, n.d * 1.7)) * T.melDecay, v * 0.42,
+        [[1, 1, 1], [2.01, 0.28, 0.55], [3.98, 0.12, 0.3], [5.4, 0.05, 0.2]],
+        T.melWave, 7000 * T.melBright);
     } else if (n.voice === 1) {
       // 分散和音：竪琴
       pluck(at, f, Math.max(0.5, Math.min(1.4, n.d)), v * 0.3,
-        [[1, 1, 1], [2, 0.22, 0.5], [3, 0.08, 0.3]], 'triangle', 3200);
+        [[1, 1, 1], [2, 0.22, 0.5], [3, 0.08, 0.3]], T.harpWave, 3200 * T.harpBright);
     } else if (n.voice === 2) {
       // 低音：弓
-      bowed(at, f, n.d, v * 0.3, 0.09, 420, [-6, 5]);
+      bowed(at, f, n.d, v * 0.3, 0.09 * T.bowAtk, 420 * T.bowBright, sp([-6, 5]));
     } else if (n.voice === 3) {
       // 持続：弦
-      bowed(at, f, n.d, v * 0.16, 0.85, 1250, [-8, 0, 7]);
+      bowed(at, f, n.d, v * 0.16, 0.85 * T.bowAtk, 1250 * T.bowBright, sp([-8, 0, 7]));
     } else if (n.voice === 4) {
-      // 鐘（部の変わり目だけ）
+      // 鐘（部の変わり目だけ。無い作品もある）
       pluck(at, f, Math.max(2.5, n.d), v * 0.3,
-        [[1, 1, 1], [2.76, 0.4, 0.5], [5.4, 0.16, 0.25], [8.9, 0.06, 0.15]], 'sine', 9000);
+        [[1, 1, 1], [2.76, 0.4, 0.5], [5.4, 0.16, 0.25], [8.9, 0.06, 0.15]],
+        'sine', 9000 * T.bellBright);
     } else if (n.voice === 5) {
       drum(at, f, v * 0.55);                          // 太鼓
     } else if (n.voice === 6) {
       choir(at, f, n.d, v * 0.16);                    // 聲
     } else if (n.voice === 7) {
       // 弾（ピツィカート）
-      pluck(at, f, 0.3, v * 0.34, [[1, 1, 1], [2, 0.3, 0.4], [3.1, 0.12, 0.25]], 'triangle', 2400);
+      pluck(at, f, 0.3, v * 0.34, [[1, 1, 1], [2, 0.3, 0.4], [3.1, 0.12, 0.25]],
+        'triangle', 2400 * T.pizzBright);
     } else {
       // 弓の旋律（弦が主旋律を取る）
-      bowed(at, f, n.d, v * 0.2, 0.12, 2400, [-7, 0, 6]);
+      bowed(at, f, n.d, v * 0.2, 0.12 * T.bowAtk, 2400 * T.bowBright, sp([-7, 0, 6]));
     }
   }
 
