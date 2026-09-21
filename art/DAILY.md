@@ -138,12 +138,31 @@ art\tools\win\install-task.bat   ← これをダブルクリックするだけ
 4. 全部の出力を `Claude Art Project\daily.log` に足していく
 
 やめるときは `art\tools\win\uninstall-task.bat`。
-時刻を変えるときは `install-task.bat` の `set "TIME=06:00"` を書き換えて、もう一度叩く。
+時刻を変えるときは `install-task.ps1` の `$At = '06:00'` を書き換えて、もう一度叩く。
+**何度叩いても上書きなので、予定は増えない**（同じ名前の予定は1つしか持てない）。
 
-```bat
-schtasks /run /tn "Primaries daily"      :: いますぐ1回試す
-schtasks /query /tn "Primaries daily"    :: 次の実行予定を見る
+### 入ったかどうかは `check-task.bat` で見る
+
 ```
+art\tools\win\check-task.bat   ← ダブルクリック
+```
+
+予定が入っているか・次に動く日時・前回の結果・`node`／`claude`／`chrome` があるか・
+鍵が入っているか・これまでの作品・`daily.log` の終わり20行が、**1枚で出る。**
+詰まったときは、まずこれを動かして出てきた文字をそのまま見せればよい。
+
+PowerShell から直に見たいなら:
+
+```powershell
+Get-ScheduledTask -TaskName "Primaries daily" | Select TaskName, State
+Get-ScheduledTaskInfo -TaskName "Primaries daily" | Select NextRunTime, LastRunTime, LastTaskResult
+Start-ScheduledTask -TaskName "Primaries daily"     # いますぐ1回試す
+```
+
+**`schtasks /query` の「次回実行時刻」を当てにしないこと。**
+あの文言は Windows の言語で変わるので、`findstr` で拾うと日本語版では何も出ず、
+「登録できていない」ように見える（実際にそう見えた）。登録は
+`Register-ScheduledTask` でやり、確認は物を引き直して数で出している。
 
 - 映像は**実時間で6分**かかる。その間パソコンは他のことをしてよいが、
   重い処理を並べるとコマが落ちる

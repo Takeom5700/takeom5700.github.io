@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-set "TASK=Primaries daily"
-schtasks /delete /tn "%TASK%" /f
-echo 予定を消しました（道具とこれまでの作品はそのままです）。
+rem 予定を消す（道具とこれまでの作品はそのまま残る）。
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0uninstall-task.ps1"
+echo.
 pause
