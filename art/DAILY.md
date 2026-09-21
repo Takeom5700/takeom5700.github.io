@@ -184,29 +184,82 @@ schtasks /query /tn "Primaries daily"    :: 次の実行予定を見る
 1本上げるのに **1600 quota**、既定の上限が1日 **10,000**。
 つまり **1日6本まで。** 1日1本なら余裕がある。
 
-### 用意する手順
+### 投稿先はどうやって決まるか（**ここを間違えると personal に上がる**）
+
+**チャンネル名を設定に書くのではない。鍵（refresh token）が持ち主を決める。**
+どのチャンネルに上がるかは、**許可を出したときに選んだチャンネル**で決まる。
+
+Google アカウントに複数チャンネルがあると、許可の画面で
+「チャンネルを選択」が出る。**そこで Primaries を選ぶこと。**
+個人チャンネルを選ぶと、作品はそちらに上がる。
+
+取り違えを防ぐ仕掛けを入れてある。
+
+```bat
+setx YT_CHANNEL "@primaries"
+```
+
+これを入れておくと、**上げる前に鍵の持ち主を確かめて、違っていたら上げずに止まる。**
+いまの鍵がどこを指しているかは、いつでもこれで見られる。
+
+```bat
+node art\tools\upload.mjs --whoami
+```
+
+### 用意する手順（チャンネルを作ってから）
+
+**0. まず YouTube でチャンネルを作る。** 名前は `Primaries`、
+ハンドルは `@primaries`（取れなければ `@primaries.film` など）。
+**作ってから下に進む**（チャンネルが無いと、選ぶ画面にも出てこない）。
 
 1. <https://console.cloud.google.com/> でプロジェクトを作る
-2. 「API とサービス」→ YouTube Data API v3 を**有効化**
-3. 「OAuth 同意画面」を作る（外部／テストユーザーに自分を入れる）
+2. 「API とサービス」→ **YouTube Data API v3 を有効化**
+3. 「OAuth 同意画面」を作る（外部／テストユーザーに自分を入れる。
+   **あとで「本番」に上げる**——テストのままだと refresh token が7日で切れる）
 4. 「認証情報」→ OAuth クライアント ID → **デスクトップアプリ**
-5. 一度だけブラウザで許可して refresh token を取る
-   （`https://developers.google.com/oauthplayground/` で
-   スコープ `https://www.googleapis.com/auth/youtube.upload` を選ぶのが早い。
-   右上の歯車で自分のクライアントID／シークレットを使う設定にする）
-6. 環境変数に入れる
+5. 「APIキー」も1つ作る（コメントを読むのに使う。上げる方とは別）
+6. 一度だけブラウザで許可して refresh token を取る。
+   `https://developers.google.com/oauthplayground/` が早い
+   （右上の歯車で自分のクライアントID／シークレットを使う設定にする）。
+   **スコープは2つ選ぶ:**
+
+   ```
+   https://www.googleapis.com/auth/youtube.upload      ← 上げる
+   https://www.googleapis.com/auth/youtube.readonly    ← 投稿先を確かめる
+   ```
+
+   許可の途中で**チャンネルを選ぶ画面が出たら Primaries を選ぶ。**
+7. 環境変数に入れる
 
 ```bat
 setx YT_CLIENT_ID "xxxx.apps.googleusercontent.com"
 setx YT_CLIENT_SECRET "xxxx"
 setx YT_REFRESH_TOKEN "1//xxxx"
+setx YT_API_KEY "AIza..."
+setx YT_CHANNEL "@primaries"
 ```
 
-7. 試す
+（`setx` は**新しく開いたコマンドプロンプトから有効**。開いている窓では効かない）
+
+8. **投稿先を確かめる**
+
+```bat
+node art\tools\upload.mjs --whoami
+```
+
+`投稿先: Primaries @primaries UCxxxx` と出れば正しい。
+別の名前が出たら、許可を出し直してチャンネルを選び直す。
+
+9. 1本だけ試す
 
 ```bat
 node art\tools\upload.mjs "C:\...\Interval-318.webm" --title "Interval 318" --desc-file "C:\...\Interval-318.txt" --privacy private
 ```
+
+**チャンネルを作る前でも、作品づくりは今日から回せる。**
+`daily.bat` は上げるところだけ失敗して、フォルダには作品が溜まる
+（鍵が無ければ `upload.mjs` が「環境変数を入れてください」と言って終わる）。
+チャンネルと鍵が揃った日から、勝手に上がり始める。
 
 ---
 

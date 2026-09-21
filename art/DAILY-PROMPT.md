@@ -45,10 +45,12 @@
     --title <決めた題名> --seed <決めた種> --key <記事のURL> --no-feed
   フォルダに「作品.webm／音楽だけ.wav／テキスト（題名と説明文）」が出る。
 
-【7】上げる
+【7】上げる（チャンネルと鍵がまだ無ければ、ここは飛ばして【8】へ）
+  node art\tools\upload.mjs --whoami        ← まず投稿先を確かめる
   node art\tools\upload.mjs "<作品.webm>" --title "<題名 番号>" ^
     --desc-file "<テキスト.txt>" --privacy private
   API審査が通るまで private のまま。通ったら public に替える。
+  投稿先が Primaries でなければ**上げずに報告する**（鍵の持ち主が違う）。
 
 【8】コメントを汲む
   node art\tools\comments.mjs --channel @primaries ^
@@ -88,14 +90,17 @@ Claude Code に流して1本作る（詳しくは `art/DAILY.md`）。
 
 ## 初回だけ（配管の確認）
 
+**チャンネルを作る前でも 1 と 3 は動く。** 2 と 4 はチャンネルと鍵が揃ってから。
+
 ```
 Primaries の配管を確認してください。
 1. node art/tools/daily.mjs --out "C:\Users\User\Desktop\Claude Art Project" --dry-run
    （note が読めるか、記事が選べるか、題名と種が決まるかだけ見る）
-2. node art/tools/comments.mjs --channel @primaries --out "同じ場所"
-   （チャンネルが見つかるか。動画0本でも動く）
+2. node art/tools/upload.mjs --whoami
+   （鍵がどのチャンネルを指しているか。Primaries と出なければ許可を出し直す）
 3. 短い試し焼き: node art/tools/record.mjs test.webm --seed 4 --size 854x480
-4. 上げる道の確認（動画が1本あるとき）: upload.mjs を --privacy private で1回
+4. node art/tools/comments.mjs --out "同じ場所"
+   （チャンネルが見つかるか。動画0本でも動く）
 詰まったところを、原因と直しかたつきで報告してください。
 ```
 

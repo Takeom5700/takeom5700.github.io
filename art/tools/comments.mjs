@@ -20,7 +20,8 @@ const argv = process.argv.slice(2);
 const flag = (n, d) => { const i = argv.indexOf('--' + n); return i < 0 ? d : argv[i + 1]; };
 
 const KEY = process.env.YT_API_KEY;
-const CHANNEL = flag('channel', '@primaries');
+// 投稿先のチャンネル。`YT_CHANNEL` に入れておけば毎回書かなくてよい
+const CHANNEL = flag('channel', process.env.YT_CHANNEL || '@primaries');
 const OUT = flag('out', './out');
 const DAYS = parseInt(flag('days', '30'), 10);
 const MAXV = parseInt(flag('videos', '20'), 10);
@@ -71,7 +72,12 @@ const api = async (p, q) => {
 const ch = await api('channels', CHANNEL.startsWith('@')
   ? { part: 'contentDetails,snippet', forHandle: CHANNEL }
   : { part: 'contentDetails,snippet', id: CHANNEL });
-if (!ch.items || !ch.items.length) { console.error('チャンネルが見つかりません: ' + CHANNEL); process.exit(1); }
+if (!ch.items || !ch.items.length) {
+  console.error('チャンネルが見つかりません: ' + CHANNEL);
+  console.error('（まだ作っていないなら、作ってハンドルを取ってから。');
+  console.error('  ハンドルが違うなら --channel @ほんとうのハンドル か、環境変数 YT_CHANNEL で指す）');
+  process.exit(1);
+}
 const uploads = ch.items[0].contentDetails.relatedPlaylists.uploads;
 console.log(`${ch.items[0].snippet.title}（${CHANNEL}）`);
 

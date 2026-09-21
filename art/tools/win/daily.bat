@@ -42,7 +42,15 @@ goto machine
 
 :machine
 echo [node] 機械だけで作ります>> "%LOG%"
+rem YouTube の鍵がまだ無い日は、作るところまでやって上げない
+rem （チャンネルを作る前でも作品は毎日溜まる）
+if "%YT_REFRESH_TOKEN%"=="" goto nokey
 node art\tools\daily.mjs --out "%OUTDIR%" --skip-if-done --upload >> "%LOG%" 2>&1
+goto done
+
+:nokey
+echo [node] YouTube の鍵が無いので、作るところまで（上げません）>> "%LOG%"
+node art\tools\daily.mjs --out "%OUTDIR%" --skip-if-done >> "%LOG%" 2>&1
 goto done
 
 :norepo

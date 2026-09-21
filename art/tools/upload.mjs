@@ -20,13 +20,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const argv = process.argv.slice(2);
+const has = (n) => argv.includes('--' + n);
 const file = argv.find((a) => !a.startsWith('--'));
 const flag = (n, d) => { const i = argv.indexOf('--' + n); return i < 0 ? d : argv[i + 1]; };
-if (!file) {
+if (!file && !has('whoami')) {
   console.error('使い方: node art/tools/upload.mjs 作品.webm --title "Passage 004" [--desc-file 作品.txt] [--privacy private|unlisted|public]');
+  console.error('        node art/tools/upload.mjs --whoami   … いまの鍵がどのチャンネルを指しているか見る');
   process.exit(2);
 }
-const TITLE = flag('title', path.basename(file, path.extname(file)));
+const TITLE = flag('title', file ? path.basename(file, path.extname(file)) : '');
 const PRIVACY = flag('privacy', 'private');
 const CAT = flag('category', '1');            // 1 = Film & Animation
 
@@ -48,23 +50,77 @@ if (!desc && df && fs.existsSync(df)) {
 
 const TAGS = (flag('tags', 'generative art,algorithmic art,abstract animation,experimental animation,visual music,procedural art,creative coding,motion art')).split(',');
 
+// **投稿先はチャンネル名で決まらない。鍵（refresh token）が持ち主を決める。**
+// だから「どのチャンネルに上がるか」は、許可を出したときに選んだチャンネルで決まる。
+// Google アカウントに複数チャンネルがあるなら、許可の画面で
+// **Primaries を選ぶこと**（personal の方を選ぶと、そこに上がってしまう）。
+//
+// 取り違えを防ぐため、上げる前に「いまの鍵が誰か」を必ず確かめる。
+// `YT_CHANNEL`（@ハンドル か UC… のID）を入れておくと、
+// **違うチャンネルなら上げずに止まる。**
+const WANT = process.env.YT_CHANNEL || '';
+
 // ---- 合言葉を取り直す ----------------------------------------------------
 async function accessToken() {
-  const res = await fetch('https://oauth2.googleapis.com/token', {
+  let res;
+  try {
+    res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: ID, client_secret: SECRET,
-      refresh_token: REFRESH, grant_type: 'refresh_token',
-    }),
-  });
-  const j = await res.json();
-  if (!res.ok) throw new Error('合言葉を取れませんでした: ' + JSON.stringify(j));
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: ID, client_secret: SECRET,
+        refresh_token: REFRESH, grant_type: 'refresh_token',
+      }),
+    });
+  } catch (e) {
+    console.error('Google に繋がりませんでした: ' + e.message);
+    console.error('（このコンテナからは遮断されています。持ち主のパソコンで動かしてください）');
+    process.exit(2);
+  }
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    console.error('合言葉を取れませんでした: ' + (j.error_description || j.error || res.status));
+    console.error('YT_CLIENT_ID / YT_CLIENT_SECRET / YT_REFRESH_TOKEN を確かめてください。');
+    console.error('（同意画面が「テスト」のままだと refresh token は7日で切れます → 「本番」に上げる）');
+    process.exit(2);
+  }
   return j.access_token;
+}
+
+// いまの鍵が指しているチャンネルを見る。
+// `youtube.readonly` を許可していないと引けないので、引けなければ警告だけにする
+// （上げる許可（youtube.upload）だけでも投稿はできる）。
+async function whoami(token) {
+  const res = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true',
+    { headers: { authorization: 'Bearer ' + token } });
+  const j = await res.json();
+  if (!res.ok || !j.items || !j.items.length) return null;
+  const c = j.items[0];
+  return { id: c.id, title: c.snippet.title, handle: c.snippet.customUrl || '' };
 }
 
 // ---- 上げる（resumable。大きい本体は一度の PUT で流す） -------------------
 const token = await accessToken();
+
+const me = await whoami(token);   // 先に「誰の鍵か」を確かめる
+if (me) {
+  console.log(`投稿先: ${me.title}  ${me.handle}  ${me.id}`);
+  if (WANT) {
+    const want = WANT.toLowerCase().replace(/^@/, '');
+    const ok = me.id.toLowerCase() === want
+      || me.handle.toLowerCase().replace(/^@/, '') === want
+      || me.title.toLowerCase() === want;
+    if (!ok) {
+      console.error(`止めました。YT_CHANNEL は "${WANT}" ですが、いまの鍵は上のチャンネルを指しています。`);
+      console.error('許可を出し直して、そのとき Primaries のチャンネルを選んでください（art/DAILY.md）。');
+      process.exit(1);
+    }
+  }
+} else {
+  console.log('投稿先: 確かめられません（youtube.readonly を許可していない鍵です）。');
+  console.log('  → 取り違えが怖いので、最初の1本は上げたあとに YouTube Studio で確かめてください。');
+}
+if (has('whoami')) process.exit(0);
 const size = fs.statSync(file).size;
 const meta = {
   snippet: { title: TITLE, description: desc, tags: TAGS, categoryId: CAT },
