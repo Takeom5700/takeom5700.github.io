@@ -113,7 +113,17 @@ function saveState(dir, st) {
 }
 
 // ---- 本番 ---------------------------------------------------------------
-fs.mkdirSync(OUT, { recursive: true });
+// PowerShell は `%USERPROFILE%` を展開しない（cmd の書き方）。
+// そのまま渡されると `%USERPROFILE%` という名前のフォルダが本当に出来てしまうので、
+// 作る前に気づかせる。**PowerShell では `$env:USERPROFILE` か、--out を省く。**
+if (/%[A-Za-z_][A-Za-z0-9_]*%/.test(OUT)) {
+  console.error('置場に展開されていない変数が入っています: ' + OUT);
+  console.error('PowerShell なら --out "$env:USERPROFILE\\Desktop\\Claude Art Project"、');
+  console.error('または --out を省いてください（既定でデスクトップの Claude Art Project になります）。');
+  process.exit(2);
+}
+// --dry-run では何も作らない（下見のつもりでフォルダが増えないように）
+if (!DRY) fs.mkdirSync(OUT, { recursive: true });
 const state = loadState(OUT);
 const usedLinks = new Set(state.works.map((w) => w.link));
 const usedSeeds = new Set(state.works.map((w) => w.seed));

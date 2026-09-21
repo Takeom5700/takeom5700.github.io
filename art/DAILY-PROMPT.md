@@ -92,6 +92,10 @@ Claude Code に流して1本作る（詳しくは `art/DAILY.md`）。
 
 **チャンネルを作る前でも 1 と 3 は動く。** 2 と 4 はチャンネルと鍵が揃ってから。
 
+置場は**書かずに省くのがいちばん安全**（既定でデスクトップの `Claude Art Project` になる）。
+書くなら、PowerShell では `"$env:USERPROFILE\Desktop\Claude Art Project"`。
+`%USERPROFILE%` は cmd の書き方で、PowerShell はそのまま文字として渡す。
+
 ```
 Primaries の配管を確認してください。
 1. node art/tools/daily.mjs --out "C:\Users\User\Desktop\Claude Art Project" --dry-run
