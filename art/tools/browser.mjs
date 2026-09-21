@@ -9,10 +9,15 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import http from 'node:http';
 
-const HERE = path.dirname(new URL(import.meta.url).pathname);
+// **`new URL(import.meta.url).pathname` を使わないこと。**
+// Windows では `/C:/Users/...` と頭に `/` が付き、path.resolve が
+// `\C:\Users\...` を返す。そこから配ろうとすると全部 404 になり、
+// 頁が真っ白のまま「頁が口を出さなかった」で落ちる（実際に落ちた）。
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(HERE, '../..');
 // Chrome の場所。`CHROME` で指すのが確実。
 // 指定が無ければ、その OS のよくある場所を順に探す（Windows でも動くように）。

@@ -345,6 +345,7 @@ node art\tools\upload.mjs "C:\...\Interval-318.webm" --title "Interval 318" --de
 
 | 症状 | 見るところ |
 |---|---|
+| `頁が口を出さなかった（読み込みに失敗している）` | 頁が配られていない。`browser.mjs` の `ROOT` を疑う（Windows で `\C:\...` になっていた。`fileURLToPath` で直した）。`CHROME` が別の入れ物を指していないかも見る |
 | `置場に展開されていない変数が入っています` | **PowerShell で打っている。** `%USERPROFILE%` は cmd の書き方で、PowerShell は展開しない。`"$env:USERPROFILE\Desktop\Claude Art Project"` にするか、**`--out` を省く**（既定でデスクトップの `Claude Art Project`）|
 | `A positional parameter cannot be found`（`cd /d ...`）| `/d` も cmd の書き方。PowerShell では `cd <道>` だけでよい |
 | `note を読めませんでした` | そのパソコンから note.com に繋がるか。会社のネットだと弾かれることがある |

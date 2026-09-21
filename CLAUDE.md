@@ -282,6 +282,11 @@ npm の設定は置いていない（静的ファイルのみ）。
   `export.mjs` は速いが、ffmpeg に音声encoderが無いと音を混ぜられない。
 - **頁と外のあいだで大きいものを base64 で渡さない。** CDP は 1MB あたりで詰まる。
   絵と音は `POST /__sink` でバイナリのまま送る（`tools/browser.mjs`）。
+- **自分の場所は `fileURLToPath(import.meta.url)` で取る。**
+  `new URL(import.meta.url).pathname` は Windows で `/C:/Users/...` を返し、
+  `path.resolve` が `\C:\Users\...` にする。配る元がそこになるので**全部 404**、
+  頁が真っ白のまま「頁が口を出さなかった」で落ちる（持ち主のパソコンで実際に落ちた）。
+  **道具は Linux でしか動かしていないので、この種の取り違えは実走まで出てこない。**
 
 ## YouTube に出す
 
