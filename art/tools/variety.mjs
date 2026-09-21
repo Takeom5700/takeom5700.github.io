@@ -32,8 +32,11 @@ for (let s = 0; s < N; s++) {
   const ms = [...new Set(w.shots.map((x) => x.m))];
   rows.push({
     seed: s,
-    図: ms.map((i) => NAMES[i]).join(''),
-    序: NAMES[w.shots[0].m],
+    図: [...new Set(w.shots.filter((x) => x.form).map((x) => x.form.name))].join(''),
+    図の寸法: JSON.stringify([...new Map(w.shots.filter((x) => x.form)
+      .map((x) => [x.form.key, x.form.P])).values()]),
+    序: w.shots[0].form ? w.shots[0].form.name : NAMES[w.shots[0].m],
+    尺: w.total.toFixed(0),
     層: LAYER_NAMES[(w.shots.find((x) => x.lay) || {}).lay || 0],
     調: m.tonic + m.mode,
     音階: m.mode,
@@ -67,7 +70,8 @@ if (LIST) {
 // **選択肢が7しか無いものに「40通り」を求めるのは不正。**
 // 測るべきは「持っている選択肢を使い切っているか」。
 const KEYS = [
-  ['図', '図の組', 0], ['序', '序（＝終）の形', 7], ['層', '層', 4],
+  ['図', '図の組（名）', 0], ['図の寸法', '図の寸法', 0],
+  ['序', '序（＝終）の形', 7], ['層', '層', 4], ['尺', '尺', 0],
   ['調', '調（主音＋音階）', 0], ['音階', '音階', 10], ['拍子', '拍子', 8],
   ['速さ', '速さ', 0], ['和音', '和音の進行', 0], ['編成', '編成', 0],
   ['伴奏', '伴奏の形', 0], ['低音', '低音の歩き', 0], ['太鼓', '太鼓のリズム', 0],

@@ -311,7 +311,10 @@ function start() {
       // 譜の中身（下見の道具が、どの時刻を見るか決めるのに使う）
       list() {
         return work.shots.map((s) => ({
-          start: +s.start.toFixed(3), dur: +s.dur.toFixed(3), name: NAMES[s.m],
+          start: +s.start.toFixed(3), dur: +s.dur.toFixed(3),
+          // **その作品のために組んだ形の名前を出す。** 古い図の表を引くと、
+          // 道具が存在しない図の名前を報告して診断が狂う（実際に狂った）
+          name: s.form ? s.form.name : NAMES[s.m],
           m: s.m, fps: s.fps, hand: s.hand, pal: s.pal, inv: s.inv ? 1 : 0,
           n: s.n, odd: s.odd ? 1 : 0, empty: s.empty, flash: s.flash, mv: s.mv,
           sec: s.sec, th: s.th, w: s.w, recall: s.recall ? 1 : 0,
@@ -335,6 +338,20 @@ function start() {
         const sh = Object.assign({
           id: 3, m, dur: 6, start: 0, n: 4, hand: 0, pal: 0, inv: false,
           gk: 0, gx: 0.5, gy: 0.55, ga: 0.7, gn: 3, g2: true,
+          ox: 0.12, oy: -0.08, k1: 0.5, k2: 0.5, k3: 0.45, odd: true,
+          fps: 12, boil: 1, grain: 0.18, mv: 0, mvA: 0.5, flash: 0,
+          hang: 0.6, hgap: 0.5, empty: 0,
+          zoom: 1, vx: 0, vy: 0, sparse: 0, lay: 0, lyW: 0, lyD: 1,
+          au: { hit: 0, root: 0, chord: 0, level: 1, silent: 0 },
+        }, over || {});
+        film.drawShot(sh, p * sh.dur);
+        return true;
+      },
+      // 組んだ形を1つだけ見る（`art/tools/forms.mjs` が使う。作品ではない）
+      demoForm(form, p, over) {
+        const sh = Object.assign({
+          id: 3, m: 0, form, dur: 6, start: 0, n: 4, hand: 0, pal: 0, inv: false,
+          gk: 1, gx: 0.5, gy: 0.55, ga: 0.7, gn: 3, g2: true,
           ox: 0.12, oy: -0.08, k1: 0.5, k2: 0.5, k3: 0.45, odd: true,
           fps: 12, boil: 1, grain: 0.18, mv: 0, mvA: 0.5, flash: 0,
           hang: 0.6, hgap: 0.5, empty: 0,

@@ -29,6 +29,7 @@ import { makeRng, between, pick } from './rng.js';
 import { PALETTES, hueGap, lumOf, hsOf, colorsOf } from './paint.js';
 import { layerColor } from './layer.js';
 import { NAMES, MOTIFS } from './motif.js';
+import { makeForm, RANGE, FORM_KEYS, OPENING_FORMS, MOVING_FORMS, STILL_FORMS } from './form.js';
 
 export const REST = 3.0;
 
@@ -101,8 +102,12 @@ export const LAWS = {
 
 // 図の番号（motif.js の並び）
 // 0群 1獣 2菌 3波 4紋 5衆 6梯 7椅 8傘 9糸 10綿 11階 12管 13器
-const MOVING = [0, 1, 4, 10, 3];      // 動きのある図（第一主題むき）
-const STILL = [13, 7, 6, 11, 8, 5];   // 静止した図（第二主題むき）
+// **図は棚から選ばない。** 骨格を選び、寸法・数・向き・有無をその作品のために振る
+// （`form.js`）。依頼者「映像のモチーフとかも使い回さないでよ。
+// そのためにnoteの記事指定してるじゃんか。全て1から作り直すんだよ」。
+// ここで選ぶのは**骨格の番号**で、同じ骨格でも作品ごとに別の物になる。
+const MOVING = MOVING_FORMS;      // 動きが出る骨格（第一主題むき）
+const STILL = STILL_FORMS;        // 据わっている骨格（第二主題むき）
 // 問いの図（序・終むき）。いまは序を管で固定しているので、
 // 小結・挿話の候補として残してある（管が抜けた残りから選ばれる）
 const ASKING = [12, 9, 2, 6, 11];
@@ -122,13 +127,12 @@ const ASKING = [12, 9, 2, 6, 11];
 // だから序の形は下の組から選ぶ（管は重く置いてあるので、いちばんよく出る）。
 // 組に入れるのは「見えているのに何のためか分からない」形だけ。
 // **怖がらせに行く形は入れない**（眼・仮面・稲妻。核の線）。
-const OPENINGS = [12, 12, 12, 13, 7, 11, 9, 6, 8];   // 管管管・器・椅・階・糸・梯・傘
+const OPENINGS = OPENING_FORMS;
 
-const COUNT = {
-  0: [90, 420], 1: [1, 6], 2: [1, 1], 3: [1, 1], 4: [2, 6], 5: [1, 1],
-  6: [2, 9], 7: [1, 12], 8: [1, 11], 9: [16, 44], 10: [4, 16], 11: [1, 4],
-  12: [2, 9], 13: [1, 11],
-};
+// 何個置くか。**骨格ごとの上下限は form.js の RANGE が持つ。**
+// 古い図の数の表（群を90〜420個など）をそのまま使っていて、
+// 骨格0（櫓）に90個という指示が出て、1つが画面の1%の豆粒になった（実際になった）。
+const COUNT = FORM_KEYS.reduce((o, k, i) => { o[i] = RANGE[k] || [1, 6]; return o; }, {});
 // **数は下の方から取る。** 上限まで振ると画面が埋まって余白が消える。
 // u=0 で下限、u=1 で上限。ふだんは 0.42 までしか使わず、
 // 上限を使うのは展開部の頂点だけ（そこだけ埋まるから頂点に見える）。
@@ -144,6 +148,8 @@ const cnt = (rng, m, u = 0.42) =>
 function makeTheme(rng, ms, pal, kind) {
   return {
     ms: ms.slice(), k: 0, m: ms[0], pal, inv: false, shade: 0,
+    // **その主題のための形をここで組む。** 骨格は ms[0]、寸法はこの作品だけのもの
+    form: makeForm(rng, ms[0]),
     hand: kind === 1 ? 0 : pick(rng, [0, 0, 1, 2, 3]),
     // **地は一色寄りにする。** 割った地が多いと画面が常に埋まって、余白が消える
     gk: pick(rng, [0, 0, 0, 1, 1, 2, 3, 5]),
@@ -221,7 +227,7 @@ export function composeWork(seed) {
   // その通りで、**詰め込みは構成ではない。** 5つに絞ると、
   // 一つひとつが何度も帰ってくるので、帰ってきたことが分かる（それが型）。
   // 選ばれなかった図はその種では出ない。種を変えれば別の5つが出る。
-  const left = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+  const left = FORM_KEYS.map((_, i) => i);
   const take = (from, k) => {
     const out = [];
     for (let i = 0; i < k; i++) {
@@ -251,6 +257,7 @@ export function composeWork(seed) {
     const s = shotFrom(th, dur, over);
     // 図は主題の組から順に取る（順番が決まっているから再現部で同じ並びが戻る）
     if (!over || over.m === undefined) s.m = th.ms[(th.k++) % th.ms.length];
+    if (!s.form) s.form = th.form;
     if (!over || over.n === undefined) s.n = cnt(rng, s.m);
     s.start = t; s.sec = sec; s.th = theme; s.w = w;
     // **主題の中では色を動かさない。** 同じ色で続くから「同じ主題」に見える。
@@ -497,7 +504,7 @@ export function composeWork(seed) {
       const src = srcA[i++ % srcA.length];
       const d = Math.min(aEnd - t, src.dur * between(rng, 1.05, 1.5));
       const s = put(A, d, {
-        m: src.m, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        m: src.m, form: src.form, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: src.inv, shade: src.shade, mv: src.mv, mvA: src.mvA,
         fps: src.fps, pal: home, lock: 1,
@@ -530,7 +537,7 @@ export function composeWork(seed) {
       const src = srcB[j++ % srcB.length];
       const d = Math.min(end - t, src.dur * between(rng, 1.0, 1.35));
       const s = put(B, d, {
-        m: src.m, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        m: src.m, form: src.form, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: false, shade: src.shade, mv: src.mv, mvA: src.mvA,
         zoom: src.zoom, vx: src.vx, vy: src.vy, sparse: src.sparse,
@@ -793,7 +800,12 @@ export function checkWork(work) {
   if (kinds > LAWS.maxMotifs) bad.push(`貌: 図が ${kinds} 種ある（${LAWS.maxMotifs} 以下に絞る）`);
   for (const k in share) {
     const r = share[k] / work.total;
-    if (r > LAWS.maxSameShare) bad.push(`貌: 「${NAMES[k]}」が全体の ${(r * 100) | 0}%（${(LAWS.maxSameShare * 100) | 0}% 以下）`);
+    if (r > LAWS.maxSameShare) {
+      // **形の名前で言うこと**（古い図の表を引くと、無い図の名前で報告してしまう）
+      const nm = (S.find((x) => x.m === +k && x.form) || {}).form;
+      bad.push(`貌: 「${nm ? nm.name : (FORM_KEYS[k] || NAMES[k])}」が全体の `
+        + `${(r * 100) | 0}%（${(LAWS.maxSameShare * 100) | 0}% 以下）`);
+    }
   }
   // 彩
   let jumps = 0;

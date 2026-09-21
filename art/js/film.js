@@ -14,6 +14,7 @@ import { MOTIFS, NAMES, ownEvent } from './motif.js';
 import { PIXEL, evTransform, evOverlay, evComposite } from './event.js';
 import { drawLayer, layerPhase } from './layer.js';
 import { colorsOf, ground, makeInk, makeGrain, nz, nz01, snz, clamp, TAU } from './paint.js';
+import { drawForm } from './form.js';
 
 // 作品の枠は 1600×900 の論理座標。出力の大きさによらず同じ構図になる。
 export const STAGE = { w: 1600, h: 900 };
@@ -166,9 +167,15 @@ export function createFilm(canvas) {
       own: sh.ev === 11,          // 固 — 図ごとの固有の事
     };
     E.ink = makeInk(g, S, sh, col, E);
-    (MOTIFS[sh.m] || MOTIFS[0])(g, S, E);
+    // **その作品のために組んだ形があれば、そちらを描く**（`form.js`）。
+    // 無ければ既存の図の棚を引く（下見や過去の譜のため）。
     // 固有の事は、図と同じ座標で重ねて描く（人が椅子に座れる位置になる）
-    if (E.own) ownEvent(g, S, E);
+    if (sh.form) {
+      drawForm(g, S, E, sh.form);
+    } else {
+      (MOTIFS[sh.m] || MOTIFS[0])(g, S, E);
+      if (E.own) ownEvent(g, S, E);
+    }
     g.restore();
     // 事の描き足し（侵・喰・来）は画面の座標で置く
     if (sh.ev && !pix) evOverlay(g, S, E, ep);

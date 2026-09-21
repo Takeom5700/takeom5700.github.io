@@ -76,7 +76,11 @@ row('閃光の数', stat.flash, (v) => v.toFixed(0));
   for (const s of w.shots) share[s.m] = (share[s.m] || 0) + s.dur;
   console.log('');
   console.log('  種0の図の内訳: ' + Object.entries(share).sort((a, b) => b[1] - a[1])
-    .map(([m, d]) => `${NAMES[m]}${((d / w.total) * 100) | 0}%`).join(' '));
+    // **その作品が組んだ形の名前で出す**（古い図の表を引くと嘘になる）
+    .map(([m, d]) => {
+      const f = (w.shots.find((x) => x.m === +m && x.form) || {}).form;
+      return `${f ? f.name : NAMES[m]}${((d / w.total) * 100) | 0}%`;
+    }).join(' '));
   console.log('  種0の楽章: ' + w.movements.map((m) => `${m.name}${Math.round(m.dur)}s/${m.shots.length}景`).join(' '));
 }
 
