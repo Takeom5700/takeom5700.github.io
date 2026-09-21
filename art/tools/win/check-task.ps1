@@ -19,7 +19,8 @@ Write-Host ("置場       : " + $out + $outNote)
 Write-Host ''
 
 # ---- 1. 予定 -------------------------------------------------------------
-$all = @(Get-ScheduledTask | Where-Object { $_.TaskName -eq $Task })
+try { $all = @(Get-ScheduledTask -ErrorAction Stop | Where-Object { $_.TaskName -eq $Task }) }
+catch { $all = @(); Write-Host '[予定] 予定の一覧を引けませんでした（タスクスケジューラが使えない環境です）' }
 if ($all.Count -eq 0) {
   Write-Host ("[予定] 入っていません（" + $Task + "）")
   Write-Host '  → art\tools\win\install-task.bat をダブルクリックしてください。'
@@ -44,12 +45,18 @@ foreach ($cmd in 'node', 'git', 'claude') {
   if ($c) { Write-Host ("[道具] " + $cmd + " : " + $c.Source) }
   else    { Write-Host ("[道具] " + $cmd + " : 見つかりません") }
 }
+# browser.mjs が見るところと同じ順（$env:CHROME が最優先）
 $chrome = @(
+  $env:CHROME,
   'C:\Program Files\Google\Chrome\Application\chrome.exe',
-  'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
-) | Where-Object { Test-Path $_ } | Select-Object -First 1
+  'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+  $(if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'Google\Chrome\Application\chrome.exe' })
+) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
 if ($chrome) { Write-Host ("[道具] chrome : " + $chrome) }
-else { Write-Host '[道具] chrome : 見つかりません（絵を焼くのに要ります。CHROME に道を入れてください）' }
+else {
+  Write-Host '[道具] chrome : 見つかりません'
+  Write-Host '  → 絵を焼くのに要ります。Chrome を入れるか、CHROME に exe の道を入れてください'
+}
 Write-Host ''
 
 # ---- 3. 鍵（YouTube） ----------------------------------------------------

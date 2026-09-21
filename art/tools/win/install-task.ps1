@@ -29,18 +29,18 @@ Write-Host "予定を登録します: $Task  毎日 $At"
 Write-Host "叩くもの: $daily"
 Write-Host ''
 
-# cmd 経由で叩く（daily.bat は .bat なので、直に Execute できない環境がある）
-$action  = New-ScheduledTaskAction -Execute $env:ComSpec `
-             -Argument ('/c "' + $daily + '"') -WorkingDirectory $here
-$trigger = New-ScheduledTaskTrigger -Daily -At $At
-
-# スリープしていても起こす／時刻を逃したら次に起きたときに拾う／電池でも動かす／
-# 2時間で打ち切る（録画は6分だが余裕を見る）／走っている最中に重ねない
-$settings = New-ScheduledTaskSettingsSet -WakeToRun -StartWhenAvailable `
-  -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
-  -ExecutionTimeLimit (New-TimeSpan -Hours 2) -MultipleInstances IgnoreNew
-
 try {
+  # cmd 経由で叩く（daily.bat は .bat なので、直に Execute できない環境がある）
+  $action  = New-ScheduledTaskAction -Execute $env:ComSpec `
+               -Argument ('/c "' + $daily + '"') -WorkingDirectory $here
+  $trigger = New-ScheduledTaskTrigger -Daily -At $At
+
+  # スリープしていても起こす／時刻を逃したら次に起きたときに拾う／電池でも動かす／
+  # 2時間で打ち切る（録画は6分だが余裕を見る）／走っている最中に重ねない
+  $settings = New-ScheduledTaskSettingsSet -WakeToRun -StartWhenAvailable `
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+    -ExecutionTimeLimit (New-TimeSpan -Hours 2) -MultipleInstances IgnoreNew
+
   Register-ScheduledTask -TaskName $Task -Action $action -Trigger $trigger `
     -Settings $settings -Description 'Primaries: note の記事から1日1本の映像作品を作る' `
     -Force | Out-Null
@@ -54,12 +54,18 @@ try {
 }
 
 # ---- 本当に入ったか、物を引き直して確かめる -----------------------------
-$all = @(Get-ScheduledTask | Where-Object { $_.TaskName -eq $Task })
+try {
+  $all  = @(Get-ScheduledTask -ErrorAction Stop | Where-Object { $_.TaskName -eq $Task })
+  $info = Get-ScheduledTaskInfo -TaskName $Task -ErrorAction Stop
+} catch {
+  Write-Host '登録したはずの予定を引き直せませんでした:'
+  Write-Host ("  " + $_.Exception.Message)
+  exit 1
+}
 if ($all.Count -eq 0) {
   Write-Host '登録したはずの予定が見つかりません。入っていません。'
   exit 1
 }
-$info = Get-ScheduledTaskInfo -TaskName $Task
 Write-Host '--------------------------------------------'
 Write-Host ("登録できました  : " + $all[0].TaskName)
 Write-Host ("同じ名前の予定  : " + $all.Count + " 件（1 件なら重複なし）")
