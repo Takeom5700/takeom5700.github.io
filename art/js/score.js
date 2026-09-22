@@ -86,6 +86,14 @@ export const LAWS = {
   minQuietShare: 0.16,
   minRest: 5,                       // ための景（疎で2.5秒以上）
   layer: 1,                         // 断をまたいで続く層が1つあること
+  // 流 — **景は同格ではない。** 部ごとにキーカットが1つあり、
+  // その手前は段々短くなって寄せ、直後は余白で引く
+  keysPerSec: 1,                    // 部に1つ
+  minApproach: 3,                   // 寄せの帯の景の数（序は3・終は伸ばせないので0）
+  // キーは部の中央値のこの倍以上。**「その部で最長」にしないこと。**
+  // 部には狙って置いた長い余白や、主調のまま静まる終の景が入っているので、
+  // 最長を要求すると 400種のうち 400種が落ちる（実際に落ちた）。
+  keyLongerThan: 1.3,
   // 彩
   minJump: 0.30,
   minJumpShare: 0.55,               // **全部は跳ばさない。** 主題の中は同じ色で続ける
@@ -603,12 +611,139 @@ export function composeWork(seed, brief) {
     if (t < end) put(I, end - t, air(I, { pal: home, lock: 1, mv: 0 }), 4, 0, 0.4);
   }
 
+  // ---- 流（ながれ）— **景は同格ではない** ---------------------------------
+  // 依頼者:
+  //   「並列的に各カットを並べるのではなくて、**どれがキーカットなのかを意識して、
+  //     構造化された流れを作る**ように心がけるシステムにすること」
+  //   「**各カットをまたぐようなレイヤー**があって滑らかに各カットやシーンが
+  //     流れている感じを作った方がいい」
+  //
+  // 法「型」は**部の並び**を与えていたが、**部の中は景が対等に並んでいた。**
+  // だからカットが「並列」に見える——三度目の失敗（「全部のカットが同じ価値に
+  // 見える。流れも感動もない」）と同じ形が、部の内側に残っていた。
+  //
+  // 部ごとに三拍を作る。
+  //   寄せ … 手前の景を段々短くする。**切る速さそのものが「近づいている」を語る**
+  //   キー … その部でいちばん重く、いちばん長い景
+  //   引き … 直後を余白にする（頂点の直後に余白を置くのと同じ理屈）
+  //
+  // **滑らかさは「切らないこと」では作らない**（それが第一版の失敗で、撤回した法）。
+  // 断をまたいで**続くもの**で作る。寄せの帯のあいだは
+  //   ・地の割り（gk/g2）を替えない（枠の構えが保たれる。色は替わる）
+  //   ・図が一方向へ寄っていく（vx/vy が単調に動く）
+  //   ・寄り（zoom）が段々近づく
+  //   ・層が段々濃くなる（下の lyW）
+  // ので、絵は切れていても**同じものへ近づいている**ことが目で追える。
+  // 層（layer.js）が作品を1本貫くのに対して、こちらは**帯の中を繋ぐ**。
+  //
+  // **時間を足さずに組み替えること。** 最初はキーを無条件に伸ばしていたが、
+  // それは部の尺を増やすので、図の占有率（42%の上限）と余白の割合（16%の下限）を
+  // 押し出して落ちた。**部の尺は変えず、中の配分だけを変える。**
+  {
+    const med2 = (a) => { const b = [...a].sort((x, y) => x - y); return b[b.length >> 1] || 1; };
+    for (let sec = 0; sec < 5; sec++) {      // 序・提・展・再・終
+      const list = shots.filter((x) => x.sec === sec);
+      if (list.length < 4) continue;
+      const pool2 = list.filter((x) => !x.empty);
+      if (!pool2.length) continue;
+      // キーカットは**その部でいちばん重く、その中でいちばん長い景**。
+      // 重さ（w）は譜が既に持っている（展開部の頂点は w >= 1.0）。
+      const maxW = Math.max(...pool2.map((x) => x.w));
+      let key = null;
+      for (const x of pool2) {
+        if (x.w < maxW - 0.05) continue;
+        if (!key || x.dur > key.dur) key = x;
+      }
+      const at = list.indexOf(key);
+      const m = med2(list.map((x) => x.dur));
+      key.key = 1;
+      // **主調で固定した景（lock）は伸ばせない。**
+      // 伸ばすと「途中で色が替わらない長い景」になり、色を跳ばして直すと
+      // 主調へ帰れなくなる（再現部・終の景はほとんど lock。だから
+      // あの2つの部では配分を替えず、キーの札を立てるだけにする）。
+      if (key.lock) continue;
+      // **序と終は静かな部なので、寄せを激しくしない**（問いは無垢なまま置く）。
+      const calm = sec === 0 || sec === 4;
+
+      // ---- 寄せ ----
+      // **縮めるだけで、決して伸ばさないこと。** 目標の長さを直に入れると、
+      // もともと 0.3秒だった景が 0.5秒に伸びて作品の最短が消え、
+      // 法「断」の長短の比（30倍以上）が 20〜29倍に落ちた（実際に落ちた）。
+      const run = Math.min(calm ? 3 : 5, at);
+      const head = list[at - run];
+      let freed = 0;
+      let prevDur = head ? head.dur : m;
+      for (let i = run; i >= 1; i--) {                   // 帯の頭からキーの直前へ
+        const x = list[at - i];
+        if (!x || x.empty) continue;
+        const u = (run - i) / Math.max(1, run - 1);      // 0=帯の頭 1=キーの直前
+        const want = Math.max(0.28, Math.min(x.dur, prevDur * (calm ? 0.84 : 0.78)));
+        freed += x.dur - want;
+        x.dur = want;
+        prevDur = want;
+        if (head) { x.gk = head.gk; x.g2 = head.g2; }
+        // **余白の景の `sparse` を落とさないこと。** 落とすと疎な景の尺が減り、
+        // 法「余白」の下限（尺の16%）を割る。寄せの効きは長さ・位置・
+        // 枠の構えの持続でも出るので、疎な景では寄りだけ見送る。
+        if (!x.sparse) x.zoom = 0.74 + u * 0.26;         // 段々近づく
+        x.vx = (1 - u) * (x.ox > 0 ? 0.10 : -0.10);      // 一方向へ寄っていく
+        x.vy = (1 - u) * 0.045;
+        x.flow = 1;                                      // 寄せの帯（検査が見る）
+      }
+
+      // ---- 引き ----
+      // キーの直後は必ず余白。埋めたまま次へ行くと、キーが「いちばん強い」ことが
+      // 分からない。
+      const nx = list[at + 1];
+      const rel = nx && !nx.empty && !nx.lock ? nx : null;
+      if (rel) {
+        rel.sparse = 1;
+        rel.dur += freed * 0.30;
+        rel.zoom = Math.min(rel.zoom, 0.62);
+        rel.n = Math.max(1, Math.round(rel.n * 0.5));
+        rel.flow = 2;                                    // 引きの景
+      }
+
+      // ---- キー ----
+      // 寄せで空いたぶんを受け取る。
+      key.dur += freed * (rel ? 0.70 : 1.0);
+      key.sparse = 0; key.zoom = 1; key.vx = 0; key.vy = 0;
+      // **それでも中央値の 1.34 倍に届かないなら、部の他の景から少しずつ借りる。**
+      // 序は景が12しかなく長さも揃っているので、寄せだけでは足りない
+      // （400種のうち383種で「キーが中央値の 1.0 倍しかない」に落ちた）。
+      // 借りるので部の尺は変わらない。
+      // **中央値は借りるたびに動くので、数えながら何度か借りること。**
+      // 一度だけ借りる書き方だと、借りた相手が中央値を押し下げて
+      // 目標そのものが動き、序（景の長さが二極化している部）で届かなかった
+      // ——長い景が8つ並んでいる中の1つをキーにするので、
+      // 中央値もその長い景たちになる（400種のうち26種が 1.27〜1.29倍で落ちた）。
+      for (let round = 0; round < 4; round++) {
+        const mid = med2(list.map((x) => x.dur));
+        const want2 = mid * 1.36 - key.dur;
+        if (want2 <= 0.01) break;
+        const donors = list.filter((x) => x !== key && x !== rel && !x.empty && !x.lock && x.dur > 0.56);
+        // **借りられるところまで借りる（全部か無しかにしないこと）。**
+        const room = donors.reduce((a, x) => a + (x.dur - 0.46), 0);
+        const take = Math.min(want2, room * 0.55);
+        if (take <= 0.01) break;
+        for (const x of donors) x.dur -= ((x.dur - 0.46) / room) * take;
+        key.dur += take;
+      }
+    }
+  }
+
   // ---- 尺をこの作品の長さに合わせる ----
   // 部ごとの割合（±10%の振れ）はそのままに、**全体を一度だけ伸縮させる。**
   // 景の長短の関係も、事の進みかたも、層の時計も、比のまま保たれる。
   // 端数は最後の景で吸って、合計をぴったり合わせる。
   // **ここは層の時計（lyD）と音（composeMusic が movements を読む）より前に置くこと。**
   {
+    // **`t` を数え直してから伸縮すること。** 流（キーカットを長く、寄せを短く）が
+    // 長さを書き換えているので、置きながら足していた `t` は古い。
+    // 古い `t` で比を取ると、余りが**最後の景に丸ごと乗る**
+    // ——終の最後の景が 24秒になり、「途中で色が替わらない長い景」で
+    // 120種のうち119種が落ちた（実際に落ちた）。
+    t = shots.reduce((a, s) => a + s.dur, 0);
     const k = WANT / t;
     let acc = 0;
     for (const s of shots) { s.dur *= k; s.start = acc; acc += s.dur; }
@@ -644,6 +779,16 @@ export function composeWork(seed, brief) {
     // 隠れていた）。だから長い景の地には**必ず切れ目を1本入れる**
     // ——斜めの割り（1）か地平の帯（2）。どちらも面は2つのままなので余白は保つ。
     if (s.gk === 0) s.gk = pick(rng, [1, 2]);
+    // **色の跳ばしは伸縮のあとに決め直すこと。**
+    // `put()` は伸縮前の長さで決めているので、尺の長い作品（WANT/360 が最大 1.5）
+    // では 5.4秒で置いた景が 8.1秒になり、「途中で色が替わらない長い景」に落ちる。
+    // 流（キーカットを長くする）を入れて、これが毎回起きるようになった。
+    // **主調で固定したい景（lock）は跳ばさない**（再現部が主調へ帰れなくなる）。
+    if (s.dur >= 7 && !s.turn && !s.lock) {
+      s.turn = 2;
+      s.tp1 = between(rng, 0.24, 0.42); s.tp2 = between(rng, 0.58, 0.8);
+      s.tc1 = pick(rng, far); s.tc2 = s.pal;
+    }
   }
   // **同じ図・同じ配色が続く断で、絵が変わらないままにしない。**
   // put() の中でも見ているが、そこは組んでいる途中の前後関係しか見えない。
@@ -673,6 +818,16 @@ export function composeWork(seed, brief) {
       // 展開部のいちばん細かい断だけ細くする（画面が混むので）。
       // **消さない。** 消すと「そこだけ別の作品」になる
       s.lyW = (s.sec === 2 && s.dur < 1.0) ? 0.5 : 1;
+      // **層も流に参加させる。** 層は作品を1本貫くが、ずっと同じ濃さだと
+      // 「ただ動き続けている平面」で、カットの流れとは無関係に見える
+      // （依頼者「各カットをまたぐようなレイヤーがあって滑らかに各カットや
+      // シーンが流れている感じを作った方がいい」）。
+      // 寄せの帯では濃くしていき、キーカットでいちばん濃くする。
+      // これで**カットが替わっても層が同じ方へ強まっていく**ので、
+      // 断の向こう側と繋がって見える。
+      if (s.flow === 1) s.lyW *= 1.15;
+      else if (s.key) s.lyW *= 1.35;
+      else if (s.flow === 2) s.lyW *= 0.78;    // 引きでは薄れて、余白を邪魔しない
       // **日（円）の層のときは、地の円をやめる。** 円が2つ重なると
       // どちらが続いているものなのか分からなくなる（実際にそう見えた）
       if (lay === 2 && s.gk === 3) s.gk = 0;
@@ -791,6 +946,48 @@ export function checkWork(work) {
   if (work.movements[0] && work.movements[0].shots.some((s) => s.ev)) bad.push('型: 序で事が起きている（問いは無垢のまま置く）');
   if (!work.movements[3] || !work.movements[3].shots.some((s) => s.ev === 2)) bad.push('型: 再現部に「組」（組み上がり）が無い');
   if (!work.movements[4] || !work.movements[4].shots.some((s) => s.ev === 9)) bad.push('型: 終に「来」（人が来る）が無い');
+
+  // ---- 流 — **景は同格ではない** ----
+  // 三度目の失敗は「並列的で、全部のカットが同じ価値に見える」だった。
+  // 法「型」で部の並びは直したが、**部の中は対等に並んでいた。**
+  // ここは部ごとに、キーカットが1つあり／その手前が段々短くなり／
+  // 直後が余白であることを見る。
+  for (let i = 0; i < work.movements.length; i++) {
+    const ms = work.movements[i].shots;
+    if (ms.length < 4) continue;
+    const nm = work.movements[i].name;
+    const keys = ms.filter((x) => x.key);
+    if (keys.length !== LAWS.keysPerSec) {
+      bad.push(`流: ${nm} のキーカットが ${keys.length} 箇所（${LAWS.keysPerSec} つにする）`);
+      continue;
+    }
+    const key = keys[0];
+    const ds = [...ms.map((x) => x.dur)].sort((a, b) => a - b);
+    const mid = ds[ds.length >> 1] || 1;
+    // **主調で固定した景（lock）がキーの部は伸ばせない**ので、中央値以上でよい
+    // （再現部・終。あそこは「同じ姿で帰る」「主調のまま静まる」が先に立つ）。
+    const bar = key.lock ? 1.0 : LAWS.keyLongerThan;
+    if (key.dur < mid * bar) {
+      bad.push(`流: ${nm} のキーカットが中央値の ${(key.dur / mid).toFixed(2)} 倍しかない`);
+    }
+    // 寄せ。lock の部は配分を替えないので帯を作らない
+    const app = ms.filter((x) => x.flow === 1);
+    const need = key.lock ? 0 : LAWS.minApproach;
+    if (app.length < need) bad.push(`流: ${nm} の寄せが ${app.length} 景（${need} 以上）`);
+    // 寄せは段々短くなっていること
+    for (let k = 1; k < app.length; k++) {
+      if (app[k].dur > app[k - 1].dur + 1e-6) {
+        bad.push(`流: ${nm} の寄せが短くなっていない`);
+        break;
+      }
+    }
+    // 引き — キーの直後は余白（作品の最後の景だけは例外）
+    const at = ms.indexOf(key);
+    const nx = ms[at + 1];
+    if (nx && !nx.sparse && !nx.empty && !nx.lock) {
+      bad.push(`流: ${nm} のキーカットの直後が余白になっていない`);
+    }
+  }
   const owns = S.filter((s) => s.ev === 11).length;
   if (owns < LAWS.minOwnEvents) bad.push(`事: 図に固有の事が ${owns} 件しかない（${LAWS.minOwnEvents} 以上）`);
   // 展開部がいちばん速いこと（ここが遅いと山が無い）

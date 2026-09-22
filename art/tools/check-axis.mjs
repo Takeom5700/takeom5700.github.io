@@ -14,6 +14,7 @@ let bad = 0;
 const stat = {
   cpm: [], ratio: [], open: [], maxShare: [], kinds: [], hold: [], flash: [], turn: [],
   quiet: [], rests: [],
+  keys: [], appr: [], keyLong: [], appRate: [],
 };
 const layCount = {};
 
@@ -36,6 +37,21 @@ for (let seed = 0; seed < N; seed++) {
   stat.hold.push(w.shots.filter((s) => s.dur >= LAWS.minHold).length);
   stat.flash.push(w.shots.filter((s) => s.flash).length);
   stat.turn.push(w.shots.filter((s) => s.turn).length);
+  // 流（キーカットと、その前後の三拍）
+  stat.keys.push(w.shots.filter((s) => s.key).length);
+  stat.appr.push(w.shots.filter((s) => s.flow === 1).length);
+  {
+    const med = (a) => { const b = [...a].sort((x, y) => x - y); return b[b.length >> 1] || 1; };
+    const rs = [];
+    for (const mv of w.movements) {
+      const k = mv.shots.find((x) => x.key);
+      if (k) rs.push(k.dur / med(mv.shots.map((x) => x.dur)));
+    }
+    stat.keyLong.push(rs.reduce((a, b) => a + b, 0) / Math.max(1, rs.length));
+    // 寄せの帯が、キーへ向かって何倍に縮むか
+    const app = w.shots.filter((x) => x.flow === 1);
+    stat.appRate.push(app.length >= 2 ? app[app.length - 1].dur / app[0].dur : 1);
+  }
 }
 
 const agg = (a) => ({
@@ -62,6 +78,11 @@ row('同じ図の最大占有率', stat.maxShare, (v) => (v * 100).toFixed(0) + 
 console.log('余白（空ける）');
 row('疎な景の尺の割合', stat.quiet, (v) => (v * 100).toFixed(0) + '%');
 row('ための景の数', stat.rests, (v) => v.toFixed(0));
+console.log('流（キーカットと、その前後）— **景は同格ではない**');
+row('キーカットの数（部ごとに1つ）', stat.keys, (v) => v.toFixed(0));
+row('キーは部の中央値の何倍', stat.keyLong, (v) => v.toFixed(2) + '倍');
+row('寄せの帯の景の数', stat.appr, (v) => v.toFixed(0));
+row('寄せで何倍まで縮むか', stat.appRate, (v) => v.toFixed(2) + '倍');
 console.log('層（断をまたいで続く）');
 console.log('  ' + Object.entries(layCount).sort((a, b) => b[1] - a[1])
   .map(([k, n]) => `${LAYER_NAMES[k] || k} ${n}本`).join('  '));
