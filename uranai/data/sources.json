@@ -54,8 +54,8 @@
       "cadence": "毎週",
       "source": "しいたけ占い",
       "kind": "any",
-      "last_period_end": "2026-09-20",
-      "has_chip": false
+      "last_period_end": "2026-09-27",
+      "has_chip": true
     },
     {
       "key": "yamada",
