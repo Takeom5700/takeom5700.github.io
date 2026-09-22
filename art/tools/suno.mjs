@@ -26,9 +26,30 @@ fs.mkdirSync(DIR, { recursive: true });
 const page = await open(`export=1&seed=${SEED}&w=160&h=90`, { size: '160,90' });
 const info = JSON.parse(await page.evaluate('JSON.stringify(window.__mumei.musicInfo())'));
 
-// 短調はフラットで書くのが普通（D# minor ではなく Eb minor）
+// **調・拍子・編成は譜から引く。決め打ちにしないこと。**
+// 第六版は 'minor' と '4/4' と「オルゴールが主旋律」を文に焼き込んでいたが、
+// いまは音階・拍子・編成・音色が1本ごとに変わるので、それでは嘘になる。
 const NOTE = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
-const key = NOTE[((info.tonic % 12) + 12) % 12] + ' minor';
+const MODE_EN = {
+  自然短: 'natural minor', ドリア: 'Dorian', フリギア: 'Phrygian',
+  和声的短: 'harmonic minor', 長: 'major', ミクソリディア: 'Mixolydian',
+  リディア: 'Lydian', 旋律的短: 'melodic minor', ロクリア: 'Locrian',
+  和声的長: 'harmonic major',
+};
+const modeEn = MODE_EN[info.mode] || 'natural minor';
+const key = NOTE[((info.tonic % 12) + 12) % 12] + ' ' + modeEn;
+const meter = info.meter || '4/4';
+const LEAD_EN = { オルゴール: 'music box', 弦: 'bowed strings', 聲: 'wordless choir' };
+const leadEn = (info.band || '').split('・').map((x) => LEAD_EN[x] || x);
+const lead = leadEn[1] || leadEn[0] || 'music box';        // 第一主題を担うもの
+const DEV_EN = {
+  '太鼓と聲': 'timpani then wordless choir build the climax',
+  '太鼓': 'timpani drives the climax',
+  '聲': 'wordless choir carries the climax',
+  '弦の厚み': 'the strings thicken into the climax',
+  '太鼓と弦': 'timpani and thickening strings build the climax',
+};
+const devEn = DEV_EN[info.devColor] || 'the texture thickens into the climax';
 const secName = { 序: 'Intro', 提: 'Exposition', 展: 'Development', 再: 'Recapitulation', 終: 'Coda' };
 const allVoices = [...new Set(info.sections.flatMap((s) => s.voices))];
 
@@ -37,7 +58,8 @@ const expo = info.sections[1] || info.sections[0];
 const from = Math.max(0, expo.start + 4);
 const to = Math.min(info.total, from + 60);
 
-console.log(`Passage ${tag}  ${(info.total / 60).toFixed(1)}分  ${info.tempo}BPM  ${key}  音符${info.notes}`);
+console.log(`Passage ${tag}  ${(info.total / 60).toFixed(1)}分  ${info.tempo}BPM  ${key}  ${meter}  音符${info.notes}`);
+console.log(`  音色 ${info.tone}  編成 ${info.band}  和音 ${info.prog}  伴奏 ${info.arp}  展開 ${info.devColor}  鐘 ${info.bell ? 'あり' : 'なし'}`);
 for (const s of info.sections) {
   console.log(`  ${s.name} ${String(Math.round(s.dur)).padStart(3)}s  ${s.voices.join(', ')}`);
 }
@@ -58,8 +80,8 @@ if (!argv.includes('--short')) await grab(0, info.total, `${stem}-音楽.wav`);
 page.close();
 
 // ---- style prompt ----
-const short = `${key}, ${info.tempo} BPM, melancholic minimal chamber score, `
-  + `music box and harp over slow bowed strings, wordless choir, soft timpani, `
+const short = `${key}, ${info.tempo} BPM, ${meter}, melancholic minimal chamber score, `
+  + `${lead} and harp over slow bowed strings, wordless choir, soft timpani, `
   + `sparse and spacious, analog hall reverb, instrumental`;
 
 // **長い欄は 1000 文字まで。** Suno の style 欄に収まらないと切られるので、
@@ -74,18 +96,18 @@ const sectionLines = info.sections.map((s) =>
   `${secName[s.name] || s.name} ${Math.round(s.dur)}s: ${s.voices.map(shorten).join(', ')}`);
 
 const head = [
-  `${key}, ${info.tempo} BPM, 4/4. Melancholic minimal chamber score — something`,
+  `${key}, ${info.tempo} BPM, ${meter}. Melancholic minimal chamber score — something`,
   `beautiful still playing after everyone has gone. Acoustic and tonal,`,
   `never synthetic or ominous.`,
   ``,
-  `Music box carries the melody; harp keeps a broken-chord figure moving underneath;`,
-  `bowed strings hold slow pads; timpani and wordless choir enter from the middle.`,
+  `${lead[0].toUpperCase() + lead.slice(1)} carries the melody; harp keeps a broken-chord`,
+  `figure moving underneath; bowed strings hold slow pads; ${devEn}.`,
   ``,
   ...sectionLines,
 ].join('\n');
-const form = `Sonata form: the second subject leaves in the relative major and returns\n`
-  + `in the home minor; the music box comes back at the recapitulation;\n`
-  + `the last chord is a Picardy major.`;
+const form = `Sonata form: the second subject leaves the home key and returns in it;\n`
+  + `the first subject comes back unchanged at the recapitulation;\n`
+  + `the last chord resolves to a major triad.`;
 const prod = `Wide natural hall reverb, quiet dynamics, one long crescendo into the\n`
   + `development, no compression pumping, no side-chain.`;
 
@@ -105,7 +127,7 @@ const structure = info.sections.map((s) =>
 
 const txt = `Passage ${tag} — Suno 用のメモ
 =====================================
-調: ${key}   速さ: ${info.tempo} BPM   長さ: ${(info.total / 60).toFixed(1)}分
+調: ${key}   拍子: ${meter}   速さ: ${info.tempo} BPM   長さ: ${(info.total / 60).toFixed(1)}分
 
 ■ Style of Music（短い欄に貼る）
 ${short}

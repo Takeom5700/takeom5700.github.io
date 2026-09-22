@@ -8,8 +8,13 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const HERE = path.dirname(new URL(import.meta.url).pathname);
+// **`new URL(import.meta.url).pathname` を使わないこと。**
+// Windows では `/C:/Users/...` と頭に `/` が付き、path.resolve が
+// `\C:\Users\...` を返す。そこから配ろうとすると全部 404 になり、
+// 頁が真っ白のまま「頁が口を出さなかった」で落ちる（実際に落ちた）。
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 const JS = path.resolve(HERE, '../js');
 const OUT = process.argv[2] || 'mumei.html';
 

@@ -26,16 +26,26 @@
 // 帰ってきたと分かるから、終わったことが分かる。
 
 import { makeRng, between, pick } from './rng.js';
-import { PALETTES, hueGap, lumOf, hsOf, colorsOf } from './paint.js';
+import { PALETTES, makePalette, hueGap, lumOf, hsOf, colorsOf } from './paint.js';
 import { layerColor } from './layer.js';
 import { NAMES, MOTIFS } from './motif.js';
+import { makeForm, RANGE, FORM_KEYS, OPENING_FORMS, MOVING_FORMS, STILL_FORMS } from './form.js';
 
 export const REST = 3.0;
 
-// **尺は6分ちょうど（360秒）。**
-// 依頼者:「Suno の制限で6分までしか作れないようだから、映像もちょうど6分にして」。
-// 部ごとの長さは種ごとに ±10% 振れたままで、**全体だけを一度伸縮させて**合わせる。
+// ---- 尺 --------------------------------------------------------------
+// 6分ちょうどに固定していたのは **Suno が6分までしか扱えなかったから**で、
+// 作品の側の理由ではなかった。依頼者:
+//   「Sunoのことはもうかんがえなくていい。そのままクオリティの高い体験になる
+//     アートとして出力して。sunoを使うのはやめます」
+// **だから尺も作品ごとに決める。** 4分半〜9分。
+// 部ごとの長さは種ごとに振れたままで、**全体だけを一度伸縮させて**その尺に合わせる。
+// `TOTAL` は既定値として残す（引数を省いた古い呼び出しのため）。
 export const TOTAL = 360;
+export function totalOf(seed) {
+  const r = makeRng((seed | 0) * 1013904223 + 2654435761);
+  return Math.round(between(r, 270, 540));
+}
 
 // 題名。**作品の中では一度も出さない**（画面に文字を置かない）。
 // 出るのは頁を開いたときの一行と、書き出したファイルの名前だけ。
@@ -59,7 +69,7 @@ export const TITLE = 'Passage';
 export const LAWS = {
   // 型 — 構造（この版で足したもの）
   sections: 5,
-  minTotal: 359.9, maxTotal: 360.1, // 6分ちょうど（Suno が6分までのため）
+  minTotal: 269.9, maxTotal: 540.1, // 4分半〜9分（作品ごとに決まる。Suno の縛りは外した）
   minThemeA: 4,                     // 第一主題が現れる回数（序・提示・展開・再現）
   minThemeB: 3,
   minRecall: 5,                     // 再現部が提示部から引き写す景の数
@@ -76,6 +86,14 @@ export const LAWS = {
   minQuietShare: 0.16,
   minRest: 5,                       // ための景（疎で2.5秒以上）
   layer: 1,                         // 断をまたいで続く層が1つあること
+  // 流 — **景は同格ではない。** 部ごとにキーカットが1つあり、
+  // その手前は段々短くなって寄せ、直後は余白で引く
+  keysPerSec: 1,                    // 部に1つ
+  minApproach: 3,                   // 寄せの帯の景の数（序は3・終は伸ばせないので0）
+  // キーは部の中央値のこの倍以上。**「その部で最長」にしないこと。**
+  // 部には狙って置いた長い余白や、主調のまま静まる終の景が入っているので、
+  // 最長を要求すると 400種のうち 400種が落ちる（実際に落ちた）。
+  keyLongerThan: 1.3,
   // 彩
   minJump: 0.30,
   minJumpShare: 0.55,               // **全部は跳ばさない。** 主題の中は同じ色で続ける
@@ -92,25 +110,37 @@ export const LAWS = {
 
 // 図の番号（motif.js の並び）
 // 0群 1獣 2菌 3波 4紋 5衆 6梯 7椅 8傘 9糸 10綿 11階 12管 13器
-const MOVING = [0, 1, 4, 10, 3];      // 動きのある図（第一主題むき）
-const STILL = [13, 7, 6, 11, 8, 5];   // 静止した図（第二主題むき）
+// **図は棚から選ばない。** 骨格を選び、寸法・数・向き・有無をその作品のために振る
+// （`form.js`）。依頼者「映像のモチーフとかも使い回さないでよ。
+// そのためにnoteの記事指定してるじゃんか。全て1から作り直すんだよ」。
+// ここで選ぶのは**骨格の番号**で、同じ骨格でも作品ごとに別の物になる。
+const MOVING = MOVING_FORMS;      // 動きが出る骨格（第一主題むき）
+const STILL = STILL_FORMS;        // 据わっている骨格（第二主題むき）
 // 問いの図（序・終むき）。いまは序を管で固定しているので、
 // 小結・挿話の候補として残してある（管が抜けた残りから選ばれる）
 const ASKING = [12, 9, 2, 6, 11];
 
-// **序の形は「管」で固定する。** 依頼者:
+// ---- 序（＝終）の形 --------------------------------------------------
+// 依頼者:
 //   「最初のアイデアのパイプの中を球が動いてるやつが、
 //     最初のモチーフのほうがよかったな」
 // 管は、中を球が通っていくのが見えるのに、**どこから来てどこへ行くのか、
-// 何のための管なのかが一切分からない。** 問いを置く役にこれ以上のものがない。
-// 序で置いた形は終で帰ってくるので、作品は管で開いて管で閉じる。
-const OPENING = 12;
+// 何のための管なのかが一切分からない。** 問いを置く役に向いている。
+//
+// **ただし固定はしない。** 第六版は全作品が管で開いて管で閉じていた（実測 1通り/12）。
+// のちに依頼者:
+//   「毎回違うものにするけれど、根底の哲学は一貫してそうだなと
+//     なんとなく思わせられるようにすることが大切。ワンパターンは避けなくてはいけない」
+// **一貫させるのは「形」ではなく「役」**——問いを置き、終でそれが帰ってくること。
+// だから序の形は下の組から選ぶ（管は重く置いてあるので、いちばんよく出る）。
+// 組に入れるのは「見えているのに何のためか分からない」形だけ。
+// **怖がらせに行く形は入れない**（眼・仮面・稲妻。核の線）。
+const OPENINGS = OPENING_FORMS;
 
-const COUNT = {
-  0: [90, 420], 1: [1, 6], 2: [1, 1], 3: [1, 1], 4: [2, 6], 5: [1, 1],
-  6: [2, 9], 7: [1, 12], 8: [1, 11], 9: [16, 44], 10: [4, 16], 11: [1, 4],
-  12: [2, 9], 13: [1, 11],
-};
+// 何個置くか。**骨格ごとの上下限は form.js の RANGE が持つ。**
+// 古い図の数の表（群を90〜420個など）をそのまま使っていて、
+// 骨格0（櫓）に90個という指示が出て、1つが画面の1%の豆粒になった（実際になった）。
+const COUNT = FORM_KEYS.reduce((o, k, i) => { o[i] = RANGE[k] || [1, 6]; return o; }, {});
 // **数は下の方から取る。** 上限まで振ると画面が埋まって余白が消える。
 // u=0 で下限、u=1 で上限。ふだんは 0.42 までしか使わず、
 // 上限を使うのは展開部の頂点だけ（そこだけ埋まるから頂点に見える）。
@@ -123,9 +153,12 @@ const cnt = (rng, m, u = 0.42) =>
 // 主題は**図を1つ持つ**（`ms` は組で持てる作りにしてあるが、1本では1つ）。
 // 主題が図を2つ以上持つと、帰ってきたときに同じ主題だと分からない。
 // 図を増やすより、同じ図に**別のことを起こす**方が展開になる（法「事」）。
-function makeTheme(rng, ms, pal, kind) {
+function makeTheme(rng, ms, pal, kind, pals) {
   return {
     ms: ms.slice(), k: 0, m: ms[0], pal, inv: false, shade: 0,
+    pals,
+    // **その主題のための形をここで組む。** 骨格は ms[0]、寸法はこの作品だけのもの
+    form: makeForm(rng, ms[0]),
     hand: kind === 1 ? 0 : pick(rng, [0, 0, 1, 2, 3]),
     // **地は一色寄りにする。** 割った地が多いと画面が常に埋まって、余白が消える
     gk: pick(rng, [0, 0, 0, 1, 1, 2, 3, 5]),
@@ -171,23 +204,37 @@ function jumpOf(a, b) {
 }
 // 色が近いときだけ差し替える（主題の中では色を変えないので、
 // 跳ばすのは「別の群へ移るとき」だけにする）
-function pushApart(prev, s, pals) {
+function pushApart(prev, s) {
+  // 組の数は景が持っている配色表から取る（作品ごとに違う）
+  const n = (s.pals && s.pals.length) ? s.pals.length : PALETTES.length;
   for (let g = 0; g < 24 && jumpOf(prev, s) < LAWS.minJump; g++) {
     if (g % 3 === 2) s.inv = !s.inv;
-    else s.pal = (s.pal + 5) % PALETTES.length;
+    else s.pal = (s.pal + 5) % n;
   }
   return s;
 }
 
 // ---- 一本を組む -------------------------------------------------------
-export function composeWork(seed) {
+// `brief`（指示書）は**記事の内容から決めた要素**（`brief.js`）。
+// 渡されなければ全部を種から振る。**記事から着想を得るのはこの道。**
+export function composeWork(seed, brief) {
   const rng = makeRng((seed | 0) * 2654435761 + 12345);
+  const BR = brief || null;
+  // この作品の尺。指示書があればそちら（記事の長さから決まる）
+  const WANT = (BR && BR.total) ? Math.round(BR.total) : totalOf(seed);
+
+  // **その作品のための配色をここで作る。** 棚から選ばない（`makePalette`）。
+  // 8組作って、そこから主調・属調・遠い調を割る。
+  // **`pals` を景に載せること。** 載せないと映写が既定の12組を引いて、
+  // 譜の思っている色と画面の色が食い違う（shade のときと同じ轍）。
+  const PALS = Array.from({ length: 8 }, () => makePalette(rng));
+  const NPAL = PALS.length;
 
   // 調（色）を決める。home が主調、dom が属調、far が遠い調
-  const home = Math.floor(rng() * PALETTES.length);
-  const dom = (home + 4 + Math.floor(rng() * 4)) % PALETTES.length;
-  const far = [(home + 7) % PALETTES.length, (home + 9) % PALETTES.length,
-    (home + 2) % PALETTES.length, (dom + 6) % PALETTES.length];
+  const home = Math.floor(rng() * NPAL);
+  const dom = (home + 4 + Math.floor(rng() * 4)) % NPAL;
+  const far = [(home + 7) % NPAL, (home + 9) % NPAL,
+    (home + 2) % NPAL, (dom + 6) % NPAL];
 
   // **図は選ぶ。1本に5つだけ。**
   //   I 序の形／A 第一主題／B 第二主題／C 小結／E 挿話（展開部だけ）
@@ -200,7 +247,7 @@ export function composeWork(seed) {
   // その通りで、**詰め込みは構成ではない。** 5つに絞ると、
   // 一つひとつが何度も帰ってくるので、帰ってきたことが分かる（それが型）。
   // 選ばれなかった図はその種では出ない。種を変えれば別の5つが出る。
-  const left = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+  const left = FORM_KEYS.map((_, i) => i);
   const take = (from, k) => {
     const out = [];
     for (let i = 0; i < k; i++) {
@@ -211,17 +258,19 @@ export function composeWork(seed) {
     }
     return out;
   };
-  const msI = take([OPENING], 1);          // 序（＝終）の形は固定
-  const msA = take(MOVING, 1);
-  const msB = take(STILL, 1);
-  const msC = take(left.slice(), 1);
-  const msE = take(left.slice(), 1);
+  // 序（＝終）の形。**役は固定・形は可変。**
+  // 指示書があれば記事から決まった骨格を使う（順番も指示書の重みの順）。
+  const msI = take([BR ? BR.opening : pick(rng, OPENINGS)], 1);
+  const msA = take(BR ? BR.forms : MOVING, 1);
+  const msB = take(BR ? BR.forms : STILL, 1);
+  const msC = take(BR ? BR.forms : left.slice(), 1);
+  const msE = take(BR ? BR.forms : left.slice(), 1);
 
-  const A = makeTheme(rng, msA, home, 1);     // 第一主題（動・主調）
-  const B = makeTheme(rng, msB, dom, 2);      // 第二主題（静・属調）
-  const I = makeTheme(rng, msI, home, 2);     // 序の形（問い）
-  const C = makeTheme(rng, msC, dom, 1);      // 小結主題
-  const E = makeTheme(rng, msE, far[0], 1);   // 挿話（展開部だけ）
+  const A = makeTheme(rng, msA, home, 1, PALS);     // 第一主題（動・主調）
+  const B = makeTheme(rng, msB, dom, 2, PALS);      // 第二主題（静・属調）
+  const I = makeTheme(rng, msI, home, 2, PALS);     // 序の形（問い）
+  const C = makeTheme(rng, msC, dom, 1, PALS);      // 小結主題
+  const E = makeTheme(rng, msE, far[0], 1, PALS);   // 挿話（展開部だけ）
 
   const shots = [];
   let t = 0;
@@ -229,6 +278,7 @@ export function composeWork(seed) {
     const s = shotFrom(th, dur, over);
     // 図は主題の組から順に取る（順番が決まっているから再現部で同じ並びが戻る）
     if (!over || over.m === undefined) s.m = th.ms[(th.k++) % th.ms.length];
+    if (!s.form) s.form = th.form;
     if (!over || over.n === undefined) s.n = cnt(rng, s.m);
     s.start = t; s.sec = sec; s.th = theme; s.w = w;
     // **主題の中では色を動かさない。** 同じ色で続くから「同じ主題」に見える。
@@ -303,7 +353,13 @@ export function composeWork(seed) {
     sparse: 1,
   }), extra || {});
 
-  const D = (base) => Math.round(base * between(rng, 0.9, 1.12));
+  // 部の予算。**この作品の尺に合わせて先に伸ばす。**
+  // 組み終わってから全体を伸ばすだけだと、景の数が 360秒ぶんのまま残って
+  // 1分あたりの断が薄まり、長い景に色の替わりが入らない
+  // （9分の作品で 18.8断/分に落ちて検査に落ちた）。
+  // **尺を変えるなら景の数も増やすこと。**
+  const SPAN = WANT / 360;
+  const D = (base) => Math.round(base * SPAN * between(rng, 0.9, 1.12));
 
   // ---- 序（問いを置く） ----
   // 冒頭で止まらせないために、短い断片を3つ打ってから長く溜める
@@ -469,7 +525,7 @@ export function composeWork(seed) {
       const src = srcA[i++ % srcA.length];
       const d = Math.min(aEnd - t, src.dur * between(rng, 1.05, 1.5));
       const s = put(A, d, {
-        m: src.m, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        m: src.m, form: src.form, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: src.inv, shade: src.shade, mv: src.mv, mvA: src.mvA,
         fps: src.fps, pal: home, lock: 1,
@@ -502,7 +558,7 @@ export function composeWork(seed) {
       const src = srcB[j++ % srcB.length];
       const d = Math.min(end - t, src.dur * between(rng, 1.0, 1.35));
       const s = put(B, d, {
-        m: src.m, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        m: src.m, form: src.form, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: false, shade: src.shade, mv: src.mv, mvA: src.mvA,
         zoom: src.zoom, vx: src.vx, vy: src.vy, sparse: src.sparse,
@@ -543,7 +599,10 @@ export function composeWork(seed) {
     const last = put(I, rest, {
       pal: home, inv: false, hand: 1, mv: pick(rng, [0, 1]), mvA: 0.3, lock: 1,
       n: cnt(rng, I.ms[0], 0.04), gk: 0, ox: I.ox, oy: I.oy, fps: 8,
-      zoom: between(rng, 0.36, 0.52), vx: between(rng, -0.2, 0.2), vy: between(rng, -0.1, 0.1),
+      // いちばん大きな余白。**ただし 0.46 より小さくしない**
+      // （0.38 まで縮めたら「画面に色が1つしかない」景が出た。無いのは余白ではない）。
+      // 序の形が管でなくなったので、球の代わりに見えているものが無い図もある
+      zoom: between(rng, 0.46, 0.56), vx: between(rng, -0.2, 0.2), vy: between(rng, -0.1, 0.1),
       sparse: 1,
     }, 4, 0, 0.9);
     last.turn = 1; last.tp1 = 0.62; last.tc1 = home;   // 最後は主調のまま静まる
@@ -552,18 +611,145 @@ export function composeWork(seed) {
     if (t < end) put(I, end - t, air(I, { pal: home, lock: 1, mv: 0 }), 4, 0, 0.4);
   }
 
-  // ---- 尺を6分ちょうどに合わせる ----
+  // ---- 流（ながれ）— **景は同格ではない** ---------------------------------
+  // 依頼者:
+  //   「並列的に各カットを並べるのではなくて、**どれがキーカットなのかを意識して、
+  //     構造化された流れを作る**ように心がけるシステムにすること」
+  //   「**各カットをまたぐようなレイヤー**があって滑らかに各カットやシーンが
+  //     流れている感じを作った方がいい」
+  //
+  // 法「型」は**部の並び**を与えていたが、**部の中は景が対等に並んでいた。**
+  // だからカットが「並列」に見える——三度目の失敗（「全部のカットが同じ価値に
+  // 見える。流れも感動もない」）と同じ形が、部の内側に残っていた。
+  //
+  // 部ごとに三拍を作る。
+  //   寄せ … 手前の景を段々短くする。**切る速さそのものが「近づいている」を語る**
+  //   キー … その部でいちばん重く、いちばん長い景
+  //   引き … 直後を余白にする（頂点の直後に余白を置くのと同じ理屈）
+  //
+  // **滑らかさは「切らないこと」では作らない**（それが第一版の失敗で、撤回した法）。
+  // 断をまたいで**続くもの**で作る。寄せの帯のあいだは
+  //   ・地の割り（gk/g2）を替えない（枠の構えが保たれる。色は替わる）
+  //   ・図が一方向へ寄っていく（vx/vy が単調に動く）
+  //   ・寄り（zoom）が段々近づく
+  //   ・層が段々濃くなる（下の lyW）
+  // ので、絵は切れていても**同じものへ近づいている**ことが目で追える。
+  // 層（layer.js）が作品を1本貫くのに対して、こちらは**帯の中を繋ぐ**。
+  //
+  // **時間を足さずに組み替えること。** 最初はキーを無条件に伸ばしていたが、
+  // それは部の尺を増やすので、図の占有率（42%の上限）と余白の割合（16%の下限）を
+  // 押し出して落ちた。**部の尺は変えず、中の配分だけを変える。**
+  {
+    const med2 = (a) => { const b = [...a].sort((x, y) => x - y); return b[b.length >> 1] || 1; };
+    for (let sec = 0; sec < 5; sec++) {      // 序・提・展・再・終
+      const list = shots.filter((x) => x.sec === sec);
+      if (list.length < 4) continue;
+      const pool2 = list.filter((x) => !x.empty);
+      if (!pool2.length) continue;
+      // キーカットは**その部でいちばん重く、その中でいちばん長い景**。
+      // 重さ（w）は譜が既に持っている（展開部の頂点は w >= 1.0）。
+      const maxW = Math.max(...pool2.map((x) => x.w));
+      let key = null;
+      for (const x of pool2) {
+        if (x.w < maxW - 0.05) continue;
+        if (!key || x.dur > key.dur) key = x;
+      }
+      const at = list.indexOf(key);
+      const m = med2(list.map((x) => x.dur));
+      key.key = 1;
+      // **主調で固定した景（lock）は伸ばせない。**
+      // 伸ばすと「途中で色が替わらない長い景」になり、色を跳ばして直すと
+      // 主調へ帰れなくなる（再現部・終の景はほとんど lock。だから
+      // あの2つの部では配分を替えず、キーの札を立てるだけにする）。
+      if (key.lock) continue;
+      // **序と終は静かな部なので、寄せを激しくしない**（問いは無垢なまま置く）。
+      const calm = sec === 0 || sec === 4;
+
+      // ---- 寄せ ----
+      // **縮めるだけで、決して伸ばさないこと。** 目標の長さを直に入れると、
+      // もともと 0.3秒だった景が 0.5秒に伸びて作品の最短が消え、
+      // 法「断」の長短の比（30倍以上）が 20〜29倍に落ちた（実際に落ちた）。
+      const run = Math.min(calm ? 3 : 5, at);
+      const head = list[at - run];
+      let freed = 0;
+      let prevDur = head ? head.dur : m;
+      for (let i = run; i >= 1; i--) {                   // 帯の頭からキーの直前へ
+        const x = list[at - i];
+        if (!x || x.empty) continue;
+        const u = (run - i) / Math.max(1, run - 1);      // 0=帯の頭 1=キーの直前
+        const want = Math.max(0.28, Math.min(x.dur, prevDur * (calm ? 0.84 : 0.78)));
+        freed += x.dur - want;
+        x.dur = want;
+        prevDur = want;
+        if (head) { x.gk = head.gk; x.g2 = head.g2; }
+        // **余白の景の `sparse` を落とさないこと。** 落とすと疎な景の尺が減り、
+        // 法「余白」の下限（尺の16%）を割る。寄せの効きは長さ・位置・
+        // 枠の構えの持続でも出るので、疎な景では寄りだけ見送る。
+        if (!x.sparse) x.zoom = 0.74 + u * 0.26;         // 段々近づく
+        x.vx = (1 - u) * (x.ox > 0 ? 0.10 : -0.10);      // 一方向へ寄っていく
+        x.vy = (1 - u) * 0.045;
+        x.flow = 1;                                      // 寄せの帯（検査が見る）
+      }
+
+      // ---- 引き ----
+      // キーの直後は必ず余白。埋めたまま次へ行くと、キーが「いちばん強い」ことが
+      // 分からない。
+      const nx = list[at + 1];
+      const rel = nx && !nx.empty && !nx.lock ? nx : null;
+      if (rel) {
+        rel.sparse = 1;
+        rel.dur += freed * 0.30;
+        rel.zoom = Math.min(rel.zoom, 0.62);
+        rel.n = Math.max(1, Math.round(rel.n * 0.5));
+        rel.flow = 2;                                    // 引きの景
+      }
+
+      // ---- キー ----
+      // 寄せで空いたぶんを受け取る。
+      key.dur += freed * (rel ? 0.70 : 1.0);
+      key.sparse = 0; key.zoom = 1; key.vx = 0; key.vy = 0;
+      // **それでも中央値の 1.34 倍に届かないなら、部の他の景から少しずつ借りる。**
+      // 序は景が12しかなく長さも揃っているので、寄せだけでは足りない
+      // （400種のうち383種で「キーが中央値の 1.0 倍しかない」に落ちた）。
+      // 借りるので部の尺は変わらない。
+      // **中央値は借りるたびに動くので、数えながら何度か借りること。**
+      // 一度だけ借りる書き方だと、借りた相手が中央値を押し下げて
+      // 目標そのものが動き、序（景の長さが二極化している部）で届かなかった
+      // ——長い景が8つ並んでいる中の1つをキーにするので、
+      // 中央値もその長い景たちになる（400種のうち26種が 1.27〜1.29倍で落ちた）。
+      for (let round = 0; round < 4; round++) {
+        const mid = med2(list.map((x) => x.dur));
+        const want2 = mid * 1.36 - key.dur;
+        if (want2 <= 0.01) break;
+        const donors = list.filter((x) => x !== key && x !== rel && !x.empty && !x.lock && x.dur > 0.56);
+        // **借りられるところまで借りる（全部か無しかにしないこと）。**
+        const room = donors.reduce((a, x) => a + (x.dur - 0.46), 0);
+        const take = Math.min(want2, room * 0.55);
+        if (take <= 0.01) break;
+        for (const x of donors) x.dur -= ((x.dur - 0.46) / room) * take;
+        key.dur += take;
+      }
+    }
+  }
+
+  // ---- 尺をこの作品の長さに合わせる ----
   // 部ごとの割合（±10%の振れ）はそのままに、**全体を一度だけ伸縮させる。**
   // 景の長短の関係も、事の進みかたも、層の時計も、比のまま保たれる。
-  // 端数は最後の景で吸って、合計をぴったり TOTAL にする。
+  // 端数は最後の景で吸って、合計をぴったり合わせる。
   // **ここは層の時計（lyD）と音（composeMusic が movements を読む）より前に置くこと。**
   {
-    const k = TOTAL / t;
+    // **`t` を数え直してから伸縮すること。** 流（キーカットを長く、寄せを短く）が
+    // 長さを書き換えているので、置きながら足していた `t` は古い。
+    // 古い `t` で比を取ると、余りが**最後の景に丸ごと乗る**
+    // ——終の最後の景が 24秒になり、「途中で色が替わらない長い景」で
+    // 120種のうち119種が落ちた（実際に落ちた）。
+    t = shots.reduce((a, s) => a + s.dur, 0);
+    const k = WANT / t;
     let acc = 0;
     for (const s of shots) { s.dur *= k; s.start = acc; acc += s.dur; }
     const last = shots[shots.length - 1];
-    if (last) last.dur += TOTAL - acc;
-    t = TOTAL;
+    if (last) last.dur += WANT - acc;
+    t = WANT;
   }
 
   // **長い景で画面を止めない。** 5秒以上の景に「動かない」を許すと、
@@ -572,10 +758,13 @@ export function composeWork(seed) {
   // 動かない景を許さないだけでなく、**動く量にも下限を置く。**
   // 寄りが 8秒で 19% しか無いと、面で描いた絵では画素がほとんど変わらない
   // （実測 0.18%／0.5秒）。長い景ほど大きく動かす。
-  // 下限は **4秒**（実測の「長い景」の線と同じ）。5秒にしていたとき、
-  // 4.5秒の梯の景が 0.79%／0.5秒で「静止画に見える」に落ちた。
+  // 下限は **3.5秒**。実測の「長い景」の線は4秒だが、**線を4秒に置くと漏れる。**
+  // 組んだあと全体を 360秒ちょうどへ伸縮させる（TOTAL）ので、4.0秒で置いた景が
+  // 3.94秒に縮む。実測はそれを丸めて「4.0s」として測るため、網をすり抜けた
+  // 3.94秒の階の景が 0.77%／0.5秒で「静止画に見える」に落ちた（実際に落ちた）。
+  // **伸縮のぶん下に余裕を取ること。**
   for (const s of shots) {
-    if (s.dur < 4) continue;
+    if (s.dur < 3.5) continue;
     if (s.mv === 0) s.mv = pick(rng, [1, 2, 4]);
     // 揺れ（mv 3）は地が付いてこないので面がほとんど変わらない。
     // 長い景では寄り・流し・傾きに替える。
@@ -584,6 +773,34 @@ export function composeWork(seed) {
     // **地も一緒に動かす。** 図だけ流すと、面積の大半を占める地が
     // 止まったままなので画面が固まって見える（実測 0.66%／0.5秒）。
     s.gmv = 1;
+    // **ただし地が一色だと、動かしても画素が1つも変わらない。**
+    // 余白の景（図が小さい）でそれが重なると、長い景が丸ごと静止画になる
+    // （実測 0.77%／0.5秒。序の形が管でなくなって出た。管は中の球が動くので
+    // 隠れていた）。だから長い景の地には**必ず切れ目を1本入れる**
+    // ——斜めの割り（1）か地平の帯（2）。どちらも面は2つのままなので余白は保つ。
+    if (s.gk === 0) s.gk = pick(rng, [1, 2]);
+    // **色の跳ばしは伸縮のあとに決め直すこと。**
+    // `put()` は伸縮前の長さで決めているので、尺の長い作品（WANT/360 が最大 1.5）
+    // では 5.4秒で置いた景が 8.1秒になり、「途中で色が替わらない長い景」に落ちる。
+    // 流（キーカットを長くする）を入れて、これが毎回起きるようになった。
+    // **主調で固定したい景（lock）は跳ばさない**（再現部が主調へ帰れなくなる）。
+    if (s.dur >= 7 && !s.turn && !s.lock) {
+      s.turn = 2;
+      s.tp1 = between(rng, 0.24, 0.42); s.tp2 = between(rng, 0.58, 0.8);
+      s.tc1 = pick(rng, far); s.tc2 = s.pal;
+    }
+  }
+  // **同じ図・同じ配色が続く断で、絵が変わらないままにしない。**
+  // put() の中でも見ているが、そこは組んでいる途中の前後関係しか見えない。
+  // 余白を入れて画面の大半が地になったので、図が同じだと断が消える
+  // （実測 5.3%。器から器へ、地も配色も同じだった）。
+  // 調は動かさず、反転と地の割りで替える（主題の中で色を跳ばすと再現部が帰れない）。
+  for (let i = 1; i < shots.length; i++) {
+    const a = shots[i - 1], b = shots[i];
+    if (a.m !== b.m || a.pal !== b.pal) continue;
+    if (a.inv !== b.inv || a.shade !== b.shade || a.gk !== b.gk || a.g2 !== b.g2) continue;
+    b.inv = !a.inv;
+    if (b.sparse && a.sparse) b.gk = a.gk === 1 ? 2 : 1;
   }
   // ---- 層（断をまたいで続くもの） ----
   // **景は切れる。層は切れない。** 水位・日・塵・歩のどれかを1つ選び、
@@ -592,7 +809,8 @@ export function composeWork(seed) {
   // 6分が「6分の1本」としてつながる。依頼者の求め:
   //   「シーンとかカットをまたいでるようなレイヤーがあってもいいんじゃないか」
   {
-    const lay = 1 + Math.floor(rng() * 4);
+    // 層。指示書があれば記事から決まったもの（水位・日・塵・歩）
+    const lay = (BR && BR.layer) ? BR.layer : 1 + Math.floor(rng() * 4);
     const lyA = rng(), lyB = rng(), lyDir = rng() < 0.5 ? -1 : 1;
     for (const s of shots) {
       s.lay = lay; s.lyT0 = 0; s.lyD = t;
@@ -600,6 +818,16 @@ export function composeWork(seed) {
       // 展開部のいちばん細かい断だけ細くする（画面が混むので）。
       // **消さない。** 消すと「そこだけ別の作品」になる
       s.lyW = (s.sec === 2 && s.dur < 1.0) ? 0.5 : 1;
+      // **層も流に参加させる。** 層は作品を1本貫くが、ずっと同じ濃さだと
+      // 「ただ動き続けている平面」で、カットの流れとは無関係に見える
+      // （依頼者「各カットをまたぐようなレイヤーがあって滑らかに各カットや
+      // シーンが流れている感じを作った方がいい」）。
+      // 寄せの帯では濃くしていき、キーカットでいちばん濃くする。
+      // これで**カットが替わっても層が同じ方へ強まっていく**ので、
+      // 断の向こう側と繋がって見える。
+      if (s.flow === 1) s.lyW *= 1.15;
+      else if (s.key) s.lyW *= 1.35;
+      else if (s.flow === 2) s.lyW *= 0.78;    // 引きでは薄れて、余白を邪魔しない
       // **日（円）の層のときは、地の円をやめる。** 円が2つ重なると
       // どちらが続いているものなのか分からなくなる（実際にそう見えた）
       if (lay === 2 && s.gk === 3) s.gk = 0;
@@ -647,6 +875,9 @@ export function composeWork(seed) {
     total: +t.toFixed(3), movements,
     shots: shots.slice(),
     themes: { A: A.m, B: B.m, C: C.m, I: I.m, home, dom },
+    pals: PALS,
+    brief: BR,
+    want: WANT,
   };
 }
 
@@ -693,6 +924,13 @@ export function checkWork(work) {
   const durs = S.map((s) => s.dur);
   // 型
   if (work.movements.length !== LAWS.sections) bad.push(`型: 部が ${work.movements.length} しかない`);
+  // **その作品が名乗った尺と、実際の合計が一致しているか**を見る。
+  // 名乗りは work.want（指示書があれば記事の長さから決まっている）。
+  // ここで totalOf(seed) を引くと、指示書つきの作品を全部落とす（実際に落ちた）。
+  const want = work.want !== undefined ? work.want : totalOf(work.seed);
+  if (Math.abs(work.total - want) > 0.15) {
+    bad.push(`型: 全体が ${work.total.toFixed(2)}秒（名乗りは ${want}秒）`);
+  }
   if (work.total < LAWS.minTotal || work.total > LAWS.maxTotal) {
     bad.push(`型: 全体が ${Math.round(work.total)}秒（${LAWS.minTotal}〜${LAWS.maxTotal}秒）`);
   }
@@ -708,6 +946,48 @@ export function checkWork(work) {
   if (work.movements[0] && work.movements[0].shots.some((s) => s.ev)) bad.push('型: 序で事が起きている（問いは無垢のまま置く）');
   if (!work.movements[3] || !work.movements[3].shots.some((s) => s.ev === 2)) bad.push('型: 再現部に「組」（組み上がり）が無い');
   if (!work.movements[4] || !work.movements[4].shots.some((s) => s.ev === 9)) bad.push('型: 終に「来」（人が来る）が無い');
+
+  // ---- 流 — **景は同格ではない** ----
+  // 三度目の失敗は「並列的で、全部のカットが同じ価値に見える」だった。
+  // 法「型」で部の並びは直したが、**部の中は対等に並んでいた。**
+  // ここは部ごとに、キーカットが1つあり／その手前が段々短くなり／
+  // 直後が余白であることを見る。
+  for (let i = 0; i < work.movements.length; i++) {
+    const ms = work.movements[i].shots;
+    if (ms.length < 4) continue;
+    const nm = work.movements[i].name;
+    const keys = ms.filter((x) => x.key);
+    if (keys.length !== LAWS.keysPerSec) {
+      bad.push(`流: ${nm} のキーカットが ${keys.length} 箇所（${LAWS.keysPerSec} つにする）`);
+      continue;
+    }
+    const key = keys[0];
+    const ds = [...ms.map((x) => x.dur)].sort((a, b) => a - b);
+    const mid = ds[ds.length >> 1] || 1;
+    // **主調で固定した景（lock）がキーの部は伸ばせない**ので、中央値以上でよい
+    // （再現部・終。あそこは「同じ姿で帰る」「主調のまま静まる」が先に立つ）。
+    const bar = key.lock ? 1.0 : LAWS.keyLongerThan;
+    if (key.dur < mid * bar) {
+      bad.push(`流: ${nm} のキーカットが中央値の ${(key.dur / mid).toFixed(2)} 倍しかない`);
+    }
+    // 寄せ。lock の部は配分を替えないので帯を作らない
+    const app = ms.filter((x) => x.flow === 1);
+    const need = key.lock ? 0 : LAWS.minApproach;
+    if (app.length < need) bad.push(`流: ${nm} の寄せが ${app.length} 景（${need} 以上）`);
+    // 寄せは段々短くなっていること
+    for (let k = 1; k < app.length; k++) {
+      if (app[k].dur > app[k - 1].dur + 1e-6) {
+        bad.push(`流: ${nm} の寄せが短くなっていない`);
+        break;
+      }
+    }
+    // 引き — キーの直後は余白（作品の最後の景だけは例外）
+    const at = ms.indexOf(key);
+    const nx = ms[at + 1];
+    if (nx && !nx.sparse && !nx.empty && !nx.lock) {
+      bad.push(`流: ${nm} のキーカットの直後が余白になっていない`);
+    }
+  }
   const owns = S.filter((s) => s.ev === 11).length;
   if (owns < LAWS.minOwnEvents) bad.push(`事: 図に固有の事が ${owns} 件しかない（${LAWS.minOwnEvents} 以上）`);
   // 展開部がいちばん速いこと（ここが遅いと山が無い）
@@ -735,7 +1015,12 @@ export function checkWork(work) {
   if (kinds > LAWS.maxMotifs) bad.push(`貌: 図が ${kinds} 種ある（${LAWS.maxMotifs} 以下に絞る）`);
   for (const k in share) {
     const r = share[k] / work.total;
-    if (r > LAWS.maxSameShare) bad.push(`貌: 「${NAMES[k]}」が全体の ${(r * 100) | 0}%（${(LAWS.maxSameShare * 100) | 0}% 以下）`);
+    if (r > LAWS.maxSameShare) {
+      // **形の名前で言うこと**（古い図の表を引くと、無い図の名前で報告してしまう）
+      const nm = (S.find((x) => x.m === +k && x.form) || {}).form;
+      bad.push(`貌: 「${nm ? nm.name : (FORM_KEYS[k] || NAMES[k])}」が全体の `
+        + `${(r * 100) | 0}%（${(LAWS.maxSameShare * 100) | 0}% 以下）`);
+    }
   }
   // 彩
   let jumps = 0;

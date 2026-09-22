@@ -13,7 +13,8 @@ description: YouTube のコメントを読んで、Primaries の作風（house-s
 ### 1. 集める
 
 ```bash
-node art/tools/comments.mjs --channel @primaries --out "<作品フォルダ>" --days 30
+node art/tools/comments.mjs --out "<作品フォルダ>" --days 30
+# 既定の投稿先は @yama-ha-i-zo（表示名は primaries）
 ```
 
 `<作品フォルダ>/comments.json` に溜まる。`used: false` のものが未処理。

@@ -113,7 +113,17 @@ function saveState(dir, st) {
 }
 
 // ---- 本番 ---------------------------------------------------------------
-fs.mkdirSync(OUT, { recursive: true });
+// PowerShell は `%USERPROFILE%` を展開しない（cmd の書き方）。
+// そのまま渡されると `%USERPROFILE%` という名前のフォルダが本当に出来てしまうので、
+// 作る前に気づかせる。**PowerShell では `$env:USERPROFILE` か、--out を省く。**
+if (/%[A-Za-z_][A-Za-z0-9_]*%/.test(OUT)) {
+  console.error('置場に展開されていない変数が入っています: ' + OUT);
+  console.error('PowerShell なら --out "$env:USERPROFILE\\Desktop\\Claude Art Project"、');
+  console.error('または --out を省いてください（既定でデスクトップの Claude Art Project になります）。');
+  process.exit(2);
+}
+// --dry-run では何も作らない（下見のつもりでフォルダが増えないように）
+if (!DRY) fs.mkdirSync(OUT, { recursive: true });
 const state = loadState(OUT);
 const usedLinks = new Set(state.works.map((w) => w.link));
 const usedSeeds = new Set(state.works.map((w) => w.seed));
@@ -151,8 +161,13 @@ if (!has('no-feed')) {
   if (!article && items.length) log('新しい無料記事が見つかりませんでした');
 }
 
-// 種と題名。記事があれば記事から、無ければ引数か日付から決める
-const key = article ? article.link : (flag('key', null) || new Date().toISOString().slice(0, 10));
+// 種と題名。記事があれば記事から、無ければ引数か日付から決める。
+// **URL だけでなく題と本文も混ぜる。** URL だけだと、記事の中身が変わっても
+// （書き直し・別の記事が同じ体裁）同じ種になり得る。題と本文を混ぜておけば、
+// 違う記事からは必ず違う世界が出る。
+const key = article
+  ? (article.link + '|' + article.title + '|' + article.body.slice(0, 2000))
+  : (flag('key', null) || new Date().toISOString().slice(0, 10));
 let seed = parseInt(flag('seed', ''), 10);
 if (!Number.isFinite(seed)) {
   seed = hash(key) % 1000;
@@ -164,6 +179,96 @@ if (!title) {
   const pool = free.length ? free : TITLES;
   title = pool[hash(key + 'title') % pool.length];
 }
+// ---- 記事から指示書を組む ---------------------------------------------
+// **種は記事のハッシュでしかない。** ハッシュは中身を読んでいないので、
+// 「記事から着想を得た」とは言えない。記事の言葉から出す要素を決める
+// （`art/js/brief.js`）。依頼者「作品にどのような要素を出すかは、
+// インプットしたnote記事の内容から着想を得るようにしてね」。
+//
+// **直前の作品で出た図は、次の作品では出さない。**
+// 台帳の `形` は5つの組をまとめて見るので、1つだけ同じでも通ってしまう
+// （骨格は14しかなく1本に5つ使うので、素直に引くと次の日も平均1.8個が再登場する）。
+// 依頼者「椅子のモチーフは以前見た。初回で2回連続は仕組みの不備」。
+// だから直前の1本ぶんは候補から外し、その前の1本ぶんは重みを落とす。
+// 「二度と出さない」にはしない（3日で骨格が尽きる。**偶然また出るのは許す**）。
+const formsOf = (w) => String((w && w.materials && w.materials.形) || '')
+  .split(' ').map((x) => x.split(':')[1]).filter(Boolean);
+const recorded = state.works.filter((w) => w.materials);
+let avoid = formsOf(recorded[recorded.length - 1]);
+let soften = formsOf(recorded[recorded.length - 2]);
+// **置場に素材の記録が無いうちは、台帳の `recentForms` を見る。**
+// この仕組みを入れる前に焼いた作品には素材が記録されていないので、
+// そのままだと「避ける図」が空のまま1本目が焼かれる
+// ——つまり**直しても最初の1本だけは同じ図が出得る**。
+// 台帳（`art/works/ledger.json`）の `recentForms` に持ち主が見た図を
+// 入れてあるので、記録が無いときはそちらを使う。
+// **焼いたあとは必ずここを書き換える**ので、次の日からは記録の側が効く。
+if (!avoid.length && !has('no-ledger')) {
+  try {
+    const F = await import('./fresh.mjs');
+    const l = F.load();
+    if (Array.isArray(l.recentForms)) avoid = l.recentForms.slice();
+    const last = l.works[l.works.length - 1];
+    if (last) soften = formsOf(last);
+  } catch (e) { /* 台帳が読めなくても進む */ }
+}
+if (avoid.length) log(`直前に出た図は避けます: ${avoid.join(' ')}`);
+
+let brief = null;
+if (article) {
+  const { briefFromText } = await import('../js/brief.js');
+  brief = briefFromText({ title: article.title, body: article.body }, seed, { avoid, soften });
+}
+
+// ---- 台帳を見て、素材がかぶらない種に決め直す -------------------------
+// **ここが繋がっていなかった。** `fresh.mjs` の台帳（形・配色・楽器・旋律・
+// 和音・伴奏・低音・音色・題名を1つでも過去と同じなら落とす）は作ってあったのに、
+// 毎日の道からは**一度も呼ばれていなかった**。だから同じ椅子の図が2日続いても
+// 誰も止めなかった（依頼者「初回で2回連続は仕組みの不備」——そのとおりだった）。
+//
+// 台帳は2か所に持つ。`art/works/ledger.json`（リポジトリ）と、
+// 置場の `.state.json`。**毎朝の `git stash` でリポジトリ側の書き込みが
+// 棚上げされて消えるため**、置場の側だけは必ず残るようにしてある。
+// 照合はこの2つを合わせて行う。
+let materials = null;
+let freshWarn = null;
+// **手で `--seed` を指定したときは動かさない**（下見・焼き直しのため）。
+const SEED_GIVEN = flag('seed', null) !== null;
+if (!has('no-ledger') && !SEED_GIVEN) {
+  const F = await import('./fresh.mjs');
+  const ledger = F.load();
+  const past = [
+    ...ledger.works,
+    ...state.works.filter((w) => w.materials).map((w) => ({ date: w.date, materials: w.materials })),
+  ];
+  const got = F.pickFresh(brief, seed, past);
+  if (got && !got.hit.length) {
+    if (got.seed !== seed) log(`種を ${seed} → ${got.seed} に寄せました（素材が過去とかぶらない最初の種）`);
+    seed = got.seed;
+    materials = got.materials;
+  } else if (got) {
+    // **素材が尽きたということなので、逃げずに知らせる。**
+    seed = got.seed;
+    materials = got.materials;
+    freshWarn = got.hit.map((h) => `${h.key}（${h.date} の種${h.seed}と同じ）`);
+    log('');
+    log('**素材が足りません。** 240通り当てても、過去とかぶらない組が出ませんでした。');
+    for (const w of freshWarn) log('  かぶり: ' + w);
+    log('  足す場所は `node art/tools/fresh.mjs --stock` が指します。');
+    log('');
+  }
+  // 種が動いたので、指示書を**新しい種で組み直す**（読む場所・直接さ・図が種に依る）
+  if (article) {
+    const { briefFromText } = await import('../js/brief.js');
+    brief = briefFromText({ title: article.title, body: article.body }, seed, { avoid, soften });
+  }
+}
+
+const briefArg = brief
+  ? Buffer.from(JSON.stringify(brief), 'utf8').toString('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  : null;
+
 const tag = String(((seed % 1000) + 1000) % 1000).padStart(3, '0');
 const today = new Date().toISOString().slice(0, 10);
 const folder = path.join(OUT, `${today} ${title} ${tag}`);
@@ -173,6 +278,20 @@ log(`題名: ${title} ${tag}`);
 log(`種  : ${seed}`);
 log(`記事: ${article ? article.title + ' / ' + article.link : '（無し）'}`);
 log(`置場: ${folder}`);
+if (brief) {
+  const { FORM_KEYS } = await import('../js/form.js');
+  const { LAYER_NAMES } = await import('../js/layer.js');
+  log('');
+  log('記事から決めた要素:');
+  log(`  読んだ語: ${brief.from.words.join('・') || '（当たらず。種で振った）'}`);
+  log(`  形      : ${brief.forms.map((i) => FORM_KEYS[i]).join(' ')}`);
+  log(`  序の形  : ${FORM_KEYS[brief.opening]}`);
+  log(`  層      : ${LAYER_NAMES[brief.layer]}`);
+  log(`  尺      : ${brief.total}秒（記事 ${brief.from.文字数}字）`);
+  log(`  時間の印象: 速さ${brief.pace} 揺れ${brief.sway} 刻み${brief.subdiv} 繰り返し${brief.ostinato}`);
+  log(`  寄る拍子: ${Object.entries(brief.meterW).sort((a, b) => b[1] - a[1])
+    .slice(0, 3).map(([k, v]) => `${k}(${v.toFixed(2)})`).join(' ')}／一文 ${brief.from.一文の長さ}字`);
+}
 log('');
 
 // ---- 説明文（YouTube にそのまま貼れる形） --------------------------------
@@ -195,6 +314,8 @@ const memo = [
   `種: ${seed}`,
   article ? `着想: ${article.title}` : '着想: （記事なし）',
   article ? `記事: ${article.link}` : '',
+  brief ? `記事から決めた要素: 形 ${brief.forms.join(',')} / 序 ${brief.opening} / 層 ${brief.layer} / 尺 ${brief.total}秒` : '',
+  brief ? `読んだ語: ${brief.from.words.join('・')}` : '',
   'タグ: generative art, algorithmic art, abstract animation, experimental animation,',
   '      visual music, procedural art, creative coding, motion art',
 ].filter(Boolean).join('\n');
@@ -211,15 +332,31 @@ log('テキストを書きました: ' + text);
 
 // **音楽が先。** 実時間の録画中に別の重い処理を走らせるとコマが落ちる。
 log('音楽を焼きます（実時間より速い）…');
-await run([path.join(HERE, 'record.mjs'), music, '--seed', String(seed), '--music']);
+await run([path.join(HERE, 'record.mjs'), music, '--seed', String(seed), '--music',
+  ...(briefArg ? ['--brief', briefArg] : [])]);
 
 log('映像を録ります（6分かかります）…');
 await run([path.join(HERE, 'record.mjs'), film, '--seed', String(seed),
-  '--size', SIZE, '--bitrate', VBR]);
+  '--size', SIZE, '--bitrate', VBR, ...(briefArg ? ['--brief', briefArg] : [])]);
 
+// **焼けたら台帳に書く。** 書かないと明日また同じ素材が出る。
+// 置場（`.state.json`）とリポジトリ（`art/works/ledger.json`）の両方へ書く。
 state.works.push({ date: today, title, seed, link: article ? article.link : null,
-  article: article ? article.title : null, folder });
+  article: article ? article.title : null, folder, materials });
 saveState(OUT, state);
+if (materials && !has('no-ledger')) {
+  try {
+    const F = await import('./fresh.mjs');
+    const l = F.load();
+    l.works.push({ date: today, article: article ? article.title : null, materials });
+    // **直前に出た図を覚えておく。** 次の1本ではここに入っている図を出さない。
+    l.recentForms = formsOf({ materials });
+    F.save(l);
+    log(`台帳に書きました（ぜんぶで ${l.works.length} 本）／次は ${l.recentForms.join(' ')} を避けます`);
+  } catch (e) {
+    log('台帳に書けませんでした（置場の記録は残っています）: ' + e.message);
+  }
+}
 log('');
 log('できました: ' + folder);
 
@@ -227,4 +364,7 @@ if (has('upload')) {
   log('YouTube へ上げます…');
   await run([path.join(HERE, 'upload.mjs'), film, '--title', `${title} ${tag}`,
     '--desc-file', text, '--privacy', flag('privacy', 'private')]);
+  // **上げた印を置く。** 毎朝の投稿は `win/upload-latest.ps1` が
+  // 「印の無いフォルダ」を拾う作りなので、印を置かないと二度上げになる。
+  fs.writeFileSync(path.join(folder, '.uploaded'), new Date().toISOString());
 }

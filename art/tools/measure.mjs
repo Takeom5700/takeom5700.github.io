@@ -16,9 +16,12 @@ import { analyse, meanAbsDiff, cutChange, OK } from './metrics.mjs';
 
 const SEED = parseInt(process.argv[2] || '0', 10);
 const has = (n) => process.argv.includes('--' + n);
+const flag = (n, d) => { const i = process.argv.indexOf('--' + n); return i < 0 ? d : process.argv[i + 1]; };
 const W = 480, H = 270;
 
-const page = await open(`export=1&seed=${SEED}&w=${W}&h=${H}`, { software: has('sw'), size: `${W},${H}` });
+const BRIEF = flag('brief', '');
+const page = await open(`export=1&seed=${SEED}&w=${W}&h=${H}`
+  + `${BRIEF ? '&brief=' + BRIEF : ''}`, { software: has('sw'), size: `${W},${H}` });
 const meta = page.meta;
 const shots = JSON.parse(await page.evaluate('JSON.stringify(window.__mumei.list())'));
 const shoot = async (t) => {

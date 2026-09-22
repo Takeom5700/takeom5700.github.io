@@ -14,6 +14,7 @@ import { MOTIFS, NAMES, ownEvent } from './motif.js';
 import { PIXEL, evTransform, evOverlay, evComposite } from './event.js';
 import { drawLayer, layerPhase } from './layer.js';
 import { colorsOf, ground, makeInk, makeGrain, nz, nz01, snz, clamp, TAU } from './paint.js';
+import { drawForm } from './form.js';
 
 // 作品の枠は 1600×900 の論理座標。出力の大きさによらず同じ構図になる。
 export const STAGE = { w: 1600, h: 900 };
@@ -95,7 +96,12 @@ export function createFilm(canvas) {
     let pal = sh.pal;
     if (sh.turn >= 1 && p > sh.tp1) pal = sh.tc1;
     if (sh.turn >= 2 && p > sh.tp2) pal = sh.tc2;
-    let col = colorsOf({ pal, inv: sh.inv });
+    // **shade（面の割り当て）を必ず渡すこと。** 渡し忘れていて、
+    // 譜が「shade を替えたから色が変わった」と思っているのに
+    // 画面は1画素も変わっていなかった。法「同じ主題が続く断では
+    // shade か inv を必ず替える」が画面の側で死んでいたので、
+    // 版を重ねても弱い断が消えなかった（実測 8.7% → 5.3% → 5.4%）。
+    let col = colorsOf({ pal, inv: sh.inv, shade: sh.shade, pals: sh.pals });
     if (sh.flash && f < sh.flash) col = { name: col.name, g: col.i, i: col.g, a: col.l, l: col.a, raw: col.raw };
 
     const sx = st.w / S.w, sy = st.h / S.h;
@@ -161,9 +167,15 @@ export function createFilm(canvas) {
       own: sh.ev === 11,          // 固 — 図ごとの固有の事
     };
     E.ink = makeInk(g, S, sh, col, E);
-    (MOTIFS[sh.m] || MOTIFS[0])(g, S, E);
+    // **その作品のために組んだ形があれば、そちらを描く**（`form.js`）。
+    // 無ければ既存の図の棚を引く（下見や過去の譜のため）。
     // 固有の事は、図と同じ座標で重ねて描く（人が椅子に座れる位置になる）
-    if (E.own) ownEvent(g, S, E);
+    if (sh.form) {
+      drawForm(g, S, E, sh.form);
+    } else {
+      (MOTIFS[sh.m] || MOTIFS[0])(g, S, E);
+      if (E.own) ownEvent(g, S, E);
+    }
     g.restore();
     // 事の描き足し（侵・喰・来）は画面の座標で置く
     if (sh.ev && !pix) evOverlay(g, S, E, ep);

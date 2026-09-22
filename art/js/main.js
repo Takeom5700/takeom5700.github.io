@@ -76,7 +76,18 @@ function start() {
   let seed = q.has('seed') ? (parseInt(q.get('seed'), 10) | 0) : 0;
   const showHud = q.get('hud') === '1';
 
-  let work = composeWork(seed);
+  // 指示書（記事の内容から決めた要素）。`?brief=` に base64url の JSON で渡す。
+  // **外部ファイルを読まない**（`art/` の中だけで完結、という線を守る）。
+  // 無ければ全部を種から振る（頁を素で開いたとき・過去の種を見るとき）。
+  let brief = null;
+  if (q.has('brief')) {
+    try {
+      const b64 = q.get('brief').replace(/-/g, '+').replace(/_/g, '/');
+      brief = JSON.parse(decodeURIComponent(escape(atob(b64))));
+    } catch (e) { console.error('指示書を読めませんでした: ' + e.message); brief = null; }
+  }
+
+  let work = composeWork(seed, brief);
   let music = composeMusic(work);
   const bad = checkWork(work);
   if (bad.length) console.error('基軸違反:\n' + bad.join('\n'));
@@ -114,6 +125,8 @@ function start() {
   function nextWork() {
     ended = false; rest = 0;
     seed += 1;
+    // 次の種へ行くときは指示書を外す（指示書はその記事のためのもの）
+    brief = null;
     work = composeWork(seed);
     music = composeMusic(work);
     const v = checkWork(work);
@@ -144,7 +157,7 @@ function start() {
     const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!OC) return null;
     const oc = new OC(2, Math.ceil(sr * dur), sr);
-    const sd = createSound(oc);
+    const sd = createSound(oc, music.tone);   // 音色も種から（頁と書き出しで同じ音）
     if (!sd) return null;
     for (const n of music.notes) {
       if (n.t + n.d < from || n.t > to) continue;
@@ -288,11 +301,17 @@ function start() {
       // 音楽の中身（tools/suno.mjs が style prompt を組むのに使う）。
       // **譜から取る。** 耳で聞いて書くと、種を変えたときに嘘になる。
       musicInfo() {
-        const V = ['music box', 'harp', 'bowed bass', 'string pad', 'bell',
-          'soft timpani', 'wordless choir', 'pizzicato', 'strings lead'];
+        // **声部の名前は譜が組んだ音色から取る**（固定の並びを書かない）。
+        // 音色は作品ごとに組み立てるので、決め打ちの名前は嘘になる。
+        const V = (music.tone && music.tone.voices || []).map((x) => (x && x.n) || String(x));
         return {
           tempo: music.tempo, tonic: music.tonic, total: work.total,
           notes: music.notes.length,
+          // **1本ぶんの素性。** 種を替えるとここが全部変わる
+          mode: music.mode, meter: music.meter, prog: music.prog,
+          band: music.band, tone: music.tone && music.tone.name,
+          devColor: music.devColor, bell: music.bell,
+          arp: music.arp, drum: music.drum,
           sections: work.movements.map((m) => {
             const inSec = music.notes.filter((n) => n.t >= m.start - 0.5 && n.t < m.start + m.dur);
             const set = [...new Set(inSec.map((n) => n.voice))].sort();
@@ -306,7 +325,10 @@ function start() {
       // 譜の中身（下見の道具が、どの時刻を見るか決めるのに使う）
       list() {
         return work.shots.map((s) => ({
-          start: +s.start.toFixed(3), dur: +s.dur.toFixed(3), name: NAMES[s.m],
+          start: +s.start.toFixed(3), dur: +s.dur.toFixed(3),
+          // **その作品のために組んだ形の名前を出す。** 古い図の表を引くと、
+          // 道具が存在しない図の名前を報告して診断が狂う（実際に狂った）
+          name: s.form ? s.form.name : NAMES[s.m],
           m: s.m, fps: s.fps, hand: s.hand, pal: s.pal, inv: s.inv ? 1 : 0,
           n: s.n, odd: s.odd ? 1 : 0, empty: s.empty, flash: s.flash, mv: s.mv,
           sec: s.sec, th: s.th, w: s.w, recall: s.recall ? 1 : 0,
@@ -330,6 +352,20 @@ function start() {
         const sh = Object.assign({
           id: 3, m, dur: 6, start: 0, n: 4, hand: 0, pal: 0, inv: false,
           gk: 0, gx: 0.5, gy: 0.55, ga: 0.7, gn: 3, g2: true,
+          ox: 0.12, oy: -0.08, k1: 0.5, k2: 0.5, k3: 0.45, odd: true,
+          fps: 12, boil: 1, grain: 0.18, mv: 0, mvA: 0.5, flash: 0,
+          hang: 0.6, hgap: 0.5, empty: 0,
+          zoom: 1, vx: 0, vy: 0, sparse: 0, lay: 0, lyW: 0, lyD: 1,
+          au: { hit: 0, root: 0, chord: 0, level: 1, silent: 0 },
+        }, over || {});
+        film.drawShot(sh, p * sh.dur);
+        return true;
+      },
+      // 組んだ形を1つだけ見る（`art/tools/forms.mjs` が使う。作品ではない）
+      demoForm(form, p, over) {
+        const sh = Object.assign({
+          id: 3, m: 0, form, dur: 6, start: 0, n: 4, hand: 0, pal: 0, inv: false,
+          gk: 1, gx: 0.5, gy: 0.55, ga: 0.7, gn: 3, g2: true,
           ox: 0.12, oy: -0.08, k1: 0.5, k2: 0.5, k3: 0.45, odd: true,
           fps: 12, boil: 1, grain: 0.18, mv: 0, mvA: 0.5, flash: 0,
           hang: 0.6, hgap: 0.5, empty: 0,
@@ -402,7 +438,7 @@ function start() {
     veil.style.opacity = '0';
     document.body.classList.add('running');
     try {
-      snd = createSound();
+      snd = createSound(null, music.tone);
       if (snd) { snd.resume(); sndT0 = snd.ctx.currentTime - t; sndIdx = 0; }
     } catch (e) { snd = null; }
     last = performance.now();
@@ -420,8 +456,12 @@ function start() {
       window.__saveSunk = true;
       return { bytes: blob.size, type: blob.type };
     },
-    async music(rate, mono) {
-      const bytes = await renderWav(0, work.total, rate || 48000, mono);
+    // 音だけ焼く。**`from`/`to` を渡せば途中だけ**（聴き比べを速くするため。
+    // 全長を待つと1本ぶんで数分かかり、2本の比較が面倒になる）
+    async music(rate, mono, from, to) {
+      const a = Math.max(0, from || 0);
+      const b = Math.min(work.total, to === undefined || to === null ? work.total : to);
+      const bytes = await renderWav(a, Math.max(a + 1, b), rate || 48000, mono);
       if (!bytes) return null;
       await sink(new Blob([bytes], { type: 'audio/wav' }));
       return { bytes: bytes.length, rate: rate || 48000, channels: mono ? 1 : 2 };
