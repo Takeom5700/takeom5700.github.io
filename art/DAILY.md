@@ -284,10 +284,24 @@ setx YT_CHANNEL "@yama-ha-i-zo"
 node art\tools\upload.mjs --whoami
 ```
 
-### 用意する手順
+### 用意する手順（**`setup-youtube.bat` をダブルクリックするだけ**）
+
+```
+art\tools\win\setup-youtube.bat   ← これをダブルクリック
+```
+
+尋ねられるのは**クライアントIDと秘密の2つだけ**。あとは自分でやる——
+ブラウザを開き、返ってきた合言葉を引き換え、**投稿先が合っているか確かめ**、
+環境変数（`YT_CLIENT_ID`／`YT_CLIENT_SECRET`／`YT_REFRESH_TOKEN`／`YT_CHANNEL`）に入れる。
+**違うチャンネルを選んでしまったら、鍵を保存せずに止まる。**
+
+そのIDと秘密だけは**持ち主がブラウザで作るしかない**（Google アカウントの操作なので、
+鍵を持たない側からは作れない）。下の1〜5がその手順。
 
 **0. チャンネルはもうある**（《primaries》`@yama-ha-i-zo`）。作る必要はない。
-大事なのは**手順6で、そのチャンネルを選ぶこと**。
+大事なのは**許可の画面でそのチャンネルを選ぶこと**だけ。
+
+#### 手で全部やる場合（`setup-youtube.bat` を使わないとき）
 
 1. <https://console.cloud.google.com/> でプロジェクトを作る
 2. 「API とサービス」→ **YouTube Data API v3 を有効化**
@@ -296,8 +310,10 @@ node art\tools\upload.mjs --whoami
 4. 「認証情報」→ OAuth クライアント ID → **デスクトップアプリ**
 5. 「APIキー」も1つ作る（コメントを読むのに使う。上げる方とは別）
 6. 一度だけブラウザで許可して refresh token を取る。
-   `https://developers.google.com/oauthplayground/` が早い
-   （右上の歯車で自分のクライアントID／シークレットを使う設定にする）。
+   **`node art/tools/auth.mjs --id <ID> --secret <秘密> --setx` が早い**
+   （自分で受け口を立てて、引き換えと投稿先の確認までやる。
+   手で文字列を貼る手順が無いので、貼り間違えが起きない）。
+   外の道具でやるなら `https://developers.google.com/oauthplayground/`。
    **スコープは2つ選ぶ:**
 
    ```
