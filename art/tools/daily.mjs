@@ -194,8 +194,24 @@ if (!title) {
 const formsOf = (w) => String((w && w.materials && w.materials.形) || '')
   .split(' ').map((x) => x.split(':')[1]).filter(Boolean);
 const recorded = state.works.filter((w) => w.materials);
-const avoid = formsOf(recorded[recorded.length - 1]);
-const soften = formsOf(recorded[recorded.length - 2]);
+let avoid = formsOf(recorded[recorded.length - 1]);
+let soften = formsOf(recorded[recorded.length - 2]);
+// **置場に素材の記録が無いうちは、台帳の `recentForms` を見る。**
+// この仕組みを入れる前に焼いた作品には素材が記録されていないので、
+// そのままだと「避ける図」が空のまま1本目が焼かれる
+// ——つまり**直しても最初の1本だけは同じ図が出得る**。
+// 台帳（`art/works/ledger.json`）の `recentForms` に持ち主が見た図を
+// 入れてあるので、記録が無いときはそちらを使う。
+// **焼いたあとは必ずここを書き換える**ので、次の日からは記録の側が効く。
+if (!avoid.length && !has('no-ledger')) {
+  try {
+    const F = await import('./fresh.mjs');
+    const l = F.load();
+    if (Array.isArray(l.recentForms)) avoid = l.recentForms.slice();
+    const last = l.works[l.works.length - 1];
+    if (last) soften = formsOf(last);
+  } catch (e) { /* 台帳が読めなくても進む */ }
+}
 if (avoid.length) log(`直前に出た図は避けます: ${avoid.join(' ')}`);
 
 let brief = null;
@@ -333,8 +349,10 @@ if (materials && !has('no-ledger')) {
     const F = await import('./fresh.mjs');
     const l = F.load();
     l.works.push({ date: today, article: article ? article.title : null, materials });
+    // **直前に出た図を覚えておく。** 次の1本ではここに入っている図を出さない。
+    l.recentForms = formsOf({ materials });
     F.save(l);
-    log(`台帳に書きました（ぜんぶで ${l.works.length} 本）`);
+    log(`台帳に書きました（ぜんぶで ${l.works.length} 本）／次は ${l.recentForms.join(' ')} を避けます`);
   } catch (e) {
     log('台帳に書けませんでした（置場の記録は残っています）: ' + e.message);
   }
