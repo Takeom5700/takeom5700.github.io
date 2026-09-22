@@ -2,7 +2,7 @@
 
 note の記事から着想を得て、6分ちょうどの作品を1本焼き、
 **1日1つのフォルダ**に「作品・音楽だけ・テキスト（題名と説明文）」を置く。
-そのまま YouTube（**Primaries**）へ上げるところまで。
+そのまま YouTube（**@yama-ha-i-zo**）へ上げるところまで。
 
 ---
 
@@ -92,7 +92,7 @@ node art\tools\daily.mjs --out "..." --title Interval --seed 318 --no-feed
 **軸（十法）は変えない。その上に積む層を、視聴者のコメントが育てる。**
 
 ```bash
-node art/tools/comments.mjs --channel @primaries --out "<作品フォルダ>" --days 30
+node art/tools/comments.mjs --out "<作品フォルダ>" --days 30
 ```
 
 1. コメントが `<作品フォルダ>/comments.json` に溜まる（重複は足さない）
@@ -226,9 +226,16 @@ Start-ScheduledTask -TaskName "Primaries daily"     # いますぐ1回試す
 **「チャンネルを作れば自動投稿できるようになるか？」の答えは「いいえ」。**
 チャンネルは必要だが、それだけでは足りない。要るものは4つ。
 
+**投稿先は《primaries》／ハンドル `@yama-ha-i-zo`**（2026-09-22 に依頼者が指定。もうある）。
+**表示名とハンドルが違う**ので、API に渡すのは必ずハンドルの方。
+`upload.mjs` と `comments.mjs` の既定がハンドルになっている。
+2026-09-22 時点で**動画0本**（`comments.mjs` は0本でも動く）。
+**このコンテナからは YouTube が見えない。** 確かめるのは持ち主のパソコンで
+`node art\tools\upload.mjs --whoami`。
+
 | | 要るもの | 備考 |
 |---|---|---|
-| 1 | YouTube チャンネル | Primaries |
+| 1 | YouTube チャンネル | **《primaries》@yama-ha-i-zo（もうある）** |
 | 2 | Google Cloud のプロジェクト＋ **YouTube Data API v3 を有効化** | 無料 |
 | 3 | OAuth クライアント（デスクトップ）と、**一度だけブラウザで許可**して得る refresh token | 以後は自動 |
 | 4 | **API 審査（YouTube API Services audit）** | これが通るまで**上げた動画は非公開に固定される** |
@@ -258,27 +265,29 @@ Start-ScheduledTask -TaskName "Primaries daily"     # いますぐ1回試す
 どのチャンネルに上がるかは、**許可を出したときに選んだチャンネル**で決まる。
 
 Google アカウントに複数チャンネルがあると、許可の画面で
-「チャンネルを選択」が出る。**そこで Primaries を選ぶこと。**
+「チャンネルを選択」が出る。**そこで @yama-ha-i-zo を選ぶこと。**
 個人チャンネルを選ぶと、作品はそちらに上がる。
 
-取り違えを防ぐ仕掛けを入れてある。
+取り違えを防ぐ仕掛けを入れてある。**既定で見張りが入っている。**
 
 ```bat
-setx YT_CHANNEL "@primaries"
+setx YT_CHANNEL "@yama-ha-i-zo"
 ```
 
-これを入れておくと、**上げる前に鍵の持ち主を確かめて、違っていたら上げずに止まる。**
+**設定し忘れても止まる**（`upload.mjs` の既定が `@yama-ha-i-zo`）。
+設定し忘れたときこそ別のチャンネルに上がって困るので、既定を入れてある。
+上げる前に鍵の持ち主を確かめて、違っていたら**上げずに止まる。**
+別のチャンネルへ出したいときだけ `YT_CHANNEL` を上書きする。
 いまの鍵がどこを指しているかは、いつでもこれで見られる。
 
 ```bat
 node art\tools\upload.mjs --whoami
 ```
 
-### 用意する手順（チャンネルを作ってから）
+### 用意する手順
 
-**0. まず YouTube でチャンネルを作る。** 名前は `Primaries`、
-ハンドルは `@primaries`（取れなければ `@primaries.film` など）。
-**作ってから下に進む**（チャンネルが無いと、選ぶ画面にも出てこない）。
+**0. チャンネルはもうある**（《primaries》`@yama-ha-i-zo`）。作る必要はない。
+大事なのは**手順6で、そのチャンネルを選ぶこと**。
 
 1. <https://console.cloud.google.com/> でプロジェクトを作る
 2. 「API とサービス」→ **YouTube Data API v3 を有効化**
@@ -296,7 +305,8 @@ node art\tools\upload.mjs --whoami
    https://www.googleapis.com/auth/youtube.readonly    ← 投稿先を確かめる
    ```
 
-   許可の途中で**チャンネルを選ぶ画面が出たら Primaries を選ぶ。**
+   許可の途中で**チャンネルを選ぶ画面が出たら `@yama-ha-i-zo` を選ぶ。**
+   **ここが唯一の分かれ道。** 別のチャンネルを選ぶと、作品はそちらに上がる。
 7. 環境変数に入れる
 
 ```bat
@@ -304,7 +314,7 @@ setx YT_CLIENT_ID "xxxx.apps.googleusercontent.com"
 setx YT_CLIENT_SECRET "xxxx"
 setx YT_REFRESH_TOKEN "1//xxxx"
 setx YT_API_KEY "AIza..."
-setx YT_CHANNEL "@primaries"
+setx YT_CHANNEL "@yama-ha-i-zo"
 ```
 
 （`setx` は**新しく開いたコマンドプロンプトから有効**。開いている窓では効かない）
@@ -315,7 +325,8 @@ setx YT_CHANNEL "@primaries"
 node art\tools\upload.mjs --whoami
 ```
 
-`投稿先: Primaries @primaries UCxxxx` と出れば正しい。
+`投稿先: primaries @yama-ha-i-zo UCxxxx` と出れば正しい。
+**表示名（primaries）とハンドル（@yama-ha-i-zo）の両方が出る。**
 別の名前が出たら、許可を出し直してチャンネルを選び直す。
 
 9. 1本だけ試す

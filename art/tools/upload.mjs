@@ -53,12 +53,15 @@ const TAGS = (flag('tags', 'generative art,algorithmic art,abstract animation,ex
 // **投稿先はチャンネル名で決まらない。鍵（refresh token）が持ち主を決める。**
 // だから「どのチャンネルに上がるか」は、許可を出したときに選んだチャンネルで決まる。
 // Google アカウントに複数チャンネルがあるなら、許可の画面で
-// **Primaries を選ぶこと**（personal の方を選ぶと、そこに上がってしまう）。
+// **@yama-ha-i-zo を選ぶこと**（personal の方を選ぶと、そこに上がってしまう）。
 //
 // 取り違えを防ぐため、上げる前に「いまの鍵が誰か」を必ず確かめる。
-// `YT_CHANNEL`（@ハンドル か UC… のID）を入れておくと、
-// **違うチャンネルなら上げずに止まる。**
-const WANT = process.env.YT_CHANNEL || '';
+// **既定で見張りを入れてある。** `YT_CHANNEL` を設定し忘れても、
+// 鍵が別のチャンネルを指していたら上げずに止まる
+// （設定し忘れたときこそ、別のチャンネルに上がって困る）。
+// 別のチャンネルへ出したいときだけ `YT_CHANNEL` を上書きする。
+const CHANNEL_DEFAULT = '@yama-ha-i-zo';   // 依頼者の指定（2026-09-22）
+const WANT = process.env.YT_CHANNEL || CHANNEL_DEFAULT;
 
 // ---- 合言葉を取り直す ----------------------------------------------------
 async function accessToken() {
@@ -112,12 +115,13 @@ if (me) {
       || me.title.toLowerCase() === want;
     if (!ok) {
       console.error(`止めました。YT_CHANNEL は "${WANT}" ですが、いまの鍵は上のチャンネルを指しています。`);
-      console.error('許可を出し直して、そのとき Primaries のチャンネルを選んでください（art/DAILY.md）。');
+        console.error(`許可を出し直して、そのとき ${WANT} のチャンネルを選んでください（art/DAILY.md）。`);
       process.exit(1);
     }
   }
 } else {
   console.log('投稿先: 確かめられません（youtube.readonly を許可していない鍵です）。');
+  console.log(`  → 出したいのは ${WANT} です。`);
   console.log('  → 取り違えが怖いので、最初の1本は上げたあとに YouTube Studio で確かめてください。');
 }
 if (has('whoami')) process.exit(0);

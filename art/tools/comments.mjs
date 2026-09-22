@@ -1,7 +1,8 @@
 // YouTube のコメントを集める。**視聴者が作風に参加するための入口。**
 //
-//   node art/tools/comments.mjs --channel @primaries --out "C:\\...\\Claude Art Project"
-//   node art/tools/comments.mjs --channel @primaries --out ./out --days 7
+//   node art/tools/comments.mjs --out "C:\\...\\Claude Art Project"
+//   node art/tools/comments.mjs --out ./out --days 7
+//   node art/tools/comments.mjs --channel @別のハンドル --out ./out
 //
 // 集めたものは `<out>/comments.json` に溜まる（重複は足さない）。
 // これを読んで作風にするのは `.claude/skills/style-from-comments`。
@@ -21,7 +22,8 @@ const flag = (n, d) => { const i = argv.indexOf('--' + n); return i < 0 ? d : ar
 
 const KEY = process.env.YT_API_KEY;
 // 投稿先のチャンネル。`YT_CHANNEL` に入れておけば毎回書かなくてよい
-const CHANNEL = flag('channel', process.env.YT_CHANNEL || '@primaries');
+// 投稿先。既定は依頼者のチャンネル（2026-09-22 に指定）
+const CHANNEL = flag('channel', process.env.YT_CHANNEL || '@yama-ha-i-zo');
 const OUT = flag('out', './out');
 const DAYS = parseInt(flag('days', '30'), 10);
 const MAXV = parseInt(flag('videos', '20'), 10);
