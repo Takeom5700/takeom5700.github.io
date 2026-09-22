@@ -284,6 +284,7 @@ pull のあとに `ledger-merge.mjs` が写しを足し戻す。
 | `art/tools/win/` | **毎朝6時に自動で回す仕掛け**（`install-task.bat` をダブルクリックするだけ。詰まったら `check-task.bat`、YouTube の鍵は `setup-youtube.bat`）。**`.bat` には ASCII しか書かない**（日本語は隣の `.ps1` へ。cmd が日本語の行を読み損なってコメントを実行する）|
 | `art/tools/auth.mjs` | YouTube の鍵を取る（受け口を自分で立てて、**投稿先が合っているかまで確かめる**）|
 | `art/tools/win/update.bat` | **道具を最新にする**（`git pull` を打つ代わりにダブルクリック。何が来たかを並べる）|
+| `art/tools/win/upload-latest.bat` | **鍵を入れる前に焼いた作品を、あとから上げる。** `daily.ps1` は鍵が無い日は作るだけで止まり、しかも「その日ぶんが既にあるなら何もしない」ので、`daily.bat` を叩き直しても上がらない（この抜け道が必要だった）|
 | `.claude/skills/house-style` | **視聴者のコメントで積み上がった作風。** 新作の前に必ず読む |
 | `.claude/skills/style-from-comments` | コメントを汲んで作風に積む／膨らんだら圧縮する |
 
@@ -314,6 +315,17 @@ pull のあとに `ledger-merge.mjs` が写しを足し戻す。
 `art/tools/daily.mjs`（1日1本を焼いてフォルダに置く）と
 `art/tools/upload.mjs`（YouTube へ上げる）は、そちらで走らせる前提で書いてある。
 **YouTube は API 審査を通すまで、上げた動画が非公開に固定される**（外せない）。
+
+**毎朝の投稿が動く条件は3つある。** どれか1つ欠けると上がらない。
+
+| | 確かめかた |
+|---|---|
+| 1. 予定が入っている | `art\tools\win\check-task.bat`（予定の名前は `Primaries daily`）|
+| 2. 鍵が入っている | `node art\tools\upload.mjs --whoami`。**環境変数なので、入れたあと端末を開き直すこと** |
+| 3. 手元の枝が新しい | `art\tools\win\update.bat`。**`main` には道具が入っていない**（`.ps1` も `auth.mjs` も `brief.js` も枝の側にしかない）ので、パソコンの clone は枝に居ること |
+
+**鍵が無い日は作るだけで止まる**（`daily.ps1` が `--upload` を付けない）。
+そのぶんは `upload-latest.bat` で後から上げる。
 
 **題名は `score.js` の `TITLE` 一箇所で決まる**（`'Passage'`）。頁の `<title>`・
 始める前の一行・書き出すファイル名がこれに揃う。改題するならそこと
