@@ -190,6 +190,16 @@ Get-Content "$env:USERPROFILE\Desktop\Claude Art Project\daily.log" -Tail 30 -Wa
 時刻を変えるときは `install-task.ps1` の `$At = '06:00'` を書き換えて、もう一度叩く。
 **何度叩いても上書きなので、予定は増えない**（同じ名前の予定は1つしか持てない）。
 
+### 道具を最新にする（`git pull` を打たずに）
+
+```
+art\tools\win\update.bat   ← ダブルクリック
+```
+
+`git pull` を打つためだけに端末を開くのが手間なので、フォルダから叩ける形にした。
+**何が新しく来たかと、それが何をした変更かを最後に並べる。**
+毎朝の自動実行（`daily.ps1`）も最初に同じことをやっている。
+
 ### 入ったかどうかは `check-task.bat` で見る
 
 ```
