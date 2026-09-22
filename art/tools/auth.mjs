@@ -187,12 +187,28 @@ async function finish(code, err) {
     console.log('投稿先を確かめられませんでした（youtube.readonly が許可されていない）。');
   }
 
+  // **鍵そのものを画面に出さないこと。**
+  // refresh token は期限の無い資格情報で、これ1つでこのチャンネルへ
+  // 投稿できる。端末に出すと、画面の写真・配信・肩越しの目・端末の履歴に
+  // そのまま残る（持ち主が画面の写真を送ってきて、そこに全文が写っていた）。
+  // 環境変数へは下で直に入れるので、**人が読む必要はどこにも無い。**
+  // 頭と尻だけ見せて「取れた」ことだけ分かるようにする。
+  const mask = (t) => (!t ? '(無し)'
+    : t.length <= 14 ? '*'.repeat(t.length)
+      : t.slice(0, 6) + '…' + '*'.repeat(12) + '…' + t.slice(-4));
   console.log('');
-  console.log('YT_REFRESH_TOKEN=' + j.refresh_token);
+  console.log('鍵を受け取りました: YT_REFRESH_TOKEN = ' + mask(j.refresh_token));
+  console.log('（**鍵そのものは画面に出しません。** 人に見せる必要が無く、');
+  console.log('  見えたところから漏れるものなので）');
   console.log('');
   if (has('setx') && process.platform === 'win32') {
+    // **`cmd /c` を通さないこと。** `setx` は実行ファイルなので直に起こせる。
+    // cmd を通すと値が cmd の解釈を受ける（`&` で切れる・`%` が変数展開になる）。
+    // いまの鍵にはその文字が入っていないので通っているが、入った日に黙って壊れる
+    // ——許可の URL がまさにそれで切れた（`cmd /c start` に URL を渡していた）。
     const put = (k, v) => new Promise((ok2) => {
-      const p = spawn('cmd', ['/c', 'setx', k, v], { stdio: 'ignore' });
+      const p = spawn('setx', [k, v], { stdio: 'ignore', shell: false });
+      p.on('error', () => ok2());
       p.on('exit', () => ok2());
     });
     await put('YT_CLIENT_ID', ID);
