@@ -268,6 +268,12 @@ node art/tools/fresh.mjs --list                # 台帳の中身
 
 核に触れる求め（画面に文字・怖くする・国旗）も断って、理由を書付に残す。
 
+**毎朝の `claude` は手元のファイルを書き換えたままコミットしないことがある。**
+作品を作る過程で `art/js/score.js` などを触るので、翌日の `git pull` が
+「Your local changes would be overwritten by merge」で止まる（実際に止まった）。
+だから `daily.ps1` と `update.bat` は**引く前に `git stash` で脇へ置く**。
+捨てないので `git stash list` → `git stash pop` で戻せる。
+
 **このコンテナから持ち主のパソコンへは届かない。** 2026-09-22 に確かめた——
 登録されているパソコン側のセッションは全部 `disconnected`（`computer_unreachable`）で、
 繋がっているのはクラウド側の1つだけ。だから**`git pull` は持ち主が叩くしかない**

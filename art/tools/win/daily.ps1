@@ -157,7 +157,17 @@ try {
   Say ('リポジトリ: ' + $repo)
   Say ('置場      : ' + $out)
 
-  # 道具とスキルを最新にする（失敗しても止めない。ネットが無い日もある）
+  # ---- 道具とスキルを最新にする ----------------------------------------
+  # **手元の直しかけを先に脇へ置くこと。** 前の回の claude が art/js/score.js
+  # などを書き換えてコミットせずに残すので、そのままだと
+  # 「Your local changes would be overwritten by merge」で毎回止まる
+  # （実際に持ち主のパソコンで止まった）。失敗しても進む（ネットが無い日もある）。
+  $dirty = @(& git status --porcelain 2>$null | Where-Object { $_ -notmatch '^\?\?' })
+  if ($dirty.Count) {
+    Say ('[git] 手元の直しかけ ' + $dirty.Count + ' 件を脇へ置きます（git stash）')
+    foreach ($d in $dirty) { Say ('      ' + $d) }
+    Run 'git' @('stash', 'push', '-m', ('auto ' + (Get-Date -Format 'yyyy-MM-dd HH:mm')))
+  }
   Run 'git' @('pull', '--ff-only')
 
   # その日ぶんが既にあるなら何もしない（遅れて起きた日に2本焼かないため）

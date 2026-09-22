@@ -19,15 +19,25 @@ $branch = (& git rev-parse --abbrev-ref HEAD 2>$null)
 Write-Host ('ブランチ  : ' + $branch)
 Write-Host ''
 
+# **手元の直しかけを先に脇へ置く。** 毎朝の自動実行（claude）が
+# art/js/score.js などを書き換えてコミットせずに残すので、そのままだと
+# 「Your local changes would be overwritten by merge」で止まる
+# （実際に持ち主のパソコンで止まった）。stash なので捨てずに取っておける。
+$dirty = @(& git status --porcelain 2>$null | Where-Object { $_ -notmatch '^\?\?' })
+if ($dirty.Count) {
+  Write-Host ('手元の直しかけが ' + $dirty.Count + ' 件あります。脇へ置きます（git stash）:')
+  foreach ($d in $dirty) { Write-Host ('  ' + $d) }
+  & git stash push -m ('auto ' + (Get-Date -Format 'yyyy-MM-dd HH:mm')) | Out-Null
+  Write-Host '（戻したいときは git stash list → git stash pop）'
+  Write-Host ''
+}
+
 & git pull --ff-only
 $code = $LASTEXITCODE
 Write-Host ''
 
 if ($code -ne 0) {
   Write-Host '取り込めませんでした。上に出ている文言を見てください。'
-  Write-Host 'よくあるのは「手元で何かを直していて競合している」。そのときは:'
-  Write-Host '  git stash   （直しかけを脇に置く）'
-  Write-Host '  git pull'
   exit 1
 }
 
