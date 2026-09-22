@@ -229,16 +229,31 @@ try {
     if ($c) { Say '[claude] 今日のぶんができていません。機械だけで作り直します' }
     Say '  （claude が「Not logged in」と言っていたら、一度 claude を手で立ち上げて'
     Say '   /login を通してください。それまでは記事を読まずに作ります）'
+    # **ここで --upload は付けない。** 投稿は下の一箇所にまとめてある（理由は下）。
     $a = @('art\tools\daily.mjs', '--out', $out, '--skip-if-done')
-    if ($env:YT_REFRESH_TOKEN) {
-      Say '[node] 作って YouTube まで上げます'
-      $a += '--upload'
-    } else {
-      Say '[node] YouTube の鍵が無いので、作るところまで（上げません）'
-    }
     Run 'node' $a
     if (MadeToday $out) { Say '[node] できました' }
     else { Say '[node] できませんでした。上のログを見てください' }
+  }
+
+  # ---- 投稿（作りかたが2通りあるので、出口は1つにまとめる）----------------
+  #
+  # **claude が作った日は一度も上がらない作りだった。** `--upload` は
+  # 機械だけの経路（daily.mjs）にしか付いていなくて、記事を読んで作る本命の
+  # 経路（claude）には投稿の処理が無かった。さらに鍵が無い日に作ったぶんは
+  # 「その日ぶんは既にある」と判定されて、あとから叩いても上がらなかった。
+  #
+  # だから**どちらの経路で作っても、最後にここを通る**ようにする。
+  # `upload-latest.ps1` は「まだ上げていない作品」を古い順に上げるので、
+  # 溜まっていたぶんも自然に片付く（印を置くので二度上げない）。
+  if ($env:YT_REFRESH_TOKEN) {
+    Say '[上げる] まだ上げていない作品を YouTube へ'
+    Run 'powershell' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+      (Join-Path $here 'upload-latest.ps1'), $out, '3')
+  } else {
+    Say '[上げる] YouTube の鍵が無いので上げません（作るところまで）'
+    Say '         鍵を入れたら art\tools\win\setup-youtube.bat → そのあとは'
+    Say '         溜まっているぶんも翌朝に自動で上がります'
   }
 
   Say ('----- 終わり ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' -----')

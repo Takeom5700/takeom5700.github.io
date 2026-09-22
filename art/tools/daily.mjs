@@ -364,4 +364,7 @@ if (has('upload')) {
   log('YouTube へ上げます…');
   await run([path.join(HERE, 'upload.mjs'), film, '--title', `${title} ${tag}`,
     '--desc-file', text, '--privacy', flag('privacy', 'private')]);
+  // **上げた印を置く。** 毎朝の投稿は `win/upload-latest.ps1` が
+  // 「印の無いフォルダ」を拾う作りなので、印を置かないと二度上げになる。
+  fs.writeFileSync(path.join(folder, '.uploaded'), new Date().toISOString());
 }
