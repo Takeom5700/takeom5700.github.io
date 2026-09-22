@@ -282,7 +282,7 @@ pull のあとに `ledger-merge.mjs` が写しを足し戻す。
 | `art/DAILY.md` | **毎日1本を自動で作って上げる**（note から着想・6分・YouTube）|
 | `art/DAILY-PROMPT.md` | パソコンの Claude Code へ毎朝打つプロンプト |
 | `art/tools/win/` | **毎朝6時に自動で回す仕掛け**（`install-task.bat` をダブルクリックするだけ。詰まったら `check-task.bat`、YouTube の鍵は `setup-youtube.bat`）。**`.bat` には ASCII しか書かない**（日本語は隣の `.ps1` へ。cmd が日本語の行を読み損なってコメントを実行する）|
-| `art/tools/auth.mjs` | YouTube の鍵を取る（受け口を自分で立てて、**投稿先が合っているかまで確かめる**）|
+| `art/tools/auth.mjs` | YouTube の鍵を取る（受け口を自分で立てて、**投稿先が合っているかまで確かめる**）。**URL を `cmd /c start` に渡さないこと**——cmd が `&` をコマンドの区切りとして読むので URL が最初の `&` で切れ、`client_id` だけが届いて Google が「Required parameter is missing: response_type」を返す（実際に返した）。`rundll32 url.dll,FileProtocolHandler` を使う。控えに押すだけの頁も1枚書く |
 | `art/tools/win/update.bat` | **道具を最新にする**（`git pull` を打つ代わりにダブルクリック。何が来たかを並べる）|
 | `art/tools/win/upload-latest.bat` | **鍵を入れる前に焼いた作品を、あとから上げる。** `daily.ps1` は鍵が無い日は作るだけで止まり、しかも「その日ぶんが既にあるなら何もしない」ので、`daily.bat` を叩き直しても上がらない（この抜け道が必要だった）|
 | `.claude/skills/house-style` | **視聴者のコメントで積み上がった作風。** 新作の前に必ず読む |

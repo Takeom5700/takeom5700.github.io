@@ -17,7 +17,14 @@
 
 import http from 'node:http';
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+
+// **自分の場所は `fileURLToPath` で取る。** `new URL(import.meta.url).pathname` は
+// Windows で `/C:/Users/...` を返し、`path.resolve` が `\C:\Users\...` にする。
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 const argv = process.argv.slice(2);
 const flag = (n, d) => { const i = argv.indexOf('--' + n); return i < 0 ? d : argv[i + 1]; };
@@ -56,14 +63,49 @@ const state = crypto.randomBytes(12).toString('hex');
 // `spawn` の失敗は非同期の 'error' イベントで来るので、try/catch では捕まらない
 // （xdg-open が無い端末で「Unhandled 'error' event」で落ちた）。
 // 開けなければ URL を出すだけでよく、手で開いてもらえば足りる。
+//
+// **Windows で `cmd /c start` に URL を渡さないこと。**
+// cmd は `&` をコマンドの区切りとして読むので、**URL が最初の `&` で切られる。**
+// 許可の URL は `?client_id=…&redirect_uri=…&response_type=code&…` なので、
+// `client_id` だけが届いて Google が
+// 「Required parameter is missing: response_type / エラー 400: invalid_request」
+// を返す（持ち主のパソコンで実際にこれが出た）。
+// `%2F` のような百分率も cmd が変数展開の記号として触る。
+//
+// だから `rundll32 url.dll,FileProtocolHandler <url>` を使う。
+// これは引数をそのまま受け取って既定のブラウザへ渡すので、
+// **cmd の解釈が一切入らない**（`&` も `%` も無事に届く）。
 const open = (url) => {
-  const cmd = process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]]
+  const cmd = process.platform === 'win32'
+    ? ['rundll32', ['url.dll,FileProtocolHandler', url]]
     : process.platform === 'darwin' ? ['open', [url]] : ['xdg-open', [url]];
   try {
     const p = spawn(cmd[0], cmd[1], { stdio: 'ignore', detached: true });
-    p.on('error', () => { /* 上の URL を手で開いてもらう */ });
+    p.on('error', () => { /* 下の控えの頁を開いてもらう */ });
     p.unref();
   } catch (e) { /* 同じ */ }
+};
+
+// **控えを1枚置く。** 端末から長い URL を写すのは現実的でないので、
+// 押すだけで飛べる頁をファイルに書いて、その場所を知らせる。
+// ブラウザが開かない・開いた URL が変だったときは、これを開けばよい。
+const writeFallback = (url) => {
+  try {
+    const f = path.join(HERE, '.auth-link.html');
+    fs.writeFileSync(f, '<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">'
+      + '<title>YouTube の許可</title>'
+      + '<style>body{font-family:sans-serif;max-width:700px;margin:80px auto;padding:0 20px;'
+      + 'line-height:1.9}a{font-size:20px}code{background:#eee;padding:2px 6px}</style></head><body>'
+      + '<h1>YouTube への許可</h1>'
+      + '<p>下を押すと Google の同意画面が開きます。'
+      + '<strong>「チャンネルを選択」が出たら primaries（@yama-ha-i-zo）を選んでください。</strong></p>'
+      + `<p><a href="${url.replace(/&/g, '&amp;')}">許可の画面へ進む</a></p>`
+      + '<p>「このアプリは Google で確認されていません」と出たら、'
+      + '<strong>「詳細」→「Primaries（安全ではないページ）に移動」</strong>で進めます。</p>'
+      + '<p>終わったら、この頁は閉じてよいです。</p>'
+      + '</body></html>', 'utf8');
+    return f;
+  } catch (e) { return null; }
 };
 
 const srv = http.createServer(async (req, res) => {
@@ -209,8 +251,16 @@ srv.on('listening', () => {
   });
   console.log('ブラウザを開きます。**「チャンネルを選択」が出たら ' + WANT + ' を選んでください。**');
   console.log('');
-  console.log('開かなければ、この URL を自分で開いてください:');
-  console.log(url);
+  const fb = writeFallback(url);
+  if (fb) {
+    console.log('**開かなかったら、このファイルをダブルクリックしてください**');
+    console.log('  ' + fb);
+    console.log('（押すだけで同意画面へ飛べる控えです。端末から長い URL を');
+    console.log('  写す必要はありません）');
+  } else {
+    console.log('開かなければ、この URL を自分で開いてください:');
+    console.log(url);
+  }
   console.log('');
   console.log('待っています…（やめるときは Ctrl+C）');
   open(url);
