@@ -455,8 +455,12 @@ function start() {
       window.__saveSunk = true;
       return { bytes: blob.size, type: blob.type };
     },
-    async music(rate, mono) {
-      const bytes = await renderWav(0, work.total, rate || 48000, mono);
+    // 音だけ焼く。**`from`/`to` を渡せば途中だけ**（聴き比べを速くするため。
+    // 全長を待つと1本ぶんで数分かかり、2本の比較が面倒になる）
+    async music(rate, mono, from, to) {
+      const a = Math.max(0, from || 0);
+      const b = Math.min(work.total, to === undefined || to === null ? work.total : to);
+      const bytes = await renderWav(a, Math.max(a + 1, b), rate || 48000, mono);
       if (!bytes) return null;
       await sink(new Blob([bytes], { type: 'audio/wav' }));
       return { bytes: bytes.length, rate: rate || 48000, channels: mono ? 1 : 2 };

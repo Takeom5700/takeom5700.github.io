@@ -3,6 +3,7 @@
 //   node art/tools/record.mjs Passage-004.webm --seed 4
 //   node art/tools/record.mjs Passage-004.webm --seed 4 --no-audio   # 映像だけ
 //   node art/tools/record.mjs Passage-004.wav  --seed 4 --music      # 音楽だけ（48kHz ステレオ）
+//   node art/tools/record.mjs a.wav --seed 4 --music --to 90     # 頭の90秒だけ（聴き比べ用）
 //   node art/tools/record.mjs Passage-004.wav  --seed 4 --music --rate 32000 --mono
 //
 // export.mjs は絵を1枚ずつ焼いて ffmpeg に流すので速いが、
@@ -49,7 +50,11 @@ page.setSink((buf) => { fs.writeSync(fd, buf); got += buf.length; });
 if (MUSIC) {
   console.log('音楽を焼いています…（実時間より速い）');
   // --mono は**送れる大きさに収めるため**の逃げ道（音の作りは変えない）
-  await page.evaluate(`window.__save.music(${parseInt(flag('rate', '48000'), 10)}, ${has('mono')})`);
+  // `--from` / `--to` で途中だけ焼ける（聴き比べ用）
+  const AF = parseFloat(flag('from', '0'));
+  const AT = flag('to', null);
+  await page.evaluate(`window.__save.music(${parseInt(flag('rate', '48000'), 10)}, ${has('mono')}, `
+    + `${AF}, ${AT === null ? 'null' : parseFloat(AT)})`);
 } else {
   console.log(`録っています…（${(meta.total / 60).toFixed(1)}分かかります）`);
   await page.evaluate(`window.__save.film(${has('no-audio') ? 'false' : 'true'}); 'started'`);
