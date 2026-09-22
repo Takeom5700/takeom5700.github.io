@@ -65,7 +65,7 @@ for (let i = 0; i < N; i++) {
   console.log(` ${String(seed).padStart(4)}  ${String(b.from.直接さ).padEnd(5)} ${b.from.読んだ場所.padEnd(3)}`
     + ` ${b.forms.map((k) => FORM_KEYS[k]).join(' ').padEnd(42)}`
     + ` ${LAYER_NAMES[b.layer].padEnd(3)} ${(w.total / 60).toFixed(1)}分`
-    + ` ${(m.tonic + m.mode).padEnd(10)} ${m.meter.padEnd(5)} ${m.tone.voices.slice(0, 3).join('・')}`);
+    + ` ${(m.tonic + m.mode).padEnd(10)} ${m.meter.padEnd(5)} ${m.tone.voices.slice(0, 3).map((v) => v.n || v).join('・')}`);
 }
 console.log('');
 console.log(`別物になった読み: ${sigs.size} / ${N}`);

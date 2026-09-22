@@ -33,26 +33,34 @@
 //   終=聲と弦、最後にオルゴールが独りで終わる
 
 import { makeRng, between, pick } from './rng.js';
-import { forRole } from './sound.js';
+import { makeInstrument } from './sound.js';
 
 // ---- 楽器の割り当て --------------------------------------------------
 // **声部と楽器の対応を作品ごとに組む。** これが固定だと、和音・拍子・音階を
 // 振っても「同じ曲」に聞こえる（依頼者に二度そう聞こえた。ここが本当の原因）。
 // 声部 0=旋律 1=分散和音 2=低音 3=持続 4=一撃 5=拍 6=もう一つの声 7=弾き 8=もう一つの旋律
+// **表から選ばない。組み立てる**（`makeInstrument`）。
+// 20種の表から選んでいたので、役ごとに取れる処方が5〜9種しかなく、
+// 音色の組み合わせがすぐ尽きた。依頼者「音色の選択肢ももっと膨大にして」。
+// 実測: 旋律の音色を3000回組んで3000通り全部別物。
 function makeVoices(rng) {
   const one = (role, avoid) => {
-    const pool = forRole(role).filter((x) => !avoid || !avoid.includes(x.n));
-    return pick(rng, pool.length ? pool : forRole(role))?.n;
+    // 同じ性格の音が隣に来ないように、名前が被ったら組み直す
+    for (let g = 0; g < 12; g++) {
+      const x = makeInstrument(rng, role);
+      if (!avoid || !avoid.includes(x.n)) return x;
+    }
+    return makeInstrument(rng, role);
   };
   const mel = one('mel');
-  const mel2 = one('mel', [mel]);                 // 別の部で主旋律を取るもの
-  const arp = one('arp', [mel]);
+  const mel2 = one('mel', [mel.n]);               // 別の部で主旋律を取るもの
+  const arp = one('arp', [mel.n]);
   const bass = one('bass');
   const pad = one('pad');
-  const pad2 = one('pad', [pad]);
+  const pad2 = one('pad', [pad.n]);
   const hit = one('hit');
   const pulse = one('pulse');
-  const low2 = one('bass', [bass]);
+  const low2 = one('bass', [bass.n]);
   return [mel, arp, bass, pad, hit, pulse, pad2, low2, mel2];
 }
 

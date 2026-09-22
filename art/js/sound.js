@@ -65,6 +65,126 @@ export const INSTRUMENTS = [
 ];
 export const forRole = (role) => INSTRUMENTS.filter((x) => x.r.split(' ').includes(role));
 
+// ---- 音色を組み立てる ------------------------------------------------
+// **表から選ぶのをやめる。** 20種の表から選んでいたので、役ごとに取れる処方が
+// 5〜9種しかなく、音色の組み合わせがすぐ尽きた。
+// 依頼者「音色の選択肢ももっと膨大にして」。
+//
+// 鳴らす仕組み（撞く・擦る・声・打つ・FM・加算）は**楽器**であって素材ではない。
+// 素材は**その楽器の設定**なので、こちらを作品ごとに組み立てる。
+// 倍音の比・波形・明るさ・減りかた・立ち上がり・唸り・フォルマント——全部振る。
+//
+// **音の哲学は動かさない**——美しい方へ振る。雑音を前に出さない
+// （雑音は太鼓の胴に1本だけ）。だから振れる幅は「その楽器らしさ」の内側に収める。
+//
+// 役: mel=旋律 arp=分散和音 bass=低音 pad=持続 hit=一撃 pulse=拍
+const MECH = {
+  mel: ['pluck', 'pluck', 'fm', 'bow', 'organ', 'choir'],
+  arp: ['pluck', 'pluck', 'fm'],
+  bass: ['pluck', 'bow', 'organ'],
+  pad: ['bow', 'organ', 'choir', 'choir'],
+  hit: ['pluck', 'fm'],
+  pulse: ['drum', 'drum', 'pluck'],
+};
+// 役ごとの音域の向き（低音は暗く、旋律は抜ける）
+const ROLE_LP = { mel: [2200, 11000], arp: [1800, 9000], bass: [260, 1300],
+  pad: [700, 3400], hit: [3000, 12000], pulse: [400, 3000] };
+
+function pickOf(rng, a) { return a[Math.floor(rng() * a.length)]; }
+function betw(rng, a, b) { return a + (b - a) * rng(); }
+
+export function makeInstrument(rng, role) {
+  const k = pickOf(rng, MECH[role] || MECH.mel);
+  const [lo, hi] = ROLE_LP[role] || ROLE_LP.mel;
+  const lp = betw(rng, lo, hi);
+  const bright = (lp - lo) / Math.max(1, hi - lo);   // 0=暗い 1=明るい
+
+  if (k === 'pluck') {
+    // 倍音の比を組む。整数に寄せると弦・木、ずらすと鐘・金物になる
+    const inh = rng() < 0.4;                          // 非整数倍音（鐘の側）
+    const n = 2 + Math.floor(rng() * 4);
+    const parts = [[1, 1, 1]];
+    for (let i = 1; i < n; i++) {
+      const base = i + 1;
+      const mul = inh ? base * betw(rng, 1.02, 1.55) : base + betw(rng, -0.02, 0.02);
+      parts.push([mul, betw(rng, 0.04, 0.42) / i, betw(rng, 0.18, 0.7)]);
+    }
+    const long = role === 'pulse' ? false : rng() < 0.45;
+    return {
+      n: name(k, bright, long, inh), k, r: role, type: pickOf(rng, ['sine', 'sine', 'triangle']),
+      lp, g: betw(rng, 0.24, 0.46) * (role === 'bass' ? 1.1 : 1),
+      dmin: role === 'pulse' ? 0.18 : long ? 1.2 : 0.3,
+      dmax: role === 'pulse' ? 0.45 : long ? betw(rng, 2.4, 4.2) : betw(rng, 0.9, 1.8),
+      dmul: betw(rng, 0.6, 2.0), parts,
+    };
+  }
+  if (k === 'fm') {
+    // 比が整数に近いと楽器らしく、離すと鈴・金物。指数が浅いと笛に寄る
+    const ratio = rng() < 0.55
+      ? Math.round(betw(rng, 1, 5)) + betw(rng, -0.01, 0.01)
+      : betw(rng, 1.3, 7.4);
+    const index = betw(rng, 0.4, 6.5);
+    const long = rng() < 0.4;
+    return {
+      n: name(k, bright, long, index > 3), k, r: role, ratio, index,
+      mw: pickOf(rng, ['sine', 'sine', 'triangle']), mdec: betw(rng, 0.25, 0.9),
+      lp, g: betw(rng, 0.2, 0.38), atk: betw(rng, 0.003, 0.05),
+      hold: role === 'pad' || (role === 'mel' && rng() < 0.3),
+      dmin: long ? 1.1 : 0.28, dmax: long ? betw(rng, 2.6, 4.6) : betw(rng, 0.8, 1.7),
+      dmul: betw(rng, 0.7, 1.9),
+    };
+  }
+  if (k === 'bow') {
+    const spread = betw(rng, 2, 14);
+    const voices = 1 + Math.floor(rng() * 3);
+    const det = [];
+    for (let i = 0; i < voices + 1; i++) det.push(Math.round((i - voices / 2) * spread));
+    return {
+      n: name(k, bright, true, spread > 8), k, r: role,
+      atk: role === 'pad' ? betw(rng, 0.4, 1.4) : betw(rng, 0.03, 0.3),
+      lp, det, g: betw(rng, 0.12, 0.3),
+    };
+  }
+  if (k === 'organ') {
+    // 引き栓（どの倍音をどれだけ出すか）。ここが音色の顔になる
+    const muls = [1, 2, 3, 4, 5, 6, 8];
+    const draws = [[1, betw(rng, 0.5, 1)]];
+    for (const m of muls.slice(1)) if (rng() < 0.55) draws.push([m, betw(rng, 0.05, 0.5) / m]);
+    return {
+      n: name(k, bright, true, draws.length > 3), k, r: role, draws,
+      lp, det: rng() < 0.5 ? betw(rng, 2, 9) : 0,
+      atk: betw(rng, 0.02, 0.5), rel: betw(rng, 0.15, 0.6), g: betw(rng, 0.1, 0.22),
+    };
+  }
+  if (k === 'choir') {
+    // 母音のフォルマント。3つの山の場所で「あ・い・う・お」が変わる
+    const f1 = betw(rng, 380, 830), f2 = betw(rng, 850, 2100), f3 = betw(rng, 2300, 3200);
+    return {
+      n: name(k, bright, true, f2 > 1500), k, r: role, g: betw(rng, 0.1, 0.2),
+      form: [[f1, betw(rng, 7, 14), 1], [f2, betw(rng, 8, 15), betw(rng, 0.3, 0.7)],
+        [f3, betw(rng, 9, 16), betw(rng, 0.08, 0.28)]],
+    };
+  }
+  return {
+    n: name(k, bright, false, false), k, r: role,
+    g: betw(rng, 0.4, 0.65), tight: betw(rng, 0.6, 1.8), noise: betw(rng, 0.3, 1.6),
+  };
+}
+
+// 名前。**報告が読めるように**（どの音色が出たか、あとで分かる必要がある）
+function name(k, bright, long, edge) {
+  const b = bright > 0.66 ? '明' : bright > 0.33 ? '中' : '暗';
+  const base = k === 'pluck' ? (long ? (edge ? '鐘' : '硝子') : (edge ? '鉄' : '木'))
+    : k === 'fm' ? (edge ? '鈴' : '簧')
+      : k === 'bow' ? (edge ? '群弦' : '弦')
+        : k === 'organ' ? (edge ? '風琴' : '笛')
+          : k === 'choir' ? (edge ? '聲' : '遠い聲')
+            : '胴';
+  // **区切りに「・」を使わないこと。** 声部の並びも「・」で繋ぐので、
+  // 「鉄・中短・鈴・中長」が4つの楽器に見えて報告が読めなくなった。
+  return base + '(' + b + (long ? '長' : '短') + ')';
+}
+
 export function createSound(givenCtx, tone) {
   const AC = givenCtx ? null : (window.AudioContext || window.webkitAudioContext);
   if (!givenCtx && !AC) return null;
@@ -226,7 +346,53 @@ export function createSound(givenCtx, tone) {
   const DEFAULT_VOICES = ['オルゴール', '竪琴', '弓の低音', '弦の持続', '鐘',
     '太鼓', '聲', '弾く弦', '弦の旋律'];
   const byName = (n) => INSTRUMENTS.find((x) => x.n === n) || INSTRUMENTS[0];
-  const VO = (tone && tone.voices ? tone.voices : DEFAULT_VOICES).map(byName);
+  // 譜は**処方の物**を渡してくる（`makeInstrument` が組んだもの）。
+  // 名前の文字列で渡ってきたら、並んでいる処方から引く（古い呼び出しのため）。
+  const VO = (tone && tone.voices ? tone.voices : DEFAULT_VOICES)
+    .map((v) => (typeof v === 'string' ? byName(v) : v));
+
+  // FM（片方の音で片方の高さを揺らす）。**加算では出ない色が出る**
+  // ——鈴・鉄琴・簧（リード）のような硬さと、低い指数でのやわらかい笛。
+  // **雑音は使わない**（この作品で雑音を前に出さない、という線は動かさない）。
+  function fmTone(at, f, dur, peak, I) {
+    const car = osc('sine', f, 0);
+    const mod = osc(I.mw || 'sine', f * I.ratio, 0);
+    const mg = ctx.createGain();
+    mg.gain.setValueAtTime(f * I.index, at);
+    mg.gain.exponentialRampToValueAtTime(Math.max(0.5, f * I.index * 0.02), at + dur * (I.mdec || 0.5));
+    mod.connect(mg); mg.connect(car.frequency);
+    const fil = ctx.createBiquadFilter();
+    fil.type = 'lowpass'; fil.frequency.value = I.lp;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.linearRampToValueAtTime(peak, at + (I.atk || 0.005));
+    if (I.hold) g.gain.setValueAtTime(peak, at + Math.max((I.atk || 0.005) + 0.02, dur * 0.8));
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur + 0.1);
+    car.connect(fil); fil.connect(g); g.connect(master);
+    car.start(at); car.stop(at + dur + 0.2);
+    mod.start(at); mod.stop(at + dur + 0.2);
+  }
+
+  // 加算（正弦を積むだけ）。弓の鋸とは別の色が出る——風琴・笛・遠い和音。
+  function organTone(at, f, dur, peak, I) {
+    const fil = ctx.createBiquadFilter();
+    fil.type = 'lowpass'; fil.frequency.value = I.lp;
+    const g = ctx.createGain();
+    const atk = I.atk || 0.1;
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.linearRampToValueAtTime(peak, at + atk);
+    g.gain.setValueAtTime(peak, at + Math.max(atk + 0.02, dur * 0.85));
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur + (I.rel || 0.3));
+    fil.connect(g); g.connect(master);
+    for (const [mul, amp] of I.draws) {
+      const o = osc('sine', f * mul, I.det ? (nzp(mul) * I.det) : 0);
+      const og = ctx.createGain(); og.gain.value = amp;
+      o.connect(og); og.connect(fil);
+      o.start(at); o.stop(at + dur + (I.rel || 0.3) + 0.1);
+    }
+  }
+  // 決まった小さな揺れ（同じ入力なら同じ値。オルガンの唸りに使う）
+  function nzp(x) { return ((Math.sin(x * 12.9898) * 43758.5453) % 1) * 2 - 1; }
 
   function play(n, at) {
     if (muted) return;
@@ -240,6 +406,13 @@ export function createSound(givenCtx, tone) {
       bowed(at, f, n.d, v * I.g, I.atk * T.bowAtk, I.lp * T.bowBright, sp(I.det));
     } else if (I.k === 'choir') {
       choir(at, f, n.d, v * I.g, I.form);
+    } else if (I.k === 'fm') {
+      const d = Math.max(I.dmin, Math.min(I.dmax, n.d * I.dmul)) * T.melDecay;
+      fmTone(at, f, d, v * I.g, Object.assign({}, I, { lp: I.lp * T.melBright }));
+    } else if (I.k === 'organ') {
+      organTone(at, f, n.d, v * I.g, Object.assign({}, I, {
+        lp: I.lp * T.bowBright, atk: (I.atk || 0.1) * T.bowAtk,
+      }));
     } else {
       drum(at, f, v * I.g, I.tight, I.noise);
     }

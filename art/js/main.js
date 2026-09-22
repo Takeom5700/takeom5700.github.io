@@ -301,8 +301,9 @@ function start() {
       // 音楽の中身（tools/suno.mjs が style prompt を組むのに使う）。
       // **譜から取る。** 耳で聞いて書くと、種を変えたときに嘘になる。
       musicInfo() {
-        const V = ['music box', 'harp', 'bowed bass', 'string pad', 'bell',
-          'soft timpani', 'wordless choir', 'pizzicato', 'strings lead'];
+        // **声部の名前は譜が組んだ音色から取る**（固定の並びを書かない）。
+        // 音色は作品ごとに組み立てるので、決め打ちの名前は嘘になる。
+        const V = (music.tone && music.tone.voices || []).map((x) => (x && x.n) || String(x));
         return {
           tempo: music.tempo, tonic: music.tonic, total: work.total,
           notes: music.notes.length,

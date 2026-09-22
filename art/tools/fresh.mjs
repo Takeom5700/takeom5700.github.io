@@ -63,7 +63,9 @@ export function materialsOf(seed) {
     速さ: String(m.tempo),
     和音: m.prog,
     編成: m.band,
-    楽器: (m.tone.voices || []).join('・'),
+    // 名前だけでなく**処方の中身まで**指紋に入れる（音色そのものが素材）
+    楽器: (m.tone.voices || []).map((v) => (v && v.n) || v).join('・'),
+    楽器の中身: JSON.stringify(m.tone.voices || []),
     伴奏: m.arp,
     低音: m.bass,
     太鼓: m.drum,
@@ -83,7 +85,7 @@ export function materialsOf(seed) {
 //   （同じ骨組みの作品が二度出ることになる）。
 //   ここに素材を混ぜないこと。混ぜると「層が4種しかないので4日目から必ず落ちる」
 //   という、素材を新しくしても直らない落ち方になる。
-const HARD_KEYS = ['形', '形の寸法', '配色', '楽器', '旋律', '音色', '和音', '伴奏', '低音', '題名'];
+const HARD_KEYS = ['形', '形の寸法', '配色', '楽器', '楽器の中身', '旋律', '音色', '和音', '伴奏', '低音', '題名'];
 const HARD = HARD_KEYS;
 const SOFT = ['尺', '序の形', '層', '調', '拍子', '速さ', '編成', '太鼓'];
 
