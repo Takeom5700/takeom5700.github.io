@@ -66,7 +66,7 @@ export const PALETTES = [
 // **ただし「原色を面で置く」は哲学なので動かさない。**
 // だから作るのは「彩度を振り切った色相を、離して2〜3つ」＋「黒に近い／白に近い一色」。
 // 濁った中間色は作らない（混色しない、という線）。
-export function makePalette(rng) {
+function rawPalette(rng) {
   const H = () => rng();
   // 色相を大きく離して取る（近い色を並べると断が消える）
   const h0 = H();
@@ -85,6 +85,40 @@ export function makePalette(rng) {
   const rest = kind === 2 ? [bright[1], bright[2], dark, light] : bright.concat([kind === 0 ? light : dark]);
   const i = rest[0], a = rest[1], l = rest[2] || light;
   return { n: '生', g, i, a, l };
+}
+
+// **どの `shade`／`inv` でも図と地が立っていること**を確かめてから返す。
+// 法「彩」は `|明度の差| > 0.25 または 色相の隔たり > 0.3` を要求している。
+// 確かめずに返していて、種138 が「図と地が立っている景が 50%」で落ちた。
+// **作る側で保証すること**（譜の側で振り直すと、主題の中で色が動いてしまう）。
+export function makePalette(rng) {
+  for (let g = 0; g < 40; g++) {
+    const p = rawPalette(rng);
+    let ok = true;
+    for (const sh of [0, 1, 2]) {
+      for (const inv of [false, true]) {
+        const c = colorsOf({ pal: 0, shade: sh, inv, pals: [p] });
+        if (!(Math.abs(lumOf(c.g) - lumOf(c.i)) > 0.3 || hueGap(c.g, c.i) > 0.36)) { ok = false; break; }
+      }
+      if (!ok) break;
+    }
+    // **白に近い色と赤を同じ組に入れない。** 層「日」の円がその赤を拾うと、
+    // 生成りの地に赤い丸＝日の丸になる（狙っていない型が乗る。禁）。
+    // 譜の側に後始末をさせると、層を作品の頭から終わりまで同じに保てない。
+    // **作る側で起きないようにするのが正しい。**
+    if (ok) {
+      const slots = [p.g, p.i, p.a, p.l];
+      const white = slots.some((h) => { const x = hsOf(h); return x.v > 0.9 && x.s < 0.12; });
+      const red = slots.some((h) => {
+        const x = hsOf(h);
+        return x.s > 0.55 && x.v > 0.55 && (x.h < 0.055 || x.h > 0.945);
+      });
+      if (white && red) ok = false;
+    }
+    if (ok) return p;
+  }
+  // 40回で決まらなければ、確実に立つ組を返す（黒地・原色の図）
+  return { n: '生', g: '#08080c', i: '#ff2d0a', a: '#ffd400', l: '#f6f2ea' };
 }
 function hsv2hex(h, s, v) {
   const f = (n) => {

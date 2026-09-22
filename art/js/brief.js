@@ -9,15 +9,28 @@
 // その記事だからその作品になった、という関係が無い）。
 // ここは**記事の言葉を読んで、出す要素を選ぶ**。
 //
-// **記事を絵で説明しない、という線は守る。**
-// 受け取るのは「何が起きるか」（沈む・剥がれる・列が崩れる・一つだけ残る）で、
-// 「何について書かれているか」（主題・固有名詞・結論）は受け取らない。
-// だから語から選ぶのは**骨格・層・速さ・厚み**だけで、
-// 記事の題名を題名にしたり、文字を画面に出したりはしない。
+// **「記事を絵で説明しない」は法ではなく、作品ごとの度合い（直接さ）。**
+// 依頼者:
+//   「記事を絵で説明しないという線、これ守っても守らなくてもどっちでもいいよ。
+//     でも説明的にはならない方がいいっていうのはアートとしてはあるよな。
+//     それは時によって」
+// だから `直接さ`（0〜1）を作品ごとに振る。
+//   低い … 記事の語からほとんど離れる（何が起きるかだけを薄く受け取る）
+//   高い … 記事がいちばん強く言っていることを、そのまま形にする
+// **どちらも許す。** ただし画面に文字を出さない・固有名詞を出さないという線は
+// 哲学の側なので動かさない（読む人によって別の作品になるため）。
+//
+// **同じ記事から、いくつも全く別の作品が出ること。**
+// 依頼者「同じ記事であってもいくつも全く新しい別のものができるっていうぐらいの
+// ことを、作ろうと思えばできるような仕組みにしていてね」。
+// だから語の重みから**選び取る（サンプリングする）**。重い順に上から5つ取ると、
+// 同じ記事から毎回同じ5つしか出ない（一対一になる）。
+// 種を変えれば**同じ記事の別の読み**が出る（一対多）。
 //
 // 使いかた:
-//   const b = briefFromText({ title, body }, seed);
+//   const b = briefFromText({ title, body }, seed);   // 種ごとに別の読み
 //   composeWork(seed, b);
+//   node art/tools/readings.mjs --title ... --body ...   # 同じ記事の読みを並べる
 //
 // **これは機械の読みなので粗い。** Claude が記事を実際に読んで書く指示書の方が
 // 本命で、その場合は同じ形の物を手で組んで渡す（`art/DAILY-PROMPT.md`）。
@@ -74,8 +87,22 @@ const countHits = (text, words) => words.reduce((n, w) => n + (text.split(w).len
 export function briefFromText(article, seed) {
   const title = (article && article.title) || '';
   const body = (article && article.body) || '';
-  const text = title + '\n' + title + '\n' + body;      // 題名は2回読む（重くする）
   const rng = makeRng((seed | 0) * 2246822519 + 917);
+
+  // **どこを読むか**も種で替える。同じ記事でも読む場所が変われば別の作品になる。
+  const focus = ['題名', '前半', '後半', '全体'][Math.floor(rng() * 4)];
+  const half = Math.floor(body.length / 2);
+  const part = focus === '題名' ? title
+    : focus === '前半' ? body.slice(0, half)
+      : focus === '後半' ? body.slice(half)
+        : body;
+  const text = title + '\n' + part;
+
+  // **直接さ**（0〜1）。高いほど記事がいちばん強く言っていることをそのまま形にし、
+  // 低いほど語から離れる。説明的にするかどうかは、その作品ごとの判断。
+  const direct = rng();
+  // 重みの尖らせ方。直接さが高いと重い骨格に集中し、低いとほぼ均等に散る
+  const heat = 0.35 + direct * 2.8;
 
   // 骨格の重み
   const w = {};
@@ -90,24 +117,33 @@ export function briefFromText(article, seed) {
   // 当たらなかったときは種で振る（記事が短い・英語だけ、などの日）
   const any = Object.values(w).some((v) => v > 0);
   if (!any) for (const k of FORM_KEYS) w[k] = rng();
-  // 同点は種で割る（毎回同じ順にならないように）
-  const order = FORM_KEYS
-    .map((k, i) => ({ i, k, v: w[k] + rng() * 0.4 }))
-    .sort((a, b) => b.v - a.v);
-  const forms = order.slice(0, 5).map((x) => x.i);
-
-  // 層
-  let layer = 0;
-  let best = 0;
-  for (const [words, idx] of WORD_LAYER) {
-    const n = countHits(text, words);
-    if (n > best) { best = n; layer = idx; }
+  // **重い順に上から5つ取らないこと。** それをすると同じ記事から毎回同じ5つしか
+  // 出ず、記事と作品が一対一になる（依頼者の求めは一対多）。
+  // 重みを確からしさに変えて、そこから5つ**引く**（重複なし）。
+  const pool = FORM_KEYS.map((k, i) => ({ i, p: Math.pow(w[k] + 0.06, heat) }));
+  const forms = [];
+  for (let n = 0; n < 5 && pool.length; n++) {
+    const sum = pool.reduce((a, b) => a + b.p, 0);
+    let r = rng() * sum;
+    let k = 0;
+    while (k < pool.length - 1 && (r -= pool[k].p) > 0) k++;
+    forms.push(pool[k].i);
+    pool.splice(k, 1);
   }
-  if (!layer) layer = 1 + Math.floor(rng() * (LAYER_NAMES.length - 1));
 
-  // 尺は記事の長さから（長い記事＝長い作品）。270〜540秒に収める
+  // 層。こちらも「いちばん多い語」で決め打ちにせず、重みから引く
+  const lw = [0, 0, 0, 0, 0];
+  for (const [words, idx] of WORD_LAYER) lw[idx] += countHits(text, words);
+  const lpool = [1, 2, 3, 4].map((i) => ({ i, p: Math.pow(lw[i] + 0.25, heat) }));
+  const lsum = lpool.reduce((a, b) => a + b.p, 0);
+  let lr = rng() * lsum, li = 0;
+  while (li < lpool.length - 1 && (lr -= lpool[li].p) > 0) li++;
+  const layer = lpool[li].i;
+
+  // 尺は記事の長さを土台に、種で振る（同じ記事でも長い版と短い版が作れる）
   const len = body.length + title.length;
-  const total = Math.round(Math.max(270, Math.min(540, 270 + len * 0.12)));
+  const base = Math.max(270, Math.min(540, 270 + len * 0.12));
+  const total = Math.round(Math.max(270, Math.min(540, base * (0.8 + rng() * 0.45))));
 
   // 文の調子から音の向きを決める。
   //   句点が多い（短く切る文）＝速い・拍が多い
@@ -120,10 +156,12 @@ export function briefFromText(article, seed) {
   return {
     from: {                                              // 何を読んで決めたか（記録用）
       words: [...new Set(hitWords)].slice(0, 12),
+      読んだ場所: focus,
+      直接さ: Math.round(direct * 100) / 100,
       文字数: len, 文の数: stops, 一文の長さ: Math.round(per),
     },
     forms,
-    opening: forms[Math.floor(rng() * Math.min(3, forms.length))],
+    opening: forms[Math.floor(rng() * forms.length)],
     layer,
     total,
     tempoBias: fast ? 1 : -1,                            // 速さの向き

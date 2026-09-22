@@ -53,7 +53,10 @@ export function materialsOf(seed) {
     形: forms.map((f) => f.name + ':' + f.key).sort().join(' '),
     形の寸法: forms.map((f) => f.key + JSON.stringify(f.P)).sort().join(' '),
     序の形: w.shots[0].form ? w.shots[0].form.name + ':' + w.shots[0].form.key : '?',
-    配色: [...new Set(w.shots.map((s) => s.pal))].sort((a, b) => a - b).join(','),
+    // **作った色そのものを記録する。** 番号（0〜7）を記録していて、
+    // どの作品も同じ「0,1,2,…」になり、配色が300本のうち253本を塞いでいた。
+    // 配色は作品ごとに作っているので、色で見れば必ず新しい（実測でそうなった）。
+    配色: (w.pals || []).map((p) => p.g + p.i + p.a + p.l).join(' '),
     層: LAYER_NAMES[(w.shots.find((x) => x.lay) || {}).lay || 0],
     調: m.tonic + m.mode,
     拍子: m.meter,
@@ -80,7 +83,8 @@ export function materialsOf(seed) {
 //   （同じ骨組みの作品が二度出ることになる）。
 //   ここに素材を混ぜないこと。混ぜると「層が4種しかないので4日目から必ず落ちる」
 //   という、素材を新しくしても直らない落ち方になる。
-const HARD = ['形', '形の寸法', '配色', '楽器', '旋律', '音色', '和音', '伴奏', '低音', '題名'];
+const HARD_KEYS = ['形', '形の寸法', '配色', '楽器', '旋律', '音色', '和音', '伴奏', '低音', '題名'];
+const HARD = HARD_KEYS;
 const SOFT = ['尺', '序の形', '層', '調', '拍子', '速さ', '編成', '太鼓'];
 
 export function collide(cur, past) {
@@ -117,10 +121,59 @@ if (has('list')) {
   process.exit(0);
 }
 
+// ---- 素材の残量 -------------------------------------------------------
+// **いつ素材を足すべきかを機械に言わせる。** 依頼者「素材は作り続けてよ、
+// 毎回作り続けてってことね」。残りが細ってきたら足す合図。
+if (has('stock')) {
+  const N = parseInt(flag('n', '400'), 10);
+  const seen = {};
+  for (const k of HARD_KEYS) seen[k] = new Set();
+  for (const p of ledger.works) {
+    for (const k of HARD_KEYS) if (p.materials && p.materials[k] !== undefined) seen[k].add(p.materials[k]);
+  }
+  let ok = 0;
+  const why = {};
+  for (let i = 0; i < N; i++) {
+    const c = materialsOf(i);
+    let bad = null;
+    for (const k of HARD_KEYS) if (seen[k].has(c[k])) { bad = k; break; }
+    if (bad) { why[bad] = (why[bad] || 0) + 1; continue; }
+    for (const k of HARD_KEYS) seen[k].add(c[k]);
+    ok++;
+  }
+  console.log(`台帳: ${ledger.works.length} 本`);
+  console.log(`種 0〜${N - 1} を当てて、素材が一切かぶらない作品: ${ok} 本`);
+  console.log('');
+  const rows = Object.entries(why).sort((a, b) => b[1] - a[1]);
+  if (rows.length) {
+    console.log('作れなくしている素材（多い順）:');
+    for (const [k, n] of rows) console.log(`  ${k.padEnd(8, '　')} ${n} 本ぶんを塞いでいる`);
+    console.log('');
+    console.log('ここを増やすのがいちばん効く:');
+    const WHERE = {
+      形: 'art/js/form.js に骨格を足す（add-motif / motif-smith）',
+      形の寸法: 'art/js/form.js の makeForm に振る幅を足す',
+      配色: 'art/js/paint.js の makePalette（すでに作る方式。作る幅を広げる）',
+      楽器: 'art/js/sound.js の INSTRUMENTS に処方を足す',
+      旋律: 'art/js/music.js の makeTune に刻みの型を足す',
+      音色: 'art/js/music.js の makeTone に振る幅を足す',
+      和音: 'art/js/music.js の makeProg（すでに組む方式）',
+      伴奏: 'art/js/music.js の伴奏の組み立て（長さの幅を足す）',
+      低音: 'art/js/music.js の低音の組み立て（踏む場所の幅を足す）',
+      題名: 'art/tools/daily.mjs の TITLES に足す',
+    };
+    for (const [k] of rows.slice(0, 3)) console.log(`  ${k} … ${WHERE[k] || '（生成の側を広げる）'}`);
+  } else {
+    console.log('いまの素材でしばらく足りている。');
+  }
+  process.exit(0);
+}
+
 const seed = parseInt(flag('seed', ''), 10);
 if (!Number.isFinite(seed)) {
   console.error('使い方: node art/tools/fresh.mjs --seed 186 [--record]');
-  console.error('        node art/tools/fresh.mjs --list');
+  console.error('        node art/tools/fresh.mjs --list     … 台帳の中身');
+  console.error('        node art/tools/fresh.mjs --stock    … 素材の残量と、足すべき場所');
   process.exit(2);
 }
 

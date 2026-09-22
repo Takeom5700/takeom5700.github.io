@@ -16,6 +16,7 @@ import { analyse, meanAbsDiff, cutChange, OK } from './metrics.mjs';
 
 const SEED = parseInt(process.argv[2] || '0', 10);
 const has = (n) => process.argv.includes('--' + n);
+const flag = (n, d) => { const i = process.argv.indexOf('--' + n); return i < 0 ? d : process.argv[i + 1]; };
 const W = 480, H = 270;
 
 const BRIEF = flag('brief', '');

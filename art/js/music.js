@@ -275,11 +275,18 @@ export function composeMusic(work, seedIn) {
   // 伴奏（分散和音）の形。**ここも組み立てる。**
   // 固定だと、和音が動いても伴奏の形が同じで「同じ曲」に聞こえる。
   const arp = (() => {
-    const len = 3 + Math.floor(rng() * 6);              // 3〜8
-    const out = [rng() < 0.6 ? 0 : 2];
+    // 長さ3〜12、段は0〜6、たまに休み（-1）を入れる。
+    // **幅が狭いと台帳で「伴奏が既出」に当たる**（3〜8・0〜4だけのとき
+    // 400種のうち49本ぶんを塞いでいた）。素材は作り続けること。
+    const len = 3 + Math.floor(rng() * 10);
+    const rest = rng() < 0.35;                          // 休みを入れる伴奏か
+    const out = [Math.floor(rng() * 3)];
     for (let i = 1; i < len; i++) {
       let x; let g = 0;
-      do { x = Math.floor(rng() * 5); g++; } while (x === out[out.length - 1] && g < 12);
+      do {
+        x = rest && rng() < 0.22 ? -1 : Math.floor(rng() * 7);
+        g++;
+      } while (x === out[out.length - 1] && g < 12);
       out.push(x);
     }
     return out;
@@ -295,11 +302,26 @@ export function composeMusic(work, seedIn) {
   const drum = DRUMS[Math.floor(rng() * DRUMS.length)].filter((x) => x < met.beats);
   // 低音の歩き。**何拍目をどの音で踏むか**を組み立てる（型から選ばない）
   const bassPat = (() => {
-    const n = Math.max(2, Math.min(met.beats, 2 + Math.floor(rng() * 3)));
-    const slots = [];
-    for (let i = 0; i < n; i++) slots.push((met.beats / n) * i);
-    // 段（0=根音 2=三度 4=五度 7=オクターヴ上の根音）
-    return slots.map((at, i) => ({ at, step: i === 0 ? 0 : pick(rng, [4, 4, 2, 7]) }));
+    // **等分だけにしないこと。** 2〜4等分・段4通りしか無かったので、
+    // 400種のうち206本ぶんを塞いでいた（いちばんの制約だった）。
+    // 拍の数だけ踏める場所を持ち、そこから選び取る。裏（半拍）も許す。
+    const half = rng() < 0.4;                           // 裏も踏むか
+    const grid = [];
+    for (let i = 0; i < met.beats; i++) {
+      grid.push(i);
+      if (half) grid.push(i + 0.5);
+    }
+    const n = Math.max(2, Math.min(grid.length, 2 + Math.floor(rng() * 5)));
+    const take = [0];                                   // 1拍目は必ず踏む
+    const rest = grid.slice(1);
+    for (let i = 0; i < n - 1 && rest.length; i++) {
+      take.push(rest.splice(Math.floor(rng() * rest.length), 1)[0]);
+    }
+    take.sort((a, b) => a - b);
+    // 段（0=根音 2=三度 4=五度 7=オクターヴ上 -3=下の五度 1=経過音）
+    return take.map((at, i) => ({
+      at, step: i === 0 ? 0 : pick(rng, [4, 4, 2, 7, 1, -3, 5]),
+    }));
   })();
   const bassWalk = bassPat.length;
   // 音色（同じ楽器の別の個体くらいの幅で振る）＋**楽器の割り当てそのもの**
@@ -354,6 +376,7 @@ export function composeMusic(work, seedIn) {
     const div = o.div || met.div;
     for (let i = 0; i < div; i++) {
       const k = arp[i % arp.length];
+      if (k < 0) continue;                              // 休み
       const oc = (i % 4 === 3) ? Math.abs(arpOct) : 0;
       add(t + (bar / div) * i, bar / div * 1.6,
         tonic + 36 + (arpOct < 0 ? -12 : 0) + degOf(SC, ch + k * 2) + oc,
