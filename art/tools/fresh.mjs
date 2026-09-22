@@ -32,18 +32,44 @@ const argv = process.argv.slice(2);
 const flag = (n, d) => { const i = argv.indexOf('--' + n); return i < 0 ? d : argv[i + 1]; };
 const has = (n) => argv.includes('--' + n);
 
-function load() {
+export function load() {
   try { return JSON.parse(fs.readFileSync(LEDGER, 'utf8')); } catch (e) { return { works: [] }; }
 }
-function save(l) {
+export function save(l) {
   fs.mkdirSync(path.dirname(LEDGER), { recursive: true });
   fs.writeFileSync(LEDGER, JSON.stringify(l, null, 2));
+}
+export const LEDGER_PATH = LEDGER;
+
+// ---- かぶらない種を探す（毎日の道が呼ぶ）------------------------------
+// **「種を変えて逃げない」は人への戒めで、機械の手順ではない。**
+// 素材は毎日新しく作り続けているので（配色・楽器・和音・伴奏・低音・旋律・
+// 音色はすべて生成）、種を動かせば必ず新しい素材の組が出る。
+// ここが探すのは「**その指示書のまま**、素材が1つもかぶらない種」。
+// 何十本探しても見つからないときは、素材そのものが尽きたということなので、
+// 逃げずに `--stock` が指す場所を足す（呼ぶ側が警告を出す）。
+export function pickFresh(brief, start, past, tries = 240) {
+  const from = ((start | 0) % 1000 + 1000) % 1000;
+  let best = null;
+  for (let i = 0; i < tries; i++) {
+    const seed = (from + i) % 1000;
+    const cur = materialsOf(seed, brief);
+    const hit = collide(cur, past);
+    if (!hit.length) return { seed, materials: cur, hit: [], tried: i + 1 };
+    if (!best || hit.length < best.hit.length) best = { seed, materials: cur, hit, tried: i + 1 };
+  }
+  return best;
 }
 
 // ---- その作品が使った素材を並べる ------------------------------------
 // **一つでも過去と同じなら落とす。** ここに並べるものは「毎回新しくする」約束。
-export function materialsOf(seed) {
-  const w = composeWork(seed);
+// **指示書（brief）を必ず渡すこと。**
+// これを渡さないと、台帳は「記事なしの作品」を見て判定することになる。
+// 実際に焼かれるのは `composeWork(seed, brief)` の方（形は指示書が選ぶ）なので、
+// 渡さないまま照合していたあいだ、**台帳は毎日まったく別の作品を見ていた**
+// ——だから同じ椅子が2日続いても落ちなかった（実際に続いた）。
+export function materialsOf(seed, brief) {
+  const w = composeWork(seed, brief || undefined);
   const m = composeMusic(w);
   const forms = [...new Map(w.shots.filter((x) => x.form).map((x) => [x.form.key, x.form])).values()];
   return {
@@ -112,6 +138,12 @@ export function collide(cur, past) {
 }
 
 // ---- 本番 -------------------------------------------------------------
+// **道具としても部品としても使う。** `daily.mjs` が `pickFresh` を呼ぶので、
+// `import` されただけで下の手続きが走ってはいけない
+// （走ると `--seed` が無くて `process.exit(2)` し、呼んだ側が落ちる。実際に落ちた）。
+const IS_MAIN = process.argv[1]
+  && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+if (IS_MAIN) {
 const ledger = load();
 
 if (has('list')) {
@@ -173,14 +205,25 @@ if (has('stock')) {
 
 const seed = parseInt(flag('seed', ''), 10);
 if (!Number.isFinite(seed)) {
-  console.error('使い方: node art/tools/fresh.mjs --seed 186 [--record]');
+  console.error('使い方: node art/tools/fresh.mjs --seed 186 [--record] [--brief <base64url>]');
   console.error('        node art/tools/fresh.mjs --list     … 台帳の中身');
   console.error('        node art/tools/fresh.mjs --stock    … 素材の残量と、足すべき場所');
   process.exit(2);
 }
 
-const cur = materialsOf(seed);
-console.log(`種${seed}「${cur.題名}」${cur.尺}秒`);
+// 指示書は base64url の JSON（`daily.mjs` が渡すのと同じ形）
+let CLI_BRIEF = null;
+{
+  const b = flag('brief', '');
+  if (b) {
+    try {
+      CLI_BRIEF = JSON.parse(Buffer.from(b.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+    } catch (e) { console.error('--brief が読めません: ' + e.message); process.exit(2); }
+  }
+}
+
+const cur = materialsOf(seed, CLI_BRIEF);
+console.log(`種${seed}「${cur.題名}」${cur.尺}秒${CLI_BRIEF ? '（指示書あり）' : ''}`);
 for (const [k, v] of Object.entries(cur)) {
   if (k === 'seed') continue;
   console.log(`  ${k.padEnd(6, '　')} ${String(v).slice(0, 96)}`);
@@ -214,4 +257,5 @@ if (has('record')) {
   console.log(`台帳に書いた（ぜんぶで ${ledger.works.length} 本）: ${LEDGER}`);
 } else {
   console.log('（--record を付けると台帳に書く。焼き上がって出したあとに書くこと）');
+}
 }

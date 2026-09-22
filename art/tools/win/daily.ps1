@@ -162,6 +162,16 @@ try {
   # などを書き換えてコミットせずに残すので、そのままだと
   # 「Your local changes would be overwritten by merge」で毎回止まる
   # （実際に持ち主のパソコンで止まった）。失敗しても進む（ネットが無い日もある）。
+  #
+  # **台帳（art\works\ledger.json）だけは先に写しを取ること。**
+  # stash して pop しないので、前の晩に書いた台帳も一緒に棚上げされて消える。
+  # 台帳が育たないと「1つでも同じなら落とす」が永久に効かず、
+  # 同じ図が何日も続く（実際に続いた）。台帳は追記しかしないので、
+  # pull のあとに写しと突き合わせて足し戻す（衝突しない・何度やっても同じ）。
+  $ledger = Join-Path $repo 'art\works\ledger.json'
+  $ledgerSave = Join-Path $env:TEMP 'primaries-ledger-save.json'
+  if (Test-Path $ledger) { Copy-Item $ledger $ledgerSave -Force }
+
   $dirty = @(& git status --porcelain 2>$null | Where-Object { $_ -notmatch '^\?\?' })
   if ($dirty.Count) {
     Say ('[git] 手元の直しかけ ' + $dirty.Count + ' 件を脇へ置きます（git stash）')
@@ -169,6 +179,11 @@ try {
     Run 'git' @('stash', 'push', '-m', ('auto ' + (Get-Date -Format 'yyyy-MM-dd HH:mm')))
   }
   Run 'git' @('pull', '--ff-only')
+
+  if (Test-Path $ledgerSave) {
+    Say '[git] 台帳を合わせます（脇へ置いた写しを足し戻す）'
+    Run 'node' @((Join-Path $repo 'art\tools\ledger-merge.mjs'), $ledgerSave)
+  }
 
   # その日ぶんが既にあるなら何もしない（遅れて起きた日に2本焼かないため）
   if (MadeToday $out) {

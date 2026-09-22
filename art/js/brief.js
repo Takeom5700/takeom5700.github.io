@@ -73,6 +73,20 @@ const WORD_FORMS = [
   [['照ら', '示', '標', '灯', '光', '合図', '目印', '柱'], { lamp: 3, tower: 1 }],
 ];
 
+// ---- 語 → 時間の印象 --------------------------------------------------
+// **BPM・拍子・リズムも記事から決める。**
+// 依頼者「BPMテンポや拍子やリズムも毎回noteの記事から得た印象に従って
+// 変わるようにして」。
+// 速さは「文の長さ」だけでは足りない（短い文でも静かな記事がある）。
+// **急ぐ語・留まる語を数えて、そこから速さの印象を作る。**
+const WORD_FAST = ['急', '走', '駆け', '一気', '瞬', '慌', '追わ', '追い', '加速',
+  '騒', '押し寄せ', '次々', 'どんどん', '崩れ落ち', '飛び', '叫'];
+const WORD_SLOW = ['静', '待', '沈', 'ゆっくり', 'じっと', '長い', '延々', '澱',
+  '留ま', '止ま', '眠', '黙', '佇', 'horizon', '果て', '遠い'];
+// 揺れ（拍を崩す感じ）を作る語
+const WORD_UNEVEN = ['歪', 'ずれ', 'よろ', 'つまず', 'ばらばら', '不意', '突然',
+  '迷', '乱', '斜め', 'いびつ', '半端'];
+
 // 語 → 層（断をまたいで続くもの）
 const WORD_LAYER = [
   [['水', '沈', '満ち', '浸', '海', '潮', '溢'], 1],   // 水位
@@ -84,9 +98,26 @@ const WORD_LAYER = [
 const countHits = (text, words) => words.reduce((n, w) => n + (text.split(w).length - 1), 0);
 
 // ---- 指示書を組む -----------------------------------------------------
-export function briefFromText(article, seed) {
+// `opts.avoid` … **直前の1本で使った骨格のキー。** ここに入っているものは
+//                 候補そのものから外す（14 のうち5つを外しても9つ残る）。
+// `opts.soften` … **その前の1本で使った骨格。** 重みを 1/25 に落とすだけ。
+//
+// **重みに掛けるだけでは効かない。** 最初は `avoid` に 0.04 を掛けていたが、
+// 重みは `Math.pow(w + 0.06, heat)`（heat は最大 3.15）で尖らせてあるので、
+// 記事が強く言っている骨格は 200 倍以上に膨らむ。そこに 0.04 を掛けても
+// 一度も出ていない骨格より桁で大きく、**5つのうち4つがそのまま再登場した**
+// （実測）。だから直前のぶんは候補から外す。
+//
+// **台帳の `形` は5つの組をまとめて見るので、1つだけ同じでも通ってしまう。**
+// 依頼者「椅子のモチーフは以前見た。将来的に偶然また出てくるのならばいいが、
+// 初回で2回連続は仕組みの不備である可能性が高い」——そのとおりで、
+// 骨格は14しかなく1本に5つ使うから、素直に引くと**次の日も平均1.8個が再登場する**。
+// 「二度と出さない」だと3日で骨格が尽きるので、**近いうちは出さない**を法にする。
+export function briefFromText(article, seed, opts) {
   const title = (article && article.title) || '';
   const body = (article && article.body) || '';
+  const avoid = new Set((opts && opts.avoid) || []);
+  const soften = new Set((opts && opts.soften) || []);
   const rng = makeRng((seed | 0) * 2246822519 + 917);
 
   // **どこを読むか**も種で替える。同じ記事でも読む場所が変われば別の作品になる。
@@ -120,7 +151,12 @@ export function briefFromText(article, seed) {
   // **重い順に上から5つ取らないこと。** それをすると同じ記事から毎回同じ5つしか
   // 出ず、記事と作品が一対一になる（依頼者の求めは一対多）。
   // 重みを確からしさに変えて、そこから5つ**引く**（重複なし）。
-  const pool = FORM_KEYS.map((k, i) => ({ i, p: Math.pow(w[k] + 0.06, heat) }));
+  // 直前のぶんを外す。**ただし候補が5つを切ったら外すのをやめる**
+  // （骨格は14しかないので、外しすぎると引けなくなる）。
+  const banned = FORM_KEYS.length - avoid.size >= 6 ? avoid : new Set();
+  const pool = FORM_KEYS
+    .map((k, i) => ({ i, k, p: Math.pow(w[k] + 0.06, heat) * (soften.has(k) ? 0.04 : 1) }))
+    .filter((x) => !banned.has(x.k));
   const forms = [];
   for (let n = 0; n < 5 && pool.length; n++) {
     const sum = pool.reduce((a, b) => a + b.p, 0);
@@ -145,13 +181,92 @@ export function briefFromText(article, seed) {
   const base = Math.max(270, Math.min(540, 270 + len * 0.12));
   const total = Math.round(Math.max(270, Math.min(540, base * (0.8 + rng() * 0.45))));
 
-  // 文の調子から音の向きを決める。
-  //   句点が多い（短く切る文）＝速い・拍が多い
-  //   句点が少ない（長く続く文）＝遅い・拍が少ない
-  const stops = (text.match(/[。！？.!?]/g) || []).length;
-  const per = stops ? len / stops : 60;                  // 1文の長さ
-  const fast = per < 40;
-  const dense = (text.match(/[、,]/g) || []).length / Math.max(1, stops);
+  // ---- 時間の印象（BPM・拍子・リズム）--------------------------------
+  // 数えるもの: 一文の長さ／句読点の密度／文の長さのばらつき／
+  //             疑問と感嘆／急ぐ語と留まる語／揺れの語／語の繰り返し
+  const sentences = text.split(/[。！？.!?\n]+/).map((x) => x.trim()).filter((x) => x.length > 1);
+  const stops = Math.max(1, sentences.length);
+  const per = len / stops;                               // 一文の長さ
+  const dense = (text.match(/[、,]/g) || []).length / stops;   // 一文あたりの読点
+  // 文の長さのばらつき（同じ長さで続く記事は規則的、乱れる記事は不規則）
+  const mean = sentences.reduce((a, b) => a + b.length, 0) / stops;
+  const varr = Math.sqrt(sentences.reduce((a, b) => a + (b.length - mean) ** 2, 0) / stops) / Math.max(1, mean);
+  const bangs = (text.match(/[！？!?]/g) || []).length / stops;
+  const fastHits = countHits(text, WORD_FAST);
+  const slowHits = countHits(text, WORD_SLOW);
+  const unevenHits = countHits(text, WORD_UNEVEN);
+  // 語の繰り返し（同じ語が何度も出る記事は、音も同じ形を繰り返す方が合う）
+  //
+  // **記事の長さで動く素性を作らないこと。** 最初は「2回以上出た3文字の割合」を
+  // 全文で数えていた。これは長い記事なら必ず被るので、同じ文章を4回つないだだけで
+  // 0.024 → 0.976 に跳ねた（＝長さの代理でしかなく、繰り返しを測っていない）。
+  // その結果この素性がどの記事でも振り切れ、拍子は 4/4 に固定された。
+  // いまは **120個ずつの窓で測って平均する**（＝その場の繰り返し具合）。
+  // 長さを4倍しても値は動かず、同じ言い回しを近くで繰り返す記事だけ上がる。
+  const grams = [];
+  for (let i = 0; i + 2 < part.length; i += 1) {
+    const g = part.slice(i, i + 3);
+    if (/^[\u3040-\u30ff\u4e00-\u9fff]{3}$/.test(g)) grams.push(g);
+  }
+  const GW = 120;
+  let racc = 0, rn = 0;
+  for (let o = 0; o < grams.length; o += GW) {
+    const c = grams.slice(o, o + GW);
+    if (c.length < 40) continue;
+    racc += 1 - new Set(c).size / c.length;
+    rn++;
+  }
+  const repeat = rn ? racc / rn
+    : (grams.length ? 1 - new Set(grams).size / grams.length : 0);
+
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  // 語の当たりも**一文あたりに直してから使う**（そのままだと長い記事ほど振り切れる）
+  const fastR = fastHits / stops, slowR = slowHits / stops, unevenR = unevenHits / stops;
+  // **速さの印象**（0=遅い 1=速い）。短い文は速く、急ぐ語で上げ、留まる語で下げる
+  const pace = clamp01(
+    0.5
+    + (40 - Math.min(120, per)) / 110            // 一文が短いほど速い
+    + (fastR - slowR) * 0.45
+    + bangs * 0.2,
+  );
+  // **揺れ**（0=まっすぐ 1=崩れる）。文の長さがばらつく記事・揺れの語で上がる
+  // 日本語の散文は文の長さのばらつき（変動係数）が 0.3〜1.0 に入るので、
+  // 0.30 を地として引く（引かないと、どの記事も「崩れている」側に寄る）。
+  const sway = clamp01((varr - 0.30) * 1.15 + unevenR * 0.55 + bangs * 0.12);
+  // **刻みの細かさ**（0=大きく 1=細かく）。読点が多い記事は細かい
+  // 読点の密度は 0.3〜7 まで振れるので、頭を抑えてから混ぜる
+  const subdiv = clamp01(Math.min(1, dense / 3.2) * 0.85 + pace * 0.15);
+  // **同じ形の繰り返し**（0=変える 1=繰り返す）
+  const ostinato = clamp01(0.30 + repeat * 2.6 + (0.60 - varr) * 0.8);
+
+  // **拍子は「重みを足す」のではなく「いちばん近い拍子」で選ぶ。**
+  //
+  // 最初は拍子ごとに `0.4 + ostinato * 1.6 + ...` と足し算で書いていた。
+  // これは**項の数と係数の大きさで勝ち負けが決まる**ので、いちばん太い項を持つ
+  // 拍子（4/4）が、記事の中身と関係なく全記事で勝った。
+  //
+  // だから拍子の側に「こういう記事の拍子である」という座標を持たせて、
+  // 記事の座標との**距離**で重みを出す。勝つのはいちばん近い拍子で、
+  // 項の数には依存しない。下駄（0.05）を履かせてあるので、
+  // **同じ記事でも種が違えば遠い拍子が出ることがある**（一対多を残すため）。
+  const HERE = { pace, sway, subdiv, ostinato };
+  const METER_AT = {
+    '4/4':  { pace: 0.50, sway: 0.12, subdiv: 0.30, ostinato: 0.80 },  // 規則的・淡々
+    '2/2':  { pace: 0.75, sway: 0.18, subdiv: 0.20, ostinato: 0.70 },  // 大きく2つ・速い
+    '3/4':  { pace: 0.32, sway: 0.30, subdiv: 0.42, ostinato: 0.38 },  // 歌う・ゆるい
+    '6/8':  { pace: 0.62, sway: 0.28, subdiv: 0.78, ostinato: 0.48 },  // 流れる
+    '9/8':  { pace: 0.45, sway: 0.52, subdiv: 0.86, ostinato: 0.30 },  // 流れて崩れる
+    '12/8': { pace: 0.28, sway: 0.22, subdiv: 0.92, ostinato: 0.60 },  // 大河
+    '5/4':  { pace: 0.44, sway: 0.86, subdiv: 0.38, ostinato: 0.15 },  // 崩れる・引っかかる
+    '7/8':  { pace: 0.78, sway: 0.82, subdiv: 0.55, ostinato: 0.20 },  // 急いで崩れる
+  };
+  const meterW = {};
+  for (const [k, at] of Object.entries(METER_AT)) {
+    let d2 = 0;
+    for (const f of ['pace', 'sway', 'subdiv', 'ostinato']) d2 += (HERE[f] - at[f]) ** 2;
+    const d = Math.sqrt(d2);                             // 0（一致）〜2（真逆）
+    meterW[k] = 0.05 + Math.pow(Math.max(0, 1 - d / 1.05), 3);
+  }
 
   return {
     from: {                                              // 何を読んで決めたか（記録用）
@@ -159,13 +274,24 @@ export function briefFromText(article, seed) {
       読んだ場所: focus,
       直接さ: Math.round(direct * 100) / 100,
       文字数: len, 文の数: stops, 一文の長さ: Math.round(per),
+      読点の密度: Math.round(dense * 100) / 100,
+      文の長さのばらつき: Math.round(varr * 100) / 100,
+      急ぐ語: fastHits, 留まる語: slowHits, 揺れの語: unevenHits,
+      繰り返し窓: rn,
+      語の繰り返し: Math.round(repeat * 100) / 100,
+      避けた形: [...avoid], 薄めた形: [...soften],
     },
     forms,
     opening: forms[Math.floor(rng() * forms.length)],
     layer,
     total,
-    tempoBias: fast ? 1 : -1,                            // 速さの向き
-    beatsBias: fast ? 1 : dense > 2 ? 0 : -1,            // 拍の多さの向き
-    devColor: dense > 2.2 ? '太鼓と聲' : fast ? '太鼓' : per > 90 ? '弦の厚み' : null,
+    // ---- 時間（記事の印象そのまま）----
+    pace: Math.round(pace * 100) / 100,
+    sway: Math.round(sway * 100) / 100,
+    subdiv: Math.round(subdiv * 100) / 100,
+    ostinato: Math.round(ostinato * 100) / 100,
+    meterW,
+    devColor: dense > 2.2 ? '太鼓と聲' : pace > 0.62 ? '太鼓'
+      : per > 90 ? '弦の厚み' : sway > 0.6 ? '太鼓と弦' : null,
   };
 }

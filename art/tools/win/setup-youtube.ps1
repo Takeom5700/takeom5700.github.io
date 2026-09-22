@@ -72,8 +72,15 @@ if ($code -eq 0) {
   Write-Host '公開は手で押してください（1本30秒）。審査は Google Cloud から申請します。'
 } else {
   Write-Host '===== 通りませんでした ====='
-  Write-Host '上に出ている文言を見てください。よくあるのは次の2つ:'
+  Write-Host '上に出ている文言を見てください。よくあるのは次の4つ:'
+  Write-Host '  ・EADDRINUSE（口が塞がっている） → 前回の許可取りが残っています。'
+  Write-Host '    開いている cmd の窓を全部閉じるか、次を打ってから、もう一度動かす:'
+  Write-Host '      taskkill /F /IM node.exe'
+  Write-Host '  ・403 access_denied（テスト中です と出る） → Google Cloud の'
+  Write-Host '    「Google 認証プラットフォーム」→「対象」→「テストユーザー」に'
+  Write-Host '    自分のアドレスを足す'
   Write-Host '  ・違うチャンネルを選んだ → https://myaccount.google.com/permissions で'
   Write-Host '    許可を取り消して、もう一度この道具を動かす'
-  Write-Host '  ・同意画面が「テスト」のまま → 「本番」に上げてからやり直す'
+  Write-Host '  ・鍵が7日で切れた（invalid_grant） → 公開ステータスが「テスト中」の'
+  Write-Host '    あいだは7日で切れます。この道具をもう一度動かせば直ります'
 }

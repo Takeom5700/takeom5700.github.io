@@ -23,6 +23,12 @@ Write-Host ''
 # art/js/score.js などを書き換えてコミットせずに残すので、そのままだと
 # 「Your local changes would be overwritten by merge」で止まる
 # （実際に持ち主のパソコンで止まった）。stash なので捨てずに取っておける。
+# **台帳だけは写しを取ってから。** stash して pop しないので、
+# 前の晩に書いた台帳が一緒に棚上げされて消える（実際に消えていた）。
+$ledger = Join-Path $repo 'art\works\ledger.json'
+$ledgerSave = Join-Path $env:TEMP 'primaries-ledger-save.json'
+if (Test-Path $ledger) { Copy-Item $ledger $ledgerSave -Force }
+
 $dirty = @(& git status --porcelain 2>$null | Where-Object { $_ -notmatch '^\?\?' })
 if ($dirty.Count) {
   Write-Host ('手元の直しかけが ' + $dirty.Count + ' 件あります。脇へ置きます（git stash）:')
@@ -35,6 +41,11 @@ if ($dirty.Count) {
 & git pull --ff-only
 $code = $LASTEXITCODE
 Write-Host ''
+
+if ($code -eq 0 -and (Test-Path $ledgerSave)) {
+  & node (Join-Path $repo 'art\tools\ledger-merge.mjs') $ledgerSave
+  Write-Host ''
+}
 
 if ($code -ne 0) {
   Write-Host '取り込めませんでした。上に出ている文言を見てください。'

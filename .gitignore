@@ -9,3 +9,10 @@ __pycache__/
 /mumei.html
 /out.html
 /test.webm
+
+# 道具が焼いた出力（作品そのものはリポジトリに置かない）
+/Passage-*.wav
+/Passage-*.mp4
+/Passage-*.webm
+/Passage-*.png
+/Passage-*-suno.txt

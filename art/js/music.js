@@ -32,7 +32,7 @@
 //   展開=**太鼓が入り、途中から聲（合唱）が重なる**／再現=オルゴールが帰る
 //   終=聲と弦、最後にオルゴールが独りで終わる
 
-import { makeRng, between, pick } from './rng.js';
+import { makeRng, between, pick, wpick } from './rng.js';
 import { makeInstrument } from './sound.js';
 
 // ---- 楽器の割り当て --------------------------------------------------
@@ -216,7 +216,7 @@ const BANDS = [
 ];
 
 // 旋律の種。隣へ動くのを主にして、たまに跳ぶ。山を1つ作る。
-function makeTune(rng, len, span) {
+function makeTune(rng, len, span, tm) {
   // **メロディの刻みも1本ごとに替える。** 6通りしか無いと似た旋律が出る。
   const rhythms = [
     [1, 1, 2], [0.5, 0.5, 1, 2], [1, 0.5, 0.5, 2], [2, 1, 1],
@@ -224,7 +224,18 @@ function makeTune(rng, len, span) {
     [0.75, 0.25, 1, 2], [2, 0.5, 0.5, 1], [0.5, 1, 0.5, 2], [1, 1, 1, 1],
     [2, 2], [0.5, 0.5, 2, 1], [1.5, 1.5, 1], [0.25, 0.25, 0.5, 1, 2],
   ];
-  const r = pick(rng, rhythms);
+  // **どの刻みを引くかを記事の印象で寄せる。**
+  // 速い・読点の多い記事は短い音（平均の短い形）、
+  // 遅い・大きく切る記事は長い音を引く。等しく選ぶと、
+  // 記事が「一気に崩れた」と言っていても旋律が悠長なまま出る。
+  let r;
+  if (tm) {
+    const want = 2.05 - (tm.pace * 0.85 + tm.subdiv * 0.7);   // 欲しい平均の長さ（拍）
+    r = wpick(rng, rhythms, rhythms.map((x) => {
+      const m = x.reduce((a, b) => a + b, 0) / x.length;
+      return 0.06 + Math.pow(Math.max(0, 1 - Math.abs(m - want) / 1.25), 3);
+    }));
+  } else r = pick(rng, rhythms);
   const out = [];
   let deg = 0;
   for (let i = 0; i < len; i++) {
@@ -263,19 +274,22 @@ export function composeMusic(work, seedIn) {
   const SC = mode.sc;
   // 拍子。指示書（記事の文の調子）が向きを言っていれば、それに寄せる
   //   短く切る文 → 拍の多い拍子／長く続く文 → 拍の少ない拍子
-  const mSorted = METERS.map((x, i) => ({ x, i })).sort((a, b) => a.x.beats - b.x.beats);
-  const met = (BR && BR.beatsBias)
-    ? (BR.beatsBias > 0
-      ? mSorted[Math.floor(mSorted.length * 0.5 + rng() * mSorted.length * 0.5)].x
-      : mSorted[Math.floor(rng() * mSorted.length * 0.6)].x)
+  // 記事の印象（速さ・揺れ・刻み・繰り返し）から出た重みで引く。
+  // **どの拍子が近いかで決まる**ので、淡々とした記事は 4/4・2/2、
+  // 読点の多い記事は 6/8・12/8、文の長さが乱れる記事は 5/4・7/8 に寄る。
+  // 重みには下駄が履かせてあるので、同じ記事でも種が違えば遠い拍子が出る。
+  const met = (BR && BR.meterW)
+    ? wpick(rng, METERS, METERS.map((m) => BR.meterW[m.name] || 0.05))
     : METERS[Math.floor(rng() * METERS.length)];
   const prg = makeProg(rng);
   const band = makeBand(rng);
-  // 速さ。八分を1拍に取る拍子（6/8・7/8）は、そのぶん速い数字になる
-  // 速さ。指示書が「速い／遅い」を言っていれば、その半分の幅から取る
+  // 速さ（BPM）。八分を1拍に取る拍子（6/8・7/8）は、そのぶん速い数字になる。
+  // **記事の速さの印象をそのまま幅の中の位置にする**（0=遅い端 1=速い端）。
+  // 種で ±12% 揺らすので、同じ記事でも同じ BPM にはならない。
   const tLo = met.half ? 108 : 48, tHi = met.half ? 168 : 92;
-  const tempo = Math.round((BR && BR.tempoBias)
-    ? (BR.tempoBias > 0 ? between(rng, (tLo + tHi) / 2, tHi) : between(rng, tLo, (tLo + tHi) / 2))
+  const tempo = Math.round((BR && BR.pace !== undefined)
+    ? Math.max(tLo, Math.min(tHi,
+      tLo + (tHi - tLo) * (0.10 + BR.pace * 0.80 + (rng() - 0.5) * 0.24)))
     : between(rng, tLo, tHi));
   const beat = 60 / tempo;
   const bar = beat * met.beats;
@@ -286,8 +300,14 @@ export function composeMusic(work, seedIn) {
     // 長さ3〜12、段は0〜6、たまに休み（-1）を入れる。
     // **幅が狭いと台帳で「伴奏が既出」に当たる**（3〜8・0〜4だけのとき
     // 400種のうち49本ぶんを塞いでいた）。素材は作り続けること。
-    const len = 3 + Math.floor(rng() * 10);
-    const rest = rng() < 0.35;                          // 休みを入れる伴奏か
+    // **長さと休みの入りかたを記事の印象から取る。**
+    // 読点の多い（刻みの細かい）記事は長い形、同じ言い回しを繰り返す記事は短い形。
+    // 刻みの粗い記事は休みが入って、伴奏がまばらになる。
+    const sd = BR && BR.subdiv !== undefined ? BR.subdiv : rng();
+    const os = BR && BR.ostinato !== undefined ? BR.ostinato : rng();
+    const len = Math.max(3, Math.min(12,
+      Math.round(3 + sd * 7 + rng() * 3.4 - os * 1.8)));
+    const rest = rng() < 0.14 + (1 - sd) * 0.44;        // 休みを入れる伴奏か
     const out = [Math.floor(rng() * 3)];
     for (let i = 1; i < len; i++) {
       let x; let g = 0;
@@ -300,14 +320,26 @@ export function composeMusic(work, seedIn) {
     return out;
   })();
   const arpOct = pick(rng, [0, 12, 12, -12]);           // 竪琴の高さ
-  // 太鼓の打ちかた（拍のどこを打つか。拍子の中に収める）
-  const beatsOf = (n) => Array.from({ length: n }, (_, i) => i);
-  const DRUMS = [
-    [0, met.beats / 2], [0, met.beats - 1], [0, 1, met.beats / 2],
-    [0, met.beats * 0.25, met.beats * 0.5, met.beats * 0.75],
-    beatsOf(met.beats), [0, met.beats / 3, met.beats * 2 / 3],
-  ];
-  const drum = DRUMS[Math.floor(rng() * DRUMS.length)].filter((x) => x < met.beats);
+  // 太鼓の打ちかた（拍のどこを打つか。拍子の中に収める）。
+  // **6通りの表から選んでいたのをやめた。** 表から選ぶと、いつか必ず同じ組が出る
+  // （`CLAUDE.md`「有限の表から選ぶと、いつか必ず同じ組が出る」）。
+  // いま打つ場所は**記事の揺れ**から組む——まっすぐな記事は拍の上だけを打ち、
+  // 崩れる記事は裏（半拍）を踏んで、打つ数も増える。1拍目は必ず打つ（断の頭）。
+  const drum = (() => {
+    const sy = BR && BR.sway !== undefined ? BR.sway : rng();
+    const grid = [];
+    for (let i = 1; i < met.beats; i++) grid.push(i);
+    for (let i = 0; i < met.beats; i++) {
+      if (rng() < 0.06 + sy * 0.46) grid.push(i + 0.5);  // 裏を踏むか
+    }
+    const n = Math.max(0, Math.min(grid.length,
+      Math.round(1 + sy * 2.2 + rng() * 2.4)));
+    const take = [0];
+    for (let i = 0; i < n && grid.length; i++) {
+      take.push(grid.splice(Math.floor(rng() * grid.length), 1)[0]);
+    }
+    return take.sort((a, b) => a - b).filter((x) => x < met.beats);
+  })();
   // 低音の歩き。**何拍目をどの音で踏むか**を組み立てる（型から選ばない）
   const bassPat = (() => {
     // **等分だけにしないこと。** 2〜4等分・段4通りしか無かったので、
@@ -345,8 +377,10 @@ export function composeMusic(work, seedIn) {
     if (t >= 0 && d > 0.02 && midi > 12 && midi < 108) notes.push({ t, d, midi, v, voice });
   };
 
-  const tuneA = makeTune(rng, 7 + Math.floor(rng() * 2), 7);
-  const tuneB = makeTune(rng, 5 + Math.floor(rng() * 3), 5);
+  const tm = BR && BR.pace !== undefined
+    ? { pace: BR.pace, subdiv: BR.subdiv === undefined ? 0.4 : BR.subdiv } : null;
+  const tuneA = makeTune(rng, 7 + Math.floor(rng() * 2), 7, tm);
+  const tuneB = makeTune(rng, 5 + Math.floor(rng() * 3), 5, tm);
 
   // 1小節ぶんを置く。ch は音階の度（0=主和音）。o.voicing で楽器を入れ替える
   function putBar(t, ch, opt) {

@@ -184,11 +184,70 @@ if (!title) {
 // 「記事から着想を得た」とは言えない。記事の言葉から出す要素を決める
 // （`art/js/brief.js`）。依頼者「作品にどのような要素を出すかは、
 // インプットしたnote記事の内容から着想を得るようにしてね」。
+//
+// **直前の作品で出た図は、次の作品では出さない。**
+// 台帳の `形` は5つの組をまとめて見るので、1つだけ同じでも通ってしまう
+// （骨格は14しかなく1本に5つ使うので、素直に引くと次の日も平均1.8個が再登場する）。
+// 依頼者「椅子のモチーフは以前見た。初回で2回連続は仕組みの不備」。
+// だから直前の1本ぶんは候補から外し、その前の1本ぶんは重みを落とす。
+// 「二度と出さない」にはしない（3日で骨格が尽きる。**偶然また出るのは許す**）。
+const formsOf = (w) => String((w && w.materials && w.materials.形) || '')
+  .split(' ').map((x) => x.split(':')[1]).filter(Boolean);
+const recorded = state.works.filter((w) => w.materials);
+const avoid = formsOf(recorded[recorded.length - 1]);
+const soften = formsOf(recorded[recorded.length - 2]);
+if (avoid.length) log(`直前に出た図は避けます: ${avoid.join(' ')}`);
+
 let brief = null;
 if (article) {
   const { briefFromText } = await import('../js/brief.js');
-  brief = briefFromText({ title: article.title, body: article.body }, seed);
+  brief = briefFromText({ title: article.title, body: article.body }, seed, { avoid, soften });
 }
+
+// ---- 台帳を見て、素材がかぶらない種に決め直す -------------------------
+// **ここが繋がっていなかった。** `fresh.mjs` の台帳（形・配色・楽器・旋律・
+// 和音・伴奏・低音・音色・題名を1つでも過去と同じなら落とす）は作ってあったのに、
+// 毎日の道からは**一度も呼ばれていなかった**。だから同じ椅子の図が2日続いても
+// 誰も止めなかった（依頼者「初回で2回連続は仕組みの不備」——そのとおりだった）。
+//
+// 台帳は2か所に持つ。`art/works/ledger.json`（リポジトリ）と、
+// 置場の `.state.json`。**毎朝の `git stash` でリポジトリ側の書き込みが
+// 棚上げされて消えるため**、置場の側だけは必ず残るようにしてある。
+// 照合はこの2つを合わせて行う。
+let materials = null;
+let freshWarn = null;
+// **手で `--seed` を指定したときは動かさない**（下見・焼き直しのため）。
+const SEED_GIVEN = flag('seed', null) !== null;
+if (!has('no-ledger') && !SEED_GIVEN) {
+  const F = await import('./fresh.mjs');
+  const ledger = F.load();
+  const past = [
+    ...ledger.works,
+    ...state.works.filter((w) => w.materials).map((w) => ({ date: w.date, materials: w.materials })),
+  ];
+  const got = F.pickFresh(brief, seed, past);
+  if (got && !got.hit.length) {
+    if (got.seed !== seed) log(`種を ${seed} → ${got.seed} に寄せました（素材が過去とかぶらない最初の種）`);
+    seed = got.seed;
+    materials = got.materials;
+  } else if (got) {
+    // **素材が尽きたということなので、逃げずに知らせる。**
+    seed = got.seed;
+    materials = got.materials;
+    freshWarn = got.hit.map((h) => `${h.key}（${h.date} の種${h.seed}と同じ）`);
+    log('');
+    log('**素材が足りません。** 240通り当てても、過去とかぶらない組が出ませんでした。');
+    for (const w of freshWarn) log('  かぶり: ' + w);
+    log('  足す場所は `node art/tools/fresh.mjs --stock` が指します。');
+    log('');
+  }
+  // 種が動いたので、指示書を**新しい種で組み直す**（読む場所・直接さ・図が種に依る）
+  if (article) {
+    const { briefFromText } = await import('../js/brief.js');
+    brief = briefFromText({ title: article.title, body: article.body }, seed, { avoid, soften });
+  }
+}
+
 const briefArg = brief
   ? Buffer.from(JSON.stringify(brief), 'utf8').toString('base64')
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
@@ -213,7 +272,9 @@ if (brief) {
   log(`  序の形  : ${FORM_KEYS[brief.opening]}`);
   log(`  層      : ${LAYER_NAMES[brief.layer]}`);
   log(`  尺      : ${brief.total}秒（記事 ${brief.from.文字数}字）`);
-  log(`  音の向き: ${brief.tempoBias > 0 ? '速い' : '遅い'}／一文 ${brief.from.一文の長さ}字`);
+  log(`  時間の印象: 速さ${brief.pace} 揺れ${brief.sway} 刻み${brief.subdiv} 繰り返し${brief.ostinato}`);
+  log(`  寄る拍子: ${Object.entries(brief.meterW).sort((a, b) => b[1] - a[1])
+    .slice(0, 3).map(([k, v]) => `${k}(${v.toFixed(2)})`).join(' ')}／一文 ${brief.from.一文の長さ}字`);
 }
 log('');
 
@@ -262,9 +323,22 @@ log('映像を録ります（6分かかります）…');
 await run([path.join(HERE, 'record.mjs'), film, '--seed', String(seed),
   '--size', SIZE, '--bitrate', VBR, ...(briefArg ? ['--brief', briefArg] : [])]);
 
+// **焼けたら台帳に書く。** 書かないと明日また同じ素材が出る。
+// 置場（`.state.json`）とリポジトリ（`art/works/ledger.json`）の両方へ書く。
 state.works.push({ date: today, title, seed, link: article ? article.link : null,
-  article: article ? article.title : null, folder });
+  article: article ? article.title : null, folder, materials });
 saveState(OUT, state);
+if (materials && !has('no-ledger')) {
+  try {
+    const F = await import('./fresh.mjs');
+    const l = F.load();
+    l.works.push({ date: today, article: article ? article.title : null, materials });
+    F.save(l);
+    log(`台帳に書きました（ぜんぶで ${l.works.length} 本）`);
+  } catch (e) {
+    log('台帳に書けませんでした（置場の記録は残っています）: ' + e.message);
+  }
+}
 log('');
 log('できました: ' + folder);
 

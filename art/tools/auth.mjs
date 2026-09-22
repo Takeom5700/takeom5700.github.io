@@ -172,8 +172,29 @@ async function finish(code, err) {
 
 // 受け口を立てる。**Google は loopback の口を許している**ので、
 // ここに返してもらう（手で文字列を貼る手順が消える）
-const PORT = parseInt(flag('port', '8731'), 10);
-srv.listen(PORT, '127.0.0.1', () => {
+//
+// **口が塞がっていたら次の口へ移ること。** 前回の許可取りが途中で終わると
+// その process が口を掴んだまま残り（窓を×で閉じても node は生きている）、
+// 次に動かしたとき `EADDRINUSE 127.0.0.1:8731` で落ちる。
+// これは持ち主のパソコンで実際に起きて、「テスターに足したのに通らない」
+// ように見えていた（原因は許可の側ではなく、こちらの口の取り合いだった）。
+// デスクトップアプリの鍵なら loopback の**どの口でも**Google が受けるので、
+// 塞がっていたら黙って隣へ移る。
+const PORT0 = parseInt(flag('port', '8731'), 10);
+let PORT = PORT0;
+srv.on('error', (e) => {
+  if (e && e.code === 'EADDRINUSE' && PORT < PORT0 + 20) {
+    PORT++;
+    console.log(`  口 ${PORT - 1} は塞がっていたので ${PORT} を使います`);
+    setTimeout(() => srv.listen(PORT, '127.0.0.1'), 60);
+    return;
+  }
+  console.error('');
+  console.error('受け口を立てられませんでした: ' + (e && e.message));
+  console.error('開いている cmd の窓を全部閉じてから、もう一度動かしてください。');
+  process.exit(1);
+});
+srv.on('listening', () => {
   const url = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
     client_id: ID,
     redirect_uri: `http://127.0.0.1:${PORT}`,
@@ -194,6 +215,7 @@ srv.listen(PORT, '127.0.0.1', () => {
   console.log('待っています…（やめるときは Ctrl+C）');
   open(url);
 });
+srv.listen(PORT, '127.0.0.1');
 
 // OAuth クライアントに入れる「承認済みのリダイレクト URI」
 // デスクトップアプリなら loopback は自動で許されるので、登録は要らない。

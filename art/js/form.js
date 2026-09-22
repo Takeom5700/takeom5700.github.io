@@ -363,7 +363,11 @@ const SKELETONS = [
       pts.push([S.w, S.h], [0, S.h]);
       curved(ctx, pts);
     },
-    top: (P, x, y, s) => [S.w * 0.5, y],
+    // **枠（S）は引数で受け取ること。** ここだけ外の `S` を見ていて、
+    // 波（丘・堤）の作品が固有の事に入った瞬間に
+    // `ReferenceError: S is not defined` で頁ごと落ちていた（実際に落ちた）。
+    // 波は画面いっぱいの帯なので、中心は枠の真ん中に取る。
+    top: (P, x, y, s, S) => [S.w * 0.5, y],
   },
   {
     key: 'swarm', 名: ['群', '粒', '雲'], ev: 'drop',
@@ -392,7 +396,7 @@ const SKELETONS = [
 function drawOwn(ctx, S, E, F, i, x, y, s) {
   const put = (fn) => { ctx.save(); ctx.fillStyle = E.col.i; ctx.beginPath(); fn(); ctx.fill(); ctx.restore(); };
   const P = F.P, ev = SKELETONS[F.sk].ev;
-  const [tx, ty] = SKELETONS[F.sk].top(P, x, y, s);
+  const [tx, ty] = SKELETONS[F.sk].top(P, x, y, s, S);
   const u = E.ep;
   if (ev === 'sit') human(ctx, S, E, tx, ty, s * 0.55, u > 0.5 ? 'sit' : 'walk');
   else if (ev === 'climb' || ev === 'ascend') {

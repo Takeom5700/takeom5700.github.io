@@ -78,13 +78,21 @@ export const forRole = (role) => INSTRUMENTS.filter((x) => x.r.split(' ').includ
 // （雑音は太鼓の胴に1本だけ）。だから振れる幅は「その楽器らしさ」の内側に収める。
 //
 // 役: mel=旋律 arp=分散和音 bass=低音 pad=持続 hit=一撃 pulse=拍
+//
+// **撥弦（pluck）に重みを掛けないこと。**
+// 最初は `mel` が6分の2、`arp` が**3分の2**を撥弦にしていた。
+// 分散和音の声部は作品の頭から終わりまで鳴り続ける役なので、
+// 3分の2が撥弦だと**どの作品も「オルゴールが延々鳴っている」音になる**
+// （依頼者「音楽はオルゴール調にたよりすぎ」——実際にそう聞こえていた）。
+// いまはどの役も**機構を等しく持ち、撥弦は1つぶんだけ**。
+// 伴奏にも弓・風琴・聲を入れて、作品ごとに中の声の質が替わるようにした。
 const MECH = {
-  mel: ['pluck', 'pluck', 'fm', 'bow', 'organ', 'choir'],
-  arp: ['pluck', 'pluck', 'fm'],
-  bass: ['pluck', 'bow', 'organ'],
-  pad: ['bow', 'organ', 'choir', 'choir'],
-  hit: ['pluck', 'fm'],
-  pulse: ['drum', 'drum', 'pluck'],
+  mel: ['pluck', 'fm', 'bow', 'organ', 'choir'],
+  arp: ['pluck', 'fm', 'bow', 'organ', 'choir'],
+  bass: ['pluck', 'bow', 'organ', 'fm'],
+  pad: ['bow', 'organ', 'choir'],
+  hit: ['pluck', 'fm', 'organ'],
+  pulse: ['drum', 'drum', 'pluck', 'fm'],
 };
 // 役ごとの音域の向き（低音は暗く、旋律は抜ける）
 const ROLE_LP = { mel: [2200, 11000], arp: [1800, 9000], bass: [260, 1300],
