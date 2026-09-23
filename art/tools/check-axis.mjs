@@ -14,7 +14,7 @@ let bad = 0;
 const stat = {
   cpm: [], ratio: [], open: [], maxShare: [], kinds: [], hold: [], flash: [], turn: [],
   quiet: [], rests: [],
-  keys: [], appr: [], keyLong: [], appRate: [],
+  keys: [], appr: [], keyLong: [], appRate: [], soft: [], unreal: [],
 };
 const layCount = {};
 
@@ -39,6 +39,14 @@ for (let seed = 0; seed < N; seed++) {
   stat.turn.push(w.shots.filter((s) => s.turn).length);
   // 流（キーカットと、その前後の三拍）
   stat.keys.push(w.shots.filter((s) => s.key).length);
+  // 縁（境目の硬さ）— 溶ける景が尺のどれだけを占めるか
+  stat.soft.push(w.shots.filter((s) => s.hand === 4).reduce((a, s) => a + s.dur, 0) / w.total);
+  // 実在しない図（裂・孔・反）が尺のどれだけを占めるか
+  {
+    const UN = ['rift', 'hollow', 'echo'];
+    stat.unreal.push(w.shots.filter((s) => s.form && UN.includes(s.form.key))
+      .reduce((a, s) => a + s.dur, 0) / w.total);
+  }
   stat.appr.push(w.shots.filter((s) => s.flow === 1).length);
   {
     const med = (a) => { const b = [...a].sort((x, y) => x - y); return b[b.length >> 1] || 1; };
@@ -83,6 +91,13 @@ row('キーカットの数（部ごとに1つ）', stat.keys, (v) => v.toFixed(0
 row('キーは部の中央値の何倍', stat.keyLong, (v) => v.toFixed(2) + '倍');
 row('寄せの帯の景の数', stat.appr, (v) => v.toFixed(0));
 row('寄せで何倍まで縮むか', stat.appRate, (v) => v.toFixed(2) + '倍');
+console.log('縁（境目の硬さ）— **溶ける縁は硬い縁があって初めて効く**');
+row(`溶ける景の尺の割合（${LAWS.maxSoftShare * 100}% 以下）`, stat.soft, (v) => (v * 100).toFixed(0) + '%');
+console.log(`  溶ける縁を使わない作品: ${stat.soft.filter((v) => v === 0).length} / ${N}`
+  + '（幾何学的に硬いだけの作品もあってよい）');
+console.log('貌（実在しない図）— 裂・孔・反');
+row('実在しない図の尺の割合', stat.unreal, (v) => (v * 100).toFixed(0) + '%');
+console.log(`  実在しない図が出ない作品: ${stat.unreal.filter((v) => v === 0).length} / ${N}`);
 console.log('層（断をまたいで続く）');
 console.log('  ' + Object.entries(layCount).sort((a, b) => b[1] - a[1])
   .map(([k, n]) => `${LAYER_NAMES[k] || k} ${n}本`).join('  '));

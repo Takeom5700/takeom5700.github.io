@@ -26,7 +26,7 @@
 // 帰ってきたと分かるから、終わったことが分かる。
 
 import { makeRng, between, pick } from './rng.js';
-import { PALETTES, makePalette, hueGap, lumOf, hsOf, colorsOf } from './paint.js';
+import { PALETTES, makePalette, hueGap, lumOf, hsOf, colorsOf, nz01 } from './paint.js';
 import { layerColor } from './layer.js';
 import { NAMES, MOTIFS } from './motif.js';
 import { makeForm, RANGE, FORM_KEYS, OPENING_FORMS, MOVING_FORMS, STILL_FORMS } from './form.js';
@@ -104,6 +104,10 @@ export const LAWS = {
   // 異
   minOdd: 4,
   minHands: 3,
+  // 縁 — **溶ける縁は硬い縁があって初めて効く。**
+  // 全面を溶かすと一度目の失敗（雲）に戻るので、上限を置く。
+  // 下限は置かない（幾何学的に硬いだけの作品もあってよい、という依頼者の線）。
+  maxSoftShare: 0.7,
   // 安全
   maxFlashPerSec: 3,
 };
@@ -187,6 +191,8 @@ function shotFrom(th, dur, over) {
     hang: 0.6, hgap: 0.5,
     // 余白。zoom<1 で図を小さくし、vx/vy で空きの中に寄せる
     zoom: 1, vx: 0, vy: 0, sparse: 0,
+    // 縁（境目の硬さ）。hand 4 のときだけ効く。どこまで溶けるか・どちらへ溶けるか
+    edgeA: 0.5, edgeDir: 0,
     // 層（断をまたいで続くもの）。中身は post-pass で入れる
     lay: 0, lyW: 1, lyT0: 0, lyD: 1, lyA: 0.5, lyB: 0.5, lyDir: 1, lyAlt: 0,
   }, th, over || {});
@@ -233,6 +239,27 @@ export function composeWork(seed, brief) {
   // 調（色）を決める。home が主調、dom が属調、far が遠い調
   const home = Math.floor(rng() * NPAL);
   const dom = (home + 4 + Math.floor(rng() * 4)) % NPAL;
+  // ---- 縁（境目の硬さ）— **溶ける縁を混ぜるかどうかは作品ごとに決める** ----
+  // 依頼者「グラデーション的だったり、何かと何かの境目が曖昧だったりする
+  // ような表現も必要であれば選択肢に入れていい」。
+  //
+  // **全面を溶かさないこと。** 一度目の失敗（雲）はそれで、
+  // 「ラテアートや雲の写真と発想が変わらない」と言われた。
+  // だから上限を 0.55 に切る。**硬い縁が必ず半分近く残る**ので、
+  // 溶けていることが対比として効く——柔らかい縁は、隣の硬い縁があって初めて柔らかい。
+  //
+  // **0 の作品もある**（依頼者「幾何学的に単純な線や円…そういうときももちろん
+  // あってもいい」）。だから「毎回必ず溶かす」にもしない。
+  const EDGE_MIX = [0, 0, 0.22, 0.34, 0.45, 0.55];
+  const edgeMix = (BR && BR.blur !== undefined)
+    // 記事が「にじむ・曖昧・溶ける」を言っていれば、そちらへ寄せる
+    ? EDGE_MIX[Math.min(EDGE_MIX.length - 1,
+      Math.round(BR.blur * (EDGE_MIX.length - 1)))]
+    : pick(rng, EDGE_MIX);
+  const edgeDir = Math.floor(rng() * 4);
+  // 溶ける景を選ぶのは種の仕事（同じ種なら同じ景が溶ける）
+  const softly = (r) => edgeMix > 0 && r < edgeMix;
+
   const far = [(home + 7) % NPAL, (home + 9) % NPAL,
     (home + 2) % NPAL, (dom + 6) % NPAL];
 
@@ -312,6 +339,25 @@ export function composeWork(seed, brief) {
       s.tc1 = pick(rng, far); s.tc2 = s.pal;
     } else if (s.dur >= 3.5 && rng() < 0.5) {
       s.turn = 1; s.tp1 = between(rng, 0.3, 0.6); s.tc1 = pick(rng, far);
+    }
+    // ---- 縁（境目の硬さ）----------------------------------------------
+    // **再現部の写しには振らない。** 提示部から `hand` を引き写しているので、
+    // ここで振り直すと「同じ姿で帰る」が崩れる
+    // （帰ってきた第一主題の縁だけ溶ける、になる）。
+    // 写しの印（`recall`）は `over` に入れてある——`put()` が返ったあとで
+    // 立てていたので、ここからは見えなかった（実際に見えず、振れなかった）。
+    //
+    // **`over.hand` の有無で見分けないこと。** `vary()` はどの景にも `hand` を
+    // 渡しているので、それを条件にすると**1景も溶けない**（実測 0%）。
+    //
+    // **キーカットは硬いままにする。** その部でいちばん強い一枚なので、
+    // 輪郭が立っている方が効く（溶けた縁は、硬い縁の隣にあって初めて柔らかい）。
+    // キーはこのあとの「流」が決めるので、ここでは重い景（w >= 0.9）を避ける。
+    if (!s.recall && s.w < 0.9
+        && softly(nz01(seed * 7 + shots.length * 131))) {
+      s.hand = 4;
+      s.edgeA = 0.3 + nz01(seed + shots.length * 17) * 0.6;
+      s.edgeDir = edgeDir;
     }
     t += dur;
     shots.push(s);
@@ -526,6 +572,7 @@ export function composeWork(seed, brief) {
       const d = Math.min(aEnd - t, src.dur * between(rng, 1.05, 1.5));
       const s = put(A, d, {
         m: src.m, form: src.form, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        edgeA: src.edgeA, edgeDir: src.edgeDir, recall: 1,
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: src.inv, shade: src.shade, mv: src.mv, mvA: src.mvA,
         fps: src.fps, pal: home, lock: 1,
@@ -559,6 +606,7 @@ export function composeWork(seed, brief) {
       const d = Math.min(end - t, src.dur * between(rng, 1.0, 1.35));
       const s = put(B, d, {
         m: src.m, form: src.form, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        edgeA: src.edgeA, edgeDir: src.edgeDir, recall: 1,
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: false, shade: src.shade, mv: src.mv, mvA: src.mvA,
         zoom: src.zoom, vx: src.vx, vy: src.vy, sparse: src.sparse,
@@ -1049,6 +1097,14 @@ export function checkWork(work) {
   if (S.some((s) => Math.abs((s.lyD || 0) - work.total) > 0.01)) bad.push('層: 層の時計が作品全体になっていない');
   if (S.filter((s) => s.odd).length < LAWS.minOdd) bad.push('異: 違和感が足りない');
   if (new Set(S.map((s) => s.hand)).size < LAWS.minHands) bad.push('異: 塗りかたが足りない');
+  // 縁 — 溶ける景が多すぎないこと（硬い縁が残っていること）
+  {
+    const soft = S.filter((s) => s.hand === 4).reduce((a, s) => a + s.dur, 0) / work.total;
+    if (soft > LAWS.maxSoftShare) {
+      bad.push(`縁: 溶ける景が ${(soft * 100) | 0}%（${LAWS.maxSoftShare * 100}% 以下。`
+        + '硬い縁が残っていないと、溶けていることが対比にならない）');
+    }
+  }
   // 禁：白に近い地に赤い円（日の丸）を置かない
   for (const s of S) {
     const c = colorsOf(s);
