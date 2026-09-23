@@ -68,11 +68,49 @@ function pStroke(ctx, pts, w, seed) {
 }
 // 面（角は角のまま）。**直線で引くこと**——paint.js の path() は角を丸めるので、
 // 箱を渡すと卵になり、階の段は点になった（実際になった）
+// **面のなめらかさは作品ごとに振る**（2026-09-23）。
+// 依頼者「幾何学的にシンプルなものもいいけど、そればかりではなく、一応
+// 選択肢としてグラデーションや**なめらかな表現や自然さの表現**も
+// **コントラストを出すための材料として**持っててね」。
+//
+// それまで面は必ず直線で引いていた（`path()` が角を丸めて箱を卵にした
+// 失敗の反動）。だが**全部が直線だと、直線であることが対比にならない。**
+//
+//   0 … 直線（既定。角が立つ）
+//   1 … ゆるい曲線（角が丸い。作られたものだが、やわらかい）
+//   2 … 有機（縁が noise で侵食される。育ったもの・削られたものに見える）
+//
+// **既定は 0。** 1・2 は作品ごとに少数へ振る（`makeForm` が決める）。
+// 硬い作品があるから、やわらかい作品がやわらかく見える。
+let SMOOTH = 0;
+export function setSmooth(v) { SMOOTH = v | 0; }
+
 function pPlate(ctx, pts, seed) {
   if (pts.length < 3) return;
   const j = (v, k) => v + (seed === undefined ? 0 : (nz01(seed + k * 31) - 0.5) * 1.6);
-  ctx.moveTo(j(pts[0][0], 0), j(pts[0][1], 1));
-  for (let i = 1; i < pts.length; i++) ctx.lineTo(j(pts[i][0], i * 2), j(pts[i][1], i * 2 + 1));
+  const q = pts.map(([x, y], i) => [j(x, i * 2), j(y, i * 2 + 1)]);
+  if (SMOOTH === 1) { path(ctx, q); return; }          // ゆるい曲線（中点を通る）
+  if (SMOOTH === 2) {
+    // 有機。辺を割って、法線の向きへ noise で押し引きする
+    // （**育った／削られた輪郭**。面であることは崩さない）。
+    const out = [];
+    for (let i = 0; i < q.length; i++) {
+      const a = q[i], b = q[(i + 1) % q.length];
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      const L = Math.hypot(dx, dy) || 1;
+      const nx = -dy / L, ny = dx / L;
+      const div = Math.max(2, Math.min(7, Math.round(L / 26)));
+      for (let k = 0; k < div; k++) {
+        const u = k / div;
+        const amp = L * 0.14 * (nz01((seed || 0) + i * 53 + k * 17) - 0.5);
+        out.push([a[0] + dx * u + nx * amp, a[1] + dy * u + ny * amp]);
+      }
+    }
+    path(ctx, out);
+    return;
+  }
+  ctx.moveTo(q[0][0], q[0][1]);
+  for (let i = 1; i < q.length; i++) ctx.lineTo(q[i][0], q[i][1]);
   ctx.closePath();
 }
 // 丸みのある面（器の胴・笠）だけ曲線で引く
@@ -307,7 +345,11 @@ const SKELETONS = [
       post(ctx, x, y, y - h, lw * 1.8, E.fix + i, true);
       canopy(ctx, x, y - h, r, Math.max(4, P.count + 3), E.fix + i + 5);
       // 石突き（先の曲がり）。これがあると傘だと分かる
-      if (P.foot) brush(ctx, [[x, y], [x + s * 0.12, y - s * 0.02]], lw * 1.6, E.fix + i + 9, false);
+      // **`pStroke` を呼ぶこと。** `brush` という名前は paint.js の側のもので、
+      // form.js には無い。`P.foot` が立った傘が出た種で
+      // `ReferenceError: brush is not defined` になり、**頁が真っ白になった**
+      // （実測 種226。譜の検査は絵を描かないので、ここは measure でしか出ない）。
+      if (P.foot) pStroke(ctx, [[x, y], [x + s * 0.12, y - s * 0.02]], lw * 1.6, E.fix + i + 9);
     },
     top: (P, x, y, s) => [x, y - s * (0.7 + P.tall * 0.5)],
   },
@@ -612,6 +654,8 @@ export function makeForm(rng, skIndex) {
     flip: rng() < 0.5,
     solid: rng() < 0.55,
     lip: 0.45 + rng() * 0.45,
+    // 面のなめらかさ。**既定は直線**。硬い作品があるから柔らかい作品が効く
+    smooth: rng() < 0.62 ? 0 : (rng() < 0.6 ? 1 : 2),
   };
   const name = S0.名[Math.floor(rng() * S0.名.length)];
   return { sk, key: S0.key, name, ev: S0.ev, P };
@@ -630,7 +674,38 @@ export const RANGE = {
 
 // ---- 描く ------------------------------------------------------------
 // `motif.js` の図と同じ呼びかた。奥ほど小さく、手前ほど大きい。
+// ---- 図の頭がどこか（枠の上へ出さないため）------------------------------
+// **骨格ごとに手で高さを申告させると必ず取り違える。** `top` は「物が乗る所」
+// （床几の座面・梯子の上端）であって図の頭ではないので、背もたれ・梁・笠は
+// そこより上にある。だから**何も塗らない ctx に一度描かせて、実際に測る。**
+// 座標はどれも (x, y) を中心に `s` に比例するので、一度測れば掛け算で収まる。
+// 知らない呼び出しは Proxy が何もしないので、部品を足しても壊れない。
+function topOf(S0, S, E, P, i, x, y, s) {
+  let top = y;
+  const see = (px, py) => { if (typeof py === 'number' && py < top) top = py; };
+  const base = {
+    moveTo: see, lineTo: see,
+    rect(a, b, w, h) { see(a, b); see(a, b + h); },
+    fillRect(a, b, w, h) { see(a, b); see(a, b + h); },
+    arc(cx, cy, r) { see(cx, cy - Math.abs(r)); },
+    ellipse(cx, cy, rx, ry) { see(cx, cy - Math.abs(ry)); },
+    quadraticCurveTo(a, b, c, d) { see(a, b); see(c, d); },
+    bezierCurveTo(a, b, c, d, e, f) { see(a, b); see(c, d); see(e, f); },
+    arcTo(a, b, c, d) { see(a, b); see(c, d); },
+  };
+  const noop = () => {};
+  const rec = new Proxy(base, {
+    get(t, k) { return k in t ? t[k] : noop; },
+    set() { return true; },
+    has() { return true; },
+  });
+  try { S0.draw(rec, S, E, P, i, x, y, s); } catch (e) { return y; }
+  return top;
+}
+
 export function drawForm(ctx, S, E, F) {
+  // **その作品の面のなめらかさを立ててから描く**（部品が読む）
+  setSmooth(F.P && F.P.smooth ? F.P.smooth : 0);
   const sh = E.sh;
   const S0 = SKELETONS[F.sk];
   const n = Math.max(1, Math.min(sh.n, (RANGE[F.key] || [1, 8])[1]));
@@ -643,13 +718,28 @@ export function drawForm(ctx, S, E, F) {
   for (let i = 0; i < n; i++) {
     const big = n === 1;
     const dep = big ? 1 : 0.8 + nz01(E.fix + i * 19) * 0.35;
-    const s = S.h * base * dep;
+    let s = S.h * base * dep;
     // **枠の中に収める。** 広げすぎると半分が枠外に出て、物が読めなくなった
     const x = big ? S.w * (0.5 + sh.ox * 0.18)
       : S.w * (0.5 + (((i + 0.5) / n) - 0.5) * (n === 2 ? 0.52 : 0.76)
         + (nz01(E.fix + i * 7) - 0.5) * 0.06);
     const y = big ? S.h * (0.76 + sh.oy * 0.08)
       : S.h * (0.62 + (dep - 0.95) * 0.5) + Math.sin(step(tq * 0.9 + i, 8)) * S.h * 0.004;
+    // ---- 枠の上へ出さない ------------------------------------------
+    // **寸法（`P.tall`／`P.wide`）は作品ごとに振っている**ので、高い組み合わせ
+    // だと図の頭が枠の外へ出る。**傘は笠が枠の上へ出て、画面に残るのは棒と
+    // 石突きだけになり「傘」に見えなかった**（実測 8通りのうち6通り。
+    // 棒だけが並んだ画面は、依頼者の言う「幾何学的な可能性の羅列」そのもの）。
+    // 旗・柵・裂も頭が切れていた。
+    //
+    // 寸法は変えず、**大きさ（`s`）だけを縮めて収める**（形の釣り合いを保つ）。
+    // 上へ出るぶんは `measure()` で**実際に測る**（`top` は「物が乗る所」で
+    // あって図の頭ではない——床几の背もたれ・櫓の梁・傘の笠がそこより上）。
+    {
+      const top = topOf(S0, S, E, F.P, i, x, y, s);
+      const need = y - top, room = y - S.h * 0.05;
+      if (need > room && need > 1) s *= room / need;
+    }
     // **必ず `E.ink.body()` を通す。** 自分で塗ると地の色で塗られて図が消え、
     // 塗りかたの手（塗る・線だけ・刻む・点で打つ）も効かない
     E.ink.body(() => S0.draw(ctx, S, E, F.P, i, x, y, s));

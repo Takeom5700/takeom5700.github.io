@@ -179,13 +179,22 @@ function makeTheme(rng, ms, pal, kind, pals) {
     form: makeForm(rng, ms[0]),
     hand: kind === 1 ? 0 : pick(rng, [0, 0, 1, 2, 3]),
     // **地は一色寄りにする。** 割った地が多いと画面が常に埋まって、余白が消える
-    gk: pick(rng, [0, 0, 0, 1, 1, 2, 3, 5]),
+    // 地の割り。**6 は勾配の地**（柔らかい広がり）。
+    // 硬い図が乗るときだけ振るので、ここでは持たせて put() で外す。
+    gk: pick(rng, [0, 0, 0, 1, 1, 2, 3, 5, 6]),
     gx: between(rng, 0.25, 0.75), gy: between(rng, 0.25, 0.75),
     ga: between(rng, 0, Math.PI), gn: Math.floor(rng() * 7), g2: rng() < 0.5,
     ox: between(rng, -0.8, 0.8), oy: between(rng, -0.8, 0.8),
     k1: rng(), k2: rng(), k3: between(rng, 0.25, 0.8),
     odd: rng() < 0.35,
-    fps: kind === 1 ? pick(rng, [12, 12, 24]) : pick(rng, [8, 8, 12]),
+    // コマ数。**8／12／24 は「打つ」側**（早期アニメーションの呼吸）。
+    // **48 を選択肢に入れた**（2026-09-23）——依頼者
+    // 「なめらかな表現も**コントラストを出すための材料として**持っててね」。
+    //
+    // いま全景が打ってあるので、**打っていることが対比になっていない**
+    // （一様な肌理になっている）。なめらかな景が少し混ざると、
+    // 打った景が「打ってある」と分かる。48 は全体の少数に留める（下の見張り）。
+    fps: kind === 1 ? pick(rng, [12, 12, 24, 48]) : pick(rng, [8, 8, 12, 24]),
     boil: 1,
     grain: between(rng, 0.10, 0.28),
     mv: kind === 1 ? pick(rng, [1, 2, 3, 4]) : pick(rng, [0, 1, 2]),
@@ -201,7 +210,7 @@ function shotFrom(th, dur, over) {
     // 事（event.js）。提示部では何も起きない＝0
     ev: 0, evAt: -1, ev0: 0.12, ev1: 0.95, ev2: 0,
     flash: 0, empty: 0,
-    turn: 0, tp1: 0.34, tp2: 0.68, tc1: th.pal, tc2: th.pal,
+    turn: 0, tp1: 0.34, tp2: 0.68, tc1: th.pal, tc2: th.pal, tps: null, tcs: null,
     hang: 0.6, hgap: 0.5,
     // 余白。zoom<1 で図を小さくし、vx/vy で空きの中に寄せる
     zoom: 1, vx: 0, vy: 0, sparse: 0,
@@ -349,11 +358,10 @@ export function composeWork(seed, brief) {
     }
     // 長い景は途中で色を跳ばす（止まって見えるのを防ぐ）
     if (s.dur >= 7) {
-      s.turn = 2;
-      s.tp1 = between(rng, 0.24, 0.42); s.tp2 = between(rng, 0.58, 0.8);
-      s.tc1 = pick(rng, far); s.tc2 = s.pal;
+      stepColors(s, far, rng);
     } else if (s.dur >= 3.5 && rng() < 0.5) {
       s.turn = 1; s.tp1 = between(rng, 0.3, 0.6); s.tc1 = pick(rng, far);
+      s.tps = null; s.tcs = null;
     }
     // ---- 縁（境目の硬さ）----------------------------------------------
     // **再現部の写しには振らない。** 提示部から `hand` を引き写しているので、
@@ -374,6 +382,15 @@ export function composeWork(seed, brief) {
       s.edgeA = 0.3 + nz01(seed + shots.length * 17) * 0.6;
       s.edgeDir = edgeDir;
     }
+
+    // ---- 勾配の地は、硬い図が乗る景にだけ残す ------------------------
+    // **柔らかい地に柔らかい図を重ねないこと。** 画面の全部が柔らかくなって、
+    // 一度目の失敗（雲。「ラテアートや雲の写真と発想が変わらない」）に戻る。
+    // 効くのは**柔らかい広がりの上に硬い輪郭が乗っている**状態そのもの。
+    //
+    // **縁を決めたあとに見ること。** 先に見ていたら `s.hand = 4` がこの下で
+    // 立つので、見張りが 524件すり抜けた（実測）。順番が命。
+    if (s.gk === 6 && (s.hand === 4 || s.sparse)) s.gk = pick(rng, [0, 1, 2]);
     t += dur;
     shots.push(s);
     return s;
@@ -535,6 +552,29 @@ export function composeWork(seed, brief) {
     }
     devChain = { chain, CAUSE };
     let prevTh = null;                 // 前の波の最後に出ていた図（因果を目に見せる）
+    // ---- 展開で、すでにいちばん出ている図に重ねない ----------------------
+    // **法「貌」（同じ図が全体の 42% を超えない）を運に任せないこと。**
+    // 波ごとの図は 32/24/18/26% の固定の確率で引いていたので、自分の部が
+    // 長い図がそのまま展開でも引かれて、400種のうち2種が 42.3% / 43.0% で
+    // 落ちた（実測）。**落ちてから種を変えて逃げるのではなく、組む側で守る。**
+    //
+    // 終は序を、再現は提示を引き写すので、いまある景から**最後の割合を見積もる**
+    // （序 ×1.6・提示 ×2・展開 ×1）。見積もりが 30% を超えている図が引かれたら、
+    // **いちばん出ていない図へ譲る。** 乱数を新しく引かないので、
+    // 譲っても下流の作品は動かない。
+    const estShare = () => {
+      const sh = {}; let tot = 0;
+      for (const s of shots) {
+        const k = s.sec === 1 ? 2 : s.sec === 0 ? 1.6 : 1;
+        sh[s.m] = (sh[s.m] || 0) + s.dur * k; tot += s.dur * k;
+      }
+      return { sh, tot: tot || 1 };
+    };
+    const yieldTo = (th) => {
+      const { sh, tot } = estShare();
+      if ((sh[th.m] || 0) / tot <= 0.30) return th;
+      return [A, B, C, E].reduce((a, x) => ((sh[x.m] || 0) < (sh[a.m] || 0) ? x : a));
+    };
     for (let w = 0; w < waves; w++) {
       const last = w === waves - 1;
       const wEnd = Math.min(end - (last ? 0 : 4), t + sec2 / waves);
@@ -549,6 +589,7 @@ export function composeWork(seed, brief) {
         const q3 = rng();
         // 挿話（E）を混ぜる。展開部は新しい材料を持ち込む場所
         let th = q3 < 0.32 ? A : q3 < 0.56 ? B : q3 < 0.74 ? C : E;
+        th = yieldTo(th);
         // **因果を目に見せる。** 波の頭だけは、前の波の最後と同じ図にする。
         // 図が入れ替わると「別のものに別のことが起きた」に見えて、
         // 事が鎖でつながっていても「だから」が伝わらない。
@@ -731,7 +772,10 @@ export function composeWork(seed, brief) {
       zoom: between(rng, 0.46, 0.56), vx: between(rng, -0.2, 0.2), vy: between(rng, -0.1, 0.1),
       sparse: 1,
     }, 4, 0, 0.9);
-    last.turn = 1; last.tp1 = 0.62; last.tc1 = home;   // 最後は主調のまま静まる
+    // 最後は主調のまま静まる。**段の並びを消すこと**——残すと film がそちらを
+    // 読んで、最後の景が主調へ帰らない
+    last.turn = 1; last.tp1 = 0.62; last.tc1 = home;
+    last.tps = null; last.tcs = null;
     last.empty = 1;
     while (end - t > 5) put(I, between(rng, 2.0, 4.0), air(I, { pal: home, lock: 1 }), 4, 0, 0.4);
     if (t < end) put(I, end - t, air(I, { pal: home, lock: 1, mv: 0 }), 4, 0, 0.4);
@@ -895,7 +939,21 @@ export function composeWork(seed, brief) {
     // 揺れ（mv 3）は地が付いてこないので面がほとんど変わらない。
     // 長い景では寄り・流し・傾きに替える。
     if (s.mv === 3) s.mv = pick(rng, [1, 2, 4]);
-    s.mvA = Math.max(s.mvA, 0.8);
+    // **とても長い景では傾き（mv 4）を使わない。** 細い図（糸・簾）を回しても
+    // 画素がほとんど変わらず、19.7秒の景が 0.81%／0.5秒まで落ちた（実測 種197）。
+    // 流し（2）は地の割りごと横へ動くので、面の大半が必ず入れ替わる。
+    //
+    // **これ以上「流しへ寄せる」ことはしない。** 8秒以上を全部流しにしてみたが、
+    // 長い景の静止率は 14% から 18% へ**悪くなった**（実測 134枚）。
+    // 乱数の並びが動いて別の景が測られるだけで、効いていない。
+    // 一色の面の映像では、**振幅を上げても静けさは消えない**——ためは残る。
+    if (s.dur >= 12 && s.mv === 4) s.mv = pick(rng, [2, 2, 1]);
+    // **動きの「速さ」を揃えること（量ではない）。** `camera()` は景の頭から
+    // 終わりまでで `mvA` ぶん動かすので、**尺が長いほど1秒あたりが遅くなる。**
+    // 11.3秒の景が 0.74%／0.5秒で「静止画に見える」に落ちた（実測）。
+    // 4.5秒で 0.8 のときと同じ速さになるまで振幅を上げる（上限 1.6——
+    // それ以上寄ると図が枠の外へ出る）。
+    s.mvA = Math.max(s.mvA, Math.min(1.6, 0.8 * s.dur / 4.5));
     // **地も一緒に動かす。** 図だけ流すと、面積の大半を占める地が
     // 止まったままなので画面が固まって見える（実測 0.66%／0.5秒）。
     s.gmv = 1;
@@ -910,12 +968,35 @@ export function composeWork(seed, brief) {
     // では 5.4秒で置いた景が 8.1秒になり、「途中で色が替わらない長い景」に落ちる。
     // 流（キーカットを長くする）を入れて、これが毎回起きるようになった。
     // **主調で固定したい景（lock）は跳ばさない**（再現部が主調へ帰れなくなる）。
-    if (s.dur >= 7 && !s.turn && !s.lock) {
-      s.turn = 2;
-      s.tp1 = between(rng, 0.24, 0.42); s.tp2 = between(rng, 0.58, 0.8);
-      s.tc1 = pick(rng, far); s.tc2 = s.pal;
+    if (s.dur >= 7 && !s.lock && (!s.tps || !s.tps.length
+        || s.tps.length + 1 < clamp2((Math.round(s.dur / 2.4) | 1), 3, 7))) {
+      // 伸縮と流で景が伸びたぶん、段を足し直す
+      stepColors(s, far, rng);
     }
   }
+  // ---- なめらかな景を少数に留める --------------------------------------
+  // **打つのが既定。** なめらかが増えると「コマ打ち」という肌理そのものが消え、
+  // ただの CG に近づく（二度目の失敗の方向）。
+  // 少数に留めるから、隣の打った景が「打ってある」と分かる。
+  {
+    const MAX_SMOOTH = 0.22;                       // 尺のこの割合まで
+    let soft = shots.filter((s) => s.fps >= 48).reduce((a, s) => a + s.dur, 0);
+    const tot = shots.reduce((a, s) => a + s.dur, 0) || 1;
+    for (let i = shots.length - 1; i >= 0 && soft / tot > MAX_SMOOTH; i--) {
+      if (shots[i].fps < 48) continue;
+      soft -= shots[i].dur;
+      shots[i].fps = pick(rng, [12, 24]);
+    }
+  }
+
+  // ---- 勾配の地の後始末 ------------------------------------------------
+  // **流（引きの景を余白にする）と縁は put() のあとで景を書き換える。**
+  // だから put() の中で見張っても、あとで柔らかい景になったものが残る
+  // （実測 24件）。最後に一度掃く。
+  for (const s of shots) {
+    if (s.gk === 6 && (s.hand === 4 || s.sparse)) s.gk = pick(rng, [0, 1, 2]);
+  }
+
   // **同じ図・同じ配色が続く断で、絵が変わらないままにしない。**
   // put() の中でも見ているが、そこは組んでいる途中の前後関係しか見えない。
   // 余白を入れて画面の大半が地になったので、図が同じだと断が消える
@@ -1008,6 +1089,33 @@ export function composeWork(seed, brief) {
     chain: devChain ? devChain.chain : null,
     cause: devChain ? devChain.CAUSE : null,
   };
+}
+
+// ---- 長い景の色の段 ----------------------------------------------------
+// **平らな面の映像では、カメラを動かしても画素がほとんど変わらない。**
+// 11秒の景で 0.28〜0.76%／0.5秒しか動かず、長い景の 17% が
+// 「静止画に見える」に落ちた（実測・種3〜23）。振幅を上げても直らない
+// ——寄りも流しも、一色の面の中では縁の細い帯しか動かさないため。
+// **動いて見せるのは色の段である。** 2.4秒にひとつ置く。
+//
+// **溶かさない**（グラデーションにしない。段で替える）。
+// **段の数は奇数にすること**——最後は自分の配色へ帰る（主題の色から
+// 出ていったままにすると、次の景との断が「同じ色のまま」になる）。
+function stepColors(s, far, rng) {
+  let k = Math.round(s.dur / 2.4);
+  if (k % 2 === 0) k += 1;
+  k = clamp2(k, 3, 7);
+  const tps = [], tcs = [];
+  for (let i = 1; i < k; i++) {
+    tps.push(clamp2(i / k + (rng() - 0.5) * 0.05, 0.1, 0.94));
+    tcs.push(i % 2 === 1 ? pick(rng, far) : s.pal);
+  }
+  s.tps = tps; s.tcs = tcs;
+  // 古い形（turn/tp1/tp2）も合わせて持たせる。法（彩: 途中で色が替わらない
+  // 長い景がある）と道具がこちらを読んでいる
+  s.turn = 2;
+  s.tp1 = tps[0]; s.tc1 = tcs[0];
+  s.tp2 = tps[tps.length - 1]; s.tc2 = tcs[tcs.length - 1];
 }
 
 function mix2(a, b, u) { return a + (b - a) * u; }

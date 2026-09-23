@@ -147,6 +147,16 @@ export function hsOf(h) {
   }
   return { h: hue, s: mx < 1e-6 ? 0 : d / mx, v: mx };
 }
+// 2色のあいだを渡っても濁らないか（勾配の地のための検査）。
+// 真ん中がまだ彩度を持っている／どちらかが黒に近い・白に近い、のどちらか。
+export function cleanRamp(x, y) {
+  const A = hex2rgb(x), B = hex2rgb(y);
+  const m = hsOf('#' + [0, 1, 2].map((k) => (((A[k] + B[k]) >> 1) | 0).toString(16).padStart(2, '0')).join(''));
+  const a = hsOf(x), b = hsOf(y);
+  const plain = (c) => c.v < 0.22 || (c.v > 0.88 && c.s < 0.18);
+  return m.s > 0.45 || plain(a) || plain(b);
+}
+
 // 同じ色のまま透明度だけ変える。**地の色を混ぜないための道具。**
 // 混ぜると濁った中間色が出て「原色を面で置く」が崩れるので、
 // 溶かすときは必ず透明へ落とす（下の地がそのまま見えるだけになる）。
@@ -286,6 +296,45 @@ export function ground(ctx, S, shot, col, seed) {
     ctx.beginPath();
     ctx.moveTo(S.w, S.h * (1 - shot.gy)); ctx.lineTo(S.w * (1 - shot.gx), S.h);
     ctx.lineTo(S.w, S.h); ctx.closePath(); ctx.fill();
+  } else if (k === 6) {
+    // **地そのものが勾配になる**（2026-09-23）。
+    // 依頼者「グラデーションやなめらかな表現や自然さの表現も
+    // **コントラストを出すための材料として**持っててね」。
+    //
+    // 縁（`hand === 4`）は図の縁を溶かす手だが、**地はいつも平らな面のまま**
+    // だった。だから作品のどこにも「柔らかい広がり」が無かった。
+    // ここは地の一つの割りかたとして勾配を持つ。
+    //
+    // **これが効くのは、上に硬い図が乗るから。** 柔らかい地に硬い輪郭が
+    // 乗っている状態そのものが対比になる（一度目の失敗＝雲は、
+    // 画面の全部が柔らかくて、硬いものが一つも無かった）。
+    // だから `gk 6` は**図が硬い景にだけ振る**（`score.js` 側で見ている）。
+    // **濁った中間色を作らないこと。** 勾配は2色のあいだを RGB で渡るので、
+    // 彩度を振り切った色相の離れた2色（赤と水色など）を渡すと
+    // **真ん中が灰色になる**（原色を面で置く、という根に反する）。
+    // 黒に近い色／白に近い色が片方にあれば、渡っても彩度は落ちない。
+    // だから**真ん中の彩度を見てから相手を決める。**
+    let end = shot.g2 ? col.a : col.i;
+    if (!cleanRamp(col.g, end)) {
+      end = cleanRamp(col.g, col.l) ? col.l
+        : cleanRamp(col.g, col.i) ? col.i
+        : cleanRamp(col.g, col.a) ? col.a : col.l;
+    }
+    const a = shot.ga;
+    const g = ctx.createLinearGradient(
+      S.w * (0.5 - Math.cos(a) * 0.5), S.h * (0.5 - Math.sin(a) * 0.5),
+      S.w * (0.5 + Math.cos(a) * 0.5), S.h * (0.5 + Math.sin(a) * 0.5));
+    // **色は2つのまま。** 中間色を作らず、地の色と差し色のあいだを渡す
+    // （濁った色を作らない、という線は動かさない）。
+    g.addColorStop(0, col.g);
+    g.addColorStop(Math.max(0.12, Math.min(0.88, shot.gx)), col.g);
+    g.addColorStop(1, end);
+    ctx.fillStyle = g;
+    // **枠より大きく塗ること。** 長い景では地ごとカメラで流すので（`gmv`）、
+    // 枠ぴったりに塗ると片側がずれて外れ、その下の一色が**硬い縦の帯**として
+    // 出てしまう（実測 種3。勾配の横に平らな面が並んで見えた）。
+    // Canvas の勾配は両端の色で外へ伸びるので、大きく塗っても形は変わらない。
+    ctx.fillRect(-S.w, -S.h, S.w * 3, S.h * 3);
   }
 }
 
