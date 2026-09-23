@@ -108,6 +108,9 @@ export const LAWS = {
   // 全面を溶かすと一度目の失敗（雲）に戻るので、上限を置く。
   // 下限は置かない（幾何学的に硬いだけの作品もあってよい、という依頼者の線）。
   maxSoftShare: 0.7,
+  // 痕 — **起きたことが残ること。** 全部元に戻ると、状態の羅列になる
+  // （依頼者「ただ幾何学的な可能性を羅列してるだけなように見える」）。
+  trace: 1,
   // 安全
   maxFlashPerSec: 3,
 };
@@ -150,6 +153,14 @@ const COUNT = FORM_KEYS.reduce((o, k, i) => { o[i] = RANGE[k] || [1, 6]; return 
 // 上限を使うのは展開部の頂点だけ（そこだけ埋まるから頂点に見える）。
 const cnt = (rng, m, u = 0.42) =>
   Math.max(1, Math.round(between(rng, COUNT[m][0], COUNT[m][0] + (COUNT[m][1] - COUNT[m][0]) * u)));
+
+// **第一主題は2つ以上にする**（骨格が許すかぎり）。
+// 法「痕」が「再現部で1つ戻ってこない」を痕にするので、1つしか無いと減らせない
+// （0 にすると図が消える）。実測では第一主題の数がほとんど 1 で、
+// **痕がほぼ発火していなかった**。だからここだけ下限を 2 に上げる。
+// 骨格の上限が1の図（波）は上げられないので、そのときは
+// 「組み上がりきらない」を痕にする（再現部の側で見ている）。
+const cntMain = (rng, m) => Math.max(COUNT[m][1] >= 2 ? 2 : 1, cnt(rng, m));
 
 // ---- 主題 -------------------------------------------------------------
 // 主題＝「図・色・置きかた・打ちかた」の組。これが作品の顔になる。
@@ -306,7 +317,8 @@ export function composeWork(seed, brief) {
     // 図は主題の組から順に取る（順番が決まっているから再現部で同じ並びが戻る）
     if (!over || over.m === undefined) s.m = th.ms[(th.k++) % th.ms.length];
     if (!s.form) s.form = th.form;
-    if (!over || over.n === undefined) s.n = cnt(rng, s.m);
+    // 第一主題（theme 1）だけ数の下限を2に上げる——痕（1つ戻ってこない）のため
+    if (!over || over.n === undefined) s.n = theme === 1 ? cntMain(rng, s.m) : cnt(rng, s.m);
     s.start = t; s.sec = sec; s.th = theme; s.w = w;
     // **主題の中では色を動かさない。** 同じ色で続くから「同じ主題」に見える。
     // 跳ばすのは群が替わる（主題が替わる／部が替わる）ときだけ。
@@ -570,8 +582,24 @@ export function composeWork(seed, brief) {
     while (t < aEnd - 0.3 && srcA.length) {
       const src = srcA[i++ % srcA.length];
       const d = Math.min(aEnd - t, src.dur * between(rng, 1.05, 1.5));
+      // ---- 痕 — **1つ戻ってこない** --------------------------------
+      // 依頼者「まだ展開や流れやストーリー感が甘いので、ただ幾何学的な可能性を
+      // 羅列してるだけなように見えるな」。
+      //
+      // **原因は「全部元に戻る」ことだった。** 無傷→壊れる→元に戻る→人が来る、
+      // なので**起きたことが何も残らない**。戻るのは型としては気持ちがいいが、
+      // 物語の逆である（物語は、起きたあとで世界が違っていること）。
+      // だから再現部は「同じ姿」で帰すが、**数を1つ減らして帰す。**
+      // 見る人は同じものだと分かり、同時に1つ足りないことに気づく。
+      // これは元に戻らない（終まで減ったまま）。
+      //
+      // 1つしか無い図では減らせない（0 にすると図が消える）ので、
+      // そのときは組み上がりを最後まで残す（下の `REBUILD`）。
+      const lost = src.n >= 2 ? 1 : 0;
+      // 減らせたかどうかを景に残す（下の痕の判定が使う）
       const s = put(A, d, {
-        m: src.m, form: src.form, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        m: src.m, form: src.form, n: src.n - lost,
+        hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
         edgeA: src.edgeA, edgeDir: src.edgeDir, recall: 1,
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: src.inv, shade: src.shade, mv: src.mv, mvA: src.mvA,
@@ -581,6 +609,7 @@ export function composeWork(seed, brief) {
         ev: 2, evAt: 0,                      // 組 — 破片が集まって組み上がる
       }, 3, 1, 0.8);
       s.recall = 1;
+      s.dropped = lost;
       recall++;
       recalls.push(s);
       if (i >= srcA.length * 2) break;
@@ -591,8 +620,14 @@ export function composeWork(seed, brief) {
     // 半分も壊れたままだと、展開部がまだ続いているようにしか見えない
     // （実際にそうなった）。だから半分組み上がった状態から始めて、すぐ元へ戻す。
     const REBUILD = 3;
+    // **数を減らせた作品はここで完全に戻してよい**（痕は「1つ足りない」の方で残る）。
+    // 減らせなかった作品（図が1つだけ）は、**組み上がりきらないこと**を痕にする
+    // ——最後まで少しだけ崩れたまま帰る。痕がゼロの作品を作らないため。
+    // **写しごとに元と比べること。** 最初の景だけと比べていたので判定が狂っていた。
+    const canDrop = recalls.some((x) => x.dropped);
+    const scar = canDrop ? 0 : 0.14;
     for (let k = 0; k < recalls.length; k++) {
-      if (k >= REBUILD) { recalls[k].ev = 0; continue; }
+      if (k >= REBUILD) { recalls[k].ev = scar ? 2 : 0; recalls[k].evAt = scar; continue; }
       recalls[k].evAt = 0.45 + (k / REBUILD) * 0.52;
     }
     // 第二主題へ渡る前に、**主調の余白をひとつ置く。**
@@ -994,6 +1029,22 @@ export function checkWork(work) {
   if (work.movements[0] && work.movements[0].shots.some((s) => s.ev)) bad.push('型: 序で事が起きている（問いは無垢のまま置く）');
   if (!work.movements[3] || !work.movements[3].shots.some((s) => s.ev === 2)) bad.push('型: 再現部に「組」（組み上がり）が無い');
   if (!work.movements[4] || !work.movements[4].shots.some((s) => s.ev === 9)) bad.push('型: 終に「来」（人が来る）が無い');
+
+  // ---- 痕 — **起きたことが残ること** ----
+  // 無傷→壊れる→元に戻る→人が来る、では**起きたことが何も残らない**ので、
+  // 状態の羅列に見える（物語は、起きたあとで世界が違っていること）。
+  // 再現部は「同じ姿」で帰すが、**1つ戻ってこない**（数を減らして帰す）。
+  // 図が1つしか無い作品は減らせないので、**組み上がりきらない**ことを痕にする。
+  if (LAWS.trace) {
+    const re = (work.movements[3] ? work.movements[3].shots : []).filter((s) => s.recall && s.th === 1);
+    if (re.length) {
+      const dropped = re.some((s) => s.dropped);
+      const scarred = re.some((s) => s.ev === 2 && s.evAt > 0 && s.evAt < 0.3);
+      if (!dropped && !scarred) {
+        bad.push('痕: 再現部が完全に元へ戻っている（1つ戻ってこない／組み上がりきらない、のどちらかが要る）');
+      }
+    }
+  }
 
   // ---- 流 — **景は同格ではない** ----
   // 三度目の失敗は「並列的で、全部のカットが同じ価値に見える」だった。

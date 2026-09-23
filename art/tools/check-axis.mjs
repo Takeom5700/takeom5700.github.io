@@ -15,6 +15,7 @@ const stat = {
   cpm: [], ratio: [], open: [], maxShare: [], kinds: [], hold: [], flash: [], turn: [],
   quiet: [], rests: [],
   keys: [], appr: [], keyLong: [], appRate: [], soft: [], unreal: [],
+  trace: [],
 };
 const layCount = {};
 
@@ -39,6 +40,12 @@ for (let seed = 0; seed < N; seed++) {
   stat.turn.push(w.shots.filter((s) => s.turn).length);
   // 流（キーカットと、その前後の三拍）
   stat.keys.push(w.shots.filter((s) => s.key).length);
+  // 痕（起きたことが残る）— どちらの形で残ったか
+  {
+    const re = (w.movements[3] ? w.movements[3].shots : []).filter((s) => s.recall && s.th === 1);
+    stat.trace.push(re.some((s) => s.dropped) ? 'drop'
+      : re.some((s) => s.ev === 2 && s.evAt > 0 && s.evAt < 0.3) ? 'scar' : 'none');
+  }
   // 縁（境目の硬さ）— 溶ける景が尺のどれだけを占めるか
   stat.soft.push(w.shots.filter((s) => s.hand === 4).reduce((a, s) => a + s.dur, 0) / w.total);
   // 実在しない図（裂・孔・反）が尺のどれだけを占めるか
@@ -98,6 +105,12 @@ console.log(`  溶ける縁を使わない作品: ${stat.soft.filter((v) => v ==
 console.log('貌（実在しない図）— 裂・孔・反');
 row('実在しない図の尺の割合', stat.unreal, (v) => (v * 100).toFixed(0) + '%');
 console.log(`  実在しない図が出ない作品: ${stat.unreal.filter((v) => v === 0).length} / ${N}`);
+console.log('痕（起きたことが残る）— **全部元に戻ると状態の羅列になる**');
+{
+  const c = (k) => stat.trace.filter((x) => x === k).length;
+  console.log(`  1つ戻ってこない ${c('drop')} 本 / 組み上がりきらない ${c('scar')} 本`
+    + ` / **痕なし ${c('none')} 本**（0 でなければならない）`);
+}
 console.log('層（断をまたいで続く）');
 console.log('  ' + Object.entries(layCount).sort((a, b) => b[1] - a[1])
   .map(([k, n]) => `${LAYER_NAMES[k] || k} ${n}本`).join('  '));
