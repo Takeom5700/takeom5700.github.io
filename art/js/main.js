@@ -142,11 +142,27 @@ function start() {
   // （だから長い景でも旋律は動き続ける）。
   function pumpSound() {
     if (!snd) return;
+    // **音は絵の時計に付いて行かせること。**
+    //
+    // 絵の時計 `t` は1コマ 0.25秒で切り上げている（重い1コマの超過分を捨てる）。
+    // 一方この予約は音の時計（実時間の `ctx.currentTime`）で入れるので、
+    // 重い場面が続くと `t` が実時間より**遅れていく一方**になる。
+    // 遅れが先読みの幅（1.5秒）を超えると、残りの音符の予約時刻が全部過去になり、
+    // `at > currentTime - 0.05` が偽になって**黙って捨てられる**——
+    // つまり**音楽だけ途中で終わって、映像は最後まで続く**
+    // （依頼者「音楽終わってもまだ映像が続いてたりするね」。これがその原因）。
+    //
+    // 直しは2つ。ここでは**ずれたら繋ぎ直す**。
+    // もう一つは下の `dt`（録っているあいだは切り上げない）。
+    const drift = (snd.ctx.currentTime - t) - sndT0;
+    if (Math.abs(drift) > 0.3) sndT0 = snd.ctx.currentTime - t;
     const horizon = t + 1.5;
     while (sndIdx < music.notes.length && music.notes[sndIdx].t < horizon) {
       const n = music.notes[sndIdx++];
-      const at = sndT0 + n.t;
-      if (at > snd.ctx.currentTime - 0.05) snd.play(n, at);
+      // **捨てないこと。** 過ぎてしまった音は「いま」に寄せて鳴らす。
+      // 黙って消すと、そこから先が無音になる。
+      const at = Math.max(sndT0 + n.t, snd.ctx.currentTime + 0.005);
+      snd.play(n, at);
     }
   }
 
@@ -428,7 +444,12 @@ function start() {
 
   function loop(now) {
     requestAnimationFrame(loop);
-    const dt = Math.min((now - last) / 1000 || 0, 0.25);
+    // **録っているあいだは切り上げないこと。** `MediaRecorder` は実時間で録るので、
+    // 絵の時計が実時間より遅れると、音（実時間で鳴る）と絵がずれていき、
+    // 最後は音だけ先に終わる。0.25秒の上限は「別のタブを見ていて戻ってきたとき、
+    // 時間が一気に飛ばないように」置いたもので、録りには要らない。
+    const raw = (now - last) / 1000 || 0;
+    const dt = rec ? raw : Math.min(raw, 0.25);
     last = now;
     if (playing) tick(dt);
   }
