@@ -285,6 +285,8 @@ pull のあとに `ledger-merge.mjs` が写しを足し戻す。
 | `art/tools/auth.mjs` | YouTube の鍵を取る（受け口を自分で立てて、**投稿先が合っているかまで確かめる**）。**URL を `cmd /c start` に渡さないこと**——cmd が `&` をコマンドの区切りとして読むので URL が最初の `&` で切れ、`client_id` だけが届いて Google が「Required parameter is missing: response_type」を返す（実際に返した）。`rundll32 url.dll,FileProtocolHandler` を使う。控えに押すだけの頁も1枚書く |
 | `art/tools/win/update.bat` | **道具を最新にする**（`git pull` を打つ代わりにダブルクリック。何が来たかを並べる）|
 | `art/tools/win/upload-latest.bat` | **鍵を入れる前に焼いた作品を、あとから上げる。** `daily.ps1` は鍵が無い日は作るだけで止まり、しかも「その日ぶんが既にあるなら何もしない」ので、`daily.bat` を叩き直しても上がらない（この抜け道が必要だった）|
+| `art/tools/win/finish.bat` | **残りの支度を1回で全部やる。** 引く→予定を入れる→鍵が効くか確かめて効かなければ取り直す→溜まっているぶんを上げる→条件3つの合否。**足りないものだけ埋める**ので、何度押してもよい |
+| `art/tools/check-win.mjs` | **Windows 側の道具が空でないか・BOM が有るか・`.bat` が ASCII かを見る番。** `.ps1` を触ったら必ず通すこと |
 | `.claude/skills/house-style` | **視聴者のコメントで積み上がった作風。** 新作の前に必ず読む |
 | `.claude/skills/style-from-comments` | コメントを汲んで作風に積む／膨らんだら圧縮する |
 
@@ -303,6 +305,25 @@ pull のあとに `ledger-merge.mjs` が写しを足し戻す。
 「Your local changes would be overwritten by merge」で止まる（実際に止まった）。
 だから `daily.ps1` と `update.bat` は**引く前に `git stash` で脇へ置く**。
 捨てないので `git stash list` → `git stash pop` で戻せる。
+
+**`.ps1` に BOM を付け直すとき、読み書きを入れ子にしないこと。**
+`io.open(p, 'w').write(io.open(p).read())` と書いた。**`open(p, 'w')` は先に
+ファイルを空にする**ので、読む前に中身が消え、**3バイト（BOM だけ）のファイル**が
+出来上がった。しかも気づかずコミットして push し、`daily.ps1` がその
+`upload-latest.ps1` を呼んでいたので、**毎朝の投稿が黙って何もしない**状態になった
+（空の台本を読んで PowerShell は正常終了する。エラーも出ない）。
+**必ず変数へ読んでから書く。** そして `node art/tools/check-win.mjs` を通す
+（BOM・中身の有無・`.bat` の ASCII・`.bat` と `.ps1` の対を見る）。
+
+**環境変数は開いている窓には届かない。** `setx` は「利用者の環境」に書くだけで、
+走っている process には見えない。鍵を入れた直後の同じ窓で `--whoami` を打つと
+「鍵がありません」と出る（実際に出た）。道具の側では
+`[Environment]::GetEnvironmentVariable($k, 'User')` で読み直して
+`'Process'` に載せておく（`finish.ps1` / `upload-latest.ps1` がそうしている）。
+
+**鍵は「有る」ことと「効く」ことが別。** テスト中の同意画面だと7日で切れ、
+許可を取り消しても環境変数だけは残る。だから有無で判断せず、
+**実際に `--whoami` を通してみて**、落ちたら取り直す（`finish.ps1` がそうしている）。
 
 **鍵そのものを画面に出さないこと。** `auth.mjs` は取れた refresh token を
 端末にそのまま印字していた。refresh token は期限の無い資格情報で、これ1つで
