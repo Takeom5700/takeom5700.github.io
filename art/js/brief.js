@@ -113,6 +113,28 @@ const WORD_BLUR = ['にじ', '滲', '溶け', '融', '霧', '霞', '朧', '曖�
 
 const WORD_UNEVEN = ['歪', 'ずれ', 'よろ', 'つまず', 'ばらばら', '不意', '突然',
   '迷', '乱', '斜め', 'いびつ', '半端'];
+// ---- 語 → 音楽の作りかた（作法）---------------------------------------
+// 依頼者:
+// 「いまやってくれてるように**コードや和音機能から音楽を作る手法**ももちろん
+//   用いても良いが、**スケールや音階から音楽を考える手法**やそれの応用でもある
+//   **対位法による音楽作り**のアプローチもできるようにはしておいて」
+//
+// 3つは「同じ音楽の飾り」ではなく**組み立ての筋そのもの**が違う。
+//   和音 … 和音が機能で進み、旋律はその上に乗る（いまの作り）
+//   音階 … 主音を保ち、色は音階そのものから出る（進行が無い＝持続の音楽）
+//   対位 … 独立した2本の線が同時に進む（縦の協和と反対の動きが法）
+//
+// **どれを取るかも記事から着想を得る**（要素の選びかたと同じ筋）。
+//   重なる・絡む・呼び合う記事 → 対位（2本の線）
+//   続く・変わらない・巡る記事 → 音階（持続）
+//   場面が移り、筋が進む記事   → 和音（機能で進む）
+const WORD_WEAVE = ['重な', '絡', '織', '編ま', '編み', '呼応', '応え', '呼び',
+  '交差', '交わ', '対話', '会話', '互い', '一方', 'もう一', '二人', '二つ',
+  '並ん', '並行', '追いか', '追う', '返事', '問いと', '掛け合'];
+const WORD_DRONE = ['続い', '続く', '変わらな', '漂', '巡', 'ずっと', '延々',
+  '絶え', '一定', '循環', '反復', '淡々', '永遠', '保た', '同じまま',
+  '変化がな', '止まったまま', '果てしな'];
+
 
 // 語 → 層（断をまたいで続くもの）
 const WORD_LAYER = [
@@ -223,6 +245,8 @@ export function briefFromText(article, seed, opts) {
   const slowHits = countHits(text, WORD_SLOW);
   const unevenHits = countHits(text, WORD_UNEVEN);
   const blurHits = countHits(text, WORD_BLUR);
+  const weaveHits = countHits(text, WORD_WEAVE);
+  const droneHits = countHits(text, WORD_DRONE);
   // 語の繰り返し（同じ語が何度も出る記事は、音も同じ形を繰り返す方が合う）
   //
   // **記事の長さで動く素性を作らないこと。** 最初は「2回以上出た3文字の割合」を
@@ -269,6 +293,16 @@ export function briefFromText(article, seed, opts) {
   // **上は 1 でも「全面が溶ける」にはならない**——`score.js` が 0.55 で頭を切る
   // （全面を溶かすと一度目の失敗＝雲に戻る）。
   const blur = clamp01(blurHits / stops * 1.1);
+  // 作法の重み。**語の当たりは一文あたりに直す**（全文で数えると、
+  // 同じ文章を4回つないだだけで振り切れる＝記事の長さの代理になってしまう）。
+  // 下駄（0.5／0.34）を履かせてあるので、語が1つも無い記事でも3つとも出る
+  // ——**どれか1つに固定しないこと。** 記事はあくまで寄せるだけ。
+  const weaveR = weaveHits / stops, droneR = droneHits / stops;
+  const methodW = {
+    和音: 0.5 + Math.max(0, 0.34 - weaveR - droneR),
+    音階: 0.34 + clamp01(droneR * 2.4) * 0.9,
+    対位: 0.34 + clamp01(weaveR * 2.4) * 0.9,
+  };
   // **同じ形の繰り返し**（0=変える 1=繰り返す）
   const ostinato = clamp01(0.30 + repeat * 2.6 + (0.60 - varr) * 0.8);
 
@@ -313,6 +347,7 @@ export function briefFromText(article, seed, opts) {
       繰り返し窓: rn,
       語の繰り返し: Math.round(repeat * 100) / 100,
       にじむ語: blurHits,
+      重なる語: weaveHits, 続く語: droneHits,
       避けた形: [...avoid], 薄めた形: [...soften],
     },
     forms,
@@ -326,6 +361,7 @@ export function briefFromText(article, seed, opts) {
     ostinato: Math.round(ostinato * 100) / 100,
     blur: Math.round(blur * 100) / 100,
     meterW,
+    methodW,
     devColor: dense > 2.2 ? '太鼓と聲' : pace > 0.62 ? '太鼓'
       : per > 90 ? '弦の厚み' : sway > 0.6 ? '太鼓と弦' : null,
   };

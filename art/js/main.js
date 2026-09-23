@@ -327,6 +327,9 @@ function start() {
           tempo: music.tempo, tonic: music.tonic, total: work.total,
           notes: music.notes.length,
           // **1本ぶんの素性。** 種を替えるとここが全部変わる
+          // **作法（どう組み立てたか）も返す。** 3つは飾りではなく作りが違うので、
+          // これを書かないと下見と記録が嘘になる
+          method: music.method, modePlan: music.modePlan,
           mode: music.mode, meter: music.meter, prog: music.prog,
           band: music.band, tone: music.tone && music.tone.name,
           devColor: music.devColor, bell: music.bell,
