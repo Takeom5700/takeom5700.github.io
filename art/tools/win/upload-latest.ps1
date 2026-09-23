@@ -91,7 +91,11 @@ foreach ($it in $todo) {
   $descFile = Join-Path $dir.FullName ($base + '.txt')
 
   Write-Host ('--- ' + $title + '（' + [math]::Round($film.Length / 1MB, 1) + ' MB）---')
-  $a = @('art\tools\upload.mjs', $film.FullName, '--title', $title, '--privacy', 'private')
+  # **動画の番号をファイルに書かせる。** 棚（art/works/index.html）が
+  # 「YouTube で見る」を出すのに要る。画面の文字を拾うと書式を変えた日に壊れる。
+  $idFile = Join-Path $dir.FullName '.videoid'
+  $a = @('art\tools\upload.mjs', $film.FullName, '--title', $title,
+    '--privacy', 'private', '--id-file', $idFile)
   if (Test-Path $descFile) { $a += @('--desc-file', $descFile) }
   & node $a
   if ($LASTEXITCODE -eq 0) {
@@ -112,6 +116,8 @@ Write-Host ''
 if ($done -gt 0) {
   Write-Host ('===== ' + $done + ' 本上がりました =====')
   Write-Host 'YouTube Studio の「コンテンツ」に非公開で入っています。'
+  # 台帳へ動画の番号を書き足す（棚が「YouTube で見る」を出せるように）
+  & node (Join-Path $repo 'art\tools\shelf.mjs') $out
 }
 if ($fail -gt 0) {
   Write-Host '===== 上がらなかったものがあります ====='

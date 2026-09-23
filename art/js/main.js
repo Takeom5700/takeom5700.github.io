@@ -113,6 +113,9 @@ function start() {
     film.resize(fixedW, fixedH, 1);
   } else {
     window.addEventListener('resize', fit);
+    // **`orientationchange` も見る。** 端末によっては回したときに
+    // `resize` が来ない／古い大きさで来るので、少し待ってから測り直す。
+    window.addEventListener('orientationchange', () => setTimeout(fit, 250));
     fit();
   }
 
@@ -495,8 +498,24 @@ function start() {
   }
 
   hint.classList.add('shown');
+
+  // **触る端末では、触った勢いで全画面へ入れておく。**
+  // 縦持ちのままだと 16:9 が細い帯に収まって、画面のほとんどが黒になる
+  // （実測 390x844 の端末で、作品は 390x219 にしかならない）。
+  // 全画面と向きの固定は**触った直後にしか許されない**（利用者の操作が要る）ので、
+  // ここでやる。iOS Safari は向きの固定を持っていないので、
+  // そのときは頁の側で「横にしてください」と出す（下の `portrait` 見張り）。
+  const touchy = window.matchMedia
+    && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  async function goBig() {
+    if (!touchy || document.fullscreenElement) return;
+    try { await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); } catch (e) { /* 断られてもよい */ }
+    try { await screen.orientation.lock('landscape'); } catch (e) { /* iOS は持っていない */ }
+  }
+
   const kick = (e) => {
     if (e.type === 'keydown' && e.key !== ' ' && e.key !== 'Enter') return;
+    goBig();
     begin();
   };
   window.addEventListener('pointerdown', kick);
@@ -521,6 +540,19 @@ function start() {
     else if (e.key === 'ArrowLeft') { seek(t - 20); }
   });
   if (showHud) hud.classList.add('shown');
+
+  // **縦持ちの見張り。** 触る端末で縦のあいだだけ「横にしてください」を出す。
+  // 向きを固定できない端末（iOS Safari）のための逃げ道。
+  if (touchy) {
+    const seeOrient = () => {
+      const tall = window.innerHeight > window.innerWidth * 1.1;
+      document.body.classList.toggle('portrait', tall);
+    };
+    // `orientationchange` だけでは古い大きさを返す端末があるので、両方見る
+    window.addEventListener('orientationchange', () => setTimeout(seeOrient, 250));
+    window.addEventListener('resize', seeOrient);
+    seeOrient();
+  }
 
   let idle = null;
   const wake = () => {
