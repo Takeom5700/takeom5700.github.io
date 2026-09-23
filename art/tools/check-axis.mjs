@@ -15,7 +15,7 @@ const stat = {
   cpm: [], ratio: [], open: [], maxShare: [], kinds: [], hold: [], flash: [], turn: [],
   quiet: [], rests: [],
   keys: [], appr: [], keyLong: [], appRate: [], soft: [], unreal: [],
-  trace: [],
+  trace: [], chain: [], keyPlan: [],
 };
 const layCount = {};
 
@@ -40,6 +40,7 @@ for (let seed = 0; seed < N; seed++) {
   stat.turn.push(w.shots.filter((s) => s.turn).length);
   // 流（キーカットと、その前後の三拍）
   stat.keys.push(w.shots.filter((s) => s.key).length);
+  if (w.chain) stat.chain.push(w.chain.join('-'));
   // 痕（起きたことが残る）— どちらの形で残ったか
   {
     const re = (w.movements[3] ? w.movements[3].shots : []).filter((s) => s.recall && s.th === 1);
@@ -105,6 +106,17 @@ console.log(`  溶ける縁を使わない作品: ${stat.soft.filter((v) => v ==
 console.log('貌（実在しない図）— 裂・孔・反');
 row('実在しない図の尺の割合', stat.unreal, (v) => (v * 100).toFixed(0) + '%');
 console.log(`  実在しない図が出ない作品: ${stat.unreal.filter((v) => v === 0).length} / ${N}`);
+console.log('因（前に起きたことの結果が次に来る）— **あいだに「だから」があること**');
+{
+  const N = ['無', '崩', '組', '溶', '殖', '落', '侵', '喰', '逃', '来', '芽', '固'];
+  const c = {};
+  for (const x of stat.chain) c[x] = (c[x] || 0) + 1;
+  const rows = Object.entries(c).sort((a, b) => b[1] - a[1]);
+  console.log(`  事の鎖: ${rows.length} 通り`);
+  for (const [k, n] of rows.slice(0, 6)) {
+    console.log(`    ${k.split('-').map((x) => N[+x]).join(' → ')}  ${n}本`);
+  }
+}
 console.log('痕（起きたことが残る）— **全部元に戻ると状態の羅列になる**');
 {
   const c = (k) => stat.trace.filter((x) => x === k).length;

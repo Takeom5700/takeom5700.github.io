@@ -111,6 +111,9 @@ export const LAWS = {
   // 痕 — **起きたことが残ること。** 全部元に戻ると、状態の羅列になる
   // （依頼者「ただ幾何学的な可能性を羅列してるだけなように見える」）。
   trace: 1,
+  // 因 — **次に起きることは、前に起きたことの結果である。**
+  // 事の名前が並んでいても、あいだに「だから」が無いと羅列に見える
+  cause: 1,
   // 安全
   maxFlashPerSec: 3,
 };
@@ -493,17 +496,45 @@ export function composeWork(seed, brief) {
   // 断のたびに事を一段ずつ進める（`evAt` が 0→1 へ上がっていく）。
   // 観る側には「同じものが、切るたびに壊れていく」ように見える。
   const sec2 = D(100);
+  let devChain = null;                 // 展開部の事の鎖（法「因」。検査が読む）
   {
     const end = t + sec2;
     const waves = 3;
     // 波ごとの事：来る → 壊れる → 呑まれる／逃げる
     // 第一波は**固有の事**。椅子に人が座る、壺が割れる、梯子を登る——
     // その図にしか起きないことを先に見せてから、壊しにかかる。
-    const evSets = [
-      [11],             // 固（その図にしか起きないことが、まず起きる）
-      [1, 3, 4],        // 崩・溶・殖（壊れはじめる）
-      [7, 8, 11],       // 喰・逃・固（呑まれる）
-    ];
+    // ---- 因 — **次に起きることは、前に起きたことの結果である** --------
+    // 依頼者「まだ展開や流れやストーリー感が甘い（…）羅列してるだけなように見える」
+    // → 前回は可逆性（法「痕」）を直した。**残っていたもう一つが因果。**
+    //
+    // 波ごとに `pick(rng, evSets[w])` で**独立に**引いていた。だから
+    // 「崩れたから落ちた」ではなく「崩れる波の次に落ちる波がある」だけだった。
+    // 事の名前は並んでいるのに、**あいだに「だから」が無い。**
+    //
+    // だから前の事から**結果として起こりうる事**だけを引く。
+    // 1崩 3溶 4殖 5落 6侵 7喰 8逃 10芽 11固
+    //（2組は再現部・9来は終のものなので、鎖には入れない）
+    // **枝は3つずつ持たせること。** 2つずつだと 2×2 で**鎖が4通りしか出ない**
+    // （実測4通り／14種）。因果は保ったまま、道筋を増やす。
+    const CAUSE = {
+      11: [6, 1, 4],   // 自分のことが起きた → 何かが入ってくる／崩れはじめる／増える
+      1: [5, 3, 8],    // ばらばらに割れた → 落ちる／垂れて流れる／破片が逃げ散る
+      3: [10, 7, 4],   // 溶けた → 別の姿になる／呑まれる／溶けた先で増える
+      4: [8, 7, 1],    // 増えた → 逃げ散る／呑まれる／重さで崩れる
+      5: [7, 4, 10],   // 落ちた → 呑まれる／落ちた先で増える／姿が変わる
+      6: [1, 7, 8],    // 入ってきた → 崩れる／呑まれる／逃げ散る
+      7: [8, 10, 5],   // 呑まれた → 逃げ散る／残りが姿を変える／落ちる
+      8: [10, 1, 3],   // 逃げ散った → 姿を変える／崩れる／溶ける
+      10: [4, 3, 6],   // 姿が変わった → 増える／溶ける／何かが入ってくる
+    };
+    // 第一波は必ず固有の事（法で決まっている）。あとは鎖でつなぐ。
+    const chain = [11];
+    for (let w = 1; w < waves; w++) {
+      const nx = CAUSE[chain[w - 1]] || [1, 3];
+      chain.push(pick(rng, nx));
+    }
+    devChain = { chain, CAUSE };
+    let prevTh = null;                 // 前の波の最後に出ていた図（因果を目に見せる）
     for (let w = 0; w < waves; w++) {
       const last = w === waves - 1;
       const wEnd = Math.min(end - (last ? 0 : 4), t + sec2 / waves);
@@ -511,12 +542,19 @@ export function composeWork(seed, brief) {
       // 「ぐちゃぐちゃになってよく分かんなくなっちゃってる」と言われた。
       // 速いことは大事だが、1枚が何なのか分かる長さは残す
       const fast = mix2(0.95, 0.44, w / (waves - 1));
-      const evK = pick(rng, evSets[w]);
+      const evK = chain[w];
       const wave = [];
+      let first = true;
       while (t < wEnd - 2.6) {
         const q3 = rng();
         // 挿話（E）を混ぜる。展開部は新しい材料を持ち込む場所
-        const th = q3 < 0.32 ? A : q3 < 0.56 ? B : q3 < 0.74 ? C : E;
+        let th = q3 < 0.32 ? A : q3 < 0.56 ? B : q3 < 0.74 ? C : E;
+        // **因果を目に見せる。** 波の頭だけは、前の波の最後と同じ図にする。
+        // 図が入れ替わると「別のものに別のことが起きた」に見えて、
+        // 事が鎖でつながっていても「だから」が伝わらない。
+        // 同じ図に続けて起こすから、崩れたから落ちた、と読める。
+        if (first && prevTh) th = prevTh;
+        first = false;
         const q = rng();
         wave.push(put(th, Math.min(wEnd - t, between(rng, fast * 0.7, fast * 1.5)),
           vary(th, {
@@ -525,6 +563,11 @@ export function composeWork(seed, brief) {
             fps: 24, mv: pick(rng, [1, 3, 4]), mvA: between(rng, 0.6, 1),
             ev: evK, ev2: (th === A ? B.m : A.m),
           }), 2, th === A ? 1 : 2, 0.5 + w * 0.15));
+      }
+      // 次の波の頭で同じ図に続けるため、最後に出ていた図を覚える
+      if (wave.length) {
+        const lastShot = wave[wave.length - 1];
+        prevTh = [A, B, C, E].find((x) => x.m === lastShot.m) || null;
       }
       // 事を断のあいだに配る。ここが「映像そのものが展開していく」ところ
       for (let i = 0; i < wave.length; i++) {
@@ -961,6 +1004,9 @@ export function composeWork(seed, brief) {
     pals: PALS,
     brief: BR,
     want: WANT,
+    // 展開部の事の鎖（法「因」）。前の事の結果だけが次に来る
+    chain: devChain ? devChain.chain : null,
+    cause: devChain ? devChain.CAUSE : null,
   };
 }
 
@@ -1029,6 +1075,20 @@ export function checkWork(work) {
   if (work.movements[0] && work.movements[0].shots.some((s) => s.ev)) bad.push('型: 序で事が起きている（問いは無垢のまま置く）');
   if (!work.movements[3] || !work.movements[3].shots.some((s) => s.ev === 2)) bad.push('型: 再現部に「組」（組み上がり）が無い');
   if (!work.movements[4] || !work.movements[4].shots.some((s) => s.ev === 9)) bad.push('型: 終に「来」（人が来る）が無い');
+
+  // ---- 因 — **次に起きることは、前に起きたことの結果である** ----
+  // 波ごとに独立に事を引いていたので、「崩れたから落ちた」ではなく
+  // 「崩れる波の次に落ちる波がある」だけだった（＝あいだに「だから」が無い）。
+  if (LAWS.cause && work.chain && work.cause) {
+    if (work.chain[0] !== 11) bad.push('因: 第一波が固有の事ではない');
+    for (let i = 1; i < work.chain.length; i++) {
+      const ok = (work.cause[work.chain[i - 1]] || []).includes(work.chain[i]);
+      if (!ok) {
+        bad.push(`因: ${work.chain[i - 1]} → ${work.chain[i]} は結果になっていない`);
+        break;
+      }
+    }
+  }
 
   // ---- 痕 — **起きたことが残ること** ----
   // 無傷→壊れる→元に戻る→人が来る、では**起きたことが何も残らない**ので、

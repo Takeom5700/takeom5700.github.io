@@ -291,9 +291,31 @@ export function composeMusic(work, seedIn) {
     ? Math.max(tLo, Math.min(tHi,
       tLo + (tHi - tLo) * (0.10 + BR.pace * 0.80 + (rng() - 0.5) * 0.24)))
     : between(rng, tLo, tHi));
-  const beat = 60 / tempo;
-  const bar = beat * met.beats;
-  const tonic = 38 + Math.floor(rng() * 22);            // 主音（調）
+  const beat0 = 60 / tempo;
+  const bar0 = beat0 * met.beats;
+  const beat = beat0, bar = bar0;        // 外へ返す用（musicInfo など）
+
+  // ---- 速さの筋（どこで速くなるか）------------------------------------
+  // 依頼者「もし変化するときは**急激な変化ではなく、音楽的に自然に繋がるように**」。
+  // だから速さは**段ではなく傾斜**で動かす（小節ごとに少しずつ）。
+  //
+  //   序  0.94 → 1.00  入っていく
+  //   提  1.00         主題は揺らさない（同じ姿で帰る必要がある）
+  //   展  1.00 → 1.12  頂点へ向かって少しずつ速くなる
+  //   再  1.00         提示部と同じ速さで帰る（帰ってきた合図）
+  //   終  1.00 → 0.86  解けていく
+  //
+  // **提示部と再現部は動かさないこと。** 同じ主題が同じ速さで帰るのが
+  // 「帰ってきた」の合図なので、ここを揺らすと型が崩れる。
+  const RATE = {
+    0: (u) => 0.94 + u * 0.06,
+    1: () => 1,
+    2: (u) => 1 + u * 0.12,
+    3: () => 1,
+    4: (u) => 1 - u * 0.14,
+  };
+  const tonic0 = 38 + Math.floor(rng() * 22);           // 主音（作品の主調）
+  const tonic = tonic0;                                 // 外へ返す用（musicInfo など）
   // 伴奏（分散和音）の形。**ここも組み立てる。**
   // 固定だと、和音が動いても伴奏の形が同じで「同じ曲」に聞こえる。
   const arp = (() => {
@@ -385,6 +407,13 @@ export function composeMusic(work, seedIn) {
   // 1小節ぶんを置く。ch は音階の度（0=主和音）。o.voicing で楽器を入れ替える
   function putBar(t, ch, opt) {
     const o = opt || {};
+    // **調は小節ごとに受け取る。** 作品を通して1つの調だったので、
+    // 6〜9分を同じ調・同じ速さで通していた（依頼者「音楽の変化や展開に乏しい」）。
+    // ソナタ形式と言いながら、その骨である調の筋
+    // （主調→属調→遠い調→主調）が音に無かった。
+    const tonic = o.key === undefined ? tonic0 : o.key;
+    // 小節の長さも受け取る（速さが部の中で少しずつ動くため）
+    const beat = o.beat || beat0, bar = o.bar || bar0;
     const tri = triadOn(SC, ch, { major: o.major, sus: o.sus });
     const root = tri[0];
     const vv = o.v === undefined ? 0.6 : o.v;
@@ -439,6 +468,10 @@ export function composeMusic(work, seedIn) {
   // 旋律を置く（和音の上に乗せ、強拍は和音の音へ寄せる）
   function putTune(t, tune, ch, opt) {
     const o = opt || {};
+    // **旋律も小節の調で置くこと。** ここが動かないと、伴奏だけ転調して
+    // 旋律が元の調に残り、濁る。
+    const tonic = o.key === undefined ? tonic0 : o.key;
+    const beat = o.beat || beat0;
     const tri = triadOn(SC, ch, {});
     let cur = t;
     for (const n of tune) {
@@ -463,6 +496,34 @@ export function composeMusic(work, seedIn) {
     return cur - t;
   }
 
+  // ---- 調の筋（どこで転調するか）------------------------------------
+  // 依頼者:
+  //   「音楽の変化や展開に乏しいと思った。もし変化するときは**急激な変化ではなく、
+  //     音楽的に自然に繋がるように**。もし**音楽的に意味や効果があるならば
+  //     急激な変化でも構わない**」
+  //
+  // ソナタ形式の骨はそもそも**調の筋**である。それが無かったので、
+  // 6〜9分を同じ調のまま通していた。入れる筋はこう。
+  //
+  //   序   主調
+  //   提A  主調 → 提B **属調へ**（+7。いちばん自然な移り先）
+  //   展   属調から**遠い調へ**（ここは意味のある急激。展開部は崩す場所）
+  //   再A  主調へ帰る → 再B **主調のまま**（帰ってきた合図。法で決まっている）
+  //   終   主調
+  //
+  // **自然に繋ぐとはどういうことか。** 移る直前の1小節を、
+  // **移り先の属和音**にする（＝その調へ行く、と耳が先に分かる）。
+  // これを入れないと調が突然すり替わって聞こえる。
+  // 遠い調へ行くところだけは準備を置かない——**そこは意味のある急激**で、
+  // 展開部が崩す場所であることを、調の断絶そのものが語る。
+  const DOM = 7;                                   // 属調（5度上）
+  // 遠い調。**三全音か短3度**を取る（どちらも主調から遠い）
+  const FAR = pick(rng, [6, 3, -3, 8, -4]);
+  const keyOf = { 0: 0, 1: 0, 2: FAR, 3: 0, 4: 0 };     // 部の頭の調（主調からの差）
+  const keyB = { 1: DOM, 3: 0 };                        // 第二主題の調
+  // 準備を置く移り（自然に繋ぐところ）。展開部への断絶だけは入れない
+  const PREP = new Set(['1B', '3A']);
+
   // ---- 部ごとに敷く ----
   const sec = work.movements;
   // 編成。**部ごとに楽器が入れ替わる**（mel=主旋律 bass=低音 pad=持続）
@@ -486,12 +547,29 @@ export function composeMusic(work, seedIn) {
     // 提示部と再現部は、途中で第二主題へ移る
     const bMark = (pl.i === 1) ? t0 + m.dur * 0.58 : (pl.i === 3) ? t0 + m.dur * 0.5 : Infinity;
     let inB = false, tuneAt = t0;
+    // この部の調（第二主題に入ったら移る）
+    let key = tonic0 + (keyOf[pl.i] || 0);
+    // **移る直前の1小節を「移り先の属和音」にする**（＝自然に繋ぐ）。
+    // 準備を入れない移り（展開部への断絶）は、意味のある急激としてそのまま置く。
+    let prepAt = Infinity;
+    if (keyB[pl.i] !== undefined && PREP.has(pl.i + 'B')) prepAt = bMark - bar;
     while (t < t1 - bar * 0.4) {
       if (!inB && t >= bMark) {
         inB = true; k = 0; tuneAt = t;
+        key = tonic0 + (keyB[pl.i] === undefined ? (keyOf[pl.i] || 0) : keyB[pl.i]);
       }
+      // 準備の小節（移り先の属和音を、移り先の調で鳴らす）
+      // 小節ごとの速さ（傾斜。段にしない）
+      const uu = (t - t0) / Math.max(1, m.dur);
+      const rate = (RATE[pl.i] || (() => 1))(Math.max(0, Math.min(1, uu)));
+      const bt = beat0 / rate, br = bt * met.beats;
+      const prepping = !inB && t >= prepAt && t < bMark;
+      const barKey = prepping
+        ? tonic0 + (keyB[pl.i] === undefined ? 0 : keyB[pl.i])
+        : key;
       const prog = inB ? (pl.i === 1 ? prg.expoB : prg.recapB) : pl.prog;
-      const ch = prog[k % prog.length];
+      // 準備の小節は、移り先の**属和音**（度4＝5度上の和音）を置く
+      const ch = prepping ? 4 : prog[k % prog.length];
       // 強さは部の中でも動かす（展開部は登り、終部は消える）
       const u = (t - t0) / Math.max(1, m.dur);
       let v = pl.v;
@@ -513,6 +591,7 @@ export function composeMusic(work, seedIn) {
         if (wantStr && u > 0.7) V.dbl = 3;
       }
       putBar(t, ch, {
+        key: barKey, beat: bt, bar: br,
         v, div: Math.max(3, Math.round(inB ? pl.div * 0.75 : pl.div)),
         fifth: k % 2 === 1, voicing: V,
         // 終部の終わりから2つめは宙に浮かせ、最後は長三和音で解決させる
@@ -525,12 +604,12 @@ export function composeMusic(work, seedIn) {
         // 展開部：主題の頭だけを取り出して、小節ごとに音階を1つずつ上げる
         if (k % 2 === 0) {
           const frag = (k % 4 === 0 ? tuneA : tuneB).slice(0, 3);
-          putTune(t, frag, ch, { shift: (k % 6) - 2, v: v * 0.9, stretch: 0.85, mel: V.mel });
+          putTune(t, frag, ch, { key: barKey, beat: bt, shift: (k % 6) - 2, v: v * 0.9, stretch: 0.85, mel: V.mel });
         }
       } else if (pl.tune === 'end') {
-        if (k === 0) putTune(t, tuneA.slice(0, 3), ch, { stretch: 1.9, v: 0.55 });
+        if (k === 0) putTune(t, tuneA.slice(0, 3), ch, { key: barKey, beat: bt, stretch: 1.9, v: 0.55 });
         // 終わりの直前、オルゴールが独りで主題の頭を鳴らす
-        if (k === prog.length - 2) putTune(t + bar * 0.5, tuneA.slice(0, 4), ch, { stretch: 1.5, v: 0.6, mel: 0 });
+        if (k === prog.length - 2) putTune(t + br * 0.5, tuneA.slice(0, 4), ch, { key: barKey, beat: bt, stretch: 1.5, v: 0.6, mel: 0 });
         if (k === prog.length - 1) {
           // 最後の和音を長く伸ばす（終わったことが分かるように）
           // **最後だけ長三和音へ寄せる**（ピカルディ）。どの音階でも解決に聞こえる
@@ -547,21 +626,27 @@ export function composeMusic(work, seedIn) {
         // 2小節にひとつ、頭から旋律を流す（息継ぎを作る）
         if (t >= tuneAt) {
           const used = putTune(t, tn, ch, {
-            v: v * 0.95, stretch: inB ? 1.3 : 1, mel: V.mel, dbl: V.dbl,
+            key: barKey, beat: bt, v: v * 0.95, stretch: inB ? 1.3 : 1, mel: V.mel, dbl: V.dbl,
           });
-          tuneAt = t + Math.max(used, bar * 2) + bar * (rng() < 0.5 ? 0 : 1);
+          tuneAt = t + Math.max(used, br * 2) + br * (rng() < 0.5 ? 0 : 1);
         }
       }
-      t += bar;
+      t += br;
       k++;
     }
     // 部の変わり目に鐘を1つ（構造を耳に知らせる）
-    if (useBell && pl.i > 0 && pl.i < 4) add(t0, 5, tonic + 60 + degOf(SC, pl.prog[0]), 0.3, 4);
+    if (useBell && pl.i > 0 && pl.i < 4) {
+      // 鐘も**その部の調**で鳴らす（構造を知らせる音が別の調だと濁る）
+      add(t0, 5, tonic0 + (keyOf[pl.i] || 0) + 60 + degOf(SC, pl.prog[0]), 0.3, 4);
+    }
   }
 
   notes.sort((a, b) => a.t - b.t);
   return {
     tempo, tonic, bar, beat, notes, tuneA, tuneB,
+    // 調の筋（主調からの差。道具と台帳が読む）
+    keys: [keyOf[0], keyOf[1], keyB[1], keyOf[2], keyOf[3], keyB[3], keyOf[4]],
+    keyPlan: `序${keyOf[0]} 提A${keyOf[1]}→B${keyB[1]} 展${keyOf[2]} 再A${keyOf[3]}→B${keyB[3]} 終${keyOf[4]}`,
     // **素性を返す。** 下見・記録・Suno の prompt がここを読むので、
     // 種を替えたときに嘘にならない（耳で書いた文にしないこと）
     mode: mode.name, meter: met.name, beats: met.beats,
