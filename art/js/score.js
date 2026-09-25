@@ -26,7 +26,7 @@
 // 帰ってきたと分かるから、終わったことが分かる。
 
 import { makeRng, between, pick } from './rng.js';
-import { PALETTES, makePalette, hueGap, lumOf, hsOf, colorsOf } from './paint.js';
+import { PALETTES, makePalette, hueGap, lumOf, hsOf, colorsOf, nz01 } from './paint.js';
 import { layerColor } from './layer.js';
 import { NAMES, MOTIFS } from './motif.js';
 import { makeForm, RANGE, FORM_KEYS, OPENING_FORMS, MOVING_FORMS, STILL_FORMS } from './form.js';
@@ -104,6 +104,16 @@ export const LAWS = {
   // 異
   minOdd: 4,
   minHands: 3,
+  // 縁 — **溶ける縁は硬い縁があって初めて効く。**
+  // 全面を溶かすと一度目の失敗（雲）に戻るので、上限を置く。
+  // 下限は置かない（幾何学的に硬いだけの作品もあってよい、という依頼者の線）。
+  maxSoftShare: 0.7,
+  // 痕 — **起きたことが残ること。** 全部元に戻ると、状態の羅列になる
+  // （依頼者「ただ幾何学的な可能性を羅列してるだけなように見える」）。
+  trace: 1,
+  // 因 — **次に起きることは、前に起きたことの結果である。**
+  // 事の名前が並んでいても、あいだに「だから」が無いと羅列に見える
+  cause: 1,
   // 安全
   maxFlashPerSec: 3,
 };
@@ -147,6 +157,14 @@ const COUNT = FORM_KEYS.reduce((o, k, i) => { o[i] = RANGE[k] || [1, 6]; return 
 const cnt = (rng, m, u = 0.42) =>
   Math.max(1, Math.round(between(rng, COUNT[m][0], COUNT[m][0] + (COUNT[m][1] - COUNT[m][0]) * u)));
 
+// **第一主題は2つ以上にする**（骨格が許すかぎり）。
+// 法「痕」が「再現部で1つ戻ってこない」を痕にするので、1つしか無いと減らせない
+// （0 にすると図が消える）。実測では第一主題の数がほとんど 1 で、
+// **痕がほぼ発火していなかった**。だからここだけ下限を 2 に上げる。
+// 骨格の上限が1の図（波）は上げられないので、そのときは
+// 「組み上がりきらない」を痕にする（再現部の側で見ている）。
+const cntMain = (rng, m) => Math.max(COUNT[m][1] >= 2 ? 2 : 1, cnt(rng, m));
+
 // ---- 主題 -------------------------------------------------------------
 // 主題＝「図・色・置きかた・打ちかた」の組。これが作品の顔になる。
 //
@@ -161,13 +179,22 @@ function makeTheme(rng, ms, pal, kind, pals) {
     form: makeForm(rng, ms[0]),
     hand: kind === 1 ? 0 : pick(rng, [0, 0, 1, 2, 3]),
     // **地は一色寄りにする。** 割った地が多いと画面が常に埋まって、余白が消える
-    gk: pick(rng, [0, 0, 0, 1, 1, 2, 3, 5]),
+    // 地の割り。**6 は勾配の地**（柔らかい広がり）。
+    // 硬い図が乗るときだけ振るので、ここでは持たせて put() で外す。
+    gk: pick(rng, [0, 0, 0, 1, 1, 2, 3, 5, 6]),
     gx: between(rng, 0.25, 0.75), gy: between(rng, 0.25, 0.75),
     ga: between(rng, 0, Math.PI), gn: Math.floor(rng() * 7), g2: rng() < 0.5,
     ox: between(rng, -0.8, 0.8), oy: between(rng, -0.8, 0.8),
     k1: rng(), k2: rng(), k3: between(rng, 0.25, 0.8),
     odd: rng() < 0.35,
-    fps: kind === 1 ? pick(rng, [12, 12, 24]) : pick(rng, [8, 8, 12]),
+    // コマ数。**8／12／24 は「打つ」側**（早期アニメーションの呼吸）。
+    // **48 を選択肢に入れた**（2026-09-23）——依頼者
+    // 「なめらかな表現も**コントラストを出すための材料として**持っててね」。
+    //
+    // いま全景が打ってあるので、**打っていることが対比になっていない**
+    // （一様な肌理になっている）。なめらかな景が少し混ざると、
+    // 打った景が「打ってある」と分かる。48 は全体の少数に留める（下の見張り）。
+    fps: kind === 1 ? pick(rng, [12, 12, 24, 48]) : pick(rng, [8, 8, 12, 24]),
     boil: 1,
     grain: between(rng, 0.10, 0.28),
     mv: kind === 1 ? pick(rng, [1, 2, 3, 4]) : pick(rng, [0, 1, 2]),
@@ -183,10 +210,12 @@ function shotFrom(th, dur, over) {
     // 事（event.js）。提示部では何も起きない＝0
     ev: 0, evAt: -1, ev0: 0.12, ev1: 0.95, ev2: 0,
     flash: 0, empty: 0,
-    turn: 0, tp1: 0.34, tp2: 0.68, tc1: th.pal, tc2: th.pal,
+    turn: 0, tp1: 0.34, tp2: 0.68, tc1: th.pal, tc2: th.pal, tps: null, tcs: null,
     hang: 0.6, hgap: 0.5,
     // 余白。zoom<1 で図を小さくし、vx/vy で空きの中に寄せる
     zoom: 1, vx: 0, vy: 0, sparse: 0,
+    // 縁（境目の硬さ）。hand 4 のときだけ効く。どこまで溶けるか・どちらへ溶けるか
+    edgeA: 0.5, edgeDir: 0,
     // 層（断をまたいで続くもの）。中身は post-pass で入れる
     lay: 0, lyW: 1, lyT0: 0, lyD: 1, lyA: 0.5, lyB: 0.5, lyDir: 1, lyAlt: 0,
   }, th, over || {});
@@ -233,6 +262,27 @@ export function composeWork(seed, brief) {
   // 調（色）を決める。home が主調、dom が属調、far が遠い調
   const home = Math.floor(rng() * NPAL);
   const dom = (home + 4 + Math.floor(rng() * 4)) % NPAL;
+  // ---- 縁（境目の硬さ）— **溶ける縁を混ぜるかどうかは作品ごとに決める** ----
+  // 依頼者「グラデーション的だったり、何かと何かの境目が曖昧だったりする
+  // ような表現も必要であれば選択肢に入れていい」。
+  //
+  // **全面を溶かさないこと。** 一度目の失敗（雲）はそれで、
+  // 「ラテアートや雲の写真と発想が変わらない」と言われた。
+  // だから上限を 0.55 に切る。**硬い縁が必ず半分近く残る**ので、
+  // 溶けていることが対比として効く——柔らかい縁は、隣の硬い縁があって初めて柔らかい。
+  //
+  // **0 の作品もある**（依頼者「幾何学的に単純な線や円…そういうときももちろん
+  // あってもいい」）。だから「毎回必ず溶かす」にもしない。
+  const EDGE_MIX = [0, 0, 0.22, 0.34, 0.45, 0.55];
+  const edgeMix = (BR && BR.blur !== undefined)
+    // 記事が「にじむ・曖昧・溶ける」を言っていれば、そちらへ寄せる
+    ? EDGE_MIX[Math.min(EDGE_MIX.length - 1,
+      Math.round(BR.blur * (EDGE_MIX.length - 1)))]
+    : pick(rng, EDGE_MIX);
+  const edgeDir = Math.floor(rng() * 4);
+  // 溶ける景を選ぶのは種の仕事（同じ種なら同じ景が溶ける）
+  const softly = (r) => edgeMix > 0 && r < edgeMix;
+
   const far = [(home + 7) % NPAL, (home + 9) % NPAL,
     (home + 2) % NPAL, (dom + 6) % NPAL];
 
@@ -279,7 +329,8 @@ export function composeWork(seed, brief) {
     // 図は主題の組から順に取る（順番が決まっているから再現部で同じ並びが戻る）
     if (!over || over.m === undefined) s.m = th.ms[(th.k++) % th.ms.length];
     if (!s.form) s.form = th.form;
-    if (!over || over.n === undefined) s.n = cnt(rng, s.m);
+    // 第一主題（theme 1）だけ数の下限を2に上げる——痕（1つ戻ってこない）のため
+    if (!over || over.n === undefined) s.n = theme === 1 ? cntMain(rng, s.m) : cnt(rng, s.m);
     s.start = t; s.sec = sec; s.th = theme; s.w = w;
     // **主題の中では色を動かさない。** 同じ色で続くから「同じ主題」に見える。
     // 跳ばすのは群が替わる（主題が替わる／部が替わる）ときだけ。
@@ -307,12 +358,39 @@ export function composeWork(seed, brief) {
     }
     // 長い景は途中で色を跳ばす（止まって見えるのを防ぐ）
     if (s.dur >= 7) {
-      s.turn = 2;
-      s.tp1 = between(rng, 0.24, 0.42); s.tp2 = between(rng, 0.58, 0.8);
-      s.tc1 = pick(rng, far); s.tc2 = s.pal;
+      stepColors(s, far, rng);
     } else if (s.dur >= 3.5 && rng() < 0.5) {
       s.turn = 1; s.tp1 = between(rng, 0.3, 0.6); s.tc1 = pick(rng, far);
+      s.tps = null; s.tcs = null;
     }
+    // ---- 縁（境目の硬さ）----------------------------------------------
+    // **再現部の写しには振らない。** 提示部から `hand` を引き写しているので、
+    // ここで振り直すと「同じ姿で帰る」が崩れる
+    // （帰ってきた第一主題の縁だけ溶ける、になる）。
+    // 写しの印（`recall`）は `over` に入れてある——`put()` が返ったあとで
+    // 立てていたので、ここからは見えなかった（実際に見えず、振れなかった）。
+    //
+    // **`over.hand` の有無で見分けないこと。** `vary()` はどの景にも `hand` を
+    // 渡しているので、それを条件にすると**1景も溶けない**（実測 0%）。
+    //
+    // **キーカットは硬いままにする。** その部でいちばん強い一枚なので、
+    // 輪郭が立っている方が効く（溶けた縁は、硬い縁の隣にあって初めて柔らかい）。
+    // キーはこのあとの「流」が決めるので、ここでは重い景（w >= 0.9）を避ける。
+    if (!s.recall && s.w < 0.9
+        && softly(nz01(seed * 7 + shots.length * 131))) {
+      s.hand = 4;
+      s.edgeA = 0.3 + nz01(seed + shots.length * 17) * 0.6;
+      s.edgeDir = edgeDir;
+    }
+
+    // ---- 勾配の地は、硬い図が乗る景にだけ残す ------------------------
+    // **柔らかい地に柔らかい図を重ねないこと。** 画面の全部が柔らかくなって、
+    // 一度目の失敗（雲。「ラテアートや雲の写真と発想が変わらない」）に戻る。
+    // 効くのは**柔らかい広がりの上に硬い輪郭が乗っている**状態そのもの。
+    //
+    // **縁を決めたあとに見ること。** 先に見ていたら `s.hand = 4` がこの下で
+    // 立つので、見張りが 524件すり抜けた（実測）。順番が命。
+    if (s.gk === 6 && (s.hand === 4 || s.sparse)) s.gk = pick(rng, [0, 1, 2]);
     t += dur;
     shots.push(s);
     return s;
@@ -435,17 +513,68 @@ export function composeWork(seed, brief) {
   // 断のたびに事を一段ずつ進める（`evAt` が 0→1 へ上がっていく）。
   // 観る側には「同じものが、切るたびに壊れていく」ように見える。
   const sec2 = D(100);
+  let devChain = null;                 // 展開部の事の鎖（法「因」。検査が読む）
   {
     const end = t + sec2;
     const waves = 3;
     // 波ごとの事：来る → 壊れる → 呑まれる／逃げる
     // 第一波は**固有の事**。椅子に人が座る、壺が割れる、梯子を登る——
     // その図にしか起きないことを先に見せてから、壊しにかかる。
-    const evSets = [
-      [11],             // 固（その図にしか起きないことが、まず起きる）
-      [1, 3, 4],        // 崩・溶・殖（壊れはじめる）
-      [7, 8, 11],       // 喰・逃・固（呑まれる）
-    ];
+    // ---- 因 — **次に起きることは、前に起きたことの結果である** --------
+    // 依頼者「まだ展開や流れやストーリー感が甘い（…）羅列してるだけなように見える」
+    // → 前回は可逆性（法「痕」）を直した。**残っていたもう一つが因果。**
+    //
+    // 波ごとに `pick(rng, evSets[w])` で**独立に**引いていた。だから
+    // 「崩れたから落ちた」ではなく「崩れる波の次に落ちる波がある」だけだった。
+    // 事の名前は並んでいるのに、**あいだに「だから」が無い。**
+    //
+    // だから前の事から**結果として起こりうる事**だけを引く。
+    // 1崩 3溶 4殖 5落 6侵 7喰 8逃 10芽 11固
+    //（2組は再現部・9来は終のものなので、鎖には入れない）
+    // **枝は3つずつ持たせること。** 2つずつだと 2×2 で**鎖が4通りしか出ない**
+    // （実測4通り／14種）。因果は保ったまま、道筋を増やす。
+    const CAUSE = {
+      11: [6, 1, 4],   // 自分のことが起きた → 何かが入ってくる／崩れはじめる／増える
+      1: [5, 3, 8],    // ばらばらに割れた → 落ちる／垂れて流れる／破片が逃げ散る
+      3: [10, 7, 4],   // 溶けた → 別の姿になる／呑まれる／溶けた先で増える
+      4: [8, 7, 1],    // 増えた → 逃げ散る／呑まれる／重さで崩れる
+      5: [7, 4, 10],   // 落ちた → 呑まれる／落ちた先で増える／姿が変わる
+      6: [1, 7, 8],    // 入ってきた → 崩れる／呑まれる／逃げ散る
+      7: [8, 10, 5],   // 呑まれた → 逃げ散る／残りが姿を変える／落ちる
+      8: [10, 1, 3],   // 逃げ散った → 姿を変える／崩れる／溶ける
+      10: [4, 3, 6],   // 姿が変わった → 増える／溶ける／何かが入ってくる
+    };
+    // 第一波は必ず固有の事（法で決まっている）。あとは鎖でつなぐ。
+    const chain = [11];
+    for (let w = 1; w < waves; w++) {
+      const nx = CAUSE[chain[w - 1]] || [1, 3];
+      chain.push(pick(rng, nx));
+    }
+    devChain = { chain, CAUSE };
+    let prevTh = null;                 // 前の波の最後に出ていた図（因果を目に見せる）
+    // ---- 展開で、すでにいちばん出ている図に重ねない ----------------------
+    // **法「貌」（同じ図が全体の 42% を超えない）を運に任せないこと。**
+    // 波ごとの図は 32/24/18/26% の固定の確率で引いていたので、自分の部が
+    // 長い図がそのまま展開でも引かれて、400種のうち2種が 42.3% / 43.0% で
+    // 落ちた（実測）。**落ちてから種を変えて逃げるのではなく、組む側で守る。**
+    //
+    // 終は序を、再現は提示を引き写すので、いまある景から**最後の割合を見積もる**
+    // （序 ×1.6・提示 ×2・展開 ×1）。見積もりが 30% を超えている図が引かれたら、
+    // **いちばん出ていない図へ譲る。** 乱数を新しく引かないので、
+    // 譲っても下流の作品は動かない。
+    const estShare = () => {
+      const sh = {}; let tot = 0;
+      for (const s of shots) {
+        const k = s.sec === 1 ? 2 : s.sec === 0 ? 1.6 : 1;
+        sh[s.m] = (sh[s.m] || 0) + s.dur * k; tot += s.dur * k;
+      }
+      return { sh, tot: tot || 1 };
+    };
+    const yieldTo = (th) => {
+      const { sh, tot } = estShare();
+      if ((sh[th.m] || 0) / tot <= 0.30) return th;
+      return [A, B, C, E].reduce((a, x) => ((sh[x.m] || 0) < (sh[a.m] || 0) ? x : a));
+    };
     for (let w = 0; w < waves; w++) {
       const last = w === waves - 1;
       const wEnd = Math.min(end - (last ? 0 : 4), t + sec2 / waves);
@@ -453,12 +582,20 @@ export function composeWork(seed, brief) {
       // 「ぐちゃぐちゃになってよく分かんなくなっちゃってる」と言われた。
       // 速いことは大事だが、1枚が何なのか分かる長さは残す
       const fast = mix2(0.95, 0.44, w / (waves - 1));
-      const evK = pick(rng, evSets[w]);
+      const evK = chain[w];
       const wave = [];
+      let first = true;
       while (t < wEnd - 2.6) {
         const q3 = rng();
         // 挿話（E）を混ぜる。展開部は新しい材料を持ち込む場所
-        const th = q3 < 0.32 ? A : q3 < 0.56 ? B : q3 < 0.74 ? C : E;
+        let th = q3 < 0.32 ? A : q3 < 0.56 ? B : q3 < 0.74 ? C : E;
+        th = yieldTo(th);
+        // **因果を目に見せる。** 波の頭だけは、前の波の最後と同じ図にする。
+        // 図が入れ替わると「別のものに別のことが起きた」に見えて、
+        // 事が鎖でつながっていても「だから」が伝わらない。
+        // 同じ図に続けて起こすから、崩れたから落ちた、と読める。
+        if (first && prevTh) th = prevTh;
+        first = false;
         const q = rng();
         wave.push(put(th, Math.min(wEnd - t, between(rng, fast * 0.7, fast * 1.5)),
           vary(th, {
@@ -467,6 +604,11 @@ export function composeWork(seed, brief) {
             fps: 24, mv: pick(rng, [1, 3, 4]), mvA: between(rng, 0.6, 1),
             ev: evK, ev2: (th === A ? B.m : A.m),
           }), 2, th === A ? 1 : 2, 0.5 + w * 0.15));
+      }
+      // 次の波の頭で同じ図に続けるため、最後に出ていた図を覚える
+      if (wave.length) {
+        const lastShot = wave[wave.length - 1];
+        prevTh = [A, B, C, E].find((x) => x.m === lastShot.m) || null;
       }
       // 事を断のあいだに配る。ここが「映像そのものが展開していく」ところ
       for (let i = 0; i < wave.length; i++) {
@@ -524,8 +666,25 @@ export function composeWork(seed, brief) {
     while (t < aEnd - 0.3 && srcA.length) {
       const src = srcA[i++ % srcA.length];
       const d = Math.min(aEnd - t, src.dur * between(rng, 1.05, 1.5));
+      // ---- 痕 — **1つ戻ってこない** --------------------------------
+      // 依頼者「まだ展開や流れやストーリー感が甘いので、ただ幾何学的な可能性を
+      // 羅列してるだけなように見えるな」。
+      //
+      // **原因は「全部元に戻る」ことだった。** 無傷→壊れる→元に戻る→人が来る、
+      // なので**起きたことが何も残らない**。戻るのは型としては気持ちがいいが、
+      // 物語の逆である（物語は、起きたあとで世界が違っていること）。
+      // だから再現部は「同じ姿」で帰すが、**数を1つ減らして帰す。**
+      // 見る人は同じものだと分かり、同時に1つ足りないことに気づく。
+      // これは元に戻らない（終まで減ったまま）。
+      //
+      // 1つしか無い図では減らせない（0 にすると図が消える）ので、
+      // そのときは組み上がりを最後まで残す（下の `REBUILD`）。
+      const lost = src.n >= 2 ? 1 : 0;
+      // 減らせたかどうかを景に残す（下の痕の判定が使う）
       const s = put(A, d, {
-        m: src.m, form: src.form, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        m: src.m, form: src.form, n: src.n - lost,
+        hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        edgeA: src.edgeA, edgeDir: src.edgeDir, recall: 1,
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: src.inv, shade: src.shade, mv: src.mv, mvA: src.mvA,
         fps: src.fps, pal: home, lock: 1,
@@ -534,6 +693,7 @@ export function composeWork(seed, brief) {
         ev: 2, evAt: 0,                      // 組 — 破片が集まって組み上がる
       }, 3, 1, 0.8);
       s.recall = 1;
+      s.dropped = lost;
       recall++;
       recalls.push(s);
       if (i >= srcA.length * 2) break;
@@ -544,8 +704,14 @@ export function composeWork(seed, brief) {
     // 半分も壊れたままだと、展開部がまだ続いているようにしか見えない
     // （実際にそうなった）。だから半分組み上がった状態から始めて、すぐ元へ戻す。
     const REBUILD = 3;
+    // **数を減らせた作品はここで完全に戻してよい**（痕は「1つ足りない」の方で残る）。
+    // 減らせなかった作品（図が1つだけ）は、**組み上がりきらないこと**を痕にする
+    // ——最後まで少しだけ崩れたまま帰る。痕がゼロの作品を作らないため。
+    // **写しごとに元と比べること。** 最初の景だけと比べていたので判定が狂っていた。
+    const canDrop = recalls.some((x) => x.dropped);
+    const scar = canDrop ? 0 : 0.14;
     for (let k = 0; k < recalls.length; k++) {
-      if (k >= REBUILD) { recalls[k].ev = 0; continue; }
+      if (k >= REBUILD) { recalls[k].ev = scar ? 2 : 0; recalls[k].evAt = scar; continue; }
       recalls[k].evAt = 0.45 + (k / REBUILD) * 0.52;
     }
     // 第二主題へ渡る前に、**主調の余白をひとつ置く。**
@@ -559,6 +725,7 @@ export function composeWork(seed, brief) {
       const d = Math.min(end - t, src.dur * between(rng, 1.0, 1.35));
       const s = put(B, d, {
         m: src.m, form: src.form, n: src.n, hand: src.hand, gk: src.gk, gx: src.gx, gy: src.gy, ga: src.ga,
+        edgeA: src.edgeA, edgeDir: src.edgeDir, recall: 1,
         gn: src.gn, g2: src.g2, ox: src.ox, oy: src.oy, k1: src.k1, k2: src.k2,
         k3: src.k3, odd: src.odd, inv: false, shade: src.shade, mv: src.mv, mvA: src.mvA,
         zoom: src.zoom, vx: src.vx, vy: src.vy, sparse: src.sparse,
@@ -605,7 +772,10 @@ export function composeWork(seed, brief) {
       zoom: between(rng, 0.46, 0.56), vx: between(rng, -0.2, 0.2), vy: between(rng, -0.1, 0.1),
       sparse: 1,
     }, 4, 0, 0.9);
-    last.turn = 1; last.tp1 = 0.62; last.tc1 = home;   // 最後は主調のまま静まる
+    // 最後は主調のまま静まる。**段の並びを消すこと**——残すと film がそちらを
+    // 読んで、最後の景が主調へ帰らない
+    last.turn = 1; last.tp1 = 0.62; last.tc1 = home;
+    last.tps = null; last.tcs = null;
     last.empty = 1;
     while (end - t > 5) put(I, between(rng, 2.0, 4.0), air(I, { pal: home, lock: 1 }), 4, 0, 0.4);
     if (t < end) put(I, end - t, air(I, { pal: home, lock: 1, mv: 0 }), 4, 0, 0.4);
@@ -769,7 +939,21 @@ export function composeWork(seed, brief) {
     // 揺れ（mv 3）は地が付いてこないので面がほとんど変わらない。
     // 長い景では寄り・流し・傾きに替える。
     if (s.mv === 3) s.mv = pick(rng, [1, 2, 4]);
-    s.mvA = Math.max(s.mvA, 0.8);
+    // **とても長い景では傾き（mv 4）を使わない。** 細い図（糸・簾）を回しても
+    // 画素がほとんど変わらず、19.7秒の景が 0.81%／0.5秒まで落ちた（実測 種197）。
+    // 流し（2）は地の割りごと横へ動くので、面の大半が必ず入れ替わる。
+    //
+    // **これ以上「流しへ寄せる」ことはしない。** 8秒以上を全部流しにしてみたが、
+    // 長い景の静止率は 14% から 18% へ**悪くなった**（実測 134枚）。
+    // 乱数の並びが動いて別の景が測られるだけで、効いていない。
+    // 一色の面の映像では、**振幅を上げても静けさは消えない**——ためは残る。
+    if (s.dur >= 12 && s.mv === 4) s.mv = pick(rng, [2, 2, 1]);
+    // **動きの「速さ」を揃えること（量ではない）。** `camera()` は景の頭から
+    // 終わりまでで `mvA` ぶん動かすので、**尺が長いほど1秒あたりが遅くなる。**
+    // 11.3秒の景が 0.74%／0.5秒で「静止画に見える」に落ちた（実測）。
+    // 4.5秒で 0.8 のときと同じ速さになるまで振幅を上げる（上限 1.6——
+    // それ以上寄ると図が枠の外へ出る）。
+    s.mvA = Math.max(s.mvA, Math.min(1.6, 0.8 * s.dur / 4.5));
     // **地も一緒に動かす。** 図だけ流すと、面積の大半を占める地が
     // 止まったままなので画面が固まって見える（実測 0.66%／0.5秒）。
     s.gmv = 1;
@@ -784,12 +968,35 @@ export function composeWork(seed, brief) {
     // では 5.4秒で置いた景が 8.1秒になり、「途中で色が替わらない長い景」に落ちる。
     // 流（キーカットを長くする）を入れて、これが毎回起きるようになった。
     // **主調で固定したい景（lock）は跳ばさない**（再現部が主調へ帰れなくなる）。
-    if (s.dur >= 7 && !s.turn && !s.lock) {
-      s.turn = 2;
-      s.tp1 = between(rng, 0.24, 0.42); s.tp2 = between(rng, 0.58, 0.8);
-      s.tc1 = pick(rng, far); s.tc2 = s.pal;
+    if (s.dur >= 7 && !s.lock && (!s.tps || !s.tps.length
+        || s.tps.length + 1 < clamp2((Math.round(s.dur / 2.4) | 1), 3, 7))) {
+      // 伸縮と流で景が伸びたぶん、段を足し直す
+      stepColors(s, far, rng);
     }
   }
+  // ---- なめらかな景を少数に留める --------------------------------------
+  // **打つのが既定。** なめらかが増えると「コマ打ち」という肌理そのものが消え、
+  // ただの CG に近づく（二度目の失敗の方向）。
+  // 少数に留めるから、隣の打った景が「打ってある」と分かる。
+  {
+    const MAX_SMOOTH = 0.22;                       // 尺のこの割合まで
+    let soft = shots.filter((s) => s.fps >= 48).reduce((a, s) => a + s.dur, 0);
+    const tot = shots.reduce((a, s) => a + s.dur, 0) || 1;
+    for (let i = shots.length - 1; i >= 0 && soft / tot > MAX_SMOOTH; i--) {
+      if (shots[i].fps < 48) continue;
+      soft -= shots[i].dur;
+      shots[i].fps = pick(rng, [12, 24]);
+    }
+  }
+
+  // ---- 勾配の地の後始末 ------------------------------------------------
+  // **流（引きの景を余白にする）と縁は put() のあとで景を書き換える。**
+  // だから put() の中で見張っても、あとで柔らかい景になったものが残る
+  // （実測 24件）。最後に一度掃く。
+  for (const s of shots) {
+    if (s.gk === 6 && (s.hand === 4 || s.sparse)) s.gk = pick(rng, [0, 1, 2]);
+  }
+
   // **同じ図・同じ配色が続く断で、絵が変わらないままにしない。**
   // put() の中でも見ているが、そこは組んでいる途中の前後関係しか見えない。
   // 余白を入れて画面の大半が地になったので、図が同じだと断が消える
@@ -878,7 +1085,37 @@ export function composeWork(seed, brief) {
     pals: PALS,
     brief: BR,
     want: WANT,
+    // 展開部の事の鎖（法「因」）。前の事の結果だけが次に来る
+    chain: devChain ? devChain.chain : null,
+    cause: devChain ? devChain.CAUSE : null,
   };
+}
+
+// ---- 長い景の色の段 ----------------------------------------------------
+// **平らな面の映像では、カメラを動かしても画素がほとんど変わらない。**
+// 11秒の景で 0.28〜0.76%／0.5秒しか動かず、長い景の 17% が
+// 「静止画に見える」に落ちた（実測・種3〜23）。振幅を上げても直らない
+// ——寄りも流しも、一色の面の中では縁の細い帯しか動かさないため。
+// **動いて見せるのは色の段である。** 2.4秒にひとつ置く。
+//
+// **溶かさない**（グラデーションにしない。段で替える）。
+// **段の数は奇数にすること**——最後は自分の配色へ帰る（主題の色から
+// 出ていったままにすると、次の景との断が「同じ色のまま」になる）。
+function stepColors(s, far, rng) {
+  let k = Math.round(s.dur / 2.4);
+  if (k % 2 === 0) k += 1;
+  k = clamp2(k, 3, 7);
+  const tps = [], tcs = [];
+  for (let i = 1; i < k; i++) {
+    tps.push(clamp2(i / k + (rng() - 0.5) * 0.05, 0.1, 0.94));
+    tcs.push(i % 2 === 1 ? pick(rng, far) : s.pal);
+  }
+  s.tps = tps; s.tcs = tcs;
+  // 古い形（turn/tp1/tp2）も合わせて持たせる。法（彩: 途中で色が替わらない
+  // 長い景がある）と道具がこちらを読んでいる
+  s.turn = 2;
+  s.tp1 = tps[0]; s.tc1 = tcs[0];
+  s.tp2 = tps[tps.length - 1]; s.tc2 = tcs[tcs.length - 1];
 }
 
 function mix2(a, b, u) { return a + (b - a) * u; }
@@ -946,6 +1183,36 @@ export function checkWork(work) {
   if (work.movements[0] && work.movements[0].shots.some((s) => s.ev)) bad.push('型: 序で事が起きている（問いは無垢のまま置く）');
   if (!work.movements[3] || !work.movements[3].shots.some((s) => s.ev === 2)) bad.push('型: 再現部に「組」（組み上がり）が無い');
   if (!work.movements[4] || !work.movements[4].shots.some((s) => s.ev === 9)) bad.push('型: 終に「来」（人が来る）が無い');
+
+  // ---- 因 — **次に起きることは、前に起きたことの結果である** ----
+  // 波ごとに独立に事を引いていたので、「崩れたから落ちた」ではなく
+  // 「崩れる波の次に落ちる波がある」だけだった（＝あいだに「だから」が無い）。
+  if (LAWS.cause && work.chain && work.cause) {
+    if (work.chain[0] !== 11) bad.push('因: 第一波が固有の事ではない');
+    for (let i = 1; i < work.chain.length; i++) {
+      const ok = (work.cause[work.chain[i - 1]] || []).includes(work.chain[i]);
+      if (!ok) {
+        bad.push(`因: ${work.chain[i - 1]} → ${work.chain[i]} は結果になっていない`);
+        break;
+      }
+    }
+  }
+
+  // ---- 痕 — **起きたことが残ること** ----
+  // 無傷→壊れる→元に戻る→人が来る、では**起きたことが何も残らない**ので、
+  // 状態の羅列に見える（物語は、起きたあとで世界が違っていること）。
+  // 再現部は「同じ姿」で帰すが、**1つ戻ってこない**（数を減らして帰す）。
+  // 図が1つしか無い作品は減らせないので、**組み上がりきらない**ことを痕にする。
+  if (LAWS.trace) {
+    const re = (work.movements[3] ? work.movements[3].shots : []).filter((s) => s.recall && s.th === 1);
+    if (re.length) {
+      const dropped = re.some((s) => s.dropped);
+      const scarred = re.some((s) => s.ev === 2 && s.evAt > 0 && s.evAt < 0.3);
+      if (!dropped && !scarred) {
+        bad.push('痕: 再現部が完全に元へ戻っている（1つ戻ってこない／組み上がりきらない、のどちらかが要る）');
+      }
+    }
+  }
 
   // ---- 流 — **景は同格ではない** ----
   // 三度目の失敗は「並列的で、全部のカットが同じ価値に見える」だった。
@@ -1049,6 +1316,14 @@ export function checkWork(work) {
   if (S.some((s) => Math.abs((s.lyD || 0) - work.total) > 0.01)) bad.push('層: 層の時計が作品全体になっていない');
   if (S.filter((s) => s.odd).length < LAWS.minOdd) bad.push('異: 違和感が足りない');
   if (new Set(S.map((s) => s.hand)).size < LAWS.minHands) bad.push('異: 塗りかたが足りない');
+  // 縁 — 溶ける景が多すぎないこと（硬い縁が残っていること）
+  {
+    const soft = S.filter((s) => s.hand === 4).reduce((a, s) => a + s.dur, 0) / work.total;
+    if (soft > LAWS.maxSoftShare) {
+      bad.push(`縁: 溶ける景が ${(soft * 100) | 0}%（${LAWS.maxSoftShare * 100}% 以下。`
+        + '硬い縁が残っていないと、溶けていることが対比にならない）');
+    }
+  }
   // 禁：白に近い地に赤い円（日の丸）を置かない
   for (const s of S) {
     const c = colorsOf(s);

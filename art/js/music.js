@@ -70,7 +70,7 @@ function makeVoices(rng) {
 // 12種の譜を並べても**音階も拍子も編成も和音の進行も全部同じ**だった
 // （実測: 声部の組 1通り/12・拍子 1通り/12・進行は定数）。
 // 依頼者の指摘「前回創ったのと同じ音楽が流れだした」は事実そのままだった。
-const MODES = [
+export const MODES = [
   { name: '自然短', sc: [0, 2, 3, 5, 7, 8, 10] },
   { name: 'ドリア', sc: [0, 2, 3, 5, 7, 9, 10] },
   { name: 'フリギア', sc: [0, 1, 3, 5, 7, 8, 10] },
@@ -83,8 +83,58 @@ const MODES = [
   { name: '和声的長', sc: [0, 2, 4, 5, 7, 8, 11] },
 ];
 
+// ---- 作法（音楽の組み立てかた）----------------------------------------
+// 依頼者:
+// 「いまやってくれてるように**コードや和音機能から音楽を作る手法**ももちろん
+//   用いても良いが、**スケールや音階から音楽を考える手法**やそれの応用でもある
+//   **対位法による音楽作りのアプローチ**もできるようにはしておいて」
+//
+// **3つは飾りではなく、組み立ての筋そのものが違う。** 同じ音符列に名前を
+// 付け替えるだけなら意味が無い。違うのはこう。
+//
+// | | 縦（同時に鳴るもの） | 横（進みかた） | 旋律の置きかた |
+// |---|---|---|---|
+// | 和音 | 三和音（度 0・2・4）| 和音が**機能**で進む（属→主）| 強拍を和音の音へ寄せる |
+// | 音階 | 主音と5度と9度（三度を積まない）| **進まない。主音を保つ**。色は音階そのものから | 音階のどこに居てもよい（寄せない）|
+// | 対位 | 2本の線が作る音程 | 和音の枠は借りるが、薄くする | **2本目が法で決まる**（協和・反対の動き・平行完全音の禁止）|
+//
+// 対比（根）と型（ソナタ形式）はどの作法でも守る。**変わるのは作りかただけ。**
+const METHODS = ['和音', '音階', '対位'];
+
+// **その音階を、その音階たらしめている度。** 長音階／自然短音階と比べて
+// いちばん離れている度（ドリアなら6度、フリギアなら2度、リディアなら4度）。
+// 音階の作法では、離れる先をここに取る——それが「音階から考える」ということ。
+// **表で持たないこと。** `MODES` に足した音階でそのまま効くようにする。
+const REF_MAJ = [0, 2, 4, 5, 7, 9, 11];
+const REF_MIN = [0, 2, 3, 5, 7, 8, 10];
+export function charDeg(sc) {
+  const dist = (r) => sc.reduce((a, v, i) => a + Math.abs(v - r[i]), 0);
+  const ref = dist(REF_MAJ) <= dist(REF_MIN) ? REF_MAJ : REF_MIN;
+  let best = 2, bd = 0;
+  for (let i = 1; i < 7; i++) {
+    const d = Math.abs(sc[i] - ref[i]);
+    if (d > bd) { bd = d; best = i; }
+  }
+  return best;
+}
+// 音階どうしの隔たり（度がいくつ違うか）。音階の作法では、
+// **調を移さずに音階を替えて**対比を作る（主音は動かさない）。
+function modeGap(a, b) {
+  let n = 0;
+  for (let i = 0; i < 7; i++) if (a[i] !== b[i]) n++;
+  return n;
+}
+// 隔たりが `want` に近い音階を引く（1〜2=隣の色／3以上=遠い色）
+function nearMode(rng, base, want) {
+  return wpick(rng, MODES, MODES.map((m) => {
+    if (m.sc === base) return 0.02;
+    const g = modeGap(m.sc, base);
+    return 0.05 + Math.pow(Math.max(0, 1 - Math.abs(g - want) / 3), 3);
+  }));
+}
+
 // 音階の度 → 主音からの半音数（どの音階でも同じ式で引ける）
-function degOf(sc, d) {
+export function degOf(sc, d) {
   const oct = Math.floor(d / 7), i = ((d % 7) + 7) % 7;
   return sc[i] + oct * 12;
 }
@@ -164,9 +214,132 @@ function makeProg(rng) {
   const recapB = walk(4, 0); recapB[3] = 0;                // 主調で帰る
   const coda = walk(4, 0); coda[3] = 0;                    // 解決する
   return {
-    name: intro.join('') + '-' + expoA.join(''),
+    // **名前に中身を入れること。** 序と提示Aの8桁だけだと、台帳で
+    // 「和音の進行が既出」に当たる作品が出る（実測 400種のうち8本）
+    name: [intro, expoA, expoB, devel].map((x) => x.join('')).join('-'),
     intro, expoA, trans, expoB, devel, recapB, coda,
   };
+}
+
+// ---- 音階の作法の「進行」（＝進まないこと）----------------------------
+// **機能で進まない音楽。** 主音を保ち、色は音階そのものから出す。
+// だから度はほとんど 0 で、離れるのは**その音階を音階たらしめている度**
+// （`charDeg`）とその近所だけ。属和音から主和音へ落とす筋は作らない
+// ——それを作った瞬間に和音の作法に戻る。
+//
+// **型（ソナタ形式）の役は残す。** 序は解決しない、再現Bと終は主音で閉じる。
+// 対比は「別の調へ行く」のではなく**別の度に居座る／音階そのものを替える**で作る。
+function makeProgModal(rng, sc) {
+  const c = charDeg(sc);
+  const near = [c, 3, 4, 1, 5].filter((x, i, a) => a.indexOf(x) === i);
+  const w = (len, first, last) => {
+    const out = [first === undefined ? 0 : first];
+    for (let i = 1; i < len; i++) out.push(rng() < 0.52 ? 0 : pick(rng, near));
+    if (last !== undefined) out[len - 1] = last;
+    return out;
+  };
+  const intro = w(4, 0, c);                     // 解決しない（主音で終わらない）
+  const expoA = w(4, 0, c);
+  const trans = w(4, pick(rng, near));
+  const expoB = w(4, c);                        // 対比＝別の度に居座る
+  for (let i = 0; i < 4; i++) if (expoB[i] === 0) expoB[i] = pick(rng, near);
+  const devel = w(8, pick(rng, near));
+  const recapB = w(4, 0, 0);
+  const coda = w(4, 0, 0);
+  return {
+    name: '階' + [intro, expoA, expoB, devel].map((x) => x.join('')).join('-'),
+    intro, expoA, trans, expoB, devel, recapB, coda,
+  };
+}
+
+// ---- 対位法（2本目の線）----------------------------------------------
+// **2本の線が、それぞれ独立していて、しかも縦が協和していること。**
+// これが対位法で、和音の上に旋律を乗せるのとは作りが逆——
+// 縦は2本の線の**結果**であって、先に置いた枠ではない。
+//
+// 法（どれも外さない）:
+//   協和   強い位置では 協和音程だけ（1度・3度・5度・6度・8度。**4度と7度は不協和**）
+//   反対   同じ方向へ動かない（平行に動くと2本が1本に聞こえる）
+//   順次   跳ぶより隣へ動く（線として歌えること）
+//   禁     **平行5度・平行8度を作らない**（完全音程が同じ向きに並ぶと声部が消える）
+//   端     始めと終わりは完全協和（`makeTune` が主題の終わりを主音へ置くので、
+//          2本目も主音へ収める＝2本が1つになって終わる）
+export const CONS = new Set([0, 3, 4, 7, 8, 9, 12, 15, 16, 19, 20, 21, 24]);
+export const PERF = new Set([0, 7, 12, 19, 24]);
+export function makeCounter(rng, subj, sc, opt) {
+  const o = opt || {};
+  const lo = o.lo === undefined ? -6 : o.lo, hi = o.hi === undefined ? 6 : o.hi;
+  const out = [];
+  let prev = null, prevIv = null;
+  for (let i = 0; i < subj.length; i++) {
+    const sd = subj[i].deg;
+    const strong = i % 2 === 0;
+    // **同点をほどく乱数は1音に1つだけ引くこと。** 候補ごとに引くと、
+    // 音階の形で引く回数が変わって、下流の作品まで動く
+    const jit = rng();
+    let best = null, bs = -1e9;
+    for (let d = lo; d <= hi; d++) {
+      const iv = Math.abs(degOf(sc, sd) - degOf(sc, d));
+      const cons = CONS.has(iv);
+      if (strong && !cons) continue;                       // 強い位置は協和だけ
+      let s = cons ? 2 : 0;
+      if (prev !== null) {
+        const step = Math.abs(d - prev);
+        if (step === 0) s -= 1.2;                          // 動かないのは線ではない
+        else if (step === 1) s += 1.4;                     // 順次進行を主に
+        else if (step > 4) s -= 2.2;                       // 跳びすぎない
+        const sm = Math.sign(sd - subj[i - 1].deg);
+        const cm = Math.sign(d - prev);
+        if (sm && cm && sm !== cm) s += 1.6;               // 反対の動きを好む
+        else if (sm && cm) s -= 0.6;
+        // **平行5度・平行8度を禁じる**（同じ完全音程が同じ向きに並ぶこと）
+        if (prevIv !== null && PERF.has(iv) && iv === prevIv && sm === cm && sm) s -= 99;
+      }
+      s += ((d * 37 + i * 11) % 7) * 0.06 * jit;           // 同点をほどく
+      if (s > bs) { bs = s; best = { d, iv }; }
+    }
+    if (!best) best = { d: prev === null ? 4 : prev, iv: 0 };
+    out.push({ deg: best.d, beats: subj[i].beats });
+    prev = best.d; prevIv = best.iv;
+  }
+  // **2本が1つになって終わる。** 主題の終わりは主音なので、こちらも主音へ。
+  // **ここを後から書き換えるなら、手前の1音も作り直すこと。**
+  // 収めた最後の音が平行完全音を作っていた（実測 400本のうち31箇所。
+  // 法は書いてあるのに、法を通したあとで最後だけ差し替えていたので残った）。
+  // 作り直しかたは古典そのまま——**反対の動きで主音へ収める**（終止）。
+  const n = out.length;
+  if (n) {
+    out[n - 1].deg = 0;
+    if (n >= 2) {
+      const sPen = subj[n - 2].deg, dir = Math.sign(subj[n - 1].deg - sPen);
+      const strong = (n - 2) % 2 === 0;
+      // 手前（n-3）から入ってくるところも見ること。**そこが抜けていた**
+      // ——最後の1音だけ見て作り直したら、平行が 31 から 49 箇所に増えた（実測）。
+      const ivIn = n >= 3
+        ? Math.abs(degOf(sc, subj[n - 3].deg) - degOf(sc, out[n - 3].deg)) : null;
+      const smIn = n >= 3 ? Math.sign(sPen - subj[n - 3].deg) : 0;
+      let best = null, bs = -1e9;
+      for (let d = lo; d <= hi; d++) {
+        const iv = Math.abs(degOf(sc, sPen) - degOf(sc, d));
+        if (strong && !CONS.has(iv)) continue;
+        const cm = Math.sign(0 - d);
+        if (dir && cm && dir === cm) continue;          // 同じ向きで収めない
+        if (ivIn !== null) {                            // 入ってくるところも平行にしない
+          const cmIn = Math.sign(d - out[n - 3].deg);
+          if (PERF.has(iv) && iv === ivIn && smIn && smIn === cmIn) continue;
+        }
+        let s = (Math.abs(d) <= 2 ? 1.6 : 0) + (Math.abs(d) === 1 ? 1.2 : 0);
+        if (n >= 3 && Math.abs(d - out[n - 3].deg) === 1) s += 1.2;
+        if (s > bs) { bs = s; best = d; }
+      }
+      if (best !== null) out[n - 2].deg = best;
+    }
+  }
+  return out;
+}
+// 反行（上がるところを下がる）。展開部で使う、対位法のいちばん古い手
+export function invert(tune) {
+  return tune.map((n) => ({ deg: -n.deg, beats: n.beats }));
 }
 
 // ---- 編成 ------------------------------------------------------------
@@ -281,7 +454,27 @@ export function composeMusic(work, seedIn) {
   const met = (BR && BR.meterW)
     ? wpick(rng, METERS, METERS.map((m) => BR.meterW[m.name] || 0.05))
     : METERS[Math.floor(rng() * METERS.length)];
-  const prg = makeProg(rng);
+  // ---- 作法（どう組み立てるか）----------------------------------------
+  // 記事が「重なる・呼び合う」と言えば**対位**へ、「続く・変わらない」と
+  // 言えば**音階**へ寄る（`brief.js` の `methodW`）。
+  // **どれか1つに固定しないこと。** 記事はあくまで寄せるだけで、
+  // 下駄が履いてあるので語の無い記事でも3つとも出る。
+  const method = (BR && BR.methodW)
+    ? wpick(rng, METHODS, METHODS.map((m) => BR.methodW[m] || 0.34))
+    : pick(rng, ['和音', '和音', '音階', '対位']);
+  const modal = method === '音階', counter = method === '対位';
+  // ---- 音階の筋（音階の作法だけ）--------------------------------------
+  // **調を移さずに音階を替えて対比を作る。** 主音は動かさないので、
+  // 「帰ってきた」は**音階が戻ること**で分かる（和音の作法が調で言うことを、
+  // 音階の作法は音階で言う）。
+  //   序・提A 基の音階／提B 隣の色（度が1〜2つ違う）／展 遠い色（3つ以上）
+  //   再 基へ戻る／終 基のまま
+  const modeB = modal ? nearMode(rng, SC, 1.5) : mode;
+  const modeF = modal ? nearMode(rng, SC, 4) : mode;
+  const scOf = { 0: SC, 1: SC, 2: modal ? modeF.sc : SC, 3: SC, 4: SC };
+  const scB = { 1: modal ? modeB.sc : SC, 3: SC };
+  // 進行。音階の作法は**機能で進まない**ので、別に組む
+  const prg = modal ? makeProgModal(rng, SC) : makeProg(rng);
   const band = makeBand(rng);
   // 速さ（BPM）。八分を1拍に取る拍子（6/8・7/8）は、そのぶん速い数字になる。
   // **記事の速さの印象をそのまま幅の中の位置にする**（0=遅い端 1=速い端）。
@@ -291,9 +484,31 @@ export function composeMusic(work, seedIn) {
     ? Math.max(tLo, Math.min(tHi,
       tLo + (tHi - tLo) * (0.10 + BR.pace * 0.80 + (rng() - 0.5) * 0.24)))
     : between(rng, tLo, tHi));
-  const beat = 60 / tempo;
-  const bar = beat * met.beats;
-  const tonic = 38 + Math.floor(rng() * 22);            // 主音（調）
+  const beat0 = 60 / tempo;
+  const bar0 = beat0 * met.beats;
+  const beat = beat0, bar = bar0;        // 外へ返す用（musicInfo など）
+
+  // ---- 速さの筋（どこで速くなるか）------------------------------------
+  // 依頼者「もし変化するときは**急激な変化ではなく、音楽的に自然に繋がるように**」。
+  // だから速さは**段ではなく傾斜**で動かす（小節ごとに少しずつ）。
+  //
+  //   序  0.94 → 1.00  入っていく
+  //   提  1.00         主題は揺らさない（同じ姿で帰る必要がある）
+  //   展  1.00 → 1.12  頂点へ向かって少しずつ速くなる
+  //   再  1.00         提示部と同じ速さで帰る（帰ってきた合図）
+  //   終  1.00 → 0.86  解けていく
+  //
+  // **提示部と再現部は動かさないこと。** 同じ主題が同じ速さで帰るのが
+  // 「帰ってきた」の合図なので、ここを揺らすと型が崩れる。
+  const RATE = {
+    0: (u) => 0.94 + u * 0.06,
+    1: () => 1,
+    2: (u) => 1 + u * 0.12,
+    3: () => 1,
+    4: (u) => 1 - u * 0.14,
+  };
+  const tonic0 = 38 + Math.floor(rng() * 22);           // 主音（作品の主調）
+  const tonic = tonic0;                                 // 外へ返す用（musicInfo など）
   // 伴奏（分散和音）の形。**ここも組み立てる。**
   // 固定だと、和音が動いても伴奏の形が同じで「同じ曲」に聞こえる。
   const arp = (() => {
@@ -381,19 +596,48 @@ export function composeMusic(work, seedIn) {
     ? { pace: BR.pace, subdiv: BR.subdiv === undefined ? 0.4 : BR.subdiv } : null;
   const tuneA = makeTune(rng, 7 + Math.floor(rng() * 2), 7, tm);
   const tuneB = makeTune(rng, 5 + Math.floor(rng() * 3), 5, tm);
+  // 対位の2本目。**主題ごとに1本ずつ、法を満たすものを先に組んでおく**
+  //（小節の中で組むと、拍ごとに乱数を引いて下流の作品まで動く）
+  const cntA = counter ? makeCounter(rng, tuneA, SC) : null;
+  const cntB = counter ? makeCounter(rng, tuneB, SC) : null;
+  // 反行（上がるところを下がる）。展開部で重ねる、対位法のいちばん古い手。
+  // **ここは協和を確かめない**——展開部は崩す場所なので、
+  // ぶつかること自体が「崩れている」の合図になる（法「型」がそう決めている）。
+  const invA = invert(tuneA.slice(0, 3)), invB = invert(tuneB.slice(0, 3));
+  // 2本目の楽器（1本目と必ず別のもの）
+  const NEXT2 = { 0: 8, 8: 6, 6: 0, 7: 0 };
 
   // 1小節ぶんを置く。ch は音階の度（0=主和音）。o.voicing で楽器を入れ替える
   function putBar(t, ch, opt) {
     const o = opt || {};
-    const tri = triadOn(SC, ch, { major: o.major, sus: o.sus });
+    // **調は小節ごとに受け取る。** 作品を通して1つの調だったので、
+    // 6〜9分を同じ調・同じ速さで通していた（依頼者「音楽の変化や展開に乏しい」）。
+    // ソナタ形式と言いながら、その骨である調の筋
+    // （主調→属調→遠い調→主調）が音に無かった。
+    const tonic = o.key === undefined ? tonic0 : o.key;
+    // 小節の長さも受け取る（速さが部の中で少しずつ動くため）
+    const beat = o.beat || beat0, bar = o.bar || bar0;
+    // **音階も小節ごとに受け取る。** 音階の作法は「調を移さずに音階を替える」
+    // ことで対比を作るので、ここが固定だと部が替わっても色が変わらない。
+    const sc = o.sc || SC;
+    // 縦の積みかたは作法で変わる。
+    //   和音・対位 … 三和音（度 0・2・4）
+    //   音階       … 主音と5度と9度（**三度を積まない**。これが音階の響き）
+    const tri = o.quintal
+      ? [degOf(sc, ch), degOf(sc, ch + 4), degOf(sc, ch + 8)]
+      : triadOn(sc, ch, { major: o.major, sus: o.sus });
     const root = tri[0];
+    // 対位：伴奏を下げて2本の線を出す。**下げすぎないこと**——0.45 まで
+    // 落としたら、作品ぜんたいの音の量が他の作法の半分になった（実測
+    // 0.45 対 0.97／秒）。対位の作品だけ音が小さい、は対比ではなく事故である
+    const thin = o.thin ? 0.62 : 1;
     const vv = o.v === undefined ? 0.6 : o.v;
     const V = o.voicing || {};
     // 持続 — 弦（3）か聲（6）
     if (o.pad !== false) {
       const pv = V.pad === undefined ? 3 : V.pad;
       for (let i = 0; i < tri.length; i++) {
-        add(t, bar * 1.02, tonic + 24 + tri[i], vv * (pv === 6 ? 0.9 : 0.2), pv);
+        add(t, bar * 1.02, tonic + 24 + tri[i], vv * (pv === 6 ? 0.9 : 0.2) * thin, pv);
       }
       // 聲が入る部では、弦も薄く重ねて土台を残す
       if (V.choir) for (const x of [tri[0], tri[2] === undefined ? tri[0] : tri[2]]) {
@@ -403,14 +647,36 @@ export function composeMusic(work, seedIn) {
     // 低音 — 弓（2）か弾（7）。歩きかたも1本ごとに替える
     if (o.bass !== false) {
       const bv = V.bass === undefined ? 2 : V.bass;
-      // 組み立てた歩き（bassPat）を踏む。段は音階から引くので、どの音階でも収まる
-      for (let i = 0; i < bassPat.length; i++) {
-        const q = bassPat[i];
-        const nx = bassPat[i + 1] ? bassPat[i + 1].at : met.beats;
-        const d = beat * (nx - q.at);
-        const pitch = tonic + root + (q.step === 7 ? 12 : degOf(SC, ch + q.step) - degOf(SC, ch));
-        add(t + beat * q.at, bv === 7 ? Math.min(d, beat * 0.6) : d * 0.92,
-          pitch, vv * (bv === 7 ? 0.6 : 0.48), bv);
+      if (o.pedal) {
+        // **音階の作法の低音は歩かない。** 主音を保つ（持続低音＝ペダル）。
+        // 歩かせると機能が生まれて、和音の作法に戻ってしまう。
+        // 5度を下に添えて開いた響きにする（三度を積まないのと同じ理屈）。
+        //
+        // **ただし打ち直す場所は `bassPat` から取る。** 1小節に1つ伸ばすだけに
+        // していたら、音階の作法の作品はどれも低音が同じになり、台帳の
+        // 指紋（低音）が嘘になった（組み立てた歩きを記録しているのに、
+        // 鳴っていない）。同じ音で打ち直すので、歩かないことは保たれる。
+        // **主音を保つ。小節の度（`ch`）に付いていかないこと。**
+        // 付いていくと和音の根音を追う低音になり、それは歩いているのと同じ
+        // （実測でそうなっていて、音の高さが 46% の確率で動いていた）。
+        // 上で度が動いても、下は動かない——それが持続低音である。
+        add(t, bar * 1.04, tonic - 5, vv * 0.3, bv);       // 5度下を添える
+        for (let i = 0; i < bassPat.length; i++) {
+          const q = bassPat[i];
+          const nx = bassPat[i + 1] ? bassPat[i + 1].at : met.beats;
+          add(t + beat * q.at, beat * (nx - q.at) * 0.96,
+            tonic, vv * (i === 0 ? 0.5 : 0.3), bv);
+        }
+      } else {
+        // 組み立てた歩き（bassPat）を踏む。段は音階から引くので、どの音階でも収まる
+        for (let i = 0; i < bassPat.length; i++) {
+          const q = bassPat[i];
+          const nx = bassPat[i + 1] ? bassPat[i + 1].at : met.beats;
+          const d = beat * (nx - q.at);
+          const pitch = tonic + root + (q.step === 7 ? 12 : degOf(sc, ch + q.step) - degOf(sc, ch));
+          add(t + beat * q.at, bv === 7 ? Math.min(d, beat * 0.6) : d * 0.92,
+            pitch, vv * (bv === 7 ? 0.6 : 0.48) * thin, bv);
+        }
       }
     }
     // 分散和音（竪琴）— **ここが止まらないので、長い景でも音が動く**
@@ -420,9 +686,12 @@ export function composeMusic(work, seedIn) {
       const k = arp[i % arp.length];
       if (k < 0) continue;                              // 休み
       const oc = (i % 4 === 3) ? Math.abs(arpOct) : 0;
+      // **音階の作法では音階を順に渡る**（和音の音だけを拾わない）。
+      // 度を1つずつ上げるので、三度を積まない縦とあわせて音階そのものが鳴る。
+      const step = o.scaleArp ? k : k * 2;
       add(t + (bar / div) * i, bar / div * 1.6,
-        tonic + 36 + (arpOct < 0 ? -12 : 0) + degOf(SC, ch + k * 2) + oc,
-        vv * (i % 2 ? 0.16 : 0.24), 1);
+        tonic + 36 + (arpOct < 0 ? -12 : 0) + degOf(sc, ch + step) + oc,
+        vv * (i % 2 ? 0.16 : 0.24) * thin, 1);
     }
     // 太鼓。打つ場所も1本ごとに替える
     if (V.drum) {
@@ -430,7 +699,7 @@ export function composeMusic(work, seedIn) {
         if (i > 0 && V.drum < 2 && i > 1) break;        // 弱いうちは2つまで
         const st = drum[i];
         add(t + beat * st, 0.3, tonic - 12 + root + (i % 2 && V.drum > 1 ? tri[2] - tri[0] : 0),
-          vv * (st === 0 ? (V.drum > 1 ? 1 : 0.8) : 0.5), 5);
+          vv * (st === 0 ? (V.drum > 1 ? 1 : 0.8) : 0.5) * thin, 5);
       }
     }
     return tri;
@@ -439,13 +708,21 @@ export function composeMusic(work, seedIn) {
   // 旋律を置く（和音の上に乗せ、強拍は和音の音へ寄せる）
   function putTune(t, tune, ch, opt) {
     const o = opt || {};
-    const tri = triadOn(SC, ch, {});
+    // **旋律も小節の調で置くこと。** ここが動かないと、伴奏だけ転調して
+    // 旋律が元の調に残り、濁る。
+    const tonic = o.key === undefined ? tonic0 : o.key;
+    const beat = o.beat || beat0;
+    const sc = o.sc || SC;
+    const tri = triadOn(sc, ch, {});
     let cur = t;
     for (const n of tune) {
       const d = n.beats * beat * (o.stretch || 1);
-      let p = tonic + 48 + (o.oct || 0) * 12 + degOf(SC, n.deg + (o.shift || 0));
-      // 強拍は和音の音に寄せる（外れたままだと濁る）
-      if (((cur - t) / beat) % 2 < 0.01) {
+      let p = tonic + 48 + (o.oct || 0) * 12 + degOf(sc, n.deg + (o.shift || 0));
+      // 強拍は和音の音に寄せる（外れたままだと濁る）。
+      // **音階の作法では寄せない**（`free`）——音階のどの度に居てもよいのが
+      // 「音階から考える」ことそのもので、和音の音へ寄せた瞬間に
+      // 和音の作法に戻る（実際、寄せていたので3つの作法が同じ音に聞こえた）。
+      if (!o.free && ((cur - t) / beat) % 2 < 0.01) {
         let best = p, bd = 99;
         for (const c of tri) {
           for (let oc = -12; oc <= 24; oc += 12) {
@@ -462,6 +739,37 @@ export function composeMusic(work, seedIn) {
     }
     return cur - t;
   }
+
+  // ---- 調の筋（どこで転調するか）------------------------------------
+  // 依頼者:
+  //   「音楽の変化や展開に乏しいと思った。もし変化するときは**急激な変化ではなく、
+  //     音楽的に自然に繋がるように**。もし**音楽的に意味や効果があるならば
+  //     急激な変化でも構わない**」
+  //
+  // ソナタ形式の骨はそもそも**調の筋**である。それが無かったので、
+  // 6〜9分を同じ調のまま通していた。入れる筋はこう。
+  //
+  //   序   主調
+  //   提A  主調 → 提B **属調へ**（+7。いちばん自然な移り先）
+  //   展   属調から**遠い調へ**（ここは意味のある急激。展開部は崩す場所）
+  //   再A  主調へ帰る → 再B **主調のまま**（帰ってきた合図。法で決まっている）
+  //   終   主調
+  //
+  // **自然に繋ぐとはどういうことか。** 移る直前の1小節を、
+  // **移り先の属和音**にする（＝その調へ行く、と耳が先に分かる）。
+  // これを入れないと調が突然すり替わって聞こえる。
+  // 遠い調へ行くところだけは準備を置かない——**そこは意味のある急激**で、
+  // 展開部が崩す場所であることを、調の断絶そのものが語る。
+  const DOM = 7;                                   // 属調（5度上）
+  // 遠い調。**三全音か短3度**を取る（どちらも主調から遠い）
+  const FAR = pick(rng, [6, 3, -3, 8, -4]);
+  // **音階の作法では転調しない。** 主音を保つのがこの作法の芯なので、
+  // 調を動かすと持続低音（ペダル）の意味が消える。対比は音階が担う。
+  const keyOf = modal ? { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 }
+    : { 0: 0, 1: 0, 2: FAR, 3: 0, 4: 0 };               // 部の頭の調（主調からの差）
+  const keyB = modal ? {} : { 1: DOM, 3: 0 };           // 第二主題の調
+  // 準備を置く移り（自然に繋ぐところ）。展開部への断絶だけは入れない
+  const PREP = new Set(['1B', '3A']);
 
   // ---- 部ごとに敷く ----
   const sec = work.movements;
@@ -486,12 +794,33 @@ export function composeMusic(work, seedIn) {
     // 提示部と再現部は、途中で第二主題へ移る
     const bMark = (pl.i === 1) ? t0 + m.dur * 0.58 : (pl.i === 3) ? t0 + m.dur * 0.5 : Infinity;
     let inB = false, tuneAt = t0;
+    // この部の調（第二主題に入ったら移る）
+    let key = tonic0 + (keyOf[pl.i] || 0);
+    // **移る直前の1小節を「移り先の属和音」にする**（＝自然に繋ぐ）。
+    // 準備を入れない移り（展開部への断絶）は、意味のある急激としてそのまま置く。
+    let prepAt = Infinity;
+    if (keyB[pl.i] !== undefined && PREP.has(pl.i + 'B')) prepAt = bMark - bar;
     while (t < t1 - bar * 0.4) {
       if (!inB && t >= bMark) {
         inB = true; k = 0; tuneAt = t;
+        key = tonic0 + (keyB[pl.i] === undefined ? (keyOf[pl.i] || 0) : keyB[pl.i]);
       }
+      // 準備の小節（移り先の属和音を、移り先の調で鳴らす）
+      // 小節ごとの速さ（傾斜。段にしない）
+      const uu = (t - t0) / Math.max(1, m.dur);
+      const rate = (RATE[pl.i] || (() => 1))(Math.max(0, Math.min(1, uu)));
+      const bt = beat0 / rate, br = bt * met.beats;
+      const prepping = !inB && t >= prepAt && t < bMark;
+      const barKey = prepping
+        ? tonic0 + (keyB[pl.i] === undefined ? 0 : keyB[pl.i])
+        : key;
+      // **音階も小節ごとに渡す。** 音階の作法は第二主題で音階が替わるので、
+      // ここを渡さないと伴奏だけ替わって旋律が元の音階に残り、濁る
+      //（調を渡し忘れたときと同じ落ちかた）
+      const barSc = (inB ? scB[pl.i] : scOf[pl.i]) || SC;
       const prog = inB ? (pl.i === 1 ? prg.expoB : prg.recapB) : pl.prog;
-      const ch = prog[k % prog.length];
+      // 準備の小節は、移り先の**属和音**（度4＝5度上の和音）を置く
+      const ch = prepping ? 4 : prog[k % prog.length];
       // 強さは部の中でも動かす（展開部は登り、終部は消える）
       const u = (t - t0) / Math.max(1, m.dur);
       let v = pl.v;
@@ -513,7 +842,12 @@ export function composeMusic(work, seedIn) {
         if (wantStr && u > 0.7) V.dbl = 3;
       }
       putBar(t, ch, {
-        v, div: Math.max(3, Math.round(inB ? pl.div * 0.75 : pl.div)),
+        key: barKey, sc: barSc, beat: bt, bar: br,
+        // 音階の作法 … 低音は歩かず主音を保ち、縦は三度を積まず、伴奏は音階を渡る
+        pedal: modal ? 1 : 0, quintal: modal ? 1 : 0, scaleArp: modal ? 1 : 0,
+        // 対位 … 伴奏を薄く、細かさも半分にする。**2本の線が聞こえないと対位ではない**
+        thin: counter ? 1 : 0,
+        v, div: Math.max(3, Math.round((inB ? pl.div * 0.75 : pl.div) * (counter ? 0.5 : 1))),
         fifth: k % 2 === 1, voicing: V,
         // 終部の終わりから2つめは宙に浮かせ、最後は長三和音で解決させる
         sus: pl.i === 4 && k === prog.length - 2,
@@ -525,16 +859,39 @@ export function composeMusic(work, seedIn) {
         // 展開部：主題の頭だけを取り出して、小節ごとに音階を1つずつ上げる
         if (k % 2 === 0) {
           const frag = (k % 4 === 0 ? tuneA : tuneB).slice(0, 3);
-          putTune(t, frag, ch, { shift: (k % 6) - 2, v: v * 0.9, stretch: 0.85, mel: V.mel });
+          putTune(t, frag, ch, {
+            key: barKey, sc: barSc, beat: bt, shift: (k % 6) - 2,
+            v: v * 0.9, stretch: 0.85, mel: V.mel, free: modal,
+          });
+          // 対位：**反行**（上がるところを下がる）を同時に重ねる
+          if (counter) {
+            putTune(t, k % 4 === 0 ? invA : invB, ch, {
+              key: barKey, sc: barSc, beat: bt, shift: (k % 6) - 2,
+              v: v * 0.66, stretch: 0.85, mel: NEXT2[V.mel] || 8, oct: -1, free: 1,
+            });
+          }
         }
       } else if (pl.tune === 'end') {
-        if (k === 0) putTune(t, tuneA.slice(0, 3), ch, { stretch: 1.9, v: 0.55 });
+        if (k === 0) {
+          putTune(t, tuneA.slice(0, 3), ch, { key: barKey, sc: barSc, beat: bt, stretch: 1.9, v: 0.55, free: modal });
+          // 対位：**2本が1つになって終わる**（2本目の終わりは主音へ収めてある）
+          if (counter) {
+            putTune(t, cntA.slice(0, 3), ch, {
+              key: barKey, sc: barSc, beat: bt, stretch: 1.9, v: 0.42,
+              mel: NEXT2[0] || 8, oct: -1, free: 1,
+            });
+          }
+        }
         // 終わりの直前、オルゴールが独りで主題の頭を鳴らす
-        if (k === prog.length - 2) putTune(t + bar * 0.5, tuneA.slice(0, 4), ch, { stretch: 1.5, v: 0.6, mel: 0 });
+        if (k === prog.length - 2) putTune(t + br * 0.5, tuneA.slice(0, 4), ch, { key: barKey, sc: barSc, beat: bt, stretch: 1.5, v: 0.6, mel: 0, free: modal });
         if (k === prog.length - 1) {
           // 最後の和音を長く伸ばす（終わったことが分かるように）
           // **最後だけ長三和音へ寄せる**（ピカルディ）。どの音階でも解決に聞こえる
-          const tri = triadOn(SC, ch, { major: 1 });
+          // **音階の作法は最後も三度を積まない**（長三和音へ寄せると
+          // そこだけ和音の作法になって、作品を通した響きが崩れる）
+          const tri = modal
+            ? [degOf(SC, ch), degOf(SC, ch + 4), degOf(SC, ch + 8)]
+            : triadOn(SC, ch, { major: 1 });
           for (const x of tri) {
             add(t, Math.max(4, t1 - t), tonic + 24 + x, 0.3, 3);
             add(t, Math.max(4, t1 - t), tonic + 36 + x, 0.18, 3);
@@ -547,23 +904,55 @@ export function composeMusic(work, seedIn) {
         // 2小節にひとつ、頭から旋律を流す（息継ぎを作る）
         if (t >= tuneAt) {
           const used = putTune(t, tn, ch, {
-            v: v * 0.95, stretch: inB ? 1.3 : 1, mel: V.mel, dbl: V.dbl,
+            key: barKey, sc: barSc, beat: bt, v: v * 0.95, stretch: inB ? 1.3 : 1,
+            mel: V.mel, dbl: counter ? undefined : V.dbl, free: modal,
           });
-          tuneAt = t + Math.max(used, bar * 2) + bar * (rng() < 0.5 ? 0 : 1);
+          // ---- 対位：2本目の線 ----------------------------------------
+          if (counter) {
+            const m2 = NEXT2[V.mel] || 8;
+            if (inB) {
+              // **同時に2声。** 2本目は法で組んだ線（協和・反対の動き・
+              // 平行完全音の禁止）。縦は2本の結果であって、先に置いた枠ではない
+              putTune(t, cntB, ch, {
+                key: barKey, sc: barSc, beat: bt, v: v * 0.86,
+                stretch: 1.3, mel: m2, oct: -1, free: 1,
+              });
+            } else {
+              // **模倣。** 同じ主題が1小節あとに5度上で入る（いちばん古い手）。
+              // 重なっているあいだが2声になる
+              putTune(t + br, tn, ch, {
+                key: barKey, sc: barSc, beat: bt, v: v * 0.78,
+                shift: 4, mel: m2, oct: -1, free: 1,
+              });
+            }
+          }
+          tuneAt = t + Math.max(used, br * 2) + br * (rng() < 0.5 ? 0 : 1);
         }
       }
-      t += bar;
+      t += br;
       k++;
     }
     // 部の変わり目に鐘を1つ（構造を耳に知らせる）
-    if (useBell && pl.i > 0 && pl.i < 4) add(t0, 5, tonic + 60 + degOf(SC, pl.prog[0]), 0.3, 4);
+    if (useBell && pl.i > 0 && pl.i < 4) {
+      // 鐘も**その部の調**で鳴らす（構造を知らせる音が別の調だと濁る）
+      add(t0, 5, tonic0 + (keyOf[pl.i] || 0) + 60
+        + degOf(scOf[pl.i] || SC, pl.prog[0]), 0.3, 4);
+    }
   }
 
   notes.sort((a, b) => a.t - b.t);
   return {
     tempo, tonic, bar, beat, notes, tuneA, tuneB,
+    // 調の筋（主調からの差。道具と台帳が読む）
+    keys: [keyOf[0], keyOf[1], keyB[1], keyOf[2], keyOf[3], keyB[3], keyOf[4]],
+    keyPlan: `序${keyOf[0]} 提A${keyOf[1]}→B${keyB[1]} 展${keyOf[2]} 再A${keyOf[3]}→B${keyB[3]} 終${keyOf[4]}`,
     // **素性を返す。** 下見・記録・Suno の prompt がここを読むので、
     // 種を替えたときに嘘にならない（耳で書いた文にしないこと）
+    // **作法を返す。** 下見・台帳・variety がここを読む
+    method,
+    modePlan: modal
+      ? `序${mode.name} 提B${modeB.name} 展${modeF.name} 再${mode.name}`
+      : mode.name,
     mode: mode.name, meter: met.name, beats: met.beats,
     prog: prg.name, band: band.name, tone, devColor, bell: useBell ? 1 : 0,
     arp: arp.join(''), drum: drum.map((x) => +x.toFixed(2)).join(','),

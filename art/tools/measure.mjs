@@ -51,14 +51,38 @@ for (const s of picks.slice(0, 8)) {
 console.log(`  平均 ${(cutSum / Math.min(8, picks.length) * 100).toFixed(1)}%（${OK.cutJump * 100}% 以上が合格）`);
 
 // ---- 動 ----------------------------------------------------------------
+// **長い景を全部見ること。** 頭から5枚しか見ていなかったので、4〜5秒の景ばかりが
+// 当たり、10秒を超える景がずっと測られていなかった（**長い景の 14% が
+// 静止画に見えていた。実測 134枚**）。一色の面の映像では、カメラの振幅を
+// 上げてもこれは消えない——寄りも流しも、平らな面の中では縁の細い帯しか
+// 動かさない。動いて見せるのは**色の段**である（score.js の `stepColors`）。
+//
+// **1枚も許さないのは間違い。** 法「間」がためを要求している以上、
+// 静かな長い景は必ず混ざる（対比の弱い景を 15% まで通すのと同じ理屈）。
+// だから1枚ずつ落とすのではなく、**枚数で見る。**
 console.log('');
 console.log('動（同じ景の中で 0.5 秒に動く量）');
-const longs = shots.filter((s) => s.dur > 4).slice(0, 5);
-for (const s of longs) {
-  const t = s.start + s.dur * 0.3;
-  const d = meanAbsDiff(await shoot(t), await shoot(t + 0.5));
-  console.log(`  ${s.name} ${s.dur.toFixed(1)}s ${s.fps}コマ  ${(d * 100).toFixed(2).padStart(5)}%  ${d >= OK.moveHalf ? '○' : '× 静止画に見える'}`);
-  if (d < OK.moveHalf) fail++;
+{
+  const all = shots.filter((s) => s.dur > 4);
+  const rows = [];
+  for (const s of all) {
+    for (const f of (s.dur > 8 ? [0.3, 0.7] : [0.3])) {
+      const t = s.start + s.dur * f;
+      const d = meanAbsDiff(await shoot(t), await shoot(t + 0.5));
+      rows.push({ s, d });
+    }
+  }
+  const still = rows.filter((r) => r.d < OK.moveHalf);
+  // 静かな方から5枚だけ並べる（全部並べると読めない）
+  for (const r of rows.slice().sort((x, y) => x.d - y.d).slice(0, 5)) {
+    console.log(`  ${r.s.name} ${r.s.dur.toFixed(1)}s ${r.s.fps}コマ mv${r.s.mv}`
+      + `  ${(r.d * 100).toFixed(2).padStart(6)}%  ${r.d >= OK.moveHalf ? '○' : '× 静止画に見える'}`);
+  }
+  // 枚数が少ない作品もあるので、1枚は必ず通す（対比の弱い景と同じ扱い）
+  const cap = Math.max(1, Math.ceil(rows.length * 0.15));
+  console.log(`  4秒を超える景 ${rows.length} 枚のうち 静止画に見える ${still.length} 枚`
+    + `（${cap} 枚まで合格）  ${still.length <= cap ? '○' : '×'}`);
+  if (still.length > cap) fail++;
 }
 
 // ---- 対比（1枚の中） ----------------------------------------------------

@@ -348,7 +348,19 @@ if (materials && !has('no-ledger')) {
   try {
     const F = await import('./fresh.mjs');
     const l = F.load();
-    l.works.push({ date: today, article: article ? article.title : null, materials });
+    // **作品を再現できる形で残す。** 棚（`art/works/index.html`）は種と指示書から
+    // その場で再生するので、**指示書が無いと別の作品が出る**（図は指示書が選ぶ）。
+    // `materials` は照合用の指紋なので、再生に要るものは上位へ分けて置く。
+    l.works.push({
+      date: today,
+      article: article ? article.title : null,
+      link: article ? article.link : null,
+      title, seed, tag,
+      // **`work` はこのファイルに無い。** 尺は指紋の側が持っている（秒の文字列）
+      total: parseInt(materials && materials.尺, 10) || null,
+      brief: briefArg || null,
+      materials,
+    });
     // **直前に出た図を覚えておく。** 次の1本ではここに入っている図を出さない。
     l.recentForms = formsOf({ materials });
     F.save(l);
