@@ -94,8 +94,13 @@ export function createFilm(canvas) {
 
     // 色。景の中でも段で入れ替える（溶かさない＝グラデーションにしない）
     let pal = sh.pal;
-    if (sh.turn >= 1 && p > sh.tp1) pal = sh.tc1;
-    if (sh.turn >= 2 && p > sh.tp2) pal = sh.tc2;
+    // 長い景は段がいくつも並ぶ（`tps`／`tcs`）。無い景は古い形（turn/tp1/tp2）
+    if (sh.tps && sh.tps.length) {
+      for (let i = 0; i < sh.tps.length; i++) if (p > sh.tps[i]) pal = sh.tcs[i];
+    } else {
+      if (sh.turn >= 1 && p > sh.tp1) pal = sh.tc1;
+      if (sh.turn >= 2 && p > sh.tp2) pal = sh.tc2;
+    }
     // **shade（面の割り当て）を必ず渡すこと。** 渡し忘れていて、
     // 譜が「shade を替えたから色が変わった」と思っているのに
     // 画面は1画素も変わっていなかった。法「同じ主題が続く断では

@@ -86,6 +86,7 @@ export function materialsOf(seed, brief) {
     層: LAYER_NAMES[(w.shots.find((x) => x.lay) || {}).lay || 0],
     調: m.tonic + m.mode,
     拍子: m.meter,
+    作法: m.method,
     速さ: String(m.tempo),
     和音: m.prog,
     編成: m.band,
@@ -113,7 +114,10 @@ export function materialsOf(seed, brief) {
 //   という、素材を新しくしても直らない落ち方になる。
 const HARD_KEYS = ['形', '形の寸法', '配色', '楽器', '楽器の中身', '旋律', '音色', '和音', '伴奏', '低音', '題名'];
 const HARD = HARD_KEYS;
-const SOFT = ['尺', '序の形', '層', '調', '拍子', '速さ', '編成', '太鼓'];
+// **作法（和音／音階／対位）は3つしかないので、必ずこちら側。**
+// 素材の側に入れると「3日目から必ず落ちて、素材を新しくしても直らない」
+// 落ち方になる（層が4種・拍子が8種のときと同じ）。
+const SOFT = ['尺', '序の形', '層', '調', '拍子', '速さ', '編成', '太鼓', '作法'];
 
 export function collide(cur, past) {
   const hit = [];

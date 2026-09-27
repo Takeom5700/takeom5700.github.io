@@ -54,18 +54,18 @@ if (!title && !body) {
 console.log(`記事「${title}」${body.length}字`);
 console.log(`読みを ${N} 通り出す（種 ${FROM}〜${FROM + N - 1}）`);
 console.log('');
-console.log('  種   直接さ 読む所 形                                        層    尺   調          拍子  楽器');
+console.log('  種   直接さ 読む所 形                                        層    尺   調          拍子  作法 楽器');
 const sigs = new Set();
 for (let i = 0; i < N; i++) {
   const seed = FROM + i;
   const b = briefFromText({ title, body }, seed);
   const w = composeWork(seed, b);
   const m = composeMusic(w);
-  sigs.add(b.forms.join(',') + '|' + b.layer + '|' + b.total + '|' + m.mode + m.meter);
+  sigs.add(b.forms.join(',') + '|' + b.layer + '|' + b.total + '|' + m.mode + m.meter + m.method);
   console.log(` ${String(seed).padStart(4)}  ${String(b.from.直接さ).padEnd(5)} ${b.from.読んだ場所.padEnd(3)}`
     + ` ${b.forms.map((k) => FORM_KEYS[k]).join(' ').padEnd(42)}`
     + ` ${LAYER_NAMES[b.layer].padEnd(3)} ${(w.total / 60).toFixed(1)}分`
-    + ` ${(m.tonic + m.mode).padEnd(10)} ${m.meter.padEnd(5)} ${m.tone.voices.slice(0, 3).map((v) => v.n || v).join('・')}`);
+    + ` ${(m.tonic + m.mode).padEnd(10)} ${m.meter.padEnd(5)} ${m.method} ${m.tone.voices.slice(0, 3).map((v) => v.n || v).join('・')}`);
 }
 console.log('');
 console.log(`別物になった読み: ${sigs.size} / ${N}`);

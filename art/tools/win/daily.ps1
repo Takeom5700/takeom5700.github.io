@@ -188,7 +188,22 @@ try {
   # その日ぶんが既にあるなら何もしない（遅れて起きた日に2本焼かないため）
   if (MadeToday $out) {
     Say '今日のぶんはもう作ってあります。何もしません。'
-    Say ('----- 終わり ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' -----')
+    # ---- 台帳を押し上げる（棚を外から見えるようにする）--------------------
+  # **棚（art/works/index.html）は台帳を読む。** 台帳がこのパソコンの中だけに
+  # あると、外出先のスマホからは何も並ばない。台帳は小さな記録なので、
+  # 作品そのものを上げるのとは別に、これだけ押し上げる。
+  # （公開ページに出るのは main へ入れてから。枝までは自動で上がる）
+  if (Test-Path $ledger) {
+    $chg = @(& git status --porcelain -- $ledger 2>$null)
+    if ($chg.Count) {
+      Say '[git] 台帳を押し上げます（棚のため）'
+      Run 'git' @('add', '--', $ledger)
+      Run 'git' @('commit', '-m', ('作品の台帳を足す（' + (Get-Date -Format 'yyyy-MM-dd') + '）'))
+      Run 'git' @('push')
+    }
+  }
+
+  Say ('----- 終わり ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' -----')
     exit 0
   }
 

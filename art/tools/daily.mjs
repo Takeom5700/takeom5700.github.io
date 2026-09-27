@@ -298,13 +298,18 @@ log('');
 // `art/CHANNEL.md` の書式。**1〜2行目だけ言葉を置く**（機械に棚を教えるため）。
 // 売り文句は入れない。記事への案内は「記録」の側に置いてあるので、
 // 貼りたいときだけ自分で足すこと。
+// **尺を文に書き込まないこと。** `six minutes` と `6:00` を決め打ちで書いていて、
+// Suno の6分縛りを外したあと（尺は作品ごとに 4.5〜9分）**全作品の説明欄が嘘**に
+// なっていた。長さは下のデータの行に、そのつど実際の数を書く。
+const secs = (brief && brief.total) || 360;
+const clock = `${Math.floor(secs / 60)}:${String(Math.round(secs % 60)).padStart(2, '0')}`;
 const desc = [
-  'Generative film. One seed, one world, six minutes.',
+  'Generative film. One seed, one world.',
   'Made entirely from code — no footage, no images, no stock. Music from the same seed.',
   '',
   `${title} ${tag}`,
   'I II III IV V',
-  `6:00  seed ${seed}`,
+  `${clock}  seed ${seed}`,
 ].join('\n');
 
 const memo = [
@@ -348,7 +353,19 @@ if (materials && !has('no-ledger')) {
   try {
     const F = await import('./fresh.mjs');
     const l = F.load();
-    l.works.push({ date: today, article: article ? article.title : null, materials });
+    // **作品を再現できる形で残す。** 棚（`art/works/index.html`）は種と指示書から
+    // その場で再生するので、**指示書が無いと別の作品が出る**（図は指示書が選ぶ）。
+    // `materials` は照合用の指紋なので、再生に要るものは上位へ分けて置く。
+    l.works.push({
+      date: today,
+      article: article ? article.title : null,
+      link: article ? article.link : null,
+      title, seed, tag,
+      // **`work` はこのファイルに無い。** 尺は指紋の側が持っている（秒の文字列）
+      total: parseInt(materials && materials.尺, 10) || null,
+      brief: briefArg || null,
+      materials,
+    });
     // **直前に出た図を覚えておく。** 次の1本ではここに入っている図を出さない。
     l.recentForms = formsOf({ materials });
     F.save(l);

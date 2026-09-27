@@ -162,6 +162,14 @@ if (!put.ok) {
   process.exit(1);
 }
 console.log('できました: https://www.youtube.com/watch?v=' + out.id);
+// **動画の番号をファイルに残せるようにする。** 棚（`art/works/index.html`）が
+// 「YouTube で見る」を出すのに要る。画面の文字を拾わせると書式を変えた日に壊れる。
+if (out.id && flag('id-file', '')) {
+  try {
+    fs.writeFileSync(flag('id-file', ''), out.id, 'utf8');
+    console.log('番号を書きました: ' + flag('id-file', ''));
+  } catch (e) { console.error('番号を書けませんでした: ' + e.message); }
+}
 console.log('公開の状態: ' + (out.status ? out.status.privacyStatus : '不明'));
 if (out.status && out.status.uploadStatus === 'rejected') {
   console.error('※ YouTube に弾かれています: ' + JSON.stringify(out.status));

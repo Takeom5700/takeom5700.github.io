@@ -17,11 +17,18 @@
 <div id="hint">
   <span class="mark">PASSAGE</span>
   <span class="act">触れて始める</span>
-  <span class="sub">音が出ます　F で全画面　N で次の種<br>V 映像＋音楽を保存　B 映像だけ　S 音楽だけ</span>
+  <!-- **触る端末に鍵の案内を出さないこと。** スマホには F も N も無いので、
+       押せないものを並べることになる（実際に並んでいた）。
+       どちらを見せるかは CSS の `(pointer: coarse)` が決める。 -->
+  <span class="sub keys">音が出ます　F で全画面　N で次の種<br>V 映像＋音楽を保存　B 映像だけ　S 音楽だけ</span>
+  <span class="sub touch">音が出ます<br>触ると全画面になります</span>
 </div>
 
+<!-- 縦持ちのあいだだけ出る。向きを固定できない端末（iOS Safari）のため -->
+<div id="turn">画面を<b>横</b>にすると大きく見えます</div>
+
 <div id="hud"></div>
-<a id="back" href="/">＜ 縁日へ</a>
+<a id="back" href="works/">＜ 作品の棚</a>
 
 <noscript><p class="fallback">この作品は実時間で描いているため、JavaScript が必要です。</p></noscript>
 <script type="module" src="js/main.js"></script>

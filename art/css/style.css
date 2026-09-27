@@ -106,3 +106,28 @@ body.running:not(.idle) { cursor: default; }
   padding: 2rem; text-align: center; line-height: 2;
   color: #7a736c; z-index: 5;
 }
+
+/* ---- 触る端末（スマホ・タブレット）---------------------------------- */
+/* **押せないものを案内しない。** スマホには F も N も無いので、
+   鍵の案内は指の端末では出さない（実際に出ていた）。 */
+#hint .sub.touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  #hint .sub.keys { display: none; }
+  #hint .sub.touch { display: block; }
+  /* 指で押す物は 48px 以上に取る */
+  #back { padding: 14px 16px; font-size: 0.95rem; }
+}
+
+/* 縦持ちのあいだだけ出す案内。
+   全画面と向きの固定は触った直後にしか許されず、しかも iOS Safari は
+   向きの固定を持っていないので、頁の側から頼むしかない。 */
+#turn {
+  position: fixed; left: 0; right: 0; bottom: max(24px, env(safe-area-inset-bottom));
+  text-align: center; color: #8d867e; font-size: 0.9rem; letter-spacing: 0.08em;
+  opacity: 0; transition: opacity 0.4s; pointer-events: none; z-index: 5;
+}
+#turn b { color: #d8d2c8; }
+body.portrait #turn { opacity: 0.9; }
+/* 作品が動いているあいだは引っ込める（画面に文字を置かない、という線） */
+body.running.portrait:not(.idle) #turn { opacity: 0.55; }
+body.running.portrait.idle #turn { opacity: 0; }

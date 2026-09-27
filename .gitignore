@@ -16,3 +16,6 @@ __pycache__/
 /Passage-*.webm
 /Passage-*.png
 /Passage-*-suno.txt
+
+# 許可を取るときの控えの頁（その場かぎり）
+/art/tools/.auth-link.html
