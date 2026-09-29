@@ -1,7 +1,8 @@
 {
-  "fetched_at": "2026-09-29",
+  "fetched_at": "2026-09-30",
   "notes": [
-    "しいたけ: 解析できず"
+    "RvGUy8Hbrjs: 解析できず",
+    "CzpRFB5w7Lo: 解析できず"
   ],
   "items": [
     {
@@ -47,6 +48,17 @@
       "period_end": "2026-09-30",
       "url": "https://www.youtube.com/watch?v=dtUrXYZ5714",
       "label": "Loveちゃん 牡牛座（12星座・9/28-30）開運アクション✨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "牡牛座は大切な領域に敏感で、先手を打つ傾向がある。今週はモヤモヤアンテナが発達するが、全てに対応せずスルーする意識も重要。大切な人には向き合い、それ以外の人には「役に立たない覚悟」を持ち、自分のペースを優先して断ることも必要となる。",
+      "period_start": "2026-09-28",
+      "period_end": "2026-09-28",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-28/taurus/",
+      "label": "しいたけ 牡牛座（週間・9/28）運気テーマ🌅"
     }
   ]
 }
