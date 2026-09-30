@@ -29,7 +29,7 @@
       "source": "Loveちゃん",
       "kind": "range",
       "last_period_end": "2026-09-30",
-      "has_chip": true
+      "has_chip": false
     },
     {
       "key": "love_month",
@@ -37,7 +37,7 @@
       "cadence": "毎月",
       "source": "Loveちゃん",
       "kind": "month",
-      "has_chip": true,
+      "has_chip": false,
       "last_period_end": "2026-09-30"
     },
     {
