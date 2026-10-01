@@ -1,64 +1,96 @@
 {
-  "fetched_at": "2026-09-30",
+  "fetched_at": "2026-10-02",
   "notes": [
-    "RvGUy8Hbrjs: 解析できず",
-    "CzpRFB5w7Lo: 解析できず"
+    "-NEVn8fp_h0: 解析できず"
   ],
   "items": [
     {
       "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "food",
-      "value": "牡牛座のラッキーフードはキムチです。毎日の食事に取り入れることで運気を高めることができるでしょう。",
-      "period_start": "2026-09-28",
-      "period_end": "2026-09-30",
-      "url": "https://www.youtube.com/watch?v=dtUrXYZ5714",
-      "label": "Loveちゃん 牡牛座（12星座・9/28-30）ラッキーフード🍜"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
+      "scope": "十二支",
+      "target": "全体",
       "kind": "caution",
-      "value": "不満や愚痴からトラブルを起こさないよう注意が必要です。また、鳥のフンや急な雨、高い場所の物を取る際など、頭上のハプニングにも気を付けましょう。",
-      "period_start": "2026-09-28",
-      "period_end": "2026-09-30",
-      "url": "https://www.youtube.com/watch?v=dtUrXYZ5714",
-      "label": "Loveちゃん 牡牛座（12星座・9/28-30）注意⚠"
+      "value": "大きな事件や事故、大炎上に注意が必要な時期です。火災や爆発、台風・大雨による土砂災害や河川の増水などに十分警戒してください。",
+      "period_start": "2026-10-02",
+      "period_end": "2026-10-04",
+      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
+      "label": "Loveちゃん 全体（十二支・10/2-4）注意⚠"
     },
     {
       "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
+      "scope": "十二支",
+      "target": "全体",
       "kind": "theme",
-      "value": "運気が高まり主役になれる時期です。滞っていたものが動き出し、新たな展開やスタート、明るい未来を感じられます。不屈の闘志で困難を乗り越えられる強さも湧いてきます。",
-      "period_start": "2026-09-28",
-      "period_end": "2026-09-30",
-      "url": "https://www.youtube.com/watch?v=dtUrXYZ5714",
-      "label": "Loveちゃん 牡牛座（12星座・9/28-30）運気テーマ🌅"
+      "value": "力と力が真っ向からぶつかり合うような権利争いやトラブルが起きやすい時です。冷静で客観的な視点を保ち、穏やかに過ごすことを意識しましょう。",
+      "period_start": "2026-10-02",
+      "period_end": "2026-10-04",
+      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
+      "label": "Loveちゃん 全体（十二支・10/2-4）運気テーマ🌅"
     },
     {
       "source": "Loveちゃん",
-      "scope": "12星座",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "color",
+      "value": "寅年のラッキーカラーはネイビーです。小物や普段のコーディネートに取り入れてみましょう。",
+      "period_start": "2026-10-02",
+      "period_end": "2026-10-04",
+      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
+      "label": "Loveちゃん 寅年（十二支・10/2-4）ラッキーカラー🎨"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "caution",
+      "value": "羽目を外しすぎてトラブルを起こさないよう注意しましょう。また、食べ過ぎやぎっくり腰、転倒による怪我にも気を配ることが大切です。",
+      "period_start": "2026-10-02",
+      "period_end": "2026-10-04",
+      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
+      "label": "Loveちゃん 寅年（十二支・10/2-4）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "theme",
+      "value": "伸び伸びと自由を感じられる時期です。自然と触れ合ったり、外国語の学習を始めたり、自分に合った指導者を探して刺激を受けると運気が上昇します。",
+      "period_start": "2026-10-02",
+      "period_end": "2026-10-04",
+      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
+      "label": "Loveちゃん 寅年（十二支・10/2-4）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
       "target": "牡牛座",
-      "kind": "action",
-      "value": "瞳を輝かせることが運気アップの鍵です。カラコンを試してみるのも良いでしょう。また、外出時に帽子を被って出かけると運気が高まります。",
+      "kind": "color",
+      "value": "ハッピーな気分を倍増させて運勢をコントロールするPOWER UPカラーは白、気分を落ち着けたい時のCOOL DOWNカラーは紫。",
       "period_start": "2026-09-28",
-      "period_end": "2026-09-30",
-      "url": "https://www.youtube.com/watch?v=dtUrXYZ5714",
-      "label": "Loveちゃん 牡牛座（12星座・9/28-30）開運アクション✨"
+      "period_end": "2026-09-28",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-28/taurus/",
+      "label": "しいたけ 牡牛座（週間・9/28）ラッキーカラー🎨"
     },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "theme",
-      "value": "牡牛座は大切な領域に敏感で、先手を打つ傾向がある。今週はモヤモヤアンテナが発達するが、全てに対応せずスルーする意識も重要。大切な人には向き合い、それ以外の人には「役に立たない覚悟」を持ち、自分のペースを優先して断ることも必要となる。",
+      "value": "今週は「モヤモヤアンテナ」が発達しそうだが、すべてに先手を打つのではなくスルーする意識も必要。自分のペースやコンディションを重視したい時期でもある。",
       "period_start": "2026-09-28",
       "period_end": "2026-09-28",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-28/taurus/",
       "label": "しいたけ 牡牛座（週間・9/28）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "action",
+      "value": "大切にしたい相手だけに向き合い、それ以外の人に対しては深く関わらず、自分を守るために誘いや依頼を断る「役に立たない覚悟」を持つことが大切になる。",
+      "period_start": "2026-09-28",
+      "period_end": "2026-09-28",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-28/taurus/",
+      "label": "しいたけ 牡牛座（週間・9/28）開運アクション✨"
     }
   ]
 }
