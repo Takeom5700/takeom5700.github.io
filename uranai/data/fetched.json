@@ -1,9 +1,75 @@
 {
-  "fetched_at": "2026-10-02",
+  "fetched_at": "2026-10-03",
   "notes": [
-    "-NEVn8fp_h0: 解析できず"
+    "しいたけ: 解析できず"
   ],
   "items": [
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "全体",
+      "kind": "caution",
+      "value": "退職や解散など区切りをつける動きが出やすい時です。また火災や爆発事故、大雨や台風、地震や土砂災害など火や水にまつわる災害、交通事故にも十分な注意が必要です。",
+      "period_start": "2026-10-02",
+      "period_end": "2026-10-02",
+      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
+      "label": "Loveちゃん 全体（十二支・10/2）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "全体",
+      "kind": "theme",
+      "value": "権力争いや報復などの衝突が激化しやすい時期ですが、クリエイティブな仕事が捗りやすいタイミングでもあります。冷静さを保ち、客観的な観察眼を持って過ごしましょう。",
+      "period_start": "2026-10-02",
+      "period_end": "2026-10-02",
+      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
+      "label": "Loveちゃん 全体（十二支・10/2）運気テーマ🌅"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "color",
+      "value": "寅年のラッキーカラーはネイビーです。ファッションや持ち物などに取り入れて運気を味方につけましょう。",
+      "period_start": "2026-10-02",
+      "period_end": "2026-10-02",
+      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
+      "label": "Loveちゃん 寅年（十二支・10/2）ラッキーカラー🎨"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "caution",
+      "value": "気持ちが浮かれて段差でつまずき、捻挫や骨折などの怪我をしないよう足元に注意してください。また、食べ過ぎやぎっくり腰にも気を配りましょう。",
+      "period_start": "2026-10-02",
+      "period_end": "2026-10-02",
+      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
+      "label": "Loveちゃん 寅年（十二支・10/2）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "theme",
+      "value": "伸び伸びと自分らしく過ごせる解放の時期です。自由を実感しやすくなる反面、羽目を外しすぎないよう注意が必要です。嬉しい連絡やテンションが上がる出来事も期待できます。",
+      "period_start": "2026-10-02",
+      "period_end": "2026-10-02",
+      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
+      "label": "Loveちゃん 寅年（十二支・10/2）運気テーマ🌅"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "action",
+      "value": "お花畑に行ったりトレッキングをするなど自然と触れ合うことで運気が高まります。また、外国語の学習を始めるのにも適しており、相性の良い指導者に巡り合いやすいタイミングです。",
+      "period_start": "2026-10-02",
+      "period_end": "2026-10-02",
+      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
+      "label": "Loveちゃん 寅年（十二支・10/2）開運アクション✨"
+    },
     {
       "source": "Loveちゃん",
       "scope": "十二支",
@@ -60,37 +126,26 @@
       "label": "Loveちゃん 寅年（十二支・10/2-4）運気テーマ🌅"
     },
     {
-      "source": "しいたけ",
-      "scope": "週間",
+      "source": "Loveちゃん",
+      "scope": "12星座",
       "target": "牡牛座",
-      "kind": "color",
-      "value": "ハッピーな気分を倍増させて運勢をコントロールするPOWER UPカラーは白、気分を落ち着けたい時のCOOL DOWNカラーは紫。",
-      "period_start": "2026-09-28",
-      "period_end": "2026-09-28",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-28/taurus/",
-      "label": "しいたけ 牡牛座（週間・9/28）ラッキーカラー🎨"
+      "kind": "food",
+      "value": "牡牛座のラッキーフードは豚汁です。具だくさんの温かい豚汁を食べて運気を高めていきましょう。",
+      "period_start": "2026-10-03",
+      "period_end": "2026-10-05",
+      "url": "https://www.youtube.com/watch?v=gJCTIrVjaMw",
+      "label": "Loveちゃん 牡牛座（12星座・10/3-5）ラッキーフード🍜"
     },
     {
-      "source": "しいたけ",
-      "scope": "週間",
+      "source": "Loveちゃん",
+      "scope": "12星座",
       "target": "牡牛座",
-      "kind": "theme",
-      "value": "今週は「モヤモヤアンテナ」が発達しそうだが、すべてに先手を打つのではなくスルーする意識も必要。自分のペースやコンディションを重視したい時期でもある。",
-      "period_start": "2026-09-28",
-      "period_end": "2026-09-28",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-28/taurus/",
-      "label": "しいたけ 牡牛座（週間・9/28）運気テーマ🌅"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "action",
-      "value": "大切にしたい相手だけに向き合い、それ以外の人に対しては深く関わらず、自分を守るために誘いや依頼を断る「役に立たない覚悟」を持つことが大切になる。",
-      "period_start": "2026-09-28",
-      "period_end": "2026-09-28",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-28/taurus/",
-      "label": "しいたけ 牡牛座（週間・9/28）開運アクション✨"
+      "kind": "caution",
+      "value": "人の話をしっかり集中して聞くことが大切な時期です。コミュニケーション能力が高まり自分をアピールできますが、他人の頼みに応えすぎて振り回されないよう注意が必要です。",
+      "period_start": "2026-10-03",
+      "period_end": "2026-10-05",
+      "url": "https://www.youtube.com/watch?v=gJCTIrVjaMw",
+      "label": "Loveちゃん 牡牛座（12星座・10/3-5）注意⚠"
     }
   ]
 }
