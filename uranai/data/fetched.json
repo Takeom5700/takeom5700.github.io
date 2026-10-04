@@ -1,152 +1,7 @@
 {
-  "fetched_at": "2026-10-04",
-  "notes": [
-    "しいたけ: 解析できず"
-  ],
+  "fetched_at": "2026-10-05",
+  "notes": [],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "全体",
-      "kind": "caution",
-      "value": "大きな事件や事故、大炎上に注意が必要な時期です。火災や爆発、台風・大雨による土砂災害や河川の増水などに十分警戒してください。",
-      "period_start": "2026-10-02",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
-      "label": "Loveちゃん 全体（十二支・10/2-4）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "全体",
-      "kind": "theme",
-      "value": "力と力が真っ向からぶつかり合うような権利争いやトラブルが起きやすい時です。冷静で客観的な視点を保ち、穏やかに過ごすことを意識しましょう。",
-      "period_start": "2026-10-02",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
-      "label": "Loveちゃん 全体（十二支・10/2-4）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "color",
-      "value": "寅年のラッキーカラーはネイビーです。小物や普段のコーディネートに取り入れてみましょう。",
-      "period_start": "2026-10-02",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
-      "label": "Loveちゃん 寅年（十二支・10/2-4）ラッキーカラー🎨"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "caution",
-      "value": "羽目を外しすぎてトラブルを起こさないよう注意しましょう。また、食べ過ぎやぎっくり腰、転倒による怪我にも気を配ることが大切です。",
-      "period_start": "2026-10-02",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
-      "label": "Loveちゃん 寅年（十二支・10/2-4）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "theme",
-      "value": "伸び伸びと自由を感じられる時期です。自然と触れ合ったり、外国語の学習を始めたり、自分に合った指導者を探して刺激を受けると運気が上昇します。",
-      "period_start": "2026-10-02",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=4n1hmhrHDU0",
-      "label": "Loveちゃん 寅年（十二支・10/2-4）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "color",
-      "value": "ベージュ",
-      "period_start": "2026-10-04",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
-      "label": "Loveちゃん 寅年（十二支・10/4）ラッキーカラー🎨"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "caution",
-      "value": "家庭を疎かにしないよう注意が必要です。",
-      "period_start": "2026-10-04",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
-      "label": "Loveちゃん 寅年（十二支・10/4）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "theme",
-      "value": "地道な努力が実を結ぶ時です。仕事運が上昇し、後輩からの信頼も得やすいでしょう。",
-      "period_start": "2026-10-04",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
-      "label": "Loveちゃん 寅年（十二支・10/4）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "action",
-      "value": "コツコツと努力を続けることが重要です。倹約を心がけ、お金の使い道を慎重に考えましょう。不要なサブスクの整理も有効です。仕事とプライベートの切り替えを意識してください。",
-      "period_start": "2026-10-04",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
-      "label": "Loveちゃん 寅年（十二支・10/4）開運アクション✨"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "牡牛座",
-      "kind": "color",
-      "value": "ネイビー",
-      "period_start": "2026-10-04",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
-      "label": "Loveちゃん 牡牛座（十二支・10/4）ラッキーカラー🎨"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "牡牛座",
-      "kind": "caution",
-      "value": "本当に危険なことについては、忠告を聞くようにしましょう。",
-      "period_start": "2026-10-04",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
-      "label": "Loveちゃん 牡牛座（十二支・10/4）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "状況が大きく変わる時。柔軟な対応力が重要で、最近調子が悪かった方は運気が爆上がりするでしょう。常識にとらわれない発想で、やりたいことがあれば挑戦すべきです。",
-      "period_start": "2026-10-04",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
-      "label": "Loveちゃん 牡牛座（十二支・10/4）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "牡牛座",
-      "kind": "action",
-      "value": "状況に合わせて行動し、柔軟に対応することが大切です。転職やサイドビジネス、引っ越しなど新しい挑戦が運気を高めます。参加できる会合への参加やイベント主催も吉です。",
-      "period_start": "2026-10-04",
-      "period_end": "2026-10-04",
-      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
-      "label": "Loveちゃん 牡牛座（十二支・10/4）開運アクション✨"
-    },
     {
       "source": "Loveちゃん",
       "scope": "12星座",
@@ -179,6 +34,138 @@
       "period_end": "2026-10-05",
       "url": "https://www.youtube.com/watch?v=gJCTIrVjaMw",
       "label": "Loveちゃん 牡牛座（12星座・10/3-5）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "全体",
+      "kind": "caution",
+      "value": "地震や噴火などの自然災害、大きな事故や事件、逮捕のニュースなどに注意が必要です。また、国家間の争いや原発・処理水問題、レアアース関連、AIの暴走、サイバー攻撃、ウイルスの感染症などにも気をつけましょう。",
+      "period_start": "2026-10-04",
+      "period_end": "2026-10-06",
+      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
+      "label": "Loveちゃん 全体（十二支・10/4-6）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "全体",
+      "kind": "theme",
+      "value": "衝撃的なニュースや驚くような発表、サプライズなどが出やすいタイミングです。電撃的な結婚や離婚、グループの解散や活動休止、あるいは復活劇などが報じられる可能性があります。",
+      "period_start": "2026-10-04",
+      "period_end": "2026-10-06",
+      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
+      "label": "Loveちゃん 全体（十二支・10/4-6）運気テーマ🌅"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "color",
+      "value": "ベージュ",
+      "period_start": "2026-10-04",
+      "period_end": "2026-10-06",
+      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
+      "label": "Loveちゃん 寅年（十二支・10/4-6）ラッキーカラー🎨"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "caution",
+      "value": "節約を意識しすぎてしまうことや、仕事ばかりを優先して家庭をないがしろにしてしまわないように気をつけましょう。プライベートと仕事の切り替えを意識することが大切です。",
+      "period_start": "2026-10-04",
+      "period_end": "2026-10-06",
+      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
+      "label": "Loveちゃん 寅年（十二支・10/4-6）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "theme",
+      "value": "地道にコツコツとやっていくことが大切な時です。節約しすぎてしまう面もありますが、何にお金を使い、どこにお金をかけないかシビアに考えることが大事です。仕事運が高まっており、職場での評価や人望につながりやすい運気です。",
+      "period_start": "2026-10-04",
+      "period_end": "2026-10-06",
+      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
+      "label": "Loveちゃん 寅年（十二支・10/4-6）運気テーマ🌅"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "action",
+      "value": "使っていないサブスクの整理や料金プランの見直しなどを行い、倹約を意識することが金運アップにつながります。また、仕事運が高まっているので仕事を優先しつつ、プライベートとのオンオフをしっかり切り替えることが大切です。",
+      "period_start": "2026-10-04",
+      "period_end": "2026-10-06",
+      "url": "https://www.youtube.com/watch?v=rPiF80tJEsA",
+      "label": "Loveちゃん 寅年（十二支・10/4-6）開運アクション✨"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "全体",
+      "kind": "theme",
+      "value": "常識が覆る時期。従来の主流や身体に良いとされていたものが変わったり、ミスが怪悪の功名になったりします。固定観念に縛られず、トラブルも柔軟な発想で切り抜ける姿勢が運気を高めます。",
+      "period_start": "2026-10-05",
+      "period_end": "2026-10-07",
+      "url": "https://www.youtube.com/watch?v=uwhHhdpJ3zA",
+      "label": "Loveちゃん 全体（12星座・10/5-7）運気テーマ🌅"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "牡牛座",
+      "kind": "food",
+      "value": "牡牛座のラッキーフードはオクラです。運気がとても安定している時期なので、オクラを取り入れることで良い運気を維持できるでしょう。",
+      "period_start": "2026-10-05",
+      "period_end": "2026-10-07",
+      "url": "https://www.youtube.com/watch?v=uwhHhdpJ3zA",
+      "label": "Loveちゃん 牡牛座（12星座・10/5-7）ラッキーフード🍜"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "周りと上手くやれる反面、グループに馴染めず離れたくなる気持ちも生じやすい時。手広く広げるより守る力を意識し、感情的にならず自分をうまくコントロールして過ごすことが大切です。",
+      "period_start": "2026-10-05",
+      "period_end": "2026-10-07",
+      "url": "https://www.youtube.com/watch?v=uwhHhdpJ3zA",
+      "label": "Loveちゃん 牡牛座（12星座・10/5-7）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "color",
+      "value": "COOL DOWNのカラーは紫。気分を落ち着けたい時にプラスすることで今週の運勢をコントロールできます。",
+      "period_start": "2026-09-28",
+      "period_end": "2026-09-28",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-28/taurus/",
+      "label": "しいたけ 牡牛座（週間・9/28）ラッキーカラー🎨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "今週はモヤモヤアンテナが発達しそうな時です。全てに対して先手を打とうとするのではなく、「こういう人もいるんだな」とスルーをしていく意識も必要になります。",
+      "period_start": "2026-09-28",
+      "period_end": "2026-09-28",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-28/taurus/",
+      "label": "しいたけ 牡牛座（週間・9/28）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "action",
+      "value": "大切にしたい相手以外とは適度な距離感を保つこと。自分のペースやコンディションを重視し、自分を守るために「役に立たない覚悟」を持って依頼等を断ることも大切です。",
+      "period_start": "2026-09-28",
+      "period_end": "2026-09-28",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-09-28/taurus/",
+      "label": "しいたけ 牡牛座（週間・9/28）開運アクション✨"
     }
   ]
 }
