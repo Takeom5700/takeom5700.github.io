@@ -153,6 +153,29 @@ def live(key: str, blocks: dict) -> str:
 # --------------------------------------------------------------------------
 # 置き換え（要素まるごと差し替えなので、何度実行しても同じ結果になる）
 # --------------------------------------------------------------------------
+
+def normalize_tag_quotes(html: str) -> tuple[str, int]:
+    """タグの属性に紛れこんだ全角の引用符を半角に直す。
+
+    2026-10-08 に発覚した実害への対処。外部スクリプトが
+    <strong style=”color:#b3402e;”> のように全角引用符で書いた行があり、
+    こちらの差し替えパターン（半角 " 前提）に一致せず、
+    9/24 の内容が2週間ページに居座っていた。
+
+    タグの中だけを対象にするので、本文の「」や引用符には触れない。
+    """
+    count = 0
+
+    def fix(m):
+        nonlocal count
+        tag = m.group(0)
+        if "”" not in tag and "“" not in tag:
+            return tag
+        count += 1
+        return tag.replace("”", '"').replace("“", '"')
+
+    return re.sub(r"<[^>]*>", fix, html), count
+
 def rewrite_sections(html: str, t: dict) -> tuple[str, list[str], list[str]]:
     done = []
     warnings = []
@@ -701,6 +724,9 @@ def validate(html: str, t: dict, d: datetime.date) -> tuple[list[str], list[str]
         fatal.append("絞り込みUIが入っていません")
     if 'id="stale-banner"' not in html:
         fatal.append("鮮度バナーが入っていません")
+    if re.search(r'<[^>]*[”“][^>]*>', html):
+        fatal.append("タグの属性に全角の引用符が残っています"
+                     "（差し替えパターンが一致せず古い内容が居座る）")
     if "uranai-live" not in html and "ページ自身が「見た日」を計算する" not in html:
         fatal.append("自己計算スクリプト（uranai-live.js）が入っていません")
     if html.count('data-uranai-live=') < 5:
@@ -719,7 +745,10 @@ def main() -> int:
     t = build_texts(d)
 
     def one_pass(src):
-        h, dn, wn = rewrite_sections(src, t)
+        h, nq = normalize_tag_quotes(src)
+        h, dn, wn = rewrite_sections(h, t)
+        if nq:
+            dn.append(f"全角引用符の修正×{nq}")
         h, rm = drop_expired_chips(h, d)
         h, rm2 = drop_stale_marked_chips(h)
         h = refresh_daily_chips(h, t)
