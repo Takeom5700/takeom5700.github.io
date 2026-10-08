@@ -1,42 +1,9 @@
 {
-  "fetched_at": "2026-10-07",
+  "fetched_at": "2026-10-08",
   "notes": [
-    "しいたけ: 解析できず"
+    "JEUkFfGY-lI: 解析できず"
   ],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "全体",
-      "kind": "theme",
-      "value": "常識が覆る時期。従来の主流や身体に良いとされていたものが変わったり、ミスが怪悪の功名になったりします。固定観念に縛られず、トラブルも柔軟な発想で切り抜ける姿勢が運気を高めます。",
-      "period_start": "2026-10-05",
-      "period_end": "2026-10-07",
-      "url": "https://www.youtube.com/watch?v=uwhHhdpJ3zA",
-      "label": "Loveちゃん 全体（12星座・10/5-7）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "food",
-      "value": "牡牛座のラッキーフードはオクラです。運気がとても安定している時期なので、オクラを取り入れることで良い運気を維持できるでしょう。",
-      "period_start": "2026-10-05",
-      "period_end": "2026-10-07",
-      "url": "https://www.youtube.com/watch?v=uwhHhdpJ3zA",
-      "label": "Loveちゃん 牡牛座（12星座・10/5-7）ラッキーフード🍜"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "周りと上手くやれる反面、グループに馴染めず離れたくなる気持ちも生じやすい時。手広く広げるより守る力を意識し、感情的にならず自分をうまくコントロールして過ごすことが大切です。",
-      "period_start": "2026-10-05",
-      "period_end": "2026-10-07",
-      "url": "https://www.youtube.com/watch?v=uwhHhdpJ3zA",
-      "label": "Loveちゃん 牡牛座（12星座・10/5-7）運気テーマ🌅"
-    },
     {
       "source": "Loveちゃん",
       "scope": "十二支",
@@ -124,6 +91,39 @@
       "period_end": "2026-10-09",
       "url": "https://www.youtube.com/watch?v=KboAdAfS7g4",
       "label": "Loveちゃん 牡牛座（12星座・10/7-9）開運アクション✨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "color",
+      "value": "青。COOL DOWNのカラーとして挙げられており、気分を落ち着けたいときにプラスすることで、今週の運勢をコントロールできます。",
+      "period_start": "2026-10-05",
+      "period_end": "2026-10-05",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/5）ラッキーカラー🎨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "caution",
+      "value": "真剣勝負の導火線に火がつきやすく、売り言葉に買い言葉などの喧嘩が発生しやすい点に注意。少しカチンとすることがあっても冷静に対応するよう言い聞かせましょう。",
+      "period_start": "2026-10-05",
+      "period_end": "2026-10-05",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/5）注意⚠"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "自分のタスクを猛然と終わらせながら周りの状況も把握してフォローでき、集中力のゾーンに入って「神か」と噂されるようなすごいオーラが出ています。",
+      "period_start": "2026-10-05",
+      "period_end": "2026-10-05",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/5）運気テーマ🌅"
     },
     {
       "source": "しいたけ",
