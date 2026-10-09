@@ -1,53 +1,9 @@
 {
-  "fetched_at": "2026-10-08",
+  "fetched_at": "2026-10-09",
   "notes": [
-    "JEUkFfGY-lI: 解析できず"
+    "sViWYanc7uI: 解析できず"
   ],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "全体",
-      "kind": "caution",
-      "value": "健康被害や医療・食品関係のトラブルが起こりやすい時期です。火災や交通機関の乱れ、サイバー攻撃などへの警戒も怠らないようにしましょう。",
-      "period_start": "2026-10-06",
-      "period_end": "2026-10-08",
-      "url": "https://www.youtube.com/watch?v=FRYosFqpEvc",
-      "label": "Loveちゃん 全体（十二支・10/6-8）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "color",
-      "value": "ネイビー",
-      "period_start": "2026-10-06",
-      "period_end": "2026-10-08",
-      "url": "https://www.youtube.com/watch?v=FRYosFqpEvc",
-      "label": "Loveちゃん 寅年（十二支・10/6-8）ラッキーカラー🎨"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "caution",
-      "value": "人に親身になりすぎずドライでクールな対応を意識することが大切です。相手に利用されたり詐欺に遭ったりしないよう注意してください。",
-      "period_start": "2026-10-06",
-      "period_end": "2026-10-08",
-      "url": "https://www.youtube.com/watch?v=FRYosFqpEvc",
-      "label": "Loveちゃん 寅年（十二支・10/6-8）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "theme",
-      "value": "時代の先を行く発想ができる開運期です。自身の直感と鋭い判断力を信じ、殻を破って新しい挑戦や大きな抜擢を積極的に受け入れましょう。",
-      "period_start": "2026-10-06",
-      "period_end": "2026-10-08",
-      "url": "https://www.youtube.com/watch?v=FRYosFqpEvc",
-      "label": "Loveちゃん 寅年（十二支・10/6-8）運気テーマ🌅"
-    },
     {
       "source": "Loveちゃん",
       "scope": "12星座",
@@ -93,11 +49,44 @@
       "label": "Loveちゃん 牡牛座（12星座・10/7-9）開運アクション✨"
     },
     {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "全体",
+      "kind": "caution",
+      "value": "会話が噛み合わなかったり人間関係で注意が必要な3日間です。大切なやり取りは文字にして残しましょう。また公文書や契約書の不備に注意し、土砂災害や地盤沈下等の災害にも気を配りましょう。",
+      "period_start": "2026-10-09",
+      "period_end": "2026-10-11",
+      "url": "https://www.youtube.com/watch?v=4Z-8ear1VQ8",
+      "label": "Loveちゃん 全体（12星座・10/9-11）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "牡牛座",
+      "kind": "food",
+      "value": "サーモン",
+      "period_start": "2026-10-09",
+      "period_end": "2026-10-11",
+      "url": "https://www.youtube.com/watch?v=4Z-8ear1VQ8",
+      "label": "Loveちゃん 牡牛座（12星座・10/9-11）ラッキーフード🍜"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "疲れが溜まりやすく休息が必要な時です。マッサージや寝具の新調で身体を整えましょう。分析能力が高まる時期ですが、契約事は流されず丁寧な交渉や確認を行うことが重要です。",
+      "period_start": "2026-10-09",
+      "period_end": "2026-10-11",
+      "url": "https://www.youtube.com/watch?v=4Z-8ear1VQ8",
+      "label": "Loveちゃん 牡牛座（12星座・10/9-11）運気テーマ🌅"
+    },
+    {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "color",
-      "value": "青。COOL DOWNのカラーとして挙げられており、気分を落ち着けたいときにプラスすることで、今週の運勢をコントロールできます。",
+      "value": "気分を落ち着けたいときに今週の運勢をコントロールするためのCOOL DOWNカラーとして青が挙げられています。",
       "period_start": "2026-10-05",
       "period_end": "2026-10-05",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
@@ -108,7 +97,7 @@
       "scope": "週間",
       "target": "牡牛座",
       "kind": "caution",
-      "value": "真剣勝負の導火線に火がつきやすく、売り言葉に買い言葉などの喧嘩が発生しやすい点に注意。少しカチンとすることがあっても冷静に対応するよう言い聞かせましょう。",
+      "value": "売り言葉に買い言葉などの喧嘩が発生しやすい点に注意。「どこまでやり合うか」という場面でカチンとすることがあっても、大事なところなので冷静に対応するよう言い聞かせましょう。",
       "period_start": "2026-10-05",
       "period_end": "2026-10-05",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
@@ -119,7 +108,7 @@
       "scope": "週間",
       "target": "牡牛座",
       "kind": "theme",
-      "value": "自分のタスクを猛然と終わらせながら周りの状況も把握してフォローでき、集中力のゾーンに入って「神か」と噂されるようなすごいオーラが出ています。",
+      "value": "自分のタスクを猛然と終わらせながら周囲の状況もよく見えてフォローできたり、集中力のゾーンに入ったりと、「神か」と噂されそうなほどのすごいオーラが出ています。",
       "period_start": "2026-10-05",
       "period_end": "2026-10-05",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
