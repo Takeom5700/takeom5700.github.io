@@ -1,53 +1,7 @@
 {
-  "fetched_at": "2026-10-09",
-  "notes": [
-    "sViWYanc7uI: 解析できず"
-  ],
+  "fetched_at": "2026-10-10",
+  "notes": [],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "全体",
-      "kind": "theme",
-      "value": "自分でプレッシャーをかけすぎて精神的に負担を感じやすい時期です。完璧を求めすぎず、他人と比較しないで大雑把に過ごす意識を持ちましょう。社会的には異物混入や自主回収、医療ミスなどのニュースに注目が集まりそうです。",
-      "period_start": "2026-10-07",
-      "period_end": "2026-10-09",
-      "url": "https://www.youtube.com/watch?v=KboAdAfS7g4",
-      "label": "Loveちゃん 全体（12星座・10/7-9）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "food",
-      "value": "10月7日〜9日の期間における牡牛座のラッキーフードはシュウマイです。美味しく食べて楽しむことで運気をさらに高めることができます。",
-      "period_start": "2026-10-07",
-      "period_end": "2026-10-09",
-      "url": "https://www.youtube.com/watch?v=KboAdAfS7g4",
-      "label": "Loveちゃん 牡牛座（12星座・10/7-9）ラッキーフード🍜"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "楽しむエネルギーが湧き上がりご機嫌に過ごせる好調な時期です。笑顔になれる出来事や気分が高まるきっかけに恵まれます。自分に自信を持ち、強気なスタンスやリーダーシップを発揮することが幸運のカギとなります。",
-      "period_start": "2026-10-07",
-      "period_end": "2026-10-09",
-      "url": "https://www.youtube.com/watch?v=KboAdAfS7g4",
-      "label": "Loveちゃん 牡牛座（12星座・10/7-9）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "action",
-      "value": "アクセサリー作りやDIYなどのものづくりに挑戦すると運気が高まります。また、飲み会やカラオケ、遊園地、推し活などで思い切り羽を伸ばし、自分自身を解放して楽しむことが開運に繋がります。",
-      "period_start": "2026-10-07",
-      "period_end": "2026-10-09",
-      "url": "https://www.youtube.com/watch?v=KboAdAfS7g4",
-      "label": "Loveちゃん 牡牛座（12星座・10/7-9）開運アクション✨"
-    },
     {
       "source": "Loveちゃん",
       "scope": "12星座",
@@ -82,11 +36,33 @@
       "label": "Loveちゃん 牡牛座（12星座・10/9-11）運気テーマ🌅"
     },
     {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "全体",
+      "kind": "caution",
+      "value": "金銭トラブルや盗難、未払いに注意が必要な期間です。また新月の影響で感情が乱れやすく体調を崩しやすいため、事件や事故、災害に気を付けて冷静に行動しましょう。",
+      "period_start": "2026-10-10",
+      "period_end": "2026-10-12",
+      "url": "https://www.youtube.com/watch?v=Zx43jyZ7OjY",
+      "label": "Loveちゃん 全体（十二支・10/10-12）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "theme",
+      "value": "新たな目標や挑戦意欲が湧き、勝負強さを発揮できる好運期です。熱い気持ちを忘れずに挑むことで実力以上の力を発揮できます。ラッキーカラーは赤です。",
+      "period_start": "2026-10-10",
+      "period_end": "2026-10-12",
+      "url": "https://www.youtube.com/watch?v=Zx43jyZ7OjY",
+      "label": "Loveちゃん 寅年（十二支・10/10-12）運気テーマ🌅"
+    },
+    {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "color",
-      "value": "気分を落ち着けたいときに今週の運勢をコントロールするためのCOOL DOWNカラーとして青が挙げられています。",
+      "value": "COOL DOWNのカラーは青です。気分を落ち着けたいときにこの色を取り入れて、今週の運勢をコントロールしてみましょう。",
       "period_start": "2026-10-05",
       "period_end": "2026-10-05",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
@@ -97,7 +73,7 @@
       "scope": "週間",
       "target": "牡牛座",
       "kind": "caution",
-      "value": "売り言葉に買い言葉などの喧嘩が発生しやすい点に注意。「どこまでやり合うか」という場面でカチンとすることがあっても、大事なところなので冷静に対応するよう言い聞かせましょう。",
+      "value": "売り言葉に買い言葉などの喧嘩が発生しやすい傾向があります。カチンとくることがあっても徹底的にやり合おうとせず、冷静に対応するよう自分に言い聞かせましょう。",
       "period_start": "2026-10-05",
       "period_end": "2026-10-05",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
@@ -108,7 +84,7 @@
       "scope": "週間",
       "target": "牡牛座",
       "kind": "theme",
-      "value": "自分のタスクを猛然と終わらせながら周囲の状況もよく見えてフォローできたり、集中力のゾーンに入ったりと、「神か」と噂されそうなほどのすごいオーラが出ています。",
+      "value": "自分のタスクを猛然と終わらせながら周囲もよく見えてフォローでき、集中力のゾーンに入って一部の人から「神か」と噂されるほどのすごいオーラが出ています。",
       "period_start": "2026-10-05",
       "period_end": "2026-10-05",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
