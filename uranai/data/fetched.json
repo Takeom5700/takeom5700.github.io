@@ -1,75 +1,9 @@
 {
-  "fetched_at": "2026-10-11",
+  "fetched_at": "2026-10-12",
   "notes": [
-    "UhJ9sl1G-w0: 解析できず"
+    "Loveちゃん: 取得失敗（HTTPError）"
   ],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "全体",
-      "kind": "theme",
-      "value": "10月11日午前0時50分に天秤座で新月を迎えます。願い事を書くと叶いやすい時ですが、11日〜13日は破壊力のある期間でもあり、大きな事件や事故、火災や爆発、衝撃的なニュースに注意が必要です。",
-      "period_start": "2026-10-11",
-      "period_end": "2026-10-11",
-      "url": "https://www.youtube.com/watch?v=BdJ5nDzcZmE",
-      "label": "Loveちゃん 全体（12星座・10/11）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "全体",
-      "kind": "caution",
-      "value": "会話が噛み合わなかったり人間関係で注意が必要な3日間です。大切なやり取りは文字にして残しましょう。また公文書や契約書の不備に注意し、土砂災害や地盤沈下等の災害にも気を配りましょう。",
-      "period_start": "2026-10-09",
-      "period_end": "2026-10-11",
-      "url": "https://www.youtube.com/watch?v=4Z-8ear1VQ8",
-      "label": "Loveちゃん 全体（12星座・10/9-11）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "food",
-      "value": "プリン",
-      "period_start": "2026-10-11",
-      "period_end": "2026-10-11",
-      "url": "https://www.youtube.com/watch?v=BdJ5nDzcZmE",
-      "label": "Loveちゃん 牡牛座（12星座・10/11）ラッキーフード🍜"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "一生懸命になりすぎて働きづくめになる時です。休日でも動いていないと落ち着かなかったり、本業以外で汗を流すことも。幸せを自分の手で掴もうと、独立や副業を始めるのにも良い時期です。",
-      "period_start": "2026-10-11",
-      "period_end": "2026-10-11",
-      "url": "https://www.youtube.com/watch?v=BdJ5nDzcZmE",
-      "label": "Loveちゃん 牡牛座（12星座・10/11）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "food",
-      "value": "サーモン",
-      "period_start": "2026-10-09",
-      "period_end": "2026-10-11",
-      "url": "https://www.youtube.com/watch?v=4Z-8ear1VQ8",
-      "label": "Loveちゃん 牡牛座（12星座・10/9-11）ラッキーフード🍜"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "疲れが溜まりやすく休息が必要な時です。マッサージや寝具の新調で身体を整えましょう。分析能力が高まる時期ですが、契約事は流されず丁寧な交渉や確認を行うことが重要です。",
-      "period_start": "2026-10-09",
-      "period_end": "2026-10-11",
-      "url": "https://www.youtube.com/watch?v=4Z-8ear1VQ8",
-      "label": "Loveちゃん 牡牛座（12星座・10/9-11）運気テーマ🌅"
-    },
     {
       "source": "Loveちゃん",
       "scope": "十二支",
@@ -91,39 +25,6 @@
       "period_end": "2026-10-12",
       "url": "https://www.youtube.com/watch?v=Zx43jyZ7OjY",
       "label": "Loveちゃん 寅年（十二支・10/10-12）運気テーマ🌅"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "color",
-      "value": "気分を落ち着かせたいときにプラスして今週の運勢をコントロールするためのCOOL DOWNカラーとして、青が挙げられています。",
-      "period_start": "2026-10-05",
-      "period_end": "2026-10-05",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/5）ラッキーカラー🎨"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "caution",
-      "value": "「どこまでやるか、言うか」で売り言葉に買い言葉の喧嘩が発生しやすい点に注意が必要です。カチンとすることがあってもキレずに冷静に対応するよう自分に言い聞かせましょう。",
-      "period_start": "2026-10-05",
-      "period_end": "2026-10-05",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/5）注意⚠"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "自分のタスクを猛然と終わらせつつ周囲の状況を把握してフォローもできる集中力のゾーンに入りそうで、一部の人からは「神か」と噂されるようなすごいオーラが出ています。",
-      "period_start": "2026-10-05",
-      "period_end": "2026-10-05",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/5）運気テーマ🌅"
     },
     {
       "source": "しいたけ",
