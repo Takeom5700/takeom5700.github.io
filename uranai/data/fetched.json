@@ -1,63 +1,41 @@
 {
-  "fetched_at": "2026-10-12",
+  "fetched_at": "2026-10-13",
   "notes": [
-    "Loveちゃん: 取得失敗（HTTPError）"
+    "Loveちゃん: 取得失敗（FetchError）"
   ],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "全体",
-      "kind": "caution",
-      "value": "財布の盗難や金銭トラブルに注意が必要な時期です。また新月前後となるため感情が乱れやすく体調を崩しやすくなります。事件や事故、災害に巻き込まれないよう危険な場所には近づかず冷静に行動しましょう。",
-      "period_start": "2026-10-10",
-      "period_end": "2026-10-12",
-      "url": "https://www.youtube.com/watch?v=Zx43jyZ7OjY",
-      "label": "Loveちゃん 全体（十二支・10/10-12）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "theme",
-      "value": "良い波が来て運気が急上昇する時期です。新たな目標や挑戦への意欲が湧き、強い勝負運に恵まれます。「絶対に負けたくない」という熱い気持ちを持ち続けることで、実力以上の力を発揮して運を引き寄せられます。",
-      "period_start": "2026-10-10",
-      "period_end": "2026-10-12",
-      "url": "https://www.youtube.com/watch?v=Zx43jyZ7OjY",
-      "label": "Loveちゃん 寅年（十二支・10/10-12）運気テーマ🌅"
-    },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "color",
-      "value": "金色",
-      "period_start": "2026-10-05",
-      "period_end": "2026-10-11",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/5-11）ラッキーカラー🎨"
+      "value": "気分を落ち着けたい時に取り入れて運勢をコントロールする、今週のCOOL DOWNカラーは緑です。",
+      "period_start": "2026-10-12",
+      "period_end": "2026-10-12",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-12/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/12）ラッキーカラー🎨"
     },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "caution",
-      "value": "「どこまでやるか、言うか」が問題となり、喧嘩が発生しやすいので注意が必要です。カチンとすることがあっても冷静に対応し、真剣勝負を避けるよう心がけましょう。",
-      "period_start": "2026-10-05",
-      "period_end": "2026-10-11",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/5-11）注意⚠"
+      "value": "今週は「静かにブチギレる」動きが出やすいため注意が必要です。自分がキレそうな時は「一旦」をつけて様子を見ましょう。周りの人がキレた場合は、放っておくか真剣に話を聞こうとする姿勢を持つと良いです。",
+      "period_start": "2026-10-12",
+      "period_end": "2026-10-12",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-12/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/12）注意⚠"
     },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "theme",
-      "value": "今週の牡牛座は「神か」と噂されるほどのオーラを放ち、自分のタスクを猛然とこなしつつ、周囲の状況も把握しフォローできる集中力のゾーンに入ります。",
-      "period_start": "2026-10-05",
-      "period_end": "2026-10-11",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-05/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/5-11）運気テーマ🌅"
+      "value": "今週は新しい手法を試したい気持ちが出やすいですが、締め切りが迫ったり周囲の反対にあったりする可能性があります。「どこまで試して、どこまで妥協をするか」の見極めが大事な静かな勝負所となります。",
+      "period_start": "2026-10-12",
+      "period_end": "2026-10-12",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-12/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/12）運気テーマ🌅"
     }
   ]
 }
