@@ -1,8 +1,74 @@
 {
-  "fetched_at": "2026-10-14",
+  "fetched_at": "2026-10-16",
   "notes": [
-    "Loveちゃん: 取得失敗（FetchError）",
-    "しいたけ: 解析できず"
+    "5_jbvu6HAF8: 解析できず"
   ],
-  "items": []
+  "items": [
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "全体",
+      "kind": "caution",
+      "value": "調子に乗ったり偉そうな態度をとっていると、足元をすくわれて立場を失ったり、孤立を招く恐れがあるため気を引き締めましょう。",
+      "period_start": "2026-10-16",
+      "period_end": "2026-10-18",
+      "url": "https://www.youtube.com/watch?v=MVAxRTN2ldw",
+      "label": "Loveちゃん 全体（12星座・10/16-18）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "全体",
+      "kind": "theme",
+      "value": "今の地位を守れるかが重要な時期です。油断して手を抜くとポジションを奪われる恐れがありますが、地道に努力を続けてきた人は報われるチャンスとなります。",
+      "period_start": "2026-10-16",
+      "period_end": "2026-10-18",
+      "url": "https://www.youtube.com/watch?v=MVAxRTN2ldw",
+      "label": "Loveちゃん 全体（12星座・10/16-18）運気テーマ🌅"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "牡牛座",
+      "kind": "food",
+      "value": "ラッキーフードは栗です。旬の味覚を美味しく食べてエネルギーをチャージし、運気を高めていきましょう。",
+      "period_start": "2026-10-16",
+      "period_end": "2026-10-18",
+      "url": "https://www.youtube.com/watch?v=MVAxRTN2ldw",
+      "label": "Loveちゃん 牡牛座（12星座・10/16-18）ラッキーフード🍜"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "牡牛座",
+      "kind": "caution",
+      "value": "説教や指導方針、子育てのことでトラブルになりやすい時期です。モンスターペアレントになったり周囲と揉めたりしないよう気をつけましょう。",
+      "period_start": "2026-10-16",
+      "period_end": "2026-10-18",
+      "url": "https://www.youtube.com/watch?v=MVAxRTN2ldw",
+      "label": "Loveちゃん 牡牛座（12星座・10/16-18）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "牡牛座",
+      "kind": "action",
+      "value": "休暇を取ってのびのび過ごし、マッサージやスパ、ヨガなどで体をケアしたり、神社仏閣や紅葉巡りでリフレッシュすると運気が高まります。",
+      "period_start": "2026-10-16",
+      "period_end": "2026-10-18",
+      "url": "https://www.youtube.com/watch?v=MVAxRTN2ldw",
+      "label": "Loveちゃん 牡牛座（12星座・10/16-18）開運アクション✨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "今週の牡牛座は「静かなブチギレ現象」のネイビーが出ています。新しいやり方を試したい気持ちと、締め切りや周囲の反対との間で葛藤が生じやすいでしょう。自分や周囲が静かにブチギレやすいので、一旦立ち止まり、様子を見る姿勢が大切です。",
+      "period_start": "2026-10-12",
+      "period_end": "2026-10-18",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-12/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/12-18）運気テーマ🌅"
+    }
+  ]
 }
