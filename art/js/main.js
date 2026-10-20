@@ -113,6 +113,9 @@ function start() {
     film.resize(fixedW, fixedH, 1);
   } else {
     window.addEventListener('resize', fit);
+    // **`orientationchange` も見る。** 端末によっては回したときに
+    // `resize` が来ない／古い大きさで来るので、少し待ってから測り直す。
+    window.addEventListener('orientationchange', () => setTimeout(fit, 250));
     fit();
   }
 
@@ -139,11 +142,27 @@ function start() {
   // （だから長い景でも旋律は動き続ける）。
   function pumpSound() {
     if (!snd) return;
+    // **音は絵の時計に付いて行かせること。**
+    //
+    // 絵の時計 `t` は1コマ 0.25秒で切り上げている（重い1コマの超過分を捨てる）。
+    // 一方この予約は音の時計（実時間の `ctx.currentTime`）で入れるので、
+    // 重い場面が続くと `t` が実時間より**遅れていく一方**になる。
+    // 遅れが先読みの幅（1.5秒）を超えると、残りの音符の予約時刻が全部過去になり、
+    // `at > currentTime - 0.05` が偽になって**黙って捨てられる**——
+    // つまり**音楽だけ途中で終わって、映像は最後まで続く**
+    // （依頼者「音楽終わってもまだ映像が続いてたりするね」。これがその原因）。
+    //
+    // 直しは2つ。ここでは**ずれたら繋ぎ直す**。
+    // もう一つは下の `dt`（録っているあいだは切り上げない）。
+    const drift = (snd.ctx.currentTime - t) - sndT0;
+    if (Math.abs(drift) > 0.3) sndT0 = snd.ctx.currentTime - t;
     const horizon = t + 1.5;
     while (sndIdx < music.notes.length && music.notes[sndIdx].t < horizon) {
       const n = music.notes[sndIdx++];
-      const at = sndT0 + n.t;
-      if (at > snd.ctx.currentTime - 0.05) snd.play(n, at);
+      // **捨てないこと。** 過ぎてしまった音は「いま」に寄せて鳴らす。
+      // 黙って消すと、そこから先が無音になる。
+      const at = Math.max(sndT0 + n.t, snd.ctx.currentTime + 0.005);
+      snd.play(n, at);
     }
   }
 
@@ -308,6 +327,9 @@ function start() {
           tempo: music.tempo, tonic: music.tonic, total: work.total,
           notes: music.notes.length,
           // **1本ぶんの素性。** 種を替えるとここが全部変わる
+          // **作法（どう組み立てたか）も返す。** 3つは飾りではなく作りが違うので、
+          // これを書かないと下見と記録が嘘になる
+          method: music.method, modePlan: music.modePlan,
           mode: music.mode, meter: music.meter, prog: music.prog,
           band: music.band, tone: music.tone && music.tone.name,
           devColor: music.devColor, bell: music.bell,
@@ -425,7 +447,12 @@ function start() {
 
   function loop(now) {
     requestAnimationFrame(loop);
-    const dt = Math.min((now - last) / 1000 || 0, 0.25);
+    // **録っているあいだは切り上げないこと。** `MediaRecorder` は実時間で録るので、
+    // 絵の時計が実時間より遅れると、音（実時間で鳴る）と絵がずれていき、
+    // 最後は音だけ先に終わる。0.25秒の上限は「別のタブを見ていて戻ってきたとき、
+    // 時間が一気に飛ばないように」置いたもので、録りには要らない。
+    const raw = (now - last) / 1000 || 0;
+    const dt = rec ? raw : Math.min(raw, 0.25);
     last = now;
     if (playing) tick(dt);
   }
@@ -495,8 +522,24 @@ function start() {
   }
 
   hint.classList.add('shown');
+
+  // **触る端末では、触った勢いで全画面へ入れておく。**
+  // 縦持ちのままだと 16:9 が細い帯に収まって、画面のほとんどが黒になる
+  // （実測 390x844 の端末で、作品は 390x219 にしかならない）。
+  // 全画面と向きの固定は**触った直後にしか許されない**（利用者の操作が要る）ので、
+  // ここでやる。iOS Safari は向きの固定を持っていないので、
+  // そのときは頁の側で「横にしてください」と出す（下の `portrait` 見張り）。
+  const touchy = window.matchMedia
+    && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  async function goBig() {
+    if (!touchy || document.fullscreenElement) return;
+    try { await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); } catch (e) { /* 断られてもよい */ }
+    try { await screen.orientation.lock('landscape'); } catch (e) { /* iOS は持っていない */ }
+  }
+
   const kick = (e) => {
     if (e.type === 'keydown' && e.key !== ' ' && e.key !== 'Enter') return;
+    goBig();
     begin();
   };
   window.addEventListener('pointerdown', kick);
@@ -521,6 +564,19 @@ function start() {
     else if (e.key === 'ArrowLeft') { seek(t - 20); }
   });
   if (showHud) hud.classList.add('shown');
+
+  // **縦持ちの見張り。** 触る端末で縦のあいだだけ「横にしてください」を出す。
+  // 向きを固定できない端末（iOS Safari）のための逃げ道。
+  if (touchy) {
+    const seeOrient = () => {
+      const tall = window.innerHeight > window.innerWidth * 1.1;
+      document.body.classList.toggle('portrait', tall);
+    };
+    // `orientationchange` だけでは古い大きさを返す端末があるので、両方見る
+    window.addEventListener('orientationchange', () => setTimeout(seeOrient, 250));
+    window.addEventListener('resize', seeOrient);
+    seeOrient();
+  }
 
   let idle = null;
   const wake = () => {

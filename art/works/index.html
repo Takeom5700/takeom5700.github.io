@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>primaries — 作品の棚</title>
+<meta name="description" content="これまでに作った映像作品の一覧。種と指示書からその場で再生するので、動画ファイルの読み込みを待たずに見られる。">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="/icons/icon-192.png">
+<style>
+  :root {
+    --bg: #07070a; --fg: #f2f0ec; --dim: #8d8a94; --line: #23232c;
+    --card: #101018; --accent: #e8402f;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    line-height: 1.7; -webkit-text-size-adjust: 100%;
+    padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 48px);
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  header { padding: 32px 0 8px; }
+  h1 { font-size: 1.05rem; letter-spacing: .34em; margin: 0; font-weight: 600; }
+  h1 .dot { color: var(--accent); }
+  .lead { color: var(--dim); font-size: .85rem; margin: 10px 0 0; }
+  .lead b { color: var(--fg); font-weight: 600; }
+  a { color: var(--fg); }
+  .home { display: inline-block; margin: 20px 0 0; color: var(--dim); font-size: .8rem; text-decoration: none; }
+  .home:active { color: var(--fg); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px; margin: 14px 0;
+  }
+  .row1 { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .name { font-size: 1.2rem; font-weight: 600; letter-spacing: .04em; }
+  .num { color: var(--dim); font-variant-numeric: tabular-nums; font-size: 1.2rem; }
+  .when { color: var(--dim); font-size: .78rem; margin-left: auto; font-variant-numeric: tabular-nums; }
+  .facts { color: var(--dim); font-size: .8rem; margin: 8px 0 0; }
+  .facts span { display: inline-block; margin-right: 14px; white-space: nowrap; }
+  .from { color: var(--dim); font-size: .78rem; margin: 6px 0 0; }
+  .btns { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 auto; min-width: 120px; min-height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px; text-decoration: none; font-size: .92rem; font-weight: 600;
+    border: 1px solid var(--line); background: #191922; color: var(--fg);
+  }
+  .btn.play { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn:active { opacity: .7; }
+  .btn.off { opacity: .35; pointer-events: none; }
+
+  .note { color: var(--dim); font-size: .78rem; border-top: 1px solid var(--line);
+          margin-top: 28px; padding-top: 18px; }
+  .note b { color: var(--fg); }
+  .msg { color: var(--dim); padding: 28px 0; font-size: .88rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>PRIMARIES<span class="dot">.</span></h1>
+    <p class="lead">これまでに作った作品。<b>押すとその場で始まります</b>
+      — 動画を落とさず、種から描き直しています。</p>
+  </header>
+
+  <div id="list"><p class="msg">読んでいます…</p></div>
+
+  <p class="note">
+    <b>なぜ動画ファイルを置いていないのか。</b> 1本が 600〜900MB あって、
+    この置き場（GitHub Pages）には1ファイル100MBまでしか置けません。
+    でもこの作品は<b>コードなので、種があれば同じ絵と同じ音がそのまま出ます</b>
+    （同じ種なら1コマも違わない）。だから読み込みを待たずに始まります。<br><br>
+    <b>落として持ち歩きたいときは YouTube</b> の方から。
+    上げ終わっている作品には「YouTube」が出ます。<br><br>
+    音が出ます。電波の上でも動画は流れません（絵と音はこの端末が作っています）。
+  </p>
+
+  <a class="home" href="/">＜ 縁日へ</a>
+</div>
+
+<script>
+// 台帳（`ledger.json`）だけを読む。**外のものを何も読まない**
+// （`art/` の中だけで完結、という線）。
+const LIST = document.getElementById('list');
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g,
+  (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function mmss(sec) {
+  const s = Math.round(Number(sec) || 0);
+  if (!s) return '';
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+// 「器:vessel 柵:fence」→「器・柵」（画面に出すのは日本語の名だけ）
+function forms(v) {
+  return String(v || '').split(' ').map((x) => x.split(':')[0]).filter(Boolean).join('・');
+}
+
+fetch('ledger.json', { cache: 'no-store' })
+  .then((r) => { if (!r.ok) throw new Error('台帳が読めません（' + r.status + '）'); return r.json(); })
+  .then((d) => {
+    const works = (d.works || []).filter((w) => w && (w.materials || w.title));
+    if (!works.length) { LIST.innerHTML = '<p class="msg">まだ1本もありません。</p>'; return; }
+    // 新しい順
+    works.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+    LIST.innerHTML = works.map((w) => {
+      const m = w.materials || {};
+      const seed = w.seed != null ? w.seed : m.seed;
+      const title = w.title || (m.題名 || '').replace(/\s*\d+$/, '') || 'Passage';
+      const tag = w.tag || String(((Number(seed) % 1000) + 1000) % 1000).padStart(3, '0');
+      const total = w.total || parseInt(m.尺, 10) || 0;
+      // **指示書があれば必ず渡す。** 図は指示書が選ぶので、種だけでは別の作品が出る
+      const href = '../?seed=' + encodeURIComponent(seed)
+        + (w.brief ? '&brief=' + encodeURIComponent(w.brief) : '');
+      const yt = w.youtube
+        ? '<a class="btn" href="https://www.youtube.com/watch?v=' + esc(w.youtube) + '">YouTube</a>'
+        : '<span class="btn off">YouTube（まだ）</span>';
+      const f = forms(m.形);
+      return '<div class="card">'
+        + '<div class="row1"><span class="name">' + esc(title) + '</span>'
+        + '<span class="num">' + esc(tag) + '</span>'
+        + '<span class="when">' + esc(w.date || '') + '</span></div>'
+        + '<p class="facts">'
+        + (total ? '<span>' + mmss(total) + '</span>' : '')
+        + (m.拍子 ? '<span>' + esc(m.拍子) + '</span>' : '')
+        + (m.速さ ? '<span>' + esc(m.速さ) + ' BPM</span>' : '')
+        + (m.層 ? '<span>層: ' + esc(m.層) + '</span>' : '')
+        + '</p>'
+        + (f ? '<p class="facts"><span>図: ' + esc(f) + '</span></p>' : '')
+        + (w.article ? '<p class="from">記事: ' + esc(w.article) + '</p>' : '')
+        + '<div class="btns">'
+        + '<a class="btn play" href="' + esc(href) + '">見る</a>'
+        + yt
+        + '</div></div>';
+    }).join('');
+  })
+  .catch((e) => {
+    LIST.innerHTML = '<p class="msg">' + esc(e.message)
+      + '<br>（作品が1本も上がっていないと、まだ台帳がありません）</p>';
+  });
+</script>
+</body>
+</html>

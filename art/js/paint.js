@@ -147,6 +147,24 @@ export function hsOf(h) {
   }
   return { h: hue, s: mx < 1e-6 ? 0 : d / mx, v: mx };
 }
+// 2色のあいだを渡っても濁らないか（勾配の地のための検査）。
+// 真ん中がまだ彩度を持っている／どちらかが黒に近い・白に近い、のどちらか。
+export function cleanRamp(x, y) {
+  const A = hex2rgb(x), B = hex2rgb(y);
+  const m = hsOf('#' + [0, 1, 2].map((k) => (((A[k] + B[k]) >> 1) | 0).toString(16).padStart(2, '0')).join(''));
+  const a = hsOf(x), b = hsOf(y);
+  const plain = (c) => c.v < 0.22 || (c.v > 0.88 && c.s < 0.18);
+  return m.s > 0.45 || plain(a) || plain(b);
+}
+
+// 同じ色のまま透明度だけ変える。**地の色を混ぜないための道具。**
+// 混ぜると濁った中間色が出て「原色を面で置く」が崩れるので、
+// 溶かすときは必ず透明へ落とす（下の地がそのまま見えるだけになる）。
+export function rgba(h, a) {
+  const [r, g, b] = hex2rgb(h);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
 export function hueGap(a, b) {
   const d = Math.abs(hsOf(a).h - hsOf(b).h) % 1;
   return Math.min(d, 1 - d) * 2;   // 0〜1（1 が正反対）
@@ -278,6 +296,45 @@ export function ground(ctx, S, shot, col, seed) {
     ctx.beginPath();
     ctx.moveTo(S.w, S.h * (1 - shot.gy)); ctx.lineTo(S.w * (1 - shot.gx), S.h);
     ctx.lineTo(S.w, S.h); ctx.closePath(); ctx.fill();
+  } else if (k === 6) {
+    // **地そのものが勾配になる**（2026-09-23）。
+    // 依頼者「グラデーションやなめらかな表現や自然さの表現も
+    // **コントラストを出すための材料として**持っててね」。
+    //
+    // 縁（`hand === 4`）は図の縁を溶かす手だが、**地はいつも平らな面のまま**
+    // だった。だから作品のどこにも「柔らかい広がり」が無かった。
+    // ここは地の一つの割りかたとして勾配を持つ。
+    //
+    // **これが効くのは、上に硬い図が乗るから。** 柔らかい地に硬い輪郭が
+    // 乗っている状態そのものが対比になる（一度目の失敗＝雲は、
+    // 画面の全部が柔らかくて、硬いものが一つも無かった）。
+    // だから `gk 6` は**図が硬い景にだけ振る**（`score.js` 側で見ている）。
+    // **濁った中間色を作らないこと。** 勾配は2色のあいだを RGB で渡るので、
+    // 彩度を振り切った色相の離れた2色（赤と水色など）を渡すと
+    // **真ん中が灰色になる**（原色を面で置く、という根に反する）。
+    // 黒に近い色／白に近い色が片方にあれば、渡っても彩度は落ちない。
+    // だから**真ん中の彩度を見てから相手を決める。**
+    let end = shot.g2 ? col.a : col.i;
+    if (!cleanRamp(col.g, end)) {
+      end = cleanRamp(col.g, col.l) ? col.l
+        : cleanRamp(col.g, col.i) ? col.i
+        : cleanRamp(col.g, col.a) ? col.a : col.l;
+    }
+    const a = shot.ga;
+    const g = ctx.createLinearGradient(
+      S.w * (0.5 - Math.cos(a) * 0.5), S.h * (0.5 - Math.sin(a) * 0.5),
+      S.w * (0.5 + Math.cos(a) * 0.5), S.h * (0.5 + Math.sin(a) * 0.5));
+    // **色は2つのまま。** 中間色を作らず、地の色と差し色のあいだを渡す
+    // （濁った色を作らない、という線は動かさない）。
+    g.addColorStop(0, col.g);
+    g.addColorStop(Math.max(0.12, Math.min(0.88, shot.gx)), col.g);
+    g.addColorStop(1, end);
+    ctx.fillStyle = g;
+    // **枠より大きく塗ること。** 長い景では地ごとカメラで流すので（`gmv`）、
+    // 枠ぴったりに塗ると片側がずれて外れ、その下の一色が**硬い縦の帯**として
+    // 出てしまう（実測 種3。勾配の横に平らな面が並んで見えた）。
+    // Canvas の勾配は両端の色で外へ伸びるので、大きく塗っても形は変わらない。
+    ctx.fillRect(-S.w, -S.h, S.w * 3, S.h * 3);
   }
 }
 
@@ -314,6 +371,29 @@ function stippleClip(ctx, S, color, dens, seed, r) {
 }
 
 // 図を置く道具。motif.js はこれしか触らない。
+// 溶ける縁の勾配。**境目そのものを時間で動かす。**
+// 画面に固定した勾配だと、薄れたところは景の中でほとんど変わらないので、
+// 長い景で「静止画に見える」に落ちる（実測 0.72%／0.5秒）。
+// 境目が行き来すれば、動きにもなり、絵としても「曖昧な境目」が生きる。
+//
+// **色は混ぜず透明へ落とす。** 地の色を混ぜると濁った中間色が出て、
+// 「原色を面で置く」が崩れる。透明なら下の地がそのまま見えるだけ。
+export function softGrad(ctx, S, shot, E, c) {
+  const soft = 0.2 + (shot.edgeA === undefined ? 0.5 : shot.edgeA) * 0.45;
+  const d = shot.edgeDir === undefined ? 0 : shot.edgeDir;
+  const ph = Math.sin((E && E.p !== undefined ? E.p : 0) * Math.PI * 2) * 0.26;
+  const k = S.h * ph * 0.5;                       // 勾配の端そのものも動かす
+  const g = (d === 0) ? ctx.createLinearGradient(0, S.h + k, 0, -k)
+    : (d === 1) ? ctx.createLinearGradient(0, -k, 0, S.h + k)
+      : (d === 2) ? ctx.createLinearGradient(-k, 0, S.w + k, 0)
+        : ctx.createLinearGradient(S.w + k, 0, -k, 0);
+  const p1 = Math.max(0.03, Math.min(0.97, 1 - soft + ph));
+  g.addColorStop(0, c);
+  g.addColorStop(p1, c);
+  g.addColorStop(1, rgba(c, 0));
+  return g;
+}
+
 export function makeInk(ctx, S, shot, col, E) {
   const hand = shot.hand;
   const lw = E.lw;
@@ -344,6 +424,31 @@ export function makeInk(ctx, S, shot, col, E) {
     } else if (hand === 3) {                // 点で打つ
       stippleClip(ctx, S, c, 2600, E.seed, lw * 0.9);
       outline(pathFn, c, lw * 1.8);
+    } else if (hand === 4) {                // 溶ける（境目を曖昧にする）
+      // 依頼者「グラデーション的だったり、何かと何かの境目が曖昧だったりする
+      // ような表現も必要であれば選択肢に入れていい」。
+      //
+      // **一度目の失敗（雲）へ戻らない形で入れること。** あれは
+      // 全面がグラデーションで、しかも自然物（空・太陽）だったから
+      // 「ラテアートや雲の写真」になった。ここで入れるのは
+      // **図の縁だけが地へ溶ける**手で、図そのものは名前のある一個のまま。
+      // そして**硬い縁の景と必ず混ぜる**（`score.js` が景ごとに振る）ので、
+      // 溶けていることが対比として効く——柔らかい縁は、
+      // 隣の硬い縁があって初めて柔らかい。
+      //
+      // 端で透明へ落とす（色を混ぜない）。**地の色を混ぜると濁った中間色になり、
+      // 「原色を面で置く」が崩れる。** 透明なら下の地がそのまま見えるだけなので、
+      // 出る色は原色2つのまま。
+      // **path の外枠は Canvas2D では取れない**（`pathBox` のような API は無い）。
+      // だから枠（ステージ）いっぱいの勾配を作って、clip で図の形に切る。
+      // 溶ける向きは景ごとに決まる（`edgeDir`）。
+      ctx.save(); ctx.clip();
+      ctx.fillStyle = softGrad(ctx, S, shot, E, c);
+      ctx.fillRect(0, 0, S.w, S.h);
+      ctx.restore();
+      // **縁を1本だけ残す。** 全部溶かすと図の在りかが消えて、
+      // 「図と地が立っている」（法・彩）に落ちる。溶ける側と残る側で対比を作る。
+      outline(pathFn, c, lw * 1.2);
     } else {                                // 塗る
       ctx.fillStyle = c; ctx.fill();
     }
@@ -354,7 +459,13 @@ export function makeInk(ctx, S, shot, col, E) {
     ctx.fillStyle = color || col.a; ctx.fill(); ctx.restore();
   }
   function line(pts, w, color) {
-    ctx.save(); ctx.fillStyle = color || col.i;
+    ctx.save();
+    // **線で描く図にも縁を効かせること。** 簾・柵・糸は `body()` を通らないので、
+    // ここを直さないと「溶ける」が黙って無視される
+    // （実際に無視されて、溶ける景のはずの簾が硬いまま出ていた）。
+    ctx.fillStyle = hand === 4
+      ? softGrad(ctx, S, shot, E, color || col.i)
+      : (color || col.i);
     brush(ctx, pts, w, E.seed + Math.floor(pts[0][0]), true);
     ctx.restore();
   }

@@ -37,13 +37,17 @@ YouTube で出し続けるための取り決め。作品そのものの基軸（
 説明欄の書式（これ以上書かない）:
 
 ```
-Generative film. One seed, one world, six minutes.
+Generative film. One seed, one world.
 Made entirely from code — no footage, no images, no stock. Music from the same seed.
 
 Passage 004
 I II III IV V
-6:00  seed 4
+6:12  seed 4
 ```
+
+**尺を文に書き込まないこと。** `six minutes` と `6:00` を決め打ちにしていて、
+Suno の6分縛りを外したあと（尺は作品ごとに 4.5〜9分）**全作品の説明欄が嘘**に
+なっていた。長さはデータの行に、そのつど実際の数を書く（`daily.mjs` が入れる）。
 
 **1行目と2行目だけは言葉を置く。** ここは画面の外で、
 **機械にどの棚へ置くかを教える唯一の場所**だから（無いと、どこにも置かれない）。

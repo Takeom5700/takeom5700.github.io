@@ -9,10 +9,25 @@
 // だからここでは、部品（柱・梁・弧・輪・面・段・糸・粒・幹・笠・器・脚・帆・枠・歯）と
 // **骨格**を持ち、作品ごとに寸法・数・向き・有無を振って**その作品の図を組む。**
 //
-// **ただし「名前のある形」であることは崩さない。**
-// 三度目の失敗（型を読み当てられる）と二度目の失敗（技術の展示）のあいだを通るには、
-// 見た人が名前を言える物でなければならない。抽象の塊は「技術の展示」に落ちる。
-// だから骨格は**必ず名前を持つ物**として設計してあり、名前も一緒に返す。
+// **要るのは「同一性」で、「実在」ではない（2026-09-23 に線を引き直した）。**
+//
+// 依頼者:
+//   「台とか器とかそういう道具の概念についてだが、これはそもそもアート製作なので
+//     **必ずしもこの世に実態があるものだけをモチーフにするわけではない。**
+//     もっと既存の概念や物質に囚われない自由で解放された感性を持って
+//     アートの製作に取り組んで欲しい」
+//
+// それまで骨格は14とも**実在する道具・建物**だった（櫓・台・器・階・標・門・傘・
+// 窓・柵・帆・井・波・群・糸）。「名前のある物でなければならない」と書いていたが、
+// **二度目の失敗（技術の展示）を防いでいたのは「実在」ではなく「同一性」だった。**
+// あのとき落ちたのは「形を直接置かない」で手続きしか残らなかったからで、
+// 実在の物でなかったからではない。
+//
+// だから線はこう引き直す——**輪郭が一つに決まっていること。**
+//   ・それが何か言えること（裂け目・孔・反響……実在しなくてよい）
+//   ・**終わりで帰ってきたときに「同じあれだ」と分かること**（型がそれを要求する）
+// 決まらない塊・名づけられない滲みは、いまでも二度目の失敗である。
+// 確かめかたは変わらない——**焼いて自分の目で見る**（`node art/tools/forms.mjs`）。
 //
 // **固有の事も骨格が持つ。** 「意味は固有のところにしか宿らない」
 // （椅子に人が座るのは椅子だから、器が割れて中身が出るのは器だから）。
@@ -53,11 +68,49 @@ function pStroke(ctx, pts, w, seed) {
 }
 // 面（角は角のまま）。**直線で引くこと**——paint.js の path() は角を丸めるので、
 // 箱を渡すと卵になり、階の段は点になった（実際になった）
+// **面のなめらかさは作品ごとに振る**（2026-09-23）。
+// 依頼者「幾何学的にシンプルなものもいいけど、そればかりではなく、一応
+// 選択肢としてグラデーションや**なめらかな表現や自然さの表現**も
+// **コントラストを出すための材料として**持っててね」。
+//
+// それまで面は必ず直線で引いていた（`path()` が角を丸めて箱を卵にした
+// 失敗の反動）。だが**全部が直線だと、直線であることが対比にならない。**
+//
+//   0 … 直線（既定。角が立つ）
+//   1 … ゆるい曲線（角が丸い。作られたものだが、やわらかい）
+//   2 … 有機（縁が noise で侵食される。育ったもの・削られたものに見える）
+//
+// **既定は 0。** 1・2 は作品ごとに少数へ振る（`makeForm` が決める）。
+// 硬い作品があるから、やわらかい作品がやわらかく見える。
+let SMOOTH = 0;
+export function setSmooth(v) { SMOOTH = v | 0; }
+
 function pPlate(ctx, pts, seed) {
   if (pts.length < 3) return;
   const j = (v, k) => v + (seed === undefined ? 0 : (nz01(seed + k * 31) - 0.5) * 1.6);
-  ctx.moveTo(j(pts[0][0], 0), j(pts[0][1], 1));
-  for (let i = 1; i < pts.length; i++) ctx.lineTo(j(pts[i][0], i * 2), j(pts[i][1], i * 2 + 1));
+  const q = pts.map(([x, y], i) => [j(x, i * 2), j(y, i * 2 + 1)]);
+  if (SMOOTH === 1) { path(ctx, q); return; }          // ゆるい曲線（中点を通る）
+  if (SMOOTH === 2) {
+    // 有機。辺を割って、法線の向きへ noise で押し引きする
+    // （**育った／削られた輪郭**。面であることは崩さない）。
+    const out = [];
+    for (let i = 0; i < q.length; i++) {
+      const a = q[i], b = q[(i + 1) % q.length];
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      const L = Math.hypot(dx, dy) || 1;
+      const nx = -dy / L, ny = dx / L;
+      const div = Math.max(2, Math.min(7, Math.round(L / 26)));
+      for (let k = 0; k < div; k++) {
+        const u = k / div;
+        const amp = L * 0.14 * (nz01((seed || 0) + i * 53 + k * 17) - 0.5);
+        out.push([a[0] + dx * u + nx * amp, a[1] + dy * u + ny * amp]);
+      }
+    }
+    path(ctx, out);
+    return;
+  }
+  ctx.moveTo(q[0][0], q[0][1]);
+  for (let i = 1; i < q.length; i++) ctx.lineTo(q[i][0], q[i][1]);
   ctx.closePath();
 }
 // 丸みのある面（器の胴・笠）だけ曲線で引く
@@ -292,7 +345,11 @@ const SKELETONS = [
       post(ctx, x, y, y - h, lw * 1.8, E.fix + i, true);
       canopy(ctx, x, y - h, r, Math.max(4, P.count + 3), E.fix + i + 5);
       // 石突き（先の曲がり）。これがあると傘だと分かる
-      if (P.foot) brush(ctx, [[x, y], [x + s * 0.12, y - s * 0.02]], lw * 1.6, E.fix + i + 9, false);
+      // **`pStroke` を呼ぶこと。** `brush` という名前は paint.js の側のもので、
+      // form.js には無い。`P.foot` が立った傘が出た種で
+      // `ReferenceError: brush is not defined` になり、**頁が真っ白になった**
+      // （実測 種226。譜の検査は絵を描かないので、ここは measure でしか出ない）。
+      if (P.foot) pStroke(ctx, [[x, y], [x + s * 0.12, y - s * 0.02]], lw * 1.6, E.fix + i + 9);
     },
     top: (P, x, y, s) => [x, y - s * (0.7 + P.tall * 0.5)],
   },
@@ -401,6 +458,82 @@ const SKELETONS = [
     },
     top: (P, x, y, s) => [x, y - s * P.tall],
   },
+
+  // ==== ここから下は「実在しない図」（2026-09-23）====================
+  // **道具でも建物でもない。概念に輪郭を与えたもの。**
+  // 足すときの条件は1つだけ——**帰ってきたときに「同じあれだ」と分かること。**
+  // 末尾に足すこと（並びを変えると過去の種の作品が変わる）。
+  {
+    // 裂 — **面そのものが裂けている。** 図は物ではなく「引き裂かれた隙」。
+    // 二枚の面が離れ、あいだに地が覗く。名前は言えるが、この世に物として無い。
+    key: 'rift', 名: ['裂', '罅', '隙'], ev: 'widen',
+    draw(ctx, S, E, P, i, x, y, s) {
+      const h = s * (1.0 + P.tall * 0.8), w = s * (0.5 + P.wide * 0.5);
+      const gap = s * (0.05 + P.wide * 0.16);
+      // 裂け目の稜線。**折れ線で引く**（滑らかにすると裂けて見えない）
+      const spine = [];
+      const n = Math.max(5, P.count + 4);
+      for (let k = 0; k <= n; k++) {
+        const u = k / n;
+        const j = (nz01(E.fix + i * 31 + k * 13) - 0.5) * w * 0.5;
+        spine.push([x + j, y - h * u]);
+      }
+      // 左の面と右の面を、稜線から `gap` だけ離して閉じる
+      for (const side of [-1, 1]) {
+        const pts = spine.map(([px, py]) => [px + side * gap, py]);
+        const back = side < 0 ? x - w : x + w;
+        pts.push([back, y - h], [back, y]);
+        pPlate(ctx, pts, E.fix + i + (side < 0 ? 0 : 50));
+      }
+    },
+    top: (P, x, y, s) => [x, y - s * (1.0 + P.tall * 0.8)],
+  },
+  {
+    // 孔 — **図と地が入れ替わっている。** 図は「無いところ」。
+    // 面をひとつ置き、その中を抜く。抜いた側が主役なので、
+    // 見る人はそこに目が行く。物ではないが、はっきり一つの物として読める。
+    key: 'hollow', 名: ['孔', '欠', '虚'], ev: 'swallowIn',
+    draw(ctx, S, E, P, i, x, y, s) {
+      const w = s * (0.7 + P.wide * 0.6), h = s * (0.7 + P.tall * 0.6);
+      // 外の面（時計回り）
+      pPlate(ctx, [[x - w * 0.5, y], [x - w * 0.5, y - h],
+        [x + w * 0.5, y - h], [x + w * 0.5, y]], E.fix + i);
+      // 抜く（反時計回りに引くと nonzero で穴になる）
+      // **穴を主役の大きさに取ること。** 小さいと「面に点がある」に見えて、
+      // 図と地が入れ替わっているという肝が伝わらない（焼いて見て小さかった）。
+      const r = Math.min(w, h) * (0.26 + P.wide * 0.16);
+      const cx = x + (nz01(E.fix + i * 7) - 0.5) * w * 0.3;
+      const cy = y - h * (0.4 + nz01(E.fix + i * 11) * 0.3);
+      const m = 30;
+      ctx.moveTo(cx + r, cy);
+      for (let k = m; k >= 0; k--) {
+        const a = (k / m) * TAU;
+        const rr = r * (0.94 + nz01(E.fix + i + k) * 0.12);
+        ctx.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+      }
+      ctx.closePath();
+    },
+    top: (P, x, y, s) => [x, y - s * (0.7 + P.tall * 0.6) * 0.4],
+  },
+  {
+    // 反 — **同じ形が小さくなって続く。** 図は物ではなく「反響」という関係。
+    // 一つ目がいちばん大きく、遠ざかるほど小さく薄くなる。
+    // 何の反響かは示さない（示すと物になる）。
+    key: 'echo', 名: ['反', '響', '重'], ev: 'fade',
+    draw(ctx, S, E, P, i, x, y, s) {
+      const n = Math.max(3, P.count + 2);
+      const dx = s * (0.18 + P.wide * 0.3) * (P.flip ? -1 : 1);
+      const dy = -s * (0.1 + P.tall * 0.22);
+      for (let k = 0; k < n; k++) {
+        const q = Math.pow(0.68, k);             // 小さくなっていく
+        const w = s * 0.5 * q, h = s * 0.62 * q;
+        const px = x + dx * k, py = y + dy * k;
+        pPlate(ctx, [[px - w * 0.5, py], [px - w * 0.5, py - h],
+          [px + w * 0.5, py - h], [px + w * 0.5, py]], E.fix + i * 17 + k * 5);
+      }
+    },
+    top: (P, x, y, s) => [x, y - s * 0.62],
+  },
 ];
 
 // ---- 固有の事 --------------------------------------------------------
@@ -448,6 +581,51 @@ function drawOwn(ctx, S, E, F, i, x, y, s) {
     for (let k = 0; k < 6; k++) {
       put(() => pDisc(ctx, tx + (nz01(E.fix + k * 11) - 0.5) * s, ty + u * s * (0.6 + nz01(E.fix + k) * 0.8), s * 0.03, E.fix + k));
     }
+  } else if (ev === 'widen') {
+    // 裂が**広がる**。稜線の左右へ面が退がり、あいだの地が増えていく。
+    // 起きるのは「隙が大きくなる」ことだけ。物は何も動かない。
+    const h = s * P.tall;
+    for (const side of [-1, 1]) {
+      const d = side * u * s * 0.45;
+      put(() => {
+        ctx.moveTo(x + d, y);
+        ctx.lineTo(x + d + side * s * 0.07, y - h);
+        ctx.lineTo(x + d + side * s * 0.14, y - h);
+        ctx.lineTo(x + d + side * s * 0.05, y);
+        ctx.closePath();
+      });
+    }
+  } else if (ev === 'swallowIn') {
+    // 孔が**吸い込む**。周りの粒が穴へ寄っていく。
+    // 「無いところ」が主役なので、吸われる側を描いて穴の在りかを示す。
+    const w = s * (0.7 + P.wide * 0.6), hh = s * (0.7 + P.tall * 0.6);
+    const cx = x + (nz01(E.fix + i * 7) - 0.5) * w * 0.3;
+    const cy = y - hh * (0.4 + nz01(E.fix + i * 11) * 0.3);
+    for (let k = 0; k < 10; k++) {
+      const a = (k / 10) * TAU + u * 0.8;
+      const d0 = s * (0.4 + nz01(E.fix + k * 9) * 0.3);
+      const d = d0 * (1 - clamp(u, 0, 0.92));
+      put(() => pDisc(ctx, cx + Math.cos(a) * d, cy + Math.sin(a) * d, s * 0.026, E.fix + k));
+    }
+  } else if (ev === 'fade') {
+    // 反が**遠のく**。並びの先へ、もう一つずつ増えて小さくなっていく。
+    // 反響が続いていく、ということだけが起きる。
+    const n = Math.max(3, P.count + 2);
+    const dx = s * (0.18 + P.wide * 0.3) * (P.flip ? -1 : 1);
+    const dy = -s * (0.1 + P.tall * 0.22);
+    const add = Math.floor(u * 3.6);
+    for (let k = n; k < n + add; k++) {
+      const q = Math.pow(0.68, k);
+      const w = s * 0.5 * q, hh = s * 0.62 * q;
+      const px = x + dx * k, py = y + dy * k;
+      put(() => {
+        ctx.moveTo(px - w * 0.5, py);
+        ctx.lineTo(px - w * 0.5, py - hh);
+        ctx.lineTo(px + w * 0.5, py - hh);
+        ctx.lineTo(px + w * 0.5, py);
+        ctx.closePath();
+      });
+    }
   } else if (ev === 'untie') {
     const w = s * P.wide;
     for (let k = 0; k < 3; k++) {
@@ -476,6 +654,8 @@ export function makeForm(rng, skIndex) {
     flip: rng() < 0.5,
     solid: rng() < 0.55,
     lip: 0.45 + rng() * 0.45,
+    // 面のなめらかさ。**既定は直線**。硬い作品があるから柔らかい作品が効く
+    smooth: rng() < 0.62 ? 0 : (rng() < 0.6 ? 1 : 2),
   };
   const name = S0.名[Math.floor(rng() * S0.名.length)];
   return { sk, key: S0.key, name, ev: S0.ev, P };
@@ -488,11 +668,44 @@ export const RANGE = {
   tower: [1, 4], seat: [1, 9], vessel: [1, 6], stair: [1, 2], lamp: [1, 8],
   gate: [1, 3], canopyTree: [1, 8], window: [1, 4], fence: [1, 2], sail: [1, 5],
   well: [1, 3], wave: [1, 1], swarm: [1, 3], thread: [1, 3],
+  // 実在しない図。裂と孔は1〜2（画面を担う大きさで置く）、反は関係なので1つだけ
+  rift: [1, 2], hollow: [1, 2], echo: [1, 1],
 };
 
 // ---- 描く ------------------------------------------------------------
 // `motif.js` の図と同じ呼びかた。奥ほど小さく、手前ほど大きい。
+// ---- 図の頭がどこか（枠の上へ出さないため）------------------------------
+// **骨格ごとに手で高さを申告させると必ず取り違える。** `top` は「物が乗る所」
+// （床几の座面・梯子の上端）であって図の頭ではないので、背もたれ・梁・笠は
+// そこより上にある。だから**何も塗らない ctx に一度描かせて、実際に測る。**
+// 座標はどれも (x, y) を中心に `s` に比例するので、一度測れば掛け算で収まる。
+// 知らない呼び出しは Proxy が何もしないので、部品を足しても壊れない。
+function topOf(S0, S, E, P, i, x, y, s) {
+  let top = y;
+  const see = (px, py) => { if (typeof py === 'number' && py < top) top = py; };
+  const base = {
+    moveTo: see, lineTo: see,
+    rect(a, b, w, h) { see(a, b); see(a, b + h); },
+    fillRect(a, b, w, h) { see(a, b); see(a, b + h); },
+    arc(cx, cy, r) { see(cx, cy - Math.abs(r)); },
+    ellipse(cx, cy, rx, ry) { see(cx, cy - Math.abs(ry)); },
+    quadraticCurveTo(a, b, c, d) { see(a, b); see(c, d); },
+    bezierCurveTo(a, b, c, d, e, f) { see(a, b); see(c, d); see(e, f); },
+    arcTo(a, b, c, d) { see(a, b); see(c, d); },
+  };
+  const noop = () => {};
+  const rec = new Proxy(base, {
+    get(t, k) { return k in t ? t[k] : noop; },
+    set() { return true; },
+    has() { return true; },
+  });
+  try { S0.draw(rec, S, E, P, i, x, y, s); } catch (e) { return y; }
+  return top;
+}
+
 export function drawForm(ctx, S, E, F) {
+  // **その作品の面のなめらかさを立ててから描く**（部品が読む）
+  setSmooth(F.P && F.P.smooth ? F.P.smooth : 0);
   const sh = E.sh;
   const S0 = SKELETONS[F.sk];
   const n = Math.max(1, Math.min(sh.n, (RANGE[F.key] || [1, 8])[1]));
@@ -505,13 +718,28 @@ export function drawForm(ctx, S, E, F) {
   for (let i = 0; i < n; i++) {
     const big = n === 1;
     const dep = big ? 1 : 0.8 + nz01(E.fix + i * 19) * 0.35;
-    const s = S.h * base * dep;
+    let s = S.h * base * dep;
     // **枠の中に収める。** 広げすぎると半分が枠外に出て、物が読めなくなった
     const x = big ? S.w * (0.5 + sh.ox * 0.18)
       : S.w * (0.5 + (((i + 0.5) / n) - 0.5) * (n === 2 ? 0.52 : 0.76)
         + (nz01(E.fix + i * 7) - 0.5) * 0.06);
     const y = big ? S.h * (0.76 + sh.oy * 0.08)
       : S.h * (0.62 + (dep - 0.95) * 0.5) + Math.sin(step(tq * 0.9 + i, 8)) * S.h * 0.004;
+    // ---- 枠の上へ出さない ------------------------------------------
+    // **寸法（`P.tall`／`P.wide`）は作品ごとに振っている**ので、高い組み合わせ
+    // だと図の頭が枠の外へ出る。**傘は笠が枠の上へ出て、画面に残るのは棒と
+    // 石突きだけになり「傘」に見えなかった**（実測 8通りのうち6通り。
+    // 棒だけが並んだ画面は、依頼者の言う「幾何学的な可能性の羅列」そのもの）。
+    // 旗・柵・裂も頭が切れていた。
+    //
+    // 寸法は変えず、**大きさ（`s`）だけを縮めて収める**（形の釣り合いを保つ）。
+    // 上へ出るぶんは `measure()` で**実際に測る**（`top` は「物が乗る所」で
+    // あって図の頭ではない——床几の背もたれ・櫓の梁・傘の笠がそこより上）。
+    {
+      const top = topOf(S0, S, E, F.P, i, x, y, s);
+      const need = y - top, room = y - S.h * 0.05;
+      if (need > room && need > 1) s *= room / need;
+    }
     // **必ず `E.ink.body()` を通す。** 自分で塗ると地の色で塗られて図が消え、
     // 塗りかたの手（塗る・線だけ・刻む・点で打つ）も効かない
     E.ink.body(() => S0.draw(ctx, S, E, F.P, i, x, y, s));
@@ -527,8 +755,10 @@ export const FORM_COUNT = SKELETONS.length;
 //   tower0 seat1 vessel2 stair3 lamp4 gate5 canopyTree6 window7
 //   fence8 sail9 well10 wave11 swarm12 thread13
 // 序（問いを置く）… 見えているのに何のためか分からない物
-export const OPENING_FORMS = [10, 5, 7, 4, 2, 3, 0];   // 井・門・窓・標・器・階・櫓
+// **末尾だけに足すこと**（並びを変えると過去の種の作品が変わる）。
+// 14=裂 を足した。「何が裂けたのか分からない」のは、問いを置く役に合う。
+export const OPENING_FORMS = [10, 5, 7, 4, 2, 3, 0, 14];   // 井・門・窓・標・器・階・櫓・裂
 // 第一主題（動）… 動きが出る物
 export const MOVING_FORMS = [11, 12, 13, 9, 6];        // 波・群・糸・帆・傘
 // 第二主題（静）… 据わっている物
-export const STILL_FORMS = [1, 2, 0, 3, 7, 8, 10, 4, 5];
+export const STILL_FORMS = [1, 2, 0, 3, 7, 8, 10, 4, 5, 14, 15, 16];  // 末尾に 裂・孔・反
