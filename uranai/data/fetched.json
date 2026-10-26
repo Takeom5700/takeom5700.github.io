@@ -1,149 +1,30 @@
 {
-  "fetched_at": "2026-10-26",
-  "notes": [],
+  "fetched_at": "2026-10-27",
+  "notes": [
+    "Loveちゃん: 取得失敗（FetchError）"
+  ],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "全体",
-      "kind": "caution",
-      "value": "大きな事故や事件、火災や爆発などの火のトラブルに注意が必要な期間です。車の運転時は安全運転を徹底し、悪運を引き寄せないよう生活環境の浄化を心がけましょう。",
-      "period_start": "2026-10-24",
-      "period_end": "2026-10-26",
-      "url": "https://www.youtube.com/watch?v=n-LJGdA6Wig",
-      "label": "Loveちゃん 全体（12星座・10/24-26）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "全体",
-      "kind": "caution",
-      "value": "26日の満月前後はパワーが強まり、事件・事故や地震・噴火、大雨などの自然災害に警戒が必要です。また、詐欺や怪しい投資話に注意し、後ろめたい秘密の露呈や男女トラブルにも気をつけましょう。",
-      "period_start": "2026-10-26",
-      "period_end": "2026-10-26",
-      "url": "https://www.youtube.com/watch?v=3QTJIkeYEdI",
-      "label": "Loveちゃん 全体（12星座・10/26）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "全体",
-      "kind": "theme",
-      "value": "満月の影響で物事に区切りをつけたり、逆にやる気がみなぎって復活したりするタイミングです。驚くような事実が明るみに出ることもありますが、後ろめたい気持ちを解消して身辺を整えることが開運につながります。",
-      "period_start": "2026-10-26",
-      "period_end": "2026-10-26",
-      "url": "https://www.youtube.com/watch?v=3QTJIkeYEdI",
-      "label": "Loveちゃん 全体（12星座・10/26）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "food",
-      "value": "牡牛座の方のラッキーフードはほうれん草です。日々の食事に取り入れることで運気を高めることができます。",
-      "period_start": "2026-10-24",
-      "period_end": "2026-10-26",
-      "url": "https://www.youtube.com/watch?v=n-LJGdA6Wig",
-      "label": "Loveちゃん 牡牛座（12星座・10/24-26）ラッキーフード🍜"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "caution",
-      "value": "親しい間柄でも礼儀を忘れず、図々しい態度を取らないよう注意が必要です。お酒の飲み過ぎやおっちょこちょいな行動にも気をつけましょう。",
-      "period_start": "2026-10-24",
-      "period_end": "2026-10-26",
-      "url": "https://www.youtube.com/watch?v=n-LJGdA6Wig",
-      "label": "Loveちゃん 牡牛座（12星座・10/24-26）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "慣れから図々しくならないよう注意が必要な時期です。親しい間柄でも礼儀や尊重する気持ちを忘れず行動しましょう。家の中の水回りを綺麗に掃除すると運気が高まります。",
-      "period_start": "2026-10-24",
-      "period_end": "2026-10-26",
-      "url": "https://www.youtube.com/watch?v=n-LJGdA6Wig",
-      "label": "Loveちゃん 牡牛座（12星座・10/24-26）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "action",
-      "value": "自宅の水回りを綺麗に掃除することが効果的です。丁寧に清掃することで運気が高まります。",
-      "period_start": "2026-10-24",
-      "period_end": "2026-10-26",
-      "url": "https://www.youtube.com/watch?v=n-LJGdA6Wig",
-      "label": "Loveちゃん 牡牛座（12星座・10/24-26）開運アクション✨"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "food",
-      "value": "牡牛座のラッキーフードは杏仁豆腐です。困難を打破してまっすぐにチャレンジしていきたいこの運気の中で、ぜひ取り入れてみてください。",
-      "period_start": "2026-10-26",
-      "period_end": "2026-10-26",
-      "url": "https://www.youtube.com/watch?v=3QTJIkeYEdI",
-      "label": "Loveちゃん 牡牛座（12星座・10/26）ラッキーフード🍜"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "caution",
-      "value": "周囲と言い合いや口論になったり、人を傷つける言葉を口にしてしまったりしないように気をつけて過ごしましょう。",
-      "period_start": "2026-10-26",
-      "period_end": "2026-10-26",
-      "url": "https://www.youtube.com/watch?v=3QTJIkeYEdI",
-      "label": "Loveちゃん 牡牛座（12星座・10/26）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "すっきりさせたいことが出てきたり、壁をぶち破って困難な状況を突破できる時です。型破りさが売りになることもあります。理想と現実の間で葛藤が生じても、まっすぐな思いで挑戦していくチャレンジ精神が強運を引き寄せます。",
-      "period_start": "2026-10-26",
-      "period_end": "2026-10-26",
-      "url": "https://www.youtube.com/watch?v=3QTJIkeYEdI",
-      "label": "Loveちゃん 牡牛座（12星座・10/26）運気テーマ🌅"
-    },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "color",
-      "value": "ハッピーな気分をさらに倍増させるPOWER UPのカラーはターコイズです。また、気分を落ち着けたい時のCOOL DOWNのカラーはネイビーとなっています。",
-      "period_start": "2026-10-19",
-      "period_end": "2026-10-19",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-19/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/19）ラッキーカラー🎨"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "caution",
-      "value": "思わぬラッキーを得やすい時ですが、すぐに自分のやりたいことに突っ走るとハプニングやトラブルに繋がりやすいです。周囲にやることはないか確認するなど状況確認を慎重に行いましょう。",
-      "period_start": "2026-10-19",
-      "period_end": "2026-10-19",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-19/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/19）注意⚠"
+      "value": "運勢をコントロールするカラーとして、ハッピーな気分を倍増させるPOWER UPの「金色」と、気分を落ち着けたいCOOL DOWNの「青」があります。",
+      "period_start": "2026-10-26",
+      "period_end": "2026-11-01",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/26-11/1）ラッキーカラー🎨"
     },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "theme",
-      "value": "改良願望とラッキーへの対応がテーマです。タスクや方針に対して改良願望が強まり仕事が溜まりやすくなります。どこまでやるかなど、一回一回立ち止まり自分自身と確認していくのが良さそうです。",
-      "period_start": "2026-10-19",
-      "period_end": "2026-10-19",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-19/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/19）運気テーマ🌅"
+      "value": "周りから色々な役柄が与えられていく幸運期です。ちょっとした不安や違和感は脇に置いて全速力で最後までやり切りましょう。恋愛や人間関係では細かい約束を守り続けることで信用を得られます。",
+      "period_start": "2026-10-26",
+      "period_end": "2026-11-01",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/26-11/1）運気テーマ🌅"
     }
   ]
 }
