@@ -1,7 +1,7 @@
 {
-  "fetched_at": "2026-10-27",
+  "fetched_at": "2026-10-28",
   "notes": [
-    "Loveちゃん: 取得失敗（FetchError）"
+    "Loveちゃん: 取得失敗（HTTPError）"
   ],
   "items": [
     {
@@ -9,7 +9,7 @@
       "scope": "週間",
       "target": "牡牛座",
       "kind": "color",
-      "value": "運勢をコントロールするカラーとして、ハッピーな気分を倍増させるPOWER UPの「金色」と、気分を落ち着けたいCOOL DOWNの「青」があります。",
+      "value": "気分を落ち着かせたいなら",
       "period_start": "2026-10-26",
       "period_end": "2026-11-01",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
@@ -20,7 +20,7 @@
       "scope": "週間",
       "target": "牡牛座",
       "kind": "theme",
-      "value": "周りから色々な役柄が与えられていく幸運期です。ちょっとした不安や違和感は脇に置いて全速力で最後までやり切りましょう。恋愛や人間関係では細かい約束を守り続けることで信用を得られます。",
+      "value": "今週は「周りから色々な役柄が与えられていく」幸運期。違和感や心配は脇に置き、全速力で走り抜ける気合いで、与えられたプロジェクトを最後までやり切ることが重要です。恋愛や人間関係では、細かい約束を守り信用を得ましょう。",
       "period_start": "2026-10-26",
       "period_end": "2026-11-01",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
