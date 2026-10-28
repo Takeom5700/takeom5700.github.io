@@ -1,9 +1,53 @@
 {
-  "fetched_at": "2026-10-28",
+  "fetched_at": "2026-10-29",
   "notes": [
-    "Loveちゃん: 取得失敗（HTTPError）"
+    "しいたけ: 解析できず"
   ],
   "items": [
+    {
+      "source": "Loveちゃん",
+      "scope": "全体",
+      "target": "全体",
+      "kind": "caution",
+      "value": "10月28日、29日は地震や噴火に注意が必要です。衝撃的な出来事が起こりやすい時期でもあります。千葉県で震度5弱の地震にも注意してください。",
+      "period_start": "2026-10-28",
+      "period_end": "2026-10-28",
+      "url": "https://www.youtube.com/watch?v=T9yI4K8fOeI",
+      "label": "Loveちゃん 全体（全体・10/28）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "全体",
+      "kind": "theme",
+      "value": "10月29日〜31日は月の引力や魔力の影響が強く現れ、感情の動揺や体調の変化、突発的な事件・事故やニュースが起きやすい時期です。交通機関の遅延等に注意し、穏やかに過ごしましょう。",
+      "period_start": "2026-10-29",
+      "period_end": "2026-10-31",
+      "url": "https://www.youtube.com/watch?v=dc4a3TJQCWM",
+      "label": "Loveちゃん 全体（十二支・10/29-31）運気テーマ🌅"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "color",
+      "value": "ラッキーカラーはオレンジです。",
+      "period_start": "2026-10-29",
+      "period_end": "2026-10-31",
+      "url": "https://www.youtube.com/watch?v=dc4a3TJQCWM",
+      "label": "Loveちゃん 寅年（十二支・10/29-31）ラッキーカラー🎨"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "theme",
+      "value": "幸運やツキを感じやすく、驚くほどの強運に恵まれる時期です。強靭なメンタルを発揮して周囲を圧倒できる一方、精神的な成長や有事に備える心構えを持つことが大切になります。",
+      "period_start": "2026-10-29",
+      "period_end": "2026-10-31",
+      "url": "https://www.youtube.com/watch?v=dc4a3TJQCWM",
+      "label": "Loveちゃん 寅年（十二支・10/29-31）運気テーマ🌅"
+    },
     {
       "source": "しいたけ",
       "scope": "週間",
