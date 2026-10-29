@@ -1,20 +1,9 @@
 {
-  "fetched_at": "2026-10-29",
+  "fetched_at": "2026-10-30",
   "notes": [
-    "しいたけ: 解析できず"
+    "Loveちゃん: 取得失敗（FetchError）"
   ],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "全体",
-      "target": "全体",
-      "kind": "caution",
-      "value": "10月28日、29日は地震や噴火に注意が必要です。衝撃的な出来事が起こりやすい時期でもあります。千葉県で震度5弱の地震にも注意してください。",
-      "period_start": "2026-10-28",
-      "period_end": "2026-10-28",
-      "url": "https://www.youtube.com/watch?v=T9yI4K8fOeI",
-      "label": "Loveちゃん 全体（全体・10/28）注意⚠"
-    },
     {
       "source": "Loveちゃん",
       "scope": "十二支",
@@ -47,6 +36,39 @@
       "period_end": "2026-10-31",
       "url": "https://www.youtube.com/watch?v=dc4a3TJQCWM",
       "label": "Loveちゃん 寅年（十二支・10/29-31）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "color",
+      "value": "気分を落ち着けたい時のクールダウンカラーは青です。このカラーをプラスして、今週の運勢をコントロールしていきましょう。",
+      "period_start": "2026-10-26",
+      "period_end": "2026-10-26",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/26）ラッキーカラー🎨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "周りから色々な役柄が与えられていく幸運期を迎えています。「こんなの着たことない」と思っても冷静になりすぎず、全速力で走り抜ける気合いでやっていくのが良さそうです。",
+      "period_start": "2026-10-26",
+      "period_end": "2026-10-26",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/26）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "action",
+      "value": "要請されて不安が出ても、ちょっとした違和感や心配は脇に置き、とりあえず最後までやり切りましょう。恋愛面や人間関係では細かい約束を守り続けることで信用を得られます。",
+      "period_start": "2026-10-26",
+      "period_end": "2026-10-26",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/26）開運アクション✨"
     },
     {
       "source": "しいたけ",
