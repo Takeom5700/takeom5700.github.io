@@ -1,43 +1,10 @@
 {
-  "fetched_at": "2026-10-31",
+  "fetched_at": "2026-11-01",
   "notes": [
-    "YwNQj7SjwZI: 解析できず",
-    "aYQ5jB9ZgF8: 解析できず"
+    "dMZoLcA17Co: 解析できず",
+    "B_4c6OkISC0: 解析できず"
   ],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "全体",
-      "kind": "theme",
-      "value": "10月29日〜31日は月の引力や魔力の影響が強く現れ、感情の動揺や体調の変化、突発的な事件・事故やニュースが起きやすい時期です。交通機関の遅延等に注意し、穏やかに過ごしましょう。",
-      "period_start": "2026-10-29",
-      "period_end": "2026-10-31",
-      "url": "https://www.youtube.com/watch?v=dc4a3TJQCWM",
-      "label": "Loveちゃん 全体（十二支・10/29-31）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "color",
-      "value": "ラッキーカラーはオレンジです。",
-      "period_start": "2026-10-29",
-      "period_end": "2026-10-31",
-      "url": "https://www.youtube.com/watch?v=dc4a3TJQCWM",
-      "label": "Loveちゃん 寅年（十二支・10/29-31）ラッキーカラー🎨"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "theme",
-      "value": "幸運やツキを感じやすく、驚くほどの強運に恵まれる時期です。強靭なメンタルを発揮して周囲を圧倒できる一方、精神的な成長や有事に備える心構えを持つことが大切になります。",
-      "period_start": "2026-10-29",
-      "period_end": "2026-10-31",
-      "url": "https://www.youtube.com/watch?v=dc4a3TJQCWM",
-      "label": "Loveちゃん 寅年（十二支・10/29-31）運気テーマ🌅"
-    },
     {
       "source": "Loveちゃん",
       "scope": "十二支",
@@ -131,7 +98,7 @@
       "scope": "週間",
       "target": "牡牛座",
       "kind": "color",
-      "value": "金色",
+      "value": "ハッピーな気分をさらに倍増させるPOWER UPのカラーは金色。気分を落ち着けたいときのCOOL DOWNのカラーは青。",
       "period_start": "2026-10-26",
       "period_end": "2026-11-01",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
@@ -142,11 +109,22 @@
       "scope": "週間",
       "target": "牡牛座",
       "kind": "theme",
-      "value": "幸運期に入り、周囲から様々な役割を与えられる時期。違和感や心配は脇に置き、全速力でプロジェクトをやり切る気合いが重要です。恋愛や人間関係では、細かい約束を守ることが信頼を得る鍵となります。",
+      "value": "周りから色々な役柄が与えられていく幸運期。違和感や心配は少し脇に置いておき、全速力で走り抜け、プロジェクトをとりあえず最後までやり切ってしまう感覚が重要になる。",
       "period_start": "2026-10-26",
       "period_end": "2026-11-01",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
       "label": "しいたけ 牡牛座（週間・10/26-11/1）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "action",
+      "value": "恋愛面や人間関係では細かい約束を守ることがとても大事。忘れずに実行し続けることによって、相手からビックリされたり、信用を得ていくことができる。",
+      "period_start": "2026-10-26",
+      "period_end": "2026-11-01",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
+      "label": "しいたけ 牡牛座（週間・10/26-11/1）開運アクション✨"
     }
   ]
 }
