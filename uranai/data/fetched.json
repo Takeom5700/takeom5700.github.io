@@ -1,129 +1,41 @@
 {
-  "fetched_at": "2026-11-02",
+  "fetched_at": "2026-11-03",
   "notes": [
-    "Y1jNVNQW3DE: 解析できず"
+    "Loveちゃん: 取得失敗（FetchError）"
   ],
   "items": [
     {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "五黄土星",
-      "kind": "caution",
-      "value": "健康面に注意が必要です。気温差で体調を崩さないよう、睡眠をしっかり取り、薄着しすぎないようにしましょう。",
-      "period_start": "2026-10-31",
-      "period_end": "2026-11-02",
-      "url": "https://www.youtube.com/watch?v=B_4c6OkISC0",
-      "label": "Loveちゃん 五黄土星（十二支・10/31-11/2）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "五黄土星",
-      "kind": "theme",
-      "value": "多くのことを同時にこなし、非常に忙しく充実した時を過ごすかもしれません。もう一人自分が欲しいと感じるほどです。",
-      "period_start": "2026-10-31",
-      "period_end": "2026-11-02",
-      "url": "https://www.youtube.com/watch?v=B_4c6OkISC0",
-      "label": "Loveちゃん 五黄土星（十二支・10/31-11/2）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "五黄土星",
-      "kind": "action",
-      "value": "頭の整理やスマホのデータ整理、人間関係や家の片付けなど、大掃除をすると運気が高まります。忘れられない思いも捨て去ると良いでしょう。",
-      "period_start": "2026-10-31",
-      "period_end": "2026-11-02",
-      "url": "https://www.youtube.com/watch?v=B_4c6OkISC0",
-      "label": "Loveちゃん 五黄土星（十二支・10/31-11/2）開運アクション✨"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "全体",
-      "kind": "theme",
-      "value": "10月31日、ハロウィンの日は最高に運気の良い日になるでしょう。",
-      "period_start": "2026-10-31",
-      "period_end": "2026-11-02",
-      "url": "https://www.youtube.com/watch?v=B_4c6OkISC0",
-      "label": "Loveちゃん 全体（十二支・10/31-11/2）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "color",
-      "value": "茶色",
-      "period_start": "2026-10-31",
-      "period_end": "2026-11-02",
-      "url": "https://www.youtube.com/watch?v=B_4c6OkISC0",
-      "label": "Loveちゃん 寅年（十二支・10/31-11/2）ラッキーカラー🎨"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "caution",
-      "value": "努力が必ずしも報われるとは限らず、悔しさや悲しさを感じることもあるかもしれません。",
-      "period_start": "2026-10-31",
-      "period_end": "2026-11-02",
-      "url": "https://www.youtube.com/watch?v=B_4c6OkISC0",
-      "label": "Loveちゃん 寅年（十二支・10/31-11/2）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "theme",
-      "value": "一生懸命さが伝わる時です。努力が報われないこともありますが、やりきった達成感を感じられるでしょう。",
-      "period_start": "2026-10-31",
-      "period_end": "2026-11-02",
-      "url": "https://www.youtube.com/watch?v=B_4c6OkISC0",
-      "label": "Loveちゃん 寅年（十二支・10/31-11/2）運気テーマ🌅"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "action",
-      "value": "週明けは忙しいかもしれませんが、やる気に満ちて良い仕事ができ、頑張ろうと思えるでしょう。親孝行をするのにも良い時です。",
-      "period_start": "2026-10-31",
-      "period_end": "2026-11-02",
-      "url": "https://www.youtube.com/watch?v=B_4c6OkISC0",
-      "label": "Loveちゃん 寅年（十二支・10/31-11/2）開運アクション✨"
-    },
-    {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "color",
-      "value": "気分を落ち着けたいときのCOOL DOWNのカラーは青です。このカラーをプラスして、今週の運勢をコントロールしましょう。",
-      "period_start": "2026-10-26",
-      "period_end": "2026-10-26",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/26）ラッキーカラー🎨"
+      "value": "気分を落ち着けたいときにプラスして今週の運勢をコントロールするCOOL DOWNカラーはベージュです。",
+      "period_start": "2026-11-02",
+      "period_end": "2026-11-02",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/2）ラッキーカラー🎨"
     },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "theme",
-      "value": "今の牡牛座は周りから色々な役柄を与えられる幸運期を迎えています。冷静になりすぎず、「今はもう、全速力で走り抜ける！」という気合いでやっていくのが良さそうです。",
-      "period_start": "2026-10-26",
-      "period_end": "2026-10-26",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/26）運気テーマ🌅"
+      "value": "未来への投資や開拓のためにエネルギーを割く必要があり、日々のことに80％の力しか入れられずイライラしがちです。全部を理想通りにしようとせず、「まぁ、もういいや！」と手を抜くことも大事になります。",
+      "period_start": "2026-11-02",
+      "period_end": "2026-11-02",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/2）運気テーマ🌅"
     },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "action",
-      "value": "違和感や心配は脇に置いて、とりあえず最後までやり切ってしまいましょう。また、恋愛面や人間関係では細かい約束を忘れずに守り続けることがとても大切になります。",
-      "period_start": "2026-10-26",
-      "period_end": "2026-10-26",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-10-26/taurus/",
-      "label": "しいたけ 牡牛座（週間・10/26）開運アクション✨"
+      "value": "恋愛面や人間関係において相手の誤解や間違いを訂正する場面では、少し勇気を出して「ここ、細かいことかも知れませんが、誤解です」と伝えていくことが大切です。",
+      "period_start": "2026-11-02",
+      "period_end": "2026-11-02",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/2）開運アクション✨"
     }
   ]
 }
