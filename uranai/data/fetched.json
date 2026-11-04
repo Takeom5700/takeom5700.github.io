@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-03",
+  "fetched_at": "2026-11-04",
   "notes": [
     "Loveちゃん: 取得失敗（FetchError）"
   ],
@@ -8,34 +8,12 @@
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
-      "kind": "color",
-      "value": "気分を落ち着けたいときにプラスして今週の運勢をコントロールするCOOL DOWNカラーはベージュです。",
-      "period_start": "2026-11-02",
-      "period_end": "2026-11-02",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/2）ラッキーカラー🎨"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
       "kind": "theme",
-      "value": "未来への投資や開拓のためにエネルギーを割く必要があり、日々のことに80％の力しか入れられずイライラしがちです。全部を理想通りにしようとせず、「まぁ、もういいや！」と手を抜くことも大事になります。",
+      "value": "未来への投資や開拓にエネルギーを割くため、日々のやるべきことには80%の力しか入れられず、中途半端感やイライラを抱えやすい。いっぱいいっぱいでもやるべきことをこなすあなたはすごい。",
       "period_start": "2026-11-02",
-      "period_end": "2026-11-02",
+      "period_end": "2026-11-08",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/2）運気テーマ🌅"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "action",
-      "value": "恋愛面や人間関係において相手の誤解や間違いを訂正する場面では、少し勇気を出して「ここ、細かいことかも知れませんが、誤解です」と伝えていくことが大切です。",
-      "period_start": "2026-11-02",
-      "period_end": "2026-11-02",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/2）開運アクション✨"
+      "label": "しいたけ 牡牛座（週間・11/2-8）運気テーマ🌅"
     }
   ]
 }
