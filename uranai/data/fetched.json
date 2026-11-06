@@ -1,12 +1,42 @@
 {
-  "fetched_at": "2026-11-06",
+  "fetched_at": "2026-11-07",
   "notes": [
-    "記録済みID UCL6F7R0unHipZwsXJ3hVHzg が使えなくなっていたので取り直します",
-    "E9d3FHjPuXY: 解析できず",
-    "KKFTQlrZAxE: 解析できず",
-    "QtHLBYwU46w: 解析できず"
+    "Loveちゃん: 取得失敗（FetchError）"
   ],
   "items": [
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "color",
+      "value": "ハッピーな気分をさらに倍増させるPOWER UPカラーは「茶色」、気分を落ち着けたい時のCOOL DOWNカラーは「ベージュ」です。",
+      "period_start": "2026-11-02",
+      "period_end": "2026-11-02",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/2）ラッキーカラー🎨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "今週の牡牛座は未来への投資や開拓のエネルギーが強い時です。エネルギー配分の都合で日々のことに力が出し切れずイライラしがちですが、しっかり頑張れています。",
+      "period_start": "2026-11-02",
+      "period_end": "2026-11-02",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/2）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "action",
+      "value": "人間関係では誤解を訂正する勇気を持ちましょう。全てを理想通りにしようとせず、スルーしたり手を抜く工夫をして乗り切ることが大切です。",
+      "period_start": "2026-11-02",
+      "period_end": "2026-11-02",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/2）開運アクション✨"
+    },
     {
       "source": "しいたけ",
       "scope": "週間",
