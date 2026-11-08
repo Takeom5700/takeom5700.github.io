@@ -1,52 +1,52 @@
 {
-  "fetched_at": "2026-11-08",
+  "fetched_at": "2026-11-09",
   "notes": [
-    "Loveちゃん: 取得失敗（FetchError）"
+    "しいたけ: 解析できず"
   ],
   "items": [
     {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "color",
-      "value": "気分を落ち着けたい時にプラスして今週の運勢をコントロールするCOOL DOWNカラーはベージュです。",
-      "period_start": "2026-11-02",
-      "period_end": "2026-11-02",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/2）ラッキーカラー🎨"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "未来への投資や開拓のために日々のやるべきことに80％の力しか入れられずイライラ感を抱えやすいですが、いっぱいいっぱいになりながらもちゃんとやるべきことをやっていてすごいです。",
-      "period_start": "2026-11-02",
-      "period_end": "2026-11-02",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/2）運気テーマ🌅"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "action",
-      "value": "恋愛や人間関係で相手の誤解を勇気を出して訂正することや、全部を理想通りにしようとせず「まぁ、もういいや！」とスルーしたりしながら乗り切っていくことが大切になります。",
-      "period_start": "2026-11-02",
-      "period_end": "2026-11-02",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/2）開運アクション✨"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "未来への投資や開拓にエネルギーを割くため、日々のタスクに80%の力しか入れられず、中途半端感やイライラを抱えやすい週。完璧を目指さず、時には「まぁ、もういいや」と割り切る立ち回りが大切です。",
-      "period_start": "2026-11-02",
+      "source": "Loveちゃん",
+      "scope": "全体",
+      "target": "全体",
+      "kind": "caution",
+      "value": "地震や噴火、竜巻、大雨、土砂崩れ、地滑り、道路の陥没、津波などの自然災害に注意が必要な日です。海外で発生する場合もあります。",
+      "period_start": "2026-11-08",
       "period_end": "2026-11-08",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-02/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/2-8）運気テーマ🌅"
+      "url": "https://www.youtube.com/watch?v=eQf4gaXDJO8",
+      "label": "Loveちゃん 全体（全体・11/8）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "全体",
+      "kind": "theme",
+      "value": "11月9日は新月を迎え、新しいスタートを切るのに最適な時期です。新月のタイミングで願い事を書き出すことで運気が高まり、目標に向けて前向きに行動できます。",
+      "period_start": "2026-11-09",
+      "period_end": "2026-11-11",
+      "url": "https://www.youtube.com/watch?v=DF02liHJKQA",
+      "label": "Loveちゃん 全体（十二支・11/9-11）運気テーマ🌅"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "color",
+      "value": "黄色",
+      "period_start": "2026-11-09",
+      "period_end": "2026-11-11",
+      "url": "https://www.youtube.com/watch?v=DF02liHJKQA",
+      "label": "Loveちゃん 寅年（十二支・11/9-11）ラッキーカラー🎨"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "theme",
+      "value": "驚くような事実を知ったり好奇心がくすぐられたりと、大きなリアクションを取る場面がありそう。周囲の支えに気づく一方で、自分のペースを崩されないよう注意が必要です。",
+      "period_start": "2026-11-09",
+      "period_end": "2026-11-11",
+      "url": "https://www.youtube.com/watch?v=DF02liHJKQA",
+      "label": "Loveちゃん 寅年（十二支・11/9-11）運気テーマ🌅"
     }
   ]
 }
