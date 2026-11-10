@@ -1,20 +1,9 @@
 {
-  "fetched_at": "2026-11-09",
+  "fetched_at": "2026-11-10",
   "notes": [
-    "しいたけ: 解析できず"
+    "Loveちゃん: 取得失敗（FetchError）"
   ],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "全体",
-      "target": "全体",
-      "kind": "caution",
-      "value": "地震や噴火、竜巻、大雨、土砂崩れ、地滑り、道路の陥没、津波などの自然災害に注意が必要な日です。海外で発生する場合もあります。",
-      "period_start": "2026-11-08",
-      "period_end": "2026-11-08",
-      "url": "https://www.youtube.com/watch?v=eQf4gaXDJO8",
-      "label": "Loveちゃん 全体（全体・11/8）注意⚠"
-    },
     {
       "source": "Loveちゃん",
       "scope": "十二支",
@@ -47,6 +36,39 @@
       "period_end": "2026-11-11",
       "url": "https://www.youtube.com/watch?v=DF02liHJKQA",
       "label": "Loveちゃん 寅年（十二支・11/9-11）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "color",
+      "value": "気分を落ち着けたいときに取り入れ、今週の運勢をコントロールするCOOL DOWNカラーは白です。",
+      "period_start": "2026-11-09",
+      "period_end": "2026-11-15",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/9-15）ラッキーカラー🎨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "複数個のプロジェクトを抱え、自分なりに切り替えポイントを設定してコツコツと前に進めていく運勢です。少し忙しくなりそうですが、「考えているだけで幸せ」と感じられるものと縁ができ、触れることで癒されていきます。",
+      "period_start": "2026-11-09",
+      "period_end": "2026-11-15",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/9-15）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "action",
+      "value": "仕事面やプライベートで「これ以上考えてもわからんわ」というポイントに達したら、それ以上は考えずに放っておいて大丈夫です。時間をかけて、ひとつひとつやっていくようにしましょう。",
+      "period_start": "2026-11-09",
+      "period_end": "2026-11-15",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/9-15）開運アクション✨"
     }
   ]
 }
