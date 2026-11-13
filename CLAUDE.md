@@ -10,6 +10,7 @@ GitHub Pages で公開している個人サイト。公開元は **`main` ブラ
 | `ai-shinbun/` | AI新聞（GitHub Actions が毎日自動生成） |
 | `rivals/` | ライバルズ再現版（一人用カードゲーム・自己完結） |
 | `art/` | 映像作品《Passage》（一つの種から生成・自己完結） |
+| `music/` | 音楽教師としての自己紹介ページ（英語・応募書類からリンク。明るい背景のみ） |
 | `mistlands/`, `column-*.html` | 静的ページ |
 
 ---
