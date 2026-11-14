@@ -1,11 +1,42 @@
 {
-  "fetched_at": "2026-11-12",
+  "fetched_at": "2026-11-14",
   "notes": [
-    "xv7xyOBn3lw: 解析できず",
-    "KmQpqGrOSOw: 解析できず",
-    "しいたけ: 解析できず"
+    "Loveちゃん: 取得失敗（FetchError）"
   ],
   "items": [
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "color",
+      "value": "COOL DOWNの色は白です。気分を落ち着けたいなら、このカラーをプラスして運勢をコントロールしましょう。",
+      "period_start": "2026-11-09",
+      "period_end": "2026-11-09",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/9）ラッキーカラー🎨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "今週は複数のプロジェクトを抱える運勢。忙しくなりそうですが、切り替えポイントを設定しコツコツ前進させていきましょう。自分なりの小さな幸せを感じられるものと縁ができ、触れることで癒やされます。",
+      "period_start": "2026-11-09",
+      "period_end": "2026-11-09",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/9）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "action",
+      "value": "仕事や人間関係で「これ以上考えてもわからんわ」のポイントに達したら、それ以上は考えずに放っておいて大丈夫です。時間をかけて、ひとつひとつやっていきましょう。",
+      "period_start": "2026-11-09",
+      "period_end": "2026-11-09",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/9）開運アクション✨"
+    },
     {
       "source": "しいたけ",
       "scope": "週間",
