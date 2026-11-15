@@ -1,74 +1,42 @@
 {
-  "fetched_at": "2026-11-15",
+  "fetched_at": "2026-11-16",
   "notes": [
-    "Loveちゃん: 取得失敗（FetchError）"
+    "7crzbvbqgq0: 解析できず",
+    "しいたけ: 解析できず"
   ],
   "items": [
     {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "全体",
+      "kind": "caution",
+      "value": "油断できない衝撃的なニュースや予想外の展開が起こりやすい時期です。食品関連のトラブルや自主回収、交通機関の乱れや事故、海外情勢の動きに注意しましょう。",
+      "period_start": "2026-11-16",
+      "period_end": "2026-11-18",
+      "url": "https://www.youtube.com/watch?v=Vr15YTDpxPc",
+      "label": "Loveちゃん 全体（十二支・11/16-18）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
       "kind": "color",
-      "value": "気分を落ち着けたいならCOOL DOWNカラーは白です。このカラーをプラスして今週の運勢をコントロールしましょう。",
-      "period_start": "2026-11-09",
-      "period_end": "2026-11-09",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/9）ラッキーカラー🎨"
+      "value": "寅年の方のラッキーカラーはゴールドです。ゴールドのものを身につけることで、さらに運気を高めることができます。",
+      "period_start": "2026-11-16",
+      "period_end": "2026-11-18",
+      "url": "https://www.youtube.com/watch?v=Vr15YTDpxPc",
+      "label": "Loveちゃん 寅年（十二支・11/16-18）ラッキーカラー🎨"
     },
     {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
       "kind": "theme",
-      "value": "今週は複数個のプロジェクトを抱える運勢です。切り替えポイントを設定してコツコツ前に進めていく必要がありそうですが、「自分なりの、小さな幸せの感覚」に助けられ、そのことに触れることで癒されていきそうです。",
-      "period_start": "2026-11-09",
-      "period_end": "2026-11-09",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/9）運気テーマ🌅"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "action",
-      "value": "仕事やプライベートで「これ以上考えてもわからんわ」のポイントに達したら、それ以上は考えずに放っておいて大丈夫です。時間をかけて、ひとつひとつやっていくしかない時です。",
-      "period_start": "2026-11-09",
-      "period_end": "2026-11-09",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/9）開運アクション✨"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "color",
-      "value": "気分を落ち着けたいときに取り入れ、今週の運勢をコントロールするCOOL DOWNカラーは白です。",
-      "period_start": "2026-11-09",
-      "period_end": "2026-11-15",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/9-15）ラッキーカラー🎨"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "複数個のプロジェクトを抱え、自分なりに切り替えポイントを設定してコツコツと前に進めていく運勢です。少し忙しくなりそうですが、「考えているだけで幸せ」と感じられるものと縁ができ、触れることで癒されていきます。",
-      "period_start": "2026-11-09",
-      "period_end": "2026-11-15",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/9-15）運気テーマ🌅"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "action",
-      "value": "仕事面やプライベートで「これ以上考えてもわからんわ」というポイントに達したら、それ以上は考えずに放っておいて大丈夫です。時間をかけて、ひとつひとつやっていくようにしましょう。",
-      "period_start": "2026-11-09",
-      "period_end": "2026-11-15",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-09/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/9-15）開運アクション✨"
+      "value": "落ち込んでいた状態から回復し、これまでの努力が報われてモチベーションが戻る時です。アクセサリーやパン作りなどのものづくりに向いており、自分らしく輝けます。",
+      "period_start": "2026-11-16",
+      "period_end": "2026-11-18",
+      "url": "https://www.youtube.com/watch?v=Vr15YTDpxPc",
+      "label": "Loveちゃん 寅年（十二支・11/16-18）運気テーマ🌅"
     }
   ]
 }
