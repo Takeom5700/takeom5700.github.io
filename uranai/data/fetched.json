@@ -1,8 +1,9 @@
 {
-  "fetched_at": "2026-11-17",
+  "fetched_at": "2026-11-18",
   "notes": [
     "Wf9vKZcHbWU: 解析できず",
-    "Vr15YTDpxPc: 解析できず"
+    "rrDf3S5Jbds: 解析できず",
+    "しいたけ: 解析できず"
   ],
   "items": [
     {
@@ -39,48 +40,37 @@
       "label": "Loveちゃん 寅年（十二支・11/16-18）運気テーマ🌅"
     },
     {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "color",
-      "value": "気分を落ち着けたい時に取り入れて今週の運勢をコントロールするCOOL DOWNカラーは黒です。",
-      "period_start": "2026-11-16",
-      "period_end": "2026-11-16",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-16/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/16）ラッキーカラー🎨"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "全体",
       "kind": "caution",
-      "value": "自分のテリトリーにあるものがきちんと管理されていない姿や、「うわ、汚い！」と感じてしまうものを見ると、テンションが下がってしまいそうなので注意が必要です。",
-      "period_start": "2026-11-16",
-      "period_end": "2026-11-16",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-16/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/16）注意⚠"
+      "value": "推しの卒業や移籍など予期せぬ出来事に注意が必要な時です。隠し事や不正が発覚しやすい傾向もあります。また、足の怪我や水のトラブル、お酒の飲み過ぎ・飲酒運転にも気をつけましょう。",
+      "period_start": "2026-11-18",
+      "period_end": "2026-11-20",
+      "url": "https://www.youtube.com/watch?v=07gaoMBZTbA",
+      "label": "Loveちゃん 全体（12星座・11/18-20）注意⚠"
     },
     {
-      "source": "しいたけ",
-      "scope": "週間",
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "牡牛座",
+      "kind": "food",
+      "value": "シシャモ",
+      "period_start": "2026-11-18",
+      "period_end": "2026-11-20",
+      "url": "https://www.youtube.com/watch?v=07gaoMBZTbA",
+      "label": "Loveちゃん 牡牛座（12星座・11/18-20）ラッキーフード🍜"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
       "target": "牡牛座",
       "kind": "theme",
-      "value": "今週は緊張感をキープしたまま、面倒くさい案件や終わらせるべきことに取り組みたい時です。疲れも出やすい時期ですが、できる限りやり切ってみましょう。",
-      "period_start": "2026-11-16",
-      "period_end": "2026-11-16",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-16/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/16）運気テーマ🌅"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "action",
-      "value": "自分の中で「これは美しい」と思えるものを常に持ち歩いたり、画像フォルダの中に入れておくのがお勧めです。美しいものに接することで回復していくことができます。",
-      "period_start": "2026-11-16",
-      "period_end": "2026-11-16",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-16/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/16）開運アクション✨"
+      "value": "自分の番が来たと感じられる時。不調だった人は急に運気が上がり幸せを感じられ、順調だった人はトラブルに注意が必要です。問題解決や断捨離を行い、次のステップへ進む準備をしましょう。",
+      "period_start": "2026-11-18",
+      "period_end": "2026-11-20",
+      "url": "https://www.youtube.com/watch?v=07gaoMBZTbA",
+      "label": "Loveちゃん 牡牛座（12星座・11/18-20）運気テーマ🌅"
     }
   ]
 }
