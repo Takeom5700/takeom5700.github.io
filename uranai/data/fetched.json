@@ -1,9 +1,7 @@
 {
-  "fetched_at": "2026-11-19",
+  "fetched_at": "2026-11-20",
   "notes": [
     "v2NQBEGxfuM: 解析できず",
-    "07gaoMBZTbA: 解析できず",
-    "Wf9vKZcHbWU: 解析できず",
     "しいたけ: 解析できず"
   ],
   "items": [
@@ -39,6 +37,39 @@
       "period_end": "2026-11-20",
       "url": "https://www.youtube.com/watch?v=07gaoMBZTbA",
       "label": "Loveちゃん 牡牛座（12星座・11/18-20）運気テーマ🌅"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "全体",
+      "kind": "caution",
+      "value": "突発的な出来事やトラブルが起こりやすい時期。急な出来事に驚いたり準備不足を感じることがあるため、事故や火の元、ネット上の発言等に注意して冷静に対処することが大切。",
+      "period_start": "2026-11-20",
+      "period_end": "2026-11-22",
+      "url": "https://www.youtube.com/watch?v=pP5KjJ0H2vM",
+      "label": "Loveちゃん 全体（12星座・11/20-22）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "牡牛座",
+      "kind": "food",
+      "value": "サバの味噌煮",
+      "period_start": "2026-11-20",
+      "period_end": "2026-11-22",
+      "url": "https://www.youtube.com/watch?v=pP5KjJ0H2vM",
+      "label": "Loveちゃん 牡牛座（12星座・11/20-22）ラッキーフード🍜"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "12星座",
+      "target": "牡牛座",
+      "kind": "action",
+      "value": "足腰を鍛えることが大切な時期で、筋トレやウォーキングがおすすめ。周りとの支え合いや繋がりを大切にしつつ、依存しすぎて共倒れにならないよう適度な距離感を意識すると良い。",
+      "period_start": "2026-11-20",
+      "period_end": "2026-11-22",
+      "url": "https://www.youtube.com/watch?v=pP5KjJ0H2vM",
+      "label": "Loveちゃん 牡牛座（12星座・11/20-22）開運アクション✨"
     }
   ]
 }
