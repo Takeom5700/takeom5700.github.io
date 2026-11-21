@@ -1,43 +1,9 @@
 {
-  "fetched_at": "2026-11-20",
+  "fetched_at": "2026-11-21",
   "notes": [
-    "v2NQBEGxfuM: 解析できず",
-    "しいたけ: 解析できず"
+    "pP5KjJ0H2vM: 解析できず"
   ],
   "items": [
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "全体",
-      "kind": "caution",
-      "value": "推しの卒業や移籍など予期せぬ出来事に注意が必要な時です。隠し事や不正が発覚しやすい傾向もあります。また、足の怪我や水のトラブル、お酒の飲み過ぎ・飲酒運転にも気をつけましょう。",
-      "period_start": "2026-11-18",
-      "period_end": "2026-11-20",
-      "url": "https://www.youtube.com/watch?v=07gaoMBZTbA",
-      "label": "Loveちゃん 全体（12星座・11/18-20）注意⚠"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "food",
-      "value": "シシャモ",
-      "period_start": "2026-11-18",
-      "period_end": "2026-11-20",
-      "url": "https://www.youtube.com/watch?v=07gaoMBZTbA",
-      "label": "Loveちゃん 牡牛座（12星座・11/18-20）ラッキーフード🍜"
-    },
-    {
-      "source": "Loveちゃん",
-      "scope": "12星座",
-      "target": "牡牛座",
-      "kind": "theme",
-      "value": "自分の番が来たと感じられる時。不調だった人は急に運気が上がり幸せを感じられ、順調だった人はトラブルに注意が必要です。問題解決や断捨離を行い、次のステップへ進む準備をしましょう。",
-      "period_start": "2026-11-18",
-      "period_end": "2026-11-20",
-      "url": "https://www.youtube.com/watch?v=07gaoMBZTbA",
-      "label": "Loveちゃん 牡牛座（12星座・11/18-20）運気テーマ🌅"
-    },
     {
       "source": "Loveちゃん",
       "scope": "12星座",
@@ -70,6 +36,72 @@
       "period_end": "2026-11-22",
       "url": "https://www.youtube.com/watch?v=pP5KjJ0H2vM",
       "label": "Loveちゃん 牡牛座（12星座・11/20-22）開運アクション✨"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "全体",
+      "kind": "caution",
+      "value": "海外のニュースに注目が集まる時期。港や空港でのトラブル・事故、新幹線など長距離移動の遅れや事故に注意。また不審者や刃物にも気をつけましょう。",
+      "period_start": "2026-11-21",
+      "period_end": "2026-11-23",
+      "url": "https://www.youtube.com/watch?v=Hb0-ei3yyEU",
+      "label": "Loveちゃん 全体（十二支・11/21-23）注意⚠"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "color",
+      "value": "11月21日〜23日の寅年の方のラッキーカラーはピンクです。",
+      "period_start": "2026-11-21",
+      "period_end": "2026-11-23",
+      "url": "https://www.youtube.com/watch?v=Hb0-ei3yyEU",
+      "label": "Loveちゃん 寅年（十二支・11/21-23）ラッキーカラー🎨"
+    },
+    {
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
+      "kind": "caution",
+      "value": "気の利いたことを言おうとして嫉妬や羨ましさから嫌味っぽくなったり変ないじりをしてしまいがち。無意識に出やすいので注意し心から応援する姿勢を持とう。",
+      "period_start": "2026-11-21",
+      "period_end": "2026-11-23",
+      "url": "https://www.youtube.com/watch?v=Hb0-ei3yyEU",
+      "label": "Loveちゃん 寅年（十二支・11/21-23）注意⚠"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "color",
+      "value": "ハッピーな気分をさらに倍増させるPOWER UPのカラーはターコイズ、気分を落ち着けたい時のCOOL DOWNのカラーは黒です。",
+      "period_start": "2026-11-16",
+      "period_end": "2026-11-16",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-16/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/16）ラッキーカラー🎨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "緊張感をキープしたままやるべきタスクを終わらせようと奮闘する時期です。美しくないものにストレスを感じやすいため、美しいものに接して回復することが大切です。",
+      "period_start": "2026-11-16",
+      "period_end": "2026-11-16",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-16/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/16）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "action",
+      "value": "自分の中で「これは美しい」と思えるものを常に持ち歩いたり画像フォルダの中に入れておき、美しいものや姿勢に接して自分自身を回復させていくのがおすすめです。",
+      "period_start": "2026-11-16",
+      "period_end": "2026-11-16",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-16/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/16）開運アクション✨"
     }
   ]
 }
