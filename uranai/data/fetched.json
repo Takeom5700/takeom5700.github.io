@@ -1,7 +1,9 @@
 {
-  "fetched_at": "2026-11-21",
+  "fetched_at": "2026-11-22",
   "notes": [
-    "pP5KjJ0H2vM: 解析できず"
+    "s7LTbrD_vDg: 解析できず",
+    "6sDUEoRh_8o: 解析できず",
+    "しいたけ: 解析できず"
   ],
   "items": [
     {
@@ -42,7 +44,7 @@
       "scope": "十二支",
       "target": "全体",
       "kind": "caution",
-      "value": "海外のニュースに注目が集まる時期。港や空港でのトラブル・事故、新幹線など長距離移動の遅れや事故に注意。また不審者や刃物にも気をつけましょう。",
+      "value": "海外のニュースや港・空港、新幹線など長距離移動でのトラブルや事故に注意。不審者や刃物にも気を付け、理不尽なことがあっても運が溜まったと前向きに捉えることが大切。",
       "period_start": "2026-11-21",
       "period_end": "2026-11-23",
       "url": "https://www.youtube.com/watch?v=Hb0-ei3yyEU",
@@ -53,7 +55,7 @@
       "scope": "十二支",
       "target": "寅年",
       "kind": "color",
-      "value": "11月21日〜23日の寅年の方のラッキーカラーはピンクです。",
+      "value": "ピンク",
       "period_start": "2026-11-21",
       "period_end": "2026-11-23",
       "url": "https://www.youtube.com/watch?v=Hb0-ei3yyEU",
@@ -71,37 +73,15 @@
       "label": "Loveちゃん 寅年（十二支・11/21-23）注意⚠"
     },
     {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "color",
-      "value": "ハッピーな気分をさらに倍増させるPOWER UPのカラーはターコイズ、気分を落ち着けたい時のCOOL DOWNのカラーは黒です。",
-      "period_start": "2026-11-16",
-      "period_end": "2026-11-16",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-16/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/16）ラッキーカラー🎨"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
+      "source": "Loveちゃん",
+      "scope": "十二支",
+      "target": "寅年",
       "kind": "theme",
-      "value": "緊張感をキープしたままやるべきタスクを終わらせようと奮闘する時期です。美しくないものにストレスを感じやすいため、美しいものに接して回復することが大切です。",
-      "period_start": "2026-11-16",
-      "period_end": "2026-11-16",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-16/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/16）運気テーマ🌅"
-    },
-    {
-      "source": "しいたけ",
-      "scope": "週間",
-      "target": "牡牛座",
-      "kind": "action",
-      "value": "自分の中で「これは美しい」と思えるものを常に持ち歩いたり画像フォルダの中に入れておき、美しいものや姿勢に接して自分自身を回復させていくのがおすすめです。",
-      "period_start": "2026-11-16",
-      "period_end": "2026-11-16",
-      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-16/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/16）開運アクション✨"
+      "value": "出会い運やパートナー運が高まる時期。羨ましさや嫉妬から嫌味を言わないよう気を付け、心の底から応援する姿勢や親しみやすさを持って接することが運気を開く。",
+      "period_start": "2026-11-21",
+      "period_end": "2026-11-23",
+      "url": "https://www.youtube.com/watch?v=Hb0-ei3yyEU",
+      "label": "Loveちゃん 寅年（十二支・11/21-23）運気テーマ🌅"
     }
   ]
 }
