@@ -1,9 +1,8 @@
 {
-  "fetched_at": "2026-11-24",
+  "fetched_at": "2026-11-25",
   "notes": [
-    "Jx8hdytY-h4: 解析できず",
-    "18ZNdqCq6Y0: 解析できず",
-    "しいたけ: 解析できず"
+    "0-fxaoBN4hI: 解析できず",
+    "hjAwJ4zeWGs: 解析できず"
   ],
   "items": [
     {
@@ -38,6 +37,39 @@
       "period_end": "2026-11-25",
       "url": "https://www.youtube.com/watch?v=EU7w1q4OhZ4",
       "label": "Loveちゃん 寅年（十二支・11/23-25）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "color",
+      "value": "気分を落ち着けたい時におすすめの今週のCOOL DOWNカラーは森の色です。",
+      "period_start": "2026-11-23",
+      "period_end": "2026-11-23",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-23/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/23）ラッキーカラー🎨"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "theme",
+      "value": "今週は自分が立てた計画やペースが周囲から乱されやすい運気です。心の中で自分にナレーションをつける「演技指導」をしてマイルドに対応しましょう。",
+      "period_start": "2026-11-23",
+      "period_end": "2026-11-23",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-23/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/23）運気テーマ🌅"
+    },
+    {
+      "source": "しいたけ",
+      "scope": "週間",
+      "target": "牡牛座",
+      "kind": "action",
+      "value": "疲れが出やすく「お布団から離れたくない」と感じる時ですが、一歩を踏み出し、対人面では折れてあげる素敵な大人としての意識を持つのがお勧めです。",
+      "period_start": "2026-11-23",
+      "period_end": "2026-11-23",
+      "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-23/taurus/",
+      "label": "しいたけ 牡牛座（週間・11/23）開運アクション✨"
     }
   ]
 }
