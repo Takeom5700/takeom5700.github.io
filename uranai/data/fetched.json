@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-25",
+  "fetched_at": "2026-11-26",
   "notes": [
     "0-fxaoBN4hI: 解析できず",
     "hjAwJ4zeWGs: 解析できず"
@@ -7,69 +7,69 @@
   "items": [
     {
       "source": "Loveちゃん",
-      "scope": "十二支",
+      "scope": "12星座",
       "target": "全体",
       "kind": "caution",
-      "value": "11月24日の満月前後は頭痛やめまいなどの急な体調変化が起きやすく、詐欺や不審者、水トラブルにも注意が必要です。",
-      "period_start": "2026-11-23",
-      "period_end": "2026-11-25",
-      "url": "https://www.youtube.com/watch?v=EU7w1q4OhZ4",
-      "label": "Loveちゃん 全体（十二支・11/23-25）注意⚠"
+      "value": "11月26日からの約1週間は衝撃的な出来事や大きな変化が起きやすい激動の時期です。万が一に備えてスマホの充電や備蓄をしっかり確認しておきましょう。",
+      "period_start": "2026-11-26",
+      "period_end": "2026-11-28",
+      "url": "https://www.youtube.com/watch?v=6cjWZwD6XyE",
+      "label": "Loveちゃん 全体（12星座・11/26-28）注意⚠"
     },
     {
       "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
-      "kind": "caution",
-      "value": "相手の裏の顔や二面性を知ってショックを受けたり裏切られたと感じることがあるため、人間関係は広げすぎないのが吉です。",
-      "period_start": "2026-11-23",
-      "period_end": "2026-11-25",
-      "url": "https://www.youtube.com/watch?v=EU7w1q4OhZ4",
-      "label": "Loveちゃん 寅年（十二支・11/23-25）注意⚠"
+      "scope": "12星座",
+      "target": "牡牛座",
+      "kind": "food",
+      "value": "牡牛座のラッキーフードはおでんです。温かいおでんを食べることで、不安定な気持ちを落ち着かせ運気を高めることができます。",
+      "period_start": "2026-11-26",
+      "period_end": "2026-11-28",
+      "url": "https://www.youtube.com/watch?v=6cjWZwD6XyE",
+      "label": "Loveちゃん 牡牛座（12星座・11/26-28）ラッキーフード🍜"
     },
     {
       "source": "Loveちゃん",
-      "scope": "十二支",
-      "target": "寅年",
+      "scope": "12星座",
+      "target": "牡牛座",
       "kind": "theme",
-      "value": "待ちに待ったことや長年望んできたことが現実化しやすく、嬉しい展開が期待できる運気です。",
-      "period_start": "2026-11-23",
-      "period_end": "2026-11-25",
-      "url": "https://www.youtube.com/watch?v=EU7w1q4OhZ4",
-      "label": "Loveちゃん 寅年（十二支・11/23-25）運気テーマ🌅"
+      "value": "落ち込んだりすみっこに隠れたくなったりしやすい時期ですが、急な嬉しい連絡や起死回生の一打があり、心が軽くなるような良い流れが訪れます。",
+      "period_start": "2026-11-26",
+      "period_end": "2026-11-28",
+      "url": "https://www.youtube.com/watch?v=6cjWZwD6XyE",
+      "label": "Loveちゃん 牡牛座（12星座・11/26-28）運気テーマ🌅"
     },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "color",
-      "value": "気分を落ち着けたい時におすすめの今週のCOOL DOWNカラーは森の色です。",
+      "value": "気分を落ち着けたい時にプラスして今週の運勢をコントロールするCOOL DOWNカラーは「森の色」です。",
       "period_start": "2026-11-23",
-      "period_end": "2026-11-23",
+      "period_end": "2026-11-29",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-23/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/23）ラッキーカラー🎨"
+      "label": "しいたけ 牡牛座（週間・11/23-29）ラッキーカラー🎨"
     },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "theme",
-      "value": "今週は自分が立てた計画やペースが周囲から乱されやすい運気です。心の中で自分にナレーションをつける「演技指導」をしてマイルドに対応しましょう。",
+      "value": "今週は自分が立てた計画やペースが周囲に乱されやすい運気です。心の中でナレーションをつけるなどマイルドに対応して乗り切っていきましょう。",
       "period_start": "2026-11-23",
-      "period_end": "2026-11-23",
+      "period_end": "2026-11-29",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-23/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/23）運気テーマ🌅"
+      "label": "しいたけ 牡牛座（週間・11/23-29）運気テーマ🌅"
     },
     {
       "source": "しいたけ",
       "scope": "週間",
       "target": "牡牛座",
       "kind": "action",
-      "value": "疲れが出やすく「お布団から離れたくない」と感じる時ですが、一歩を踏み出し、対人面では折れてあげる素敵な大人としての意識を持つのがお勧めです。",
+      "value": "疲れが出やすくお布団から離れたくない時ですが第一歩を踏み出すことが大事です。人間関係では折れてあげる素敵な大人意識で対応しましょう。",
       "period_start": "2026-11-23",
-      "period_end": "2026-11-23",
+      "period_end": "2026-11-29",
       "url": "https://shiitakeuranai.jp/weekly-horoscope/2026-11-23/taurus/",
-      "label": "しいたけ 牡牛座（週間・11/23）開運アクション✨"
+      "label": "しいたけ 牡牛座（週間・11/23-29）開運アクション✨"
     }
   ]
 }
